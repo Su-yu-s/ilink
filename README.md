@@ -23,6 +23,8 @@ macOS liquid glass effect + black/white/gray minimalist aesthetic
 Multi-factor login support (phone number / student ID / username) with progressive rate limiting. Registration enforces identity selection (Student / Teacher / Admin), password strength policy, and duplicate detection.
 
 **Entity:** `User` — id, username, studentId, phoneNumber, password, email, role (STUDENT/TEACHER/ADMIN), avatar, realName, gender, grade, major, school, college, bio, honors, createdAt
+<img width="1209" height="945" alt="image" src="https://github.com/user-attachments/assets/1d5b1d97-4c6d-4cb3-bb2e-e9ae5070b2fc" /><img width="998" height="1135" alt="image" src="https://github.com/user-attachments/assets/32a6ac55-f7cf-4706-a002-ce75d991ead7" />
+
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -41,6 +43,7 @@ Multi-factor login support (phone number / student ID / username) with progressi
 ### 2. Smart Recommendation Engine
 
 Skill-tag-based intelligent matching algorithm. Recommends the most suitable teams to users, and the best-fit members to team leaders. Records recommendation feedback for continuous model optimization.
+<img width="1950" height="800" alt="image" src="https://github.com/user-attachments/assets/35e6b5c6-7cb2-41b5-b8e4-bc274972c4c3" />
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -54,7 +57,7 @@ Skill-tag-based intelligent matching algorithm. Recommends the most suitable tea
 ### 3. Team Building (Recruitment & Matching)
 
 Full lifecycle management for team recruitment: publish demands → browse marketplace → apply → approve/reject → form team. Supports keyword search, category filtering, and status tracking.
-
+<img width="1942" height="810" alt="QQ_1782284692365" src="https://github.com/user-attachments/assets/edc84ad6-f0c3-40aa-b062-2206191b2b18" />
 **Status flow:** `OPEN` (recruiting) → `TEAMING` (forming) → `CLOSED` (ended)
 
 **Entities:**
@@ -88,6 +91,7 @@ Four-column Kanban board (**To Do → In Progress → Review → Done**) with fu
 - `TaskParticipant` — taskId, userId, role (OWNER/LEAD/MEMBER/REVIEWER), contributionHours, contributionRate
 - `TaskSubmission` — taskId, submitterId, content, attachments
 - `TaskComment` — taskId, parentId (supports threaded replies), userId, content, commentType, attachments, likeCount
+<img width="1302" height="792" alt="image" src="https://github.com/user-attachments/assets/e966c064-1321-4072-b44e-67f00c929893" />
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -143,6 +147,7 @@ STOMP over WebSocket real-time messaging for team collaboration. Messages persis
 ### 7. Community Forum
 
 Full-featured discussion forum with four categories (**General / Tech / Competition / Resource**). Rich-text post editor with HTML sanitization (Jsoup + custom sanitizer). Like, favorite, and nested comment interactions.
+<img width="1905" height="903" alt="image" src="https://github.com/user-attachments/assets/ab7ff117-1a5f-48cf-9614-6e22d13083d7" />
 
 **Entities:**
 - `CommunityPost` — id, authorId, category, title, content, attachments (JSON), viewCount, likeCount, favoriteCount
@@ -167,9 +172,10 @@ Full-featured discussion forum with four categories (**General / Tech / Competit
 
 ---
 
-### 8. Achievement Gallery
+### 8. Achievement Gallery and List of Competitions
 
 Digital showcase for project outcomes, research results, and competition awards. Supports file upload with MIME-type verification. Public gallery with search and sorting (latest / most popular). Cached for performance.
+<img width="1818" height="1032" alt="image" src="https://github.com/user-attachments/assets/c17a581c-06a3-45e4-99e7-490a0437e976" />
 
 **Entity:** `Asset` — id, title, description, fileUrl, userId, viewCount, createdAt
 
@@ -182,10 +188,13 @@ Digital showcase for project outcomes, research results, and competition awards.
 | `/api/asset/download/{id}` | GET | Download achievement file (increments download count) |
 
 ---
+List of Competitions
+<img width="1864" height="1122" alt="image" src="https://github.com/user-attachments/assets/7bef811a-101b-49a0-9b33-cdc12e77a6c7" />
 
 ### 9. Mentor Matching
 
 Two-way mentor-student matching system. Teachers apply to become mentors with research directions and projects. Students browse mentor profiles and apply to join projects. Mentor approves or rejects applications.
+<img width="1857" height="776" alt="image" src="https://github.com/user-attachments/assets/f743a79d-7832-4feb-80ab-0598c09e424b" />
 
 **Entities:**
 - `TeacherApplication` — id, userId, introduction, researchDirection, projects, status (PENDING/APPROVED)
