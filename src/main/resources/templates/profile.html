@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-profile-page="overview" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+    <div class="il-page-wrapper">
+        <div class="il-profile-layout">
+            <aside class="il-profile-sidebar">
+                <h3 class="il-profile-sidebar-title">个人中心</h3>
+                <p class="il-profile-sidebar-subtitle">管理您的账号</p>
+                <nav class="il-profile-nav">
+                    <a href="/profile.html" class="il-profile-nav-item active">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"/>
+                        </svg>
+                        概览
+                    </a>
+                    <a href="/profile-edit.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 12a5 5 0 100-10a5 5 0 000 10z"/>
+                            <path d="M4 22a8 8 0 0116 0"/>
+                        </svg>
+                        编辑资料
+                    </a>
+                    <a href="/profile-honors.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 3l2.4 7.4H22l-6 4.6 2.3 7L12 17.8 5.7 22 8 14.4 2 10.6h7.6L12 3z"/>
+                        </svg>
+                        个人成果
+                    </a>
+                    <a href="/profile-posts.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M7 4h10a2 2 0 012 2v14l-4-2.5L11 18l-4 1.5V6a2 2 0 012-2z"/>
+                            <path d="M9 9h6M9 13h4"/>
+                        </svg>
+                        我的文章
+                    </a>
+                    <a href="/profile-favorites.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2.8l2.8 5.7 6.3.9-4.6 4.6 1.1 6.2L12 17.9 6.4 20.1l1.1-6.2L2.9 9.4l6.3-.9L12 2.8z"/>
+                        </svg>
+                        我的收藏
+                    </a>
+                    <a href="/profile-password.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2z"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                        修改密码
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="il-profile-content">
+                <div class="il-profile-card">
+                    <div class="il-profile-avatar">
+                        <img th:if="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
+                             th:src="${currentUser.avatar}"
+                             th:alt="${currentUser.realName ?: currentUser.username}"
+                             onerror="this.style.display='none'; this.parentElement.querySelector('.il-profile-avatar-fallback').style.display='flex';">
+                        <span class="il-profile-avatar-fallback"
+                              th:unless="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
+                              th:text="${currentUser.username != null && !currentUser.username.isEmpty() ? #strings.substring(currentUser.username, 0, 1) : '用'}">用</span>
+                        <span class="il-profile-avatar-fallback"
+                              th:if="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
+                              style="display:none;"
+                              th:text="${currentUser.username != null && !currentUser.username.isEmpty() ? #strings.substring(currentUser.username, 0, 1) : '用'}">用</span>
+                    </div>
+                    <div class="il-profile-info">
+                        <h1 class="il-profile-name" th:text="${currentUser.realName ?: currentUser.username}">用户</h1>
+                        <div class="il-profile-meta">
+                            <span class="il-profile-meta-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                    <polyline points="22,6 12,13 2,6"/>
+                                </svg>
+                                <span th:text="${currentUser.email ?: '未设置邮箱'}">邮箱</span>
+                            </span>
+                            <span class="il-profile-meta-item">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2a7 7 0 100 14a7 7 0 000-14z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2H10a2 2 0 01-2-2v-.09A1.65 1.65 0 007 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2V8a2 2 0 012-2h.09A1.65 1.65 0 004.6 7a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2h2a2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2v2a2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                                </svg>
+                                <span th:text="${currentUser.school ?: '未设置学校'}">学校</span>
+                            </span>
+                        </div>
+                        <p class="il-profile-bio" th:text="${currentUser.bio ?: '还没有个人简介，去编辑一下吧~'}">个人简介</p>
+                    </div>
+                    <div class="il-profile-actions">
+                        <a href="/profile-edit.html" class="il-btn il-btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            编辑资料
+                        </a>
+                    </div>
+                </div>
+
+                <div class="il-section-card">
+                    <div class="il-section-header">
+                        <h2 class="il-section-title">我的活动</h2>
+                    </div>
+
+                    <div class="il-tabs">
+                        <button class="il-tab active" id="tab-teams" type="button">我的组队</button>
+                        <button class="il-tab" id="tab-applications" type="button">我的申请</button>
+                    </div>
+
+                    <div id="content-teams">
+                        <div class="il-empty-state">
+                            <div class="il-empty-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 010 7.75"/>
+                                </svg>
+                            </div>
+                            <p class="il-empty-title">还没有组队</p>
+                            <p class="il-empty-text">去组队大厅看看，找到志同道合的伙伴</p>
+                        </div>
+                    </div>
+
+                    <div id="content-applications" style="display: none;">
+                        <div class="il-empty-state">
+                            <div class="il-empty-icon">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                    <polyline points="22,4 12,14.01 9,11.01"/>
+                                </svg>
+                            </div>
+                            <p class="il-empty-title">还没有申请</p>
+                            <p class="il-empty-text">申请加入感兴趣的团队吧</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=4.3"></script>
+    <script src="/js/common.js?v=7.5"></script>
+    <script src="/js/profile.js?v=4.4"></script>
+    <script>
+        document.body.setAttribute('data-particles', 'true');
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.il-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+
+            document.getElementById('content-teams').style.display = tab === 'teams' ? 'block' : 'none';
+            document.getElementById('content-applications').style.display = tab === 'applications' ? 'block' : 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化粒子特效（在 common.js 全局初始化之后，确保 data-particles 已设置）
+            if (window.ParticleSystem) {
+                new ParticleSystem('particleCanvas');
+            }
+            const tabs = document.querySelectorAll('.il-tab');
+            tabs.forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    const tabName = this.id === 'tab-teams' ? 'teams' : 'applications';
+                    switchTab(tabName);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

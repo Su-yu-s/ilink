@@ -1,0 +1,447 @@
+/**
+ * 成果详情 · 分享卡片布局 v2.0
+ * 参考竞赛成果分享页，配色对齐 iLink 黑白灰
+ */
+
+body[data-app-page="asset-detail"].asset-detail-page {
+  background: linear-gradient(145deg, #f3f4f6 0%, #e5e7eb 100%) !important;
+}
+
+body[data-app-page="asset-detail"] .asset-detail-shell {
+  position: relative;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.5rem;
+}
+
+body[data-app-page="asset-detail"] .asset-detail-shell .particle-canvas {
+  pointer-events: none;
+}
+
+body[data-app-page="asset-detail"] .share-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow:
+    0 25px 45px -12px rgba(17, 24, 39, 0.12),
+    0 4px 12px rgba(17, 24, 39, 0.04);
+  overflow: hidden;
+}
+
+body[data-app-page="asset-detail"] .card-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.92fr;
+  gap: 0;
+}
+
+body[data-app-page="asset-detail"] .achievement-section {
+  padding: 2rem;
+  background: #ffffff;
+}
+
+body[data-app-page="asset-detail"] .insight-section {
+  padding: 2rem;
+  background: #fafafa;
+  border-left: 1px solid #f0f2f5;
+}
+
+body[data-app-page="asset-detail"] .detail-badge {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111827;
+  background: #f3f4f6;
+  border-radius: 9999px;
+}
+
+body[data-app-page="asset-detail"] .honor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #374151;
+  background: #fef3c7;
+  border-radius: 9999px;
+}
+
+body[data-app-page="asset-detail"] .project-title {
+  margin: 0 0 0.35rem !important;
+  padding: 0 !important;
+  font-size: clamp(1.75rem, 3vw, 2.1rem) !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.02em;
+  color: #111827 !important;
+}
+
+body[data-app-page="asset-detail"] .project-subtitle {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+body[data-app-page="asset-detail"] .project-sub {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+body[data-app-page="asset-detail"] .author-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 1rem 0.35rem 0.5rem;
+  background: #f9fafb;
+  border: 1px solid #f0f2f5;
+  border-radius: 9999px;
+}
+
+body[data-app-page="asset-detail"] .author-info .detail-view__author-name,
+body[data-app-page="asset-detail"] .author-info .author-name-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+body[data-app-page="asset-detail"] .meta-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+body[data-app-page="asset-detail"] .meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  color: #4b5563;
+  background: #f3f4f6;
+  border-radius: 9999px;
+}
+
+body[data-app-page="asset-detail"] .meta-item i {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+body[data-app-page="asset-detail"] .category-tag {
+  font-weight: 600;
+  color: #111827;
+  background: #e5e7eb;
+}
+
+body[data-app-page="asset-detail"] .desc-header {
+  margin-bottom: 1rem;
+}
+
+body[data-app-page="asset-detail"] .desc-box {
+  padding: 1.15rem 1.25rem;
+  background: #f9fafb;
+  border: 1px solid #f0f2f5;
+  border-radius: 12px;
+}
+
+body[data-app-page="asset-detail"] .desc-text {
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #374151;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+body[data-app-page="asset-detail"] .desc-extra {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #4b5563;
+  border-top: 1px dashed #e5e7eb;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+body[data-app-page="asset-detail"] .desc-extra img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+body[data-app-page="asset-detail"] .insight-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.25rem;
+}
+
+body[data-app-page="asset-detail"] .insight-header i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.1rem;
+  color: #111827;
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+body[data-app-page="asset-detail"] .insight-header h2 {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  color: #111827 !important;
+}
+
+body[data-app-page="asset-detail"] .insight-content {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #374151;
+}
+
+body[data-app-page="asset-detail"] .insight-content p {
+  margin: 0 0 0.85rem;
+}
+
+body[data-app-page="asset-detail"] .insight-quote {
+  padding: 1rem 1.1rem;
+  margin: 0.5rem 0 0.85rem;
+  font-style: italic;
+  color: #4b5563;
+  background: #f3f4f6;
+  border-left: 3px solid #111827;
+  border-radius: 10px;
+}
+
+body[data-app-page="asset-detail"] .insight-empty {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+body[data-app-page="asset-detail"] .highlight-text {
+  font-weight: 600;
+  color: #111827;
+}
+
+body[data-app-page="asset-detail"] .insight-signature {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: right;
+  color: #6b7280;
+  border-top: 1px solid #e5e7eb;
+}
+
+body[data-app-page="asset-detail"] .full-width-attachment {
+  padding: 1.5rem 2rem 1.75rem;
+  background: #ffffff;
+  border-top: 1px solid #f0f2f5;
+}
+
+body[data-app-page="asset-detail"] .attachment-area {
+  padding: 1.15rem 1.35rem 1.35rem;
+  background: #fafafa;
+  border: 1px solid #f0f2f5;
+  border-radius: 14px;
+}
+
+body[data-app-page="asset-detail"] .attachment-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+  padding-left: 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  border-left: 4px solid #111827;
+}
+
+body[data-app-page="asset-detail"] .file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+body[data-app-page="asset-detail"] .file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  background: #ffffff;
+  border: 1px solid #f0f2f5;
+  border-radius: 12px;
+}
+
+body[data-app-page="asset-detail"] .file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+body[data-app-page="asset-detail"] .file-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 1.1rem;
+  color: #111827;
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+body[data-app-page="asset-detail"] .file-details h4 {
+  margin: 0 0 0.15rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-all;
+}
+
+body[data-app-page="asset-detail"] .file-details span {
+  font-size: 0.72rem;
+  color: #6b7280;
+}
+
+body[data-app-page="asset-detail"] .download-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #111827 !important;
+  text-decoration: none !important;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 9999px;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+body[data-app-page="asset-detail"] .download-btn:hover {
+  color: #ffffff !important;
+  background: #111827;
+  border-color: #111827;
+}
+
+body[data-app-page="asset-detail"] .download-hint {
+  margin: 0.85rem 0 0;
+  font-size: 0.72rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+body[data-app-page="asset-detail"] .return-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 1rem 2rem 1.25rem;
+  background: #ffffff;
+  border-top: 1px solid #f0f2f5;
+}
+
+body[data-app-page="asset-detail"] .asset-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.55rem 1.35rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ffffff;
+  background: #111827;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+body[data-app-page="asset-detail"] .asset-edit-btn:hover {
+  background: #1f2937;
+}
+
+body[data-app-page="asset-detail"] .asset-edit-btn:active {
+  transform: scale(0.98);
+}
+
+body[data-app-page="asset-detail"] .return-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.55rem 1.35rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+body[data-app-page="asset-detail"] .return-btn:hover {
+  background: #e5e7eb;
+  transform: translateX(-2px);
+}
+
+/* 作者头像圆形 */
+body[data-app-page="asset-detail"] .author-info .il-publisher-avatar,
+body[data-app-page="asset-detail"] .author-info .il-avatar-wrap,
+body[data-app-page="asset-detail"] .author-info .il-publisher-avatar__img {
+  border-radius: 50% !important;
+}
+
+@media (max-width: 880px) {
+  body[data-app-page="asset-detail"] .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-app-page="asset-detail"] .insight-section {
+    border-left: none;
+    border-top: 1px solid #f0f2f5;
+  }
+}
+
+@media (max-width: 560px) {
+  body[data-app-page="asset-detail"] .asset-detail-shell {
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  body[data-app-page="asset-detail"] .achievement-section,
+  body[data-app-page="asset-detail"] .insight-section {
+    padding: 1.35rem;
+  }
+
+  body[data-app-page="asset-detail"] .project-sub {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  body[data-app-page="asset-detail"] .file-item {
+    flex-wrap: wrap;
+  }
+}

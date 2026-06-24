@@ -1,0 +1,28 @@
+# 本地开发（默认 spring.profiles.active=dev）
+# 数据库密码请通过环境变量 SPRING_DATASOURCE_PASSWORD 或本文件配置，勿提交真实密码到仓库
+spring:
+  datasource:
+    password: ${SPRING_DATASOURCE_PASSWORD:1234}
+  thymeleaf:
+    cache: false
+
+logging:
+  level:
+    cn.ilink: debug
+    org.springframework.web: info
+
+# 接口是否向客户端返回异常详情（切勿在生产开启）
+app:
+  api:
+    expose-error-detail: ${APP_EXPOSE_ERROR_DETAIL:false}
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 文件上传路径（dev 环境使用项目相对路径，与 WebMvcConfig 一致）
+file:
+  upload-dir: ./uploads
+  access-url-prefix: /uploads/
+upload:
+  path: ./uploads

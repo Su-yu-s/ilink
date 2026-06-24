@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章详情 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link href="/css/community-article.css?v=1.2" rel="stylesheet">
+</head>
+<body data-app-page="community-article" class="ilink-page-bg community-article-page" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="il-page-wrapper community-article-page">
+        <div class="community-article-shell">
+            <canvas id="particleCanvas" class="particle-canvas" aria-hidden="true"></canvas>
+
+            <nav class="community-article-breadcrumb" aria-label="breadcrumb">
+                <a href="/community.html">交流社区</a>
+                <span class="community-article-breadcrumb__sep" aria-hidden="true">›</span>
+                <span id="breadcrumbCategory">文章</span>
+                <span class="community-article-breadcrumb__sep" aria-hidden="true">›</span>
+                <span id="breadcrumbTitle" class="community-article-breadcrumb__current">加载中…</span>
+            </nav>
+
+            <article class="community-article-card page-transition">
+                <header class="community-article-card__header">
+                    <h1 class="community-article__title" id="articleTitle">加载中…</h1>
+                    <div class="community-article__meta-stats" id="articleMetaStats">
+                        <span id="articleMetaCategory" class="community-article__meta-item"></span>
+                        <span class="community-article__meta-sep" aria-hidden="true">·</span>
+                        <span class="community-article__meta-author">
+                            <span id="articleMetaAvatar" class="community-article__avatar-slot community-article__avatar-slot--inline"></span>
+                            <span id="articleAuthorName" class="community-article__meta-item">—</span>
+                        </span>
+                        <span class="community-article__meta-sep" aria-hidden="true">·</span>
+                        <time id="articleMetaDate" class="community-article__meta-item"></time>
+                        <span class="community-article__meta-sep" aria-hidden="true">·</span>
+                        <span class="community-article__meta-item">阅读 <span id="articleViewCount">0</span></span>
+                    </div>
+                </header>
+                <div class="community-article-card__body">
+                    <div id="articleBody" class="community-article__content community-post-body"></div>
+                    <div id="articleAttachments" class="community-article-attachments d-none"></div>
+                    <footer class="community-article__footer">
+                        <a href="/community.html" class="il-btn il-btn-secondary community-article__footer-back">返回社区</a>
+                        <div id="articleInteractionBar" class="community-article__interactions" aria-label="互动">
+                            <button type="button" id="articleLikeBtn" class="community-article__action-btn" aria-pressed="false">
+                                <span class="community-article__action-label">点赞</span>
+                                <span id="articleLikeCount" class="community-article__action-num">0</span>
+                            </button>
+                            <button type="button" id="articleFavBtn" class="community-article__action-btn" aria-pressed="false">
+                                <span class="community-article__action-label">收藏</span>
+                                <span id="articleFavCount" class="community-article__action-num">0</span>
+                            </button>
+                        </div>
+                        <div class="community-article__footer-actions">
+                            <button type="button" class="il-btn il-btn-danger-outline d-none" id="deleteArticleBtn">删除文章</button>
+                        </div>
+                    </footer>
+                </div>
+            </article>
+
+            <section class="community-article-comments page-transition" aria-labelledby="commentsHeading">
+                <header class="community-article-comments__header">
+                    <h2 id="commentsHeading" class="community-article-comments__title">评论</h2>
+                    <span class="community-article-comments__hint" id="commentCountHint"></span>
+                </header>
+                <div class="community-article-comments__body">
+                    <div class="community-article-compose">
+                        <label for="newCommentInput" class="community-article-compose__label">发表看法</label>
+                        <textarea class="community-article-compose__textarea" id="newCommentInput" rows="3" maxlength="2000"
+                            placeholder="分享你的经验、疑问或补充（最多 2000 字）"></textarea>
+                        <div class="community-article-compose__actions">
+                            <button type="button" class="il-btn il-btn-primary" id="submitCommentBtn">发布评论</button>
+                        </div>
+                    </div>
+                    <div id="commentList" class="community-article-comment-list">
+                        <p class="community-article-comment-list__empty">加载评论中…</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
+    <script src="/js/community-article.js?v=39"></script>
+    <div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

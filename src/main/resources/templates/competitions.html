@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竞赛目录 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-app-page="competitions" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, 'competition')"></div>
+
+    <div class="container main-content">
+        <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+        <div class="competition-hub mx-auto">
+            <div class="il-hero">
+                <p class="il-hero-eyebrow">赛事信息 · 备赛参考</p>
+                <h1 class="il-hero-title">竞赛目录</h1>
+                <p class="il-hero-desc">汇总国内高校常见学科竞赛与创新创业赛事，便于检索赛道、主办单位与大致赛季。具体章程与报名时间以各赛官网为准。</p>
+            </div>
+
+            <div class="il-toolbar competition-toolbar">
+                <div class="il-toolbar-row">
+                    <nav class="competition-track-tabs"
+                         id="competitionTrackTabs" aria-label="竞赛分类">
+                    </nav>
+                    <div class="il-toolbar-search competition-toolbar__search" th:replace="~{fragments/search-field :: combo('compSearchInput', '搜索竞赛名称、标签…', 'compSearchBtn', '搜索', '搜索竞赛')}"></div>
+                </div>
+            </div>
+
+            <div id="competitionGrid" class="row g-4 competition-grid">
+            </div>
+
+            <div id="competitionEmpty" class="empty-state text-center py-5 rounded-3 border border-dashed bg-white bg-opacity-50 d-none">
+                <p class="text-muted mb-0">没有匹配的竞赛，试试其它分类或关键词。</p>
+            </div>
+
+            <nav id="competitionPager" class="mt-3 d-none" aria-label="竞赛目录分页">
+                <ul class="pagination pagination-sm justify-content-center mb-0" id="competitionPagerInner"></ul>
+            </nav>
+
+            <p class="small text-muted text-center mt-3 mb-0" id="competitionCountHint"></p>
+        </div>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=4.2"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/competitions.js?v=4.2"></script>
+</body>
+</html>

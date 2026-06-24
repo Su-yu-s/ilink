@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成果详情 - iLink</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <link href="/css/asset-detail.css?v=2.2" rel="stylesheet">
+    <link href="/css/asset-publish.css?v=1.0" rel="stylesheet">
+</head>
+<body data-app-page="asset-detail" class="ilink-page-bg asset-detail-page" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="asset-detail-shell">
+        <canvas id="particleCanvas" class="particle-canvas" aria-hidden="true"></canvas>
+        <article class="share-card page-transition" id="shareCard">
+            <div class="card-grid">
+                <section class="achievement-section">
+                    <div class="detail-badge">
+                        <i class="fas fa-trophy" aria-hidden="true"></i>
+                        <span>竞赛成果详情</span>
+                        <span class="honor-badge" id="assetHonorBadge" hidden>
+                            <i class="fas fa-award" aria-hidden="true"></i>
+                            <span id="assetHonorText"></span>
+                        </span>
+                    </div>
+                    <h1 class="project-title" id="assetTitle">成果标题</h1>
+                    <p class="project-subtitle" id="assetSubtitle" hidden></p>
+                    <div class="project-sub">
+                        <div class="author-info" id="assetAuthor">-</div>
+                        <div class="meta-stats">
+                            <div class="meta-item category-tag" id="assetCategoryWrap">
+                                <i class="fas fa-tag" aria-hidden="true"></i>
+                                <span id="assetCategory">未分类</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="far fa-calendar-alt" aria-hidden="true"></i>
+                                <span id="assetCreateTime">-</span>
+                            </div>
+                            <div class="meta-item">
+                                <i class="far fa-eye" aria-hidden="true"></i>
+                                <span id="assetViewCount">浏览 0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="insight-header desc-header">
+                        <i class="fas fa-align-left" aria-hidden="true"></i>
+                        <h2>成果描述</h2>
+                    </div>
+                    <div class="desc-box">
+                        <div class="desc-text" id="assetDescLead">-</div>
+                        <div class="desc-extra" id="assetDescExtra" hidden></div>
+                    </div>
+                </section>
+
+                <section class="insight-section">
+                    <div class="insight-header">
+                        <i class="fas fa-pen-fancy" aria-hidden="true"></i>
+                        <h2>竞赛心得 · 分享时刻</h2>
+                    </div>
+                    <div class="insight-content" id="assetInsight">
+                        <p class="insight-empty">暂无分享内容，可在成果描述中用空行分隔「成果说明」与「参赛心得」。</p>
+                    </div>
+                </section>
+            </div>
+
+            <section class="full-width-attachment" id="assetAttachmentSection" hidden>
+                <div class="attachment-area">
+                    <div class="attachment-title">
+                        <i class="fas fa-paperclip" aria-hidden="true"></i> 附件资料 · 成果共享
+                    </div>
+                    <div class="file-list" id="assetFiles"></div>
+                    <p class="download-hint">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        附件由发布者上传，仅供学习交流使用。
+                    </p>
+                </div>
+            </section>
+
+            <footer class="return-footer">
+                <button type="button" class="return-btn" id="backBtn">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回成果展示
+                </button>
+                <button type="button" class="asset-edit-btn" id="assetEditBtn" hidden>
+                    <i class="fas fa-pen" aria-hidden="true"></i> 编辑成果
+                </button>
+            </footer>
+        </article>
+    </div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <div th:replace="fragments/asset-publish-modal :: modal"></div>
+    <script src="/js/asset-publish.js?v=1.0"></script>
+    <script src="/js/asset-detail.js?v=10"></script>
+    <div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

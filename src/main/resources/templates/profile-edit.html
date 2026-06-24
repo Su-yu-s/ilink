@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑资料 - iLink</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-profile-page="edit" th:data-user-id="${currentUser?.id}" class="ilink-page-bg">
+    <input type="file" id="avatarFileInput" class="d-none" accept="image/jpeg,image/png,image/gif,image/webp">
+
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="il-page-wrapper">
+        <div class="il-profile-layout">
+            <aside class="il-profile-sidebar">
+                <h3 class="il-profile-sidebar-title">个人中心</h3>
+                <p class="il-profile-sidebar-subtitle">管理您的账号</p>
+                <nav class="il-profile-nav">
+                    <a href="/profile.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"/>
+                        </svg>
+                        概览
+                    </a>
+                    <a href="/profile-edit.html" class="il-profile-nav-item active">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 12a5 5 0 100-10a5 5 0 000 10z"/>
+                            <path d="M4 22a8 8 0 0116 0"/>
+                        </svg>
+                        编辑资料
+                    </a>
+                    <a href="/profile-honors.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 3l2.4 7.4H22l-6 4.6 2.3 7L12 17.8 5.7 22 8 14.4 2 10.6h7.6L12 3z"/>
+                        </svg>
+                        个人成果
+                    </a>
+                    <a href="/profile-posts.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M7 4h10a2 2 0 012 2v14l-4-2.5L11 18l-4 1.5V6a2 2 0 012-2z"/>
+                            <path d="M9 9h6M9 13h4"/>
+                        </svg>
+                        我的文章
+                    </a>
+                    <a href="/profile-favorites.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2.8l2.8 5.7 6.3.9-4.6 4.6 1.1 6.2L12 17.9 6.4 20.1l1.1-6.2L2.9 9.4l6.3-.9L12 2.8z"/>
+                        </svg>
+                        我的收藏
+                    </a>
+                    <a href="/profile-password.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2z"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                        修改密码
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="il-profile-content">
+                <div class="il-section-card">
+                    <form id="profileForm" novalidate>
+                        <!-- C-37: 添加 CSRF token -->
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <h2 class="il-section-title">基本信息</h2>
+
+                        <div class="il-avatar-wrapper">
+                            <div class="il-avatar-container il-avatar-preview" id="avatarContainer" title="点击更换头像">
+                                <img src="" alt="" class="il-avatar-img il-avatar-img--hidden" id="avatarPreviewImg">
+                                <div class="il-avatar-fallback il-avatar-fallback--hidden" id="avatarFallback" aria-hidden="true"></div>
+                                <div class="il-avatar-overlay">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="il-avatar-hint">
+                                点击头像更换
+                                <span>支持 JPG / PNG / GIF / WebP</span>
+                            </div>
+                            <input type="hidden" id="avatar" value="">
+                            <span class="il-avatar-upload-hint" id="avatarUploadHint"></span>
+                        </div>
+
+                        <div class="il-form-row">
+                            <div class="il-form-group">
+                                <label class="il-form-label il-form-label--required" for="username">用户名</label>
+                                <input type="text" class="il-form-input" id="username" autocomplete="username" maxlength="64" required placeholder="请输入用户名">
+                            </div>
+                            <div class="il-form-group">
+                                <label class="il-form-label il-form-label--required" for="email">邮箱</label>
+                                <input type="email" class="il-form-input" id="email" required autocomplete="email" placeholder="name@example.com">
+                            </div>
+                        </div>
+
+                        <div class="il-form-row">
+                            <div class="il-form-group">
+                                <label class="il-form-label" for="realName">姓名</label>
+                                <input type="text" class="il-form-input" id="realName" autocomplete="name" placeholder="选填">
+                            </div>
+                            <div class="il-form-group">
+                                <label class="il-form-label" for="school">学校</label>
+                                <input type="text" class="il-form-input" id="school" maxlength="128" placeholder="例如：南京晓庄学院">
+                            </div>
+                        </div>
+
+                        <div class="il-form-row">
+                            <div class="il-form-group">
+                                <label class="il-form-label" for="major">专业</label>
+                                <input type="text" class="il-form-input" id="major" maxlength="64" placeholder="例如：软件工程">
+                            </div>
+                            <div class="il-form-group">
+                                <label class="il-form-label" for="grade">年级</label>
+                                <input type="text" class="il-form-input" id="grade" maxlength="32" placeholder="例如：2023级">
+                            </div>
+                        </div>
+
+                        <div class="il-form-row">
+                            <div class="il-form-group">
+                                <label class="il-form-label" for="college">学院</label>
+                                <input type="text" class="il-form-input" id="college" maxlength="128" placeholder="例如：信息工程学院">
+                            </div>
+                            <div class="il-form-group">
+                                <label class="il-form-label" for="gender">性别</label>
+                                <select class="il-form-select" id="gender">
+                                    <option value="">不展示</option>
+                                    <option value="MALE">男</option>
+                                    <option value="FEMALE">女</option>
+                                    <option value="OTHER">其他</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="il-form-group">
+                            <label class="il-form-label" for="bio">个人简介</label>
+                            <textarea class="il-form-input" id="bio" maxlength="300" placeholder="介绍一下自己吧"></textarea>
+                        </div>
+
+                        <h2 class="il-section-title il-section-divider">技能标签</h2>
+
+                        <div class="il-skills-list" id="skillsTagsWrapper"></div>
+
+                        <div class="il-skill-form">
+                            <div class="il-form-group il-form-group--compact">
+                                <input type="text" class="il-form-input" id="skillName" maxlength="64" placeholder="技能名称">
+                            </div>
+                            <div class="il-form-group il-form-group--compact">
+                                <select class="il-form-select" id="skillCategory">
+                                    <option value="">分类</option>
+                                    <option value="programming">编程语言</option>
+                                    <option value="frontend">前端技术</option>
+                                    <option value="backend">后端技术</option>
+                                    <option value="database">数据库</option>
+                                    <option value="devops">DevOps</option>
+                                    <option value="mobile">移动开发</option>
+                                    <option value="ai">人工智能</option>
+                                    <option value="design">设计</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                            <div class="il-form-group il-form-group--compact">
+                                <select class="il-form-select" id="skillLevel">
+                                    <option value="">熟练度</option>
+                                    <option value="beginner">入门</option>
+                                    <option value="elementary">初级</option>
+                                    <option value="intermediate">中级</option>
+                                    <option value="advanced">高级</option>
+                                    <option value="expert">专家</option>
+                                </select>
+                            </div>
+                            <button type="button" class="il-btn il-btn-primary il-btn-sm" id="addSkillBtn">添加</button>
+                        </div>
+
+                        <div class="il-form-footer">
+                            <button type="submit" class="il-btn il-btn-primary" id="profileSaveBtn">保存资料</button>
+                            <p class="il-form-hint">修改将在保存后生效</p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=4.3"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/profile.js?v=4.4"></script>
+    <script src="/js/profile-edit.js?v=4.6"></script>
+</body>
+</html>

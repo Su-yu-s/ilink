@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>iLink - 高校竞赛协作平台</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=false)"></th:block>
+    <style>
+        body {
+            background-color: #f9fafb;
+            position: relative;
+        }
+        .il-page-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+            position: relative;
+            z-index: 1;
+        }
+        /* ===== Modern Hero Section ===== */
+        .il-hero-section {
+            position: relative;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 100px 24px;
+            background: linear-gradient(180deg, var(--color-gray-100) 0%, var(--color-white) 100%);
+            overflow: hidden;
+        }
+
+        .il-hero-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(17, 24, 39, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .il-hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 720px;
+        }
+
+        .il-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-sm);
+            color: var(--color-gray-600);
+            margin-bottom: 24px;
+        }
+
+        .il-hero-badge-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--color-success);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .il-hero-title {
+            font-size: clamp(2.5rem, 6vw, 3.5rem);
+            font-weight: 700;
+            color: var(--color-black);
+            line-height: 1.15;
+            margin-bottom: 20px;
+            letter-spacing: -0.03em;
+        }
+
+        .il-hero-title span {
+            color: var(--color-gray-700);
+        }
+
+        .il-hero-section p {
+            font-size: 1.25rem;
+            color: var(--color-gray-600);
+            margin-bottom: 40px;
+            line-height: 1.7;
+        }
+
+        .il-hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .il-hero-actions .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--color-black);
+            color: var(--color-white);
+            padding: 16px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .il-hero-actions .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .il-hero-actions .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            color: var(--color-black);
+            padding: 16px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+            border: 1px solid var(--border-light);
+            cursor: pointer;
+        }
+
+        .il-hero-actions .btn-secondary:hover {
+            background: var(--color-white);
+            border-color: var(--border-default);
+            transform: translateY(-2px);
+        }
+
+        /* Floating Cards Decoration */
+        .hero-float-cards {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .float-card {
+            position: absolute;
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: var(--glass-shadow);
+            opacity: 0.6;
+        }
+
+        .float-card--1 {
+            width: 200px;
+            top: 15%;
+            left: 5%;
+            animation: floatCard1 8s ease-in-out infinite;
+        }
+
+        .float-card--2 {
+            width: 160px;
+            top: 25%;
+            right: 8%;
+            animation: floatCard2 9s ease-in-out infinite;
+        }
+
+        .float-card--3 {
+            width: 180px;
+            bottom: 20%;
+            left: 10%;
+            animation: floatCard3 10s ease-in-out infinite;
+        }
+
+        @keyframes floatCard1 {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+        }
+
+        @keyframes floatCard2 {
+            0%, 100% { transform: translateY(0) rotate(2deg); }
+            50% { transform: translateY(-20px) rotate(-2deg); }
+        }
+
+        @keyframes floatCard3 {
+            0%, 100% { transform: translateY(0) rotate(1deg); }
+            50% { transform: translateY(-12px) rotate(-1deg); }
+        }
+
+        /* ===== Features Section ===== */
+        .features-section {
+            padding: 100px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-black);
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-header p {
+            font-size: 1.125rem;
+            color: var(--color-gray-600);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            .il-hero-title {
+                font-size: 2rem;
+            }
+            .il-hero-section {
+                min-height: 420px;
+                padding: 80px 16px;
+            }
+            .float-card {
+                display: none;
+            }
+            .il-hero-section p {
+                font-size: 1rem;
+                margin-bottom: 28px;
+            }
+            .il-hero-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .il-hero-actions .btn-primary,
+            .il-hero-actions .btn-secondary {
+                padding: 14px 24px;
+                font-size: 16px;
+                text-align: center;
+            }
+            .features-section {
+                padding: 60px 16px;
+            }
+            .section-header h2 {
+                font-size: 1.5rem;
+            }
+            .section-header p {
+                font-size: 0.95rem;
+            }
+            .il-feature-card {
+                padding: 24px;
+            }
+            .stats-section {
+                padding: 48px 16px;
+            }
+            .stat-number {
+                font-size: 2.2rem;
+            }
+            .stat-label {
+                font-size: 0.9rem;
+            }
+            .cta-section {
+                padding: 60px 16px;
+            }
+            .cta-section h2 {
+                font-size: 1.5rem;
+            }
+            .cta-section p {
+                font-size: 1rem;
+            }
+            .recommendation-section {
+                padding: 48px 16px;
+            }
+        }
+
+        .il-feature-card {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px) saturate(1.8);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 32px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .il-feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--glass-shadow), 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .il-feature-card .card-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 20px;
+            color: var(--color-primary);
+            opacity: 0.9;
+        }
+
+        .il-feature-card .card-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .il-feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-black);
+            margin-bottom: 12px;
+        }
+
+        .il-feature-card p {
+            font-size: var(--font-size-base);
+            color: var(--color-gray-600);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* ===== Stats Section ===== */
+        .stats-section {
+            background: #111827 !important;
+            padding: 80px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .stats-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 48px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        @media (max-width: 768px) {
+            .stats-inner {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 40px;
+            }
+        }
+
+        .stat-item {
+            padding: 24px;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--color-white);
+            line-height: 1;
+            margin-bottom: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--color-gray-400);
+        }
+
+        /* ===== CTA Section ===== */
+        .cta-section {
+            padding: 120px 24px;
+            text-align: center;
+            background: var(--color-gray-100);
+            position: relative;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 0%, rgba(17, 24, 39, 0.04) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .cta-content {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-black);
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .cta-section p {
+            font-size: 1.25rem;
+            color: var(--color-gray-600);
+            margin-bottom: 40px;
+        }
+
+        .cta-section .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--color-black);
+            color: var(--color-white);
+            padding: 18px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-section .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* ===== Scroll Animations ===== */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .scroll-animate.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== Reduced Motion ===== */
+        @media (prefers-reduced-motion: reduce) {
+            .il-hero-badge-dot,
+            .float-card,
+            .scroll-animate {
+                animation: none !important;
+                transition: none !important;
+            }
+            .scroll-animate {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        /* ===== Recommendation Section ===== */
+        .recommendation-section {
+            padding: 80px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .recommendation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .recommendation-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-black);
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .recommendation-header p {
+            font-size: 1rem;
+            color: var(--color-gray-600);
+            margin: 8px 0 0 0;
+        }
+
+        .recommendation-more {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--color-primary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .recommendation-more:hover {
+            color: var(--color-gray-700);
+            gap: 10px;
+        }
+
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .recommendation-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .recommendation-grid {
+                grid-template-columns: 1fr;
+            }
+            .recommendation-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+        }
+
+        .recommendation-card {
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .recommendation-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .match-score-badge {
+            background: linear-gradient(135deg, #374151 0%, #111827 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .match-score-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .team-status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .team-status-badge.recruiting {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+
+        .team-status-badge.full {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .recommendation-card h3 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--color-black);
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+        }
+
+        .recommendation-card-description {
+            font-size: 0.9rem;
+            color: var(--color-gray-600);
+            margin: 0 0 16px 0;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .recommendation-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .recommendation-tag {
+            padding: 4px 10px;
+            background: var(--color-gray-100);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--color-gray-700);
+        }
+
+        .recommendation-match-reason {
+            padding: 12px;
+            background: rgba(17, 24, 39, 0.04);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: var(--color-gray-700);
+            line-height: 1.5;
+        }
+
+        .recommendation-match-reason strong {
+            color: var(--color-primary);
+        }
+
+        .recommendation-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .recommendation-team-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recommendation-team-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .recommendation-team-name {
+            font-size: 0.85rem;
+            color: var(--color-gray-700);
+            font-weight: 500;
+        }
+
+        .recommendation-view-btn {
+            padding: 6px 14px;
+            background: var(--color-black);
+            color: white;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .recommendation-card:hover .recommendation-view-btn {
+            background: var(--color-primary);
+        }
+
+        .recommendation-empty {
+            text-align: center;
+            padding: 60px 24px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+        }
+
+        .recommendation-empty-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            color: var(--color-gray-400);
+        }
+
+        .recommendation-empty h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--color-gray-700);
+            margin: 0 0 8px 0;
+        }
+
+        .recommendation-empty p {
+            font-size: 0.95rem;
+            color: var(--color-gray-500);
+            margin: 0;
+        }
+
+        .recommendation-loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 24px;
+        }
+
+        .recommendation-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--color-gray-200);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body data-particles="true" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    <!-- Header -->
+    <div th:replace="fragments/header :: header(${currentUser}, 'home')"></div>
+
+    <!-- Hero Section -->
+    <section class="il-hero-section">
+        <div class="hero-float-cards">
+            <div class="float-card float-card--1">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span style="margin-left: 8px; font-size: 12px; color: var(--color-gray-500);">5人已组队</span>
+            </div>
+            <div class="float-card float-card--2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                <span style="margin-left: 8px; font-size: 12px; color: var(--color-gray-500);">新成果发布</span>
+            </div>
+            <div class="float-card float-card--3">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span style="margin-left: 8px; font-size: 12px; color: var(--color-gray-500);">导师在线答疑</span>
+            </div>
+        </div>
+        
+        <div class="il-hero-content">
+            <div class="il-hero-badge">
+                <span class="il-hero-badge-dot"></span>
+                <span th:text="|平台已有 ${userCount != null ? userCount : 0} 位用户|">平台已有 0 位用户</span>
+            </div>
+            <h1 class="il-hero-title">连接竞赛力量<br><span>成就卓越团队</span></h1>
+            <p>高校竞赛协作平台，帮你找到最佳队友、对接专业导师、展示竞赛成果</p>
+            <div class="il-hero-actions">
+                <th:block th:if="${currentUser != null}">
+                    <a href="/team-market.html" class="btn-primary">
+                        浏览组队
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    <a href="/community.html" class="btn-secondary">
+                        进入社区
+                    </a>
+                </th:block>
+                <th:block th:unless="${currentUser != null}">
+                    <a href="/register.html" class="btn-primary">
+                        立即加入
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </a>
+                    <a href="#features" class="btn-secondary">
+                        了解更多
+                    </a>
+                </th:block>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recommendation Section -->
+    <section class="recommendation-section" id="recommendations" th:if="${currentUser != null}">
+        <div class="recommendation-header scroll-animate">
+            <div>
+                <h2>为您推荐</h2>
+                <p>基于您的技能和偏好，智能匹配最适合您的团队</p>
+            </div>
+            <a href="/team-market.html" class="recommendation-more">
+                查看更多
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+            </a>
+        </div>
+        <div id="recommendationContainer">
+            <div class="recommendation-loading">
+                <div class="recommendation-spinner"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section" id="features">
+        <div class="section-header scroll-animate">
+            <h2>核心功能</h2>
+            <p>一站式竞赛协作，覆盖组队、指导、展示与交流全流程</p>
+        </div>
+        
+        <div class="features-grid">
+            <!-- Card 1: 智能组队 -->
+            <div class="il-feature-card scroll-animate">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="16" r="6"/>
+                        <circle cx="34" cy="16" r="5"/>
+                        <path d="M6 38c0-6.627 5.373-12 12-12"/>
+                        <path d="M34 26c5.523 0 10 4.477 10 10"/>
+                        <circle cx="26" cy="14" r="5"/>
+                        <path d="M22 38c0-5.523 1.79-10 4-10s4 4.477 4 10"/>
+                    </svg>
+                </div>
+                <h3>智能组队</h3>
+                <p>基于技能、竞赛类型智能匹配最佳队友，快速组建高效团队</p>
+            </div>
+
+            <!-- Card 2: 导师对接 -->
+            <div class="il-feature-card scroll-animate">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M24 4L28 14h10l-8 6 3 10-9-6-9 6 3-10-8-6h10z"/>
+                        <rect x="14" y="28" width="20" height="4" rx="1"/>
+                        <path d="M18 32v6c0 2 2 4 6 4s6-2 6-4v-6"/>
+                    </svg>
+                </div>
+                <h3>导师对接</h3>
+                <p>一键联系指导教师，获取专业指导与项目建议</p>
+            </div>
+
+            <!-- Card 3: 成果展示 -->
+            <div class="il-feature-card scroll-animate">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 40l6-16 10 6 8-20 8 12"/>
+                        <path d="M6 42h36"/>
+                        <rect x="6" y="42" width="36" height="2" rx="1"/>
+                        <path d="M16 8l4-4 4 4"/>
+                        <path d="M20 4v8"/>
+                    </svg>
+                </div>
+                <h3>成果展示</h3>
+                <p>上传展示竞赛成果，记录每一次突破与成长</p>
+            </div>
+
+            <!-- Card 4: 交流社区 -->
+            <div class="il-feature-card scroll-animate">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 12h32v20H16l-8 8V12z"/>
+                        <line x1="16" y1="20" x2="32" y2="20"/>
+                        <line x1="16" y1="26" x2="26" y2="26"/>
+                    </svg>
+                </div>
+                <h3>交流社区</h3>
+                <p>分享竞赛经验，结识志同道合的伙伴</p>
+            </div>
+
+            <!-- Card 5: 竞赛目录 -->
+            <div class="il-feature-card scroll-animate">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="8" y="6" width="32" height="36" rx="3"/>
+                        <line x1="16" y1="16" x2="32" y2="16"/>
+                        <line x1="16" y1="22" x2="32" y2="22"/>
+                        <line x1="16" y1="28" x2="26" y2="28"/>
+                        <circle cx="13" cy="16" r="1.5" fill="currentColor"/>
+                        <circle cx="13" cy="22" r="1.5" fill="currentColor"/>
+                        <circle cx="13" cy="28" r="1.5" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h3>竞赛目录</h3>
+                <p>全面收录主流学科竞赛与双创赛事信息</p>
+            </div>
+
+            <!-- Card 6: 即时通讯 -->
+            <div class="il-feature-card scroll-animate">
+                <div class="card-icon">
+                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="10" width="28" height="22" rx="3"/>
+                        <path d="M34 16h4a3 3 0 013 3v14a3 3 0 01-3 3H18l-6 5v-5h-3"/>
+                        <line x1="12" y1="18" x2="28" y2="18"/>
+                        <line x1="12" y1="24" x2="22" y2="24"/>
+                    </svg>
+                </div>
+                <h3>即时通讯</h3>
+                <p>实时沟通协作，高效推进团队项目进展</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-inner">
+            <div class="stat-item scroll-animate">
+                <div class="stat-number" th:text="${userCount ?: 0}">0</div>
+                <div class="stat-label">注册用户</div>
+            </div>
+            <div class="stat-item scroll-animate">
+                <div class="stat-number" th:text="${teamCount ?: 0}">0</div>
+                <div class="stat-label">成功组队</div>
+            </div>
+            <div class="stat-item scroll-animate">
+                <div class="stat-number" th:text="${assetCount ?: 0}">0</div>
+                <div class="stat-label">竞赛成果</div>
+            </div>
+            <div class="stat-item scroll-animate">
+                <div class="stat-number" th:text="${teacherCount ?: 0}">0</div>
+                <div class="stat-label">专业导师</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content scroll-animate">
+            <h2>准备好开始了吗？</h2>
+            <th:block th:if="${currentUser != null}">
+                <p>欢迎回来！继续探索更多竞赛机会</p>
+                <a href="/team-market.html" class="btn-primary">
+                    浏览组队
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </th:block>
+            <th:block th:unless="${currentUser != null}">
+                <p>加入 iLink，开启你的竞赛之旅</p>
+                <a href="/register.html" class="btn-primary">
+                    立即注册
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </th:block>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="/js/common.js?v=7.5"></script>
+    <script src="/js/recommendation.js?v=4.3"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUserId = document.body.getAttribute('data-user-id');
+            if (currentUserId && window.recommendationManager) {
+                window.recommendationManager.init(parseInt(currentUserId));
+            }
+        });
+    </script>
+</body>
+</html>

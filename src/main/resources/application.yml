@@ -1,0 +1,81 @@
+server:
+  port: ${SERVER_PORT:8090}
+  error:
+    whitelabel:
+      enabled: false
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:./uploads}
+  access-url-prefix: ${FILE_ACCESS_URL_PREFIX:/uploads/}
+
+upload:
+  path: ${FILE_UPLOAD_DIR:./uploads}
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/ilink?useUnicode=true&characterEncoding=utf8&useSSL=${DB_USE_SSL:true}&serverTimezone=Asia/Shanghai
+#    username: ${DB_USERNAME:root}
+#########     云数据库
+    username: ${DB_USERNAME:ilink}
+    password: ${DB_PASSWORD:changeme_in_production}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 300000
+      max-lifetime: 600000
+      connection-timeout: 30000
+      leak-detection-threshold: 60000
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: '0'
+    locations: classpath:db/migration
+    encoding: UTF-8
+    validate-on-migrate: true
+    repair-on-migrate: false
+  thymeleaf:
+    mode: HTML
+    encoding: UTF-8
+    servlet:
+      content-type: text/html
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 50MB
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      cache:
+        period: ${STATIC_CACHE_PERIOD:0}
+      chain:
+        compressed: true
+        strategy:
+          content:
+            enabled: true
+      # 切勿将 Thymeleaf 模板目录暴露为静态资源，否则存在源码泄露风险
+      static-locations: classpath:/static/
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: cn.ilink.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+
+logging:
+  level:
+    org.springframework: info
+    com.baomidou.mybatisplus: info
+
+app:
+  api:
+    expose-error-detail: false
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator

@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人成果 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-profile-page="honors" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="il-page-wrapper">
+        <div class="il-profile-layout">
+            <aside class="il-profile-sidebar">
+                <h3 class="il-profile-sidebar-title">个人中心</h3>
+                <p class="il-profile-sidebar-subtitle">管理您的账号</p>
+                <nav class="il-profile-nav">
+                    <a href="/profile.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"/>
+                        </svg>
+                        概览
+                    </a>
+                    <a href="/profile-edit.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 12a5 5 0 100-10a5 5 0 000 10z"/>
+                            <path d="M4 22a8 8 0 0116 0"/>
+                        </svg>
+                        编辑资料
+                    </a>
+                    <a href="/profile-honors.html" class="il-profile-nav-item active">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 3l2.4 7.4H22l-6 4.6 2.3 7L12 17.8 5.7 22 8 14.4 2 10.6h7.6L12 3z"/>
+                        </svg>
+                        个人成果
+                    </a>
+                    <a href="/profile-posts.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M7 4h10a2 2 0 012 2v14l-4-2.5L11 18l-4 1.5V6a2 2 0 012-2z"/>
+                            <path d="M9 9h6M9 13h4"/>
+                        </svg>
+                        我的文章
+                    </a>
+                    <a href="/profile-favorites.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2.8l2.8 5.7 6.3.9-4.6 4.6 1.1 6.2L12 17.9 6.4 20.1l1.1-6.2L2.9 9.4l6.3-.9L12 2.8z"/>
+                        </svg>
+                        我的收藏
+                    </a>
+                    <a href="/profile-password.html" class="il-profile-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2z"/>
+                            <path d="M7 11V7a5 5 0 0110 0v4"/>
+                        </svg>
+                        修改密码
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="il-profile-content">
+                <div class="il-section-card il-honors-card">
+                    <div class="il-section-header">
+                        <div class="il-section-header__text">
+                            <h2 class="il-section-title">个人成果</h2>
+                            <p class="il-section-subtitle">添加或编辑后在列表中管理；修改后请保存同步到账户</p>
+                        </div>
+                        <div class="il-section-header__actions">
+                            <button type="button" class="il-btn il-btn-ghost" id="btnManage">管理成果</button>
+                            <button type="button" class="il-btn il-btn-primary" id="btnAdd">+ 添加成果</button>
+                        </div>
+                    </div>
+
+                    <div id="honorsListSection" class="il-honors-list">
+                        <div id="honorsBatchManageBar" class="il-honors-batch-bar">
+                            <label class="il-honors-batch-bar__select">
+                                <input type="checkbox" id="checkAll" class="il-honors-batch-bar__checkbox">
+                                <span class="il-honors-batch-bar__label">已选 <strong id="count">0</strong> 条</span>
+                            </label>
+                            <button type="button" class="il-btn il-btn-danger il-btn-sm" id="btnDel" disabled>删除选中</button>
+                        </div>
+
+                        <div id="honorsEditor" class="il-honors-editor">
+                            <p class="il-honors-loading text-muted mb-0">加载中…</p>
+                        </div>
+                    </div>
+
+                    <div class="il-honors-footer">
+                        <button type="button" class="il-btn il-btn-primary" id="btnSave">保存成果</button>
+                        <p class="il-honors-footer__hint">将当前列表写入账户后，概览页同步更新</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑模态框（il-bs-form-modal：避免与 components.css .il-modal 全屏层冲突） -->
+    <div class="modal fade il-bs-form-modal" id="honorModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="il-bs-form-modal__title" id="modalTitle">添加成果</h2>
+                    <button type="button" class="btn-close il-bs-form-modal__close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="hid">
+                    <div class="il-field">
+                        <label class="il-label" for="selType">成果类型 <span class="il-label-required">*</span></label>
+                        <select class="il-select" id="selType">
+                            <option value="competition">竞赛获奖</option>
+                            <option value="scholarship">奖学金</option>
+                            <option value="honor">荣誉称号</option>
+                            <option value="paper">论文发表</option>
+                            <option value="research">科研项目</option>
+                            <option value="work">作品 / 项目</option>
+                            <option value="other">其他成果</option>
+                        </select>
+                    </div>
+                    <div class="il-field">
+                        <label class="il-label" for="txtTitle"><span id="lblTitle">名称</span> <span class="il-label-required">*</span></label>
+                        <input type="text" class="il-input" id="txtTitle" placeholder="请输入成果名称">
+                    </div>
+                    <div class="honors-section" data-section="competition">
+                        <div class="il-field-row">
+                            <div class="il-field">
+                                <label class="il-label" for="selRank">获奖等级</label>
+                                <select class="il-select" id="selRank">
+                                    <option value="">未指定</option><option value="特等奖">特等奖</option><option value="一等奖">一等奖</option><option value="二等奖">二等奖</option><option value="三等奖">三等奖</option><option value="优秀奖">优秀奖</option>
+                                </select>
+                            </div>
+                            <div class="il-field">
+                                <label class="il-label" for="selTeam">参赛形式</label>
+                                <select class="il-select" id="selTeam">
+                                    <option value="">未指定</option><option value="TEAM">团队</option><option value="INDIVIDUAL">个人</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="honors-section" data-section="competition scholarship honor paper research work other">
+                        <div class="il-field">
+                            <label class="il-label" for="selLevel">级别（可选）</label>
+                            <select class="il-select" id="selLevel">
+                                <option value="">未指定</option><option value="school">校级</option><option value="provincial">省级</option><option value="national">国家级</option><option value="international">国际级</option><option value="other">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="il-field-row">
+                        <div class="il-field"><label class="il-label" for="txtMonth">时间</label><input type="month" class="il-input" id="txtMonth"></div>
+                        <div class="il-field"><label class="il-label" for="txtPeriod">时间说明（可选）</label><input type="text" class="il-input" id="txtPeriod" placeholder="如：2024–2026 学年"></div>
+                    </div>
+                    <div class="il-field"><label class="il-label" for="txtIssuer">颁奖 / 主办 / 单位</label><input type="text" class="il-input" id="txtIssuer" placeholder="单位或组织名称"></div>
+                    <div class="il-field">
+                        <label class="il-label">证明材料</label>
+                        <p class="il-honors-proof-hint">支持 PDF、JPG、PNG，最大 10MB；可粘贴链接或上传</p>
+                        <div id="proofPreviewBox" style="display:none; margin-bottom: 8px;">
+                            <div class="honors-preview-card__proof" style="width:88px;height:88px;max-width:88px;max-height:88px;overflow:hidden;border-radius:8px;border:1px solid var(--border-light);background:#f9fafb;">
+                                <a id="proofPreviewLink" class="honors-preview-proof--image" href="#" target="_blank" rel="noopener" style="display:block;">
+                                    <img id="proofPreviewImg" class="honors-preview-proof__img" src="" alt="证明材料预览" style="width:88px;height:88px;object-fit:cover;">
+                                </a>
+                            </div>
+                        </div>
+                        <div id="proofPdfIndicator" style="display:none; margin-bottom: 8px; padding: 10px 12px; background: #fefce8; border: 1px solid #fde68a; border-radius: 8px;">
+                            <span style="font-size: 13px; font-weight: 600; color: #ca8a04;">📄 PDF 证明文件</span>
+                        </div>
+                        <input type="url" class="il-input" id="txtProofUrl" placeholder="https://...">
+                        <div class="il-dropzone" id="dropzone">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <p class="il-dropzone__text">拖拽文件到此处，或点击选择</p>
+                            <input type="file" id="fileProof" accept="image/jpeg,image/png,image/gif,image/webp,application/pdf,.pdf" class="d-none">
+                            <span class="il-dropzone__status" id="proofStatus"></span>
+                        </div>
+                    </div>
+                    <div class="il-field"><label class="il-label" for="txtDetail">详细说明（可选）</label><textarea class="il-input" id="txtDetail" rows="3" placeholder="赛项全称、团队分工、项目简介等"></textarea></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="il-btn il-btn-ghost" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="il-btn il-btn-outline" id="btnSaveMore">保存并继续添加</button>
+                    <button type="button" class="il-btn il-btn-primary" id="btnModalSave">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=4.3"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/profile.js?v=4.3"></script>
+    <script src="/js/profile-honors.js?v=4.6"></script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+/* ========================================
+   iLink Layout v7 — Campus Blueprint
+   Global page shell, rhythm, atmosphere
+   Depends: design-tokens.css, effects.css, components.css
+   ======================================== */
+
+/* --- App shell --- */
+html.ilink-app,
+.ilink-app {
+  scroll-behavior: smooth;
+}
+
+.ilink-app body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.ilink-app body.ilink-page-bg {
+  background-color: var(--bg-body);
+  background-image:
+    var(--bg-mesh),
+    var(--bg-grid);
+  background-size: 100% 480px, 48px 48px;
+  background-position: top center, 0 0;
+  background-attachment: fixed, fixed;
+}
+
+.ilink-app ::selection {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* --- Page containers --- */
+.ilink-app .il-page-wrapper {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6) var(--space-20);
+  position: relative;
+  z-index: 1;
+}
+
+.ilink-app .il-page-wrapper--narrow {
+  max-width: var(--container-narrow);
+}
+
+/* --- Unified page hero --- */
+.ilink-app .il-hero {
+  margin-bottom: var(--space-8);
+}
+
+.ilink-app .il-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 14px;
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+}
+
+.ilink-app .il-hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -0.03em;
+  line-height: var(--line-height-tight);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2);
+}
+
+.ilink-app .il-hero-desc {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  line-height: var(--line-height-relaxed);
+  max-width: 42rem;
+  margin: 0;
+}
+
+/* --- Section rhythm --- */
+.ilink-app .il-section {
+  margin-bottom: var(--space-10);
+}
+
+.ilink-app .il-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.ilink-app .il-section-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.ilink-app .il-section-sub {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin: var(--space-1) 0 0;
+}
+
+/* --- Cards & surfaces (page-level) --- */
+.ilink-app .il-surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--transition-normal),
+    transform var(--transition-normal),
+    border-color var(--transition-fast);
+}
+
+.ilink-app .il-surface:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+
+.ilink-app .il-surface--lift:hover {
+  transform: translateY(-2px);
+}
+
+/* --- Empty & loading states --- */
+.ilink-app .il-empty {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  color: var(--text-secondary);
+}
+
+.ilink-app .il-empty__icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+.ilink-app .il-empty__title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2);
+}
+
+.ilink-app .il-empty__desc {
+  font-size: var(--font-size-sm);
+  margin: 0 auto var(--space-5);
+  max-width: 24rem;
+}
+
+/* --- Form polish (Bootstrap + native) --- */
+.ilink-app input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
+.ilink-app textarea,
+.ilink-app select,
+.ilink-app .form-control {
+  border-radius: var(--radius-md) !important;
+  border-color: var(--border-default) !important;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast) !important;
+}
+
+.ilink-app input:focus,
+.ilink-app textarea:focus,
+.ilink-app select:focus,
+.ilink-app .form-control:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--brand-ring) !important;
+  outline: none !important;
+}
+
+/* --- Tables --- */
+.ilink-app .table {
+  --bs-table-bg: transparent;
+}
+
+.ilink-app .table thead th {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  border-bottom-width: 1px;
+}
+
+/* --- Page enter animation --- */
+@keyframes ilink-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ilink-app main,
+.ilink-app .il-page-wrapper {
+  animation: ilink-page-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ilink-app main,
+  .ilink-app .il-page-wrapper {
+    animation: none;
+  }
+}
+
+/* --- Error page (404) --- */
+.ilink-app .il-error-page {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-10) var(--space-6);
+}
+
+.ilink-app .il-error-brand {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-4);
+  background: var(--primary);
+  color: var(--text-white);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-bold);
+  font-size: 15px;
+  letter-spacing: -0.04em;
+  box-shadow: var(--shadow-sm);
+}
+
+.ilink-app .il-error-card {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  padding: var(--space-10) var(--space-8);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  animation: ilink-page-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ilink-app .il-error-code {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 12vw, 6rem);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--primary);
+  margin: 0 0 var(--space-2);
+}
+
+.ilink-app .il-error-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  margin: 0 0 var(--space-2);
+  color: var(--text-primary);
+}
+
+.ilink-app .il-error-desc {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-6);
+  line-height: var(--line-height-relaxed);
+}
+
+@media (max-width: 768px) {
+  .ilink-app .il-page-wrapper {
+    padding: var(--space-6) var(--space-4) var(--space-16);
+  }
+
+  .ilink-app .il-section-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

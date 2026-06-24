@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="modal">
+    <div class="modal fade il-bs-form-modal il-asset-publish-modal" id="assetPublishModal" tabindex="-1" aria-labelledby="assetPublishModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="il-bs-form-modal__title" id="assetPublishModalTitle">发布成果</h5>
+                    <button type="button" class="btn-close il-bs-form-modal__close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="il-asset-publish-modal__intro">
+                        填写内容与详情页展示一致：左侧为<strong>成果描述</strong>，空行后的内容为<strong>竞赛心得</strong>（选填）。
+                    </p>
+                    <div class="il-bs-form-modal__field">
+                        <label class="il-bs-form-modal__label" for="pubTitle">成果名称 <span class="il-bs-form-modal__req" aria-hidden="true">*</span></label>
+                        <input type="text" class="form-control il-bs-form-modal__control" id="pubTitle" placeholder="请输入成果名称" maxlength="120">
+                    </div>
+                    <div class="il-bs-form-modal__field">
+                        <label class="il-bs-form-modal__label" for="pubCategory">分类</label>
+                        <select class="form-select il-bs-form-modal__control" id="pubCategory">
+                            <option value="竞赛获奖">竞赛获奖</option>
+                            <option value="技术创新">技术创新</option>
+                            <option value="论文发表">论文发表</option>
+                            <option value="科研项目">科研项目</option>
+                            <option value="作品项目">作品 / 项目</option>
+                            <option value="荣誉称号">荣誉称号</option>
+                            <option value="奖学金">奖学金</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="il-bs-form-modal__field">
+                        <label class="il-bs-form-modal__label" for="pubDescLead">成果描述</label>
+                        <textarea class="form-control il-bs-form-modal__control il-bs-form-modal__textarea" id="pubDescLead" rows="3" placeholder="简要说明成果内容，将展示在详情页左侧"></textarea>
+                    </div>
+                    <div class="il-bs-form-modal__field">
+                        <label class="il-bs-form-modal__label" for="pubInsight">竞赛心得 <span class="il-asset-publish-modal__optional">选填</span></label>
+                        <textarea class="form-control il-bs-form-modal__control il-bs-form-modal__textarea" id="pubInsight" rows="5" placeholder="参赛经历、团队协作、复盘总结等，将展示在详情页右侧"></textarea>
+                    </div>
+                    <div class="il-bs-form-modal__field">
+                        <label class="il-bs-form-modal__label" for="pubFile">附件 <span class="il-asset-publish-modal__optional">选填</span></label>
+                        <input type="file" class="form-control il-bs-form-modal__control il-asset-publish-modal__file" id="pubFile">
+                        <p class="il-asset-publish-modal__hint" id="pubFileHint">支持 PDF、ZIP、图片等，便于他人下载参考。</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="il-btn il-btn-ghost" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="il-btn il-btn-primary" id="assetPublishSubmitBtn">发布成果</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

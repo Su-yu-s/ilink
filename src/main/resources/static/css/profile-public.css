@@ -1,0 +1,198 @@
+/**
+ * 公开用户主页 / 概览摘要（兼容新旧 DOM）
+ */
+.profile-public-page,
+.profile-page-content {
+  box-sizing: border-box;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.profile-public-page__head,
+.profile-page-content .profile-page-header,
+.profile-page-content .page-header.profile-page-header {
+  margin-bottom: 1.25rem;
+}
+
+.profile-public-page__title,
+.profile-page-content .page-header h1,
+.profile-page-content .neon-text {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #111827;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.profile-public-page__sub,
+.profile-page-content .page-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #6b7280;
+}
+
+#userInfo .profile-summary.profile-summary--inline,
+.profile-public-page__body .profile-summary.profile-summary--inline {
+  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
+}
+
+#userInfo .profile-summary-identity,
+.profile-summary-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+#userInfo .profile-summary-rule,
+.profile-summary-rule {
+  margin: 1.25rem 0;
+  border: 0;
+  border-top: 1px solid #f0f2f5;
+  opacity: 1;
+}
+
+#userInfo .profile-summary-identity__title {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+#userInfo .profile-summary-identity__meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+#userInfo .profile-snippet-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+#userInfo .profile-public-basic__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+}
+
+#userInfo .profile-public-basic__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+#userInfo .profile-public-basic__label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+#userInfo .profile-public-basic__value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+  word-break: break-word;
+}
+
+#userInfo .profile-stat-pill {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.65rem 1rem;
+  background: #f9fafb;
+  border: 1px solid #f0f2f5;
+  border-radius: 8px;
+}
+
+#userInfo .profile-stat-pill__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+#userInfo .profile-public-posts__item {
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+#userInfo .profile-public-posts__item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+#userInfo .profile-public-posts__title {
+  font-weight: 600;
+  color: #111827;
+  text-decoration: none;
+}
+
+#userInfo .honors-preview-card__layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+#userInfo .honors-preview-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+#userInfo .honors-preview-card__proof {
+  flex-shrink: 0;
+}
+
+/* 证明材料缩略图 — 强制尺寸 */
+#userInfo a.honors-preview-proof--image,
+#userInfo .honors-preview-proof--image {
+  display: block;
+  width: 88px;
+  height: 88px;
+  min-width: 88px;
+  min-height: 88px;
+  max-width: 88px;
+  max-height: 88px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #e8e8e8;
+  background: #f9fafb;
+  flex-shrink: 0;
+}
+
+#userInfo img.honors-preview-proof__img,
+.profile-page-content img.honors-preview-proof__img,
+img.honors-preview-proof__img {
+  display: block;
+  width: 88px !important;
+  height: 88px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 88px !important;
+  max-height: 88px !important;
+  object-fit: cover !important;
+  object-position: center;
+  border-radius: 8px;
+  position: static !important;
+  inset: auto !important;
+}
+
+@media (max-width: 576px) {
+  #userInfo .profile-public-basic__grid {
+    grid-template-columns: 1fr;
+  }
+
+  #userInfo .honors-preview-card__layout {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,63 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+.claude/
+.cursor/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+uploads/
+.uploads/
+
+# Logs
+*.log
+debug.txt
+
+# Env
+.env*
+!.env.example
+
+# temp scripts
+*.ps1
+!tests/e2e/run-profile-edit-validation.ps1
+fix_*.py
+restore_*.py
+smoke_test.py
+apply_manual_fixes.py
+
+# Encoding debug files
+enc_test.txt
+encoding_*.txt
+encoding_*.json
+garbled_lines.txt
+line_hex.txt
+mojibake_scan.txt
+patterns.txt
+rem2.txt
+
+# Screenshots
+screenshots/
+
+# CodeBuddy / AI tools
+.workbuddy/
+CLAUDE.md
+.cursor/
+
+# Python cache
+scripts/__pycache__/
+
+# Temp prototype pages
+index-showcase.html
+presentation.html
+
+# E2E runtime artifacts
+tests/e2e/.tmp/
+nul

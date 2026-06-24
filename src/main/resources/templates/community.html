@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交流社区 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" crossorigin="anonymous">
+</head>
+<body data-app-page="community" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, 'community')"></div>
+
+    <div class="il-page-wrapper">
+        <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+        <div class="il-hero">
+            <p class="il-hero-eyebrow">经验博客 · 竞赛协作</p>
+            <h1 class="il-hero-title">交流社区</h1>
+            <p class="il-hero-desc">赛程复盘、备赛路线、工程闲聊与资源整理。写好一篇，帮到一群人。</p>
+        </div>
+
+        <div class="il-toolbar">
+            <div class="il-toolbar-row">
+                <nav class="il-tabs" id="channelTabs" aria-label="内容频道">
+                    <button type="button" class="il-tab active" data-category="">全部</button>
+                    <button type="button" class="il-tab" data-category="general">综合</button>
+                    <button type="button" class="il-tab" data-category="tech">技术</button>
+                    <button type="button" class="il-tab" data-category="competition">竞赛</button>
+                    <button type="button" class="il-tab" data-category="resource">资源</button>
+                </nav>
+                <div class="il-toolbar-search">
+                    <div th:replace="~{fragments/search-field :: field('keywordInput', '搜索标题或正文…', '搜索', 'search', 'il-search-field--toolbar')}"></div>
+                </div>
+                <div class="il-toolbar-actions">
+                    <button type="button" class="il-btn il-btn-primary" id="openComposeBtn">
+                        <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span>写文章</span>
+                    </button>
+                    <button type="button" class="il-btn il-btn-secondary" id="refreshBtn">刷新</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="postList">
+            <div class="il-empty-state">
+                <p>正在加载文章列表…</p>
+            </div>
+        </div>
+
+        <nav id="postPager" class="d-none" aria-label="分页">
+            <ul class="pagination justify-content-center mb-0" id="postPagerInner"></ul>
+        </nav>
+    </div>
+
+    <div class="il-modal-overlay" id="composeModal" onclick="if(event.target === this) closeComposeModal()">
+        <div class="il-modal" onclick="event.stopPropagation()">
+            <div class="il-modal-header">
+                <h5 class="il-modal-title">写文章</h5>
+                <button class="il-modal-close" onclick="closeComposeModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="il-modal-body">
+                <div class="il-form-group">
+                    <label class="il-form-label">发布到分类</label>
+                    <select class="il-form-select" id="composeCategory"></select>
+                </div>
+                <div class="il-form-group">
+                    <label class="il-form-label">标题</label>
+                    <input type="text" class="il-form-input" id="composeTitle" maxlength="200" placeholder="一句话概括，方便他人检索">
+                </div>
+                <div class="il-form-group">
+                    <label class="il-form-label">正文</label>
+                    <div id="composeEditor" style="background: white; border-radius: 12px; border: 1px solid #e5e7eb;"></div>
+                    <p class="form-text small text-muted mb-0 mt-2">支持排版、链接；工具栏「图片」可插入正文配图（自动上传）。</p>
+                </div>
+                <div class="il-form-group" style="margin-bottom: 0;">
+                    <label class="il-form-label">附件（可选）</label>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <input type="file" id="composeAttachmentInput" class="d-none" multiple>
+                        <button type="button" class="il-btn il-btn-secondary" id="composeAddAttachmentBtn" style="padding: 8px 16px; font-size: 0.8125rem;">上传文件</button>
+                        <span class="small text-muted">与正文一并发布，最多 10 个</span>
+                    </div>
+                    <ul id="composeAttachmentList" class="list-unstyled small mb-0"></ul>
+                </div>
+            </div>
+            <div class="il-modal-footer">
+                <button type="button" class="il-btn il-btn-secondary" onclick="closeComposeModal()">取消</button>
+                <button type="button" class="il-btn il-btn-primary" id="submitPostBtn">发布</button>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js" crossorigin="anonymous"></script>
+    <script src="/js/community.js?v=4.2"></script>
+</body>
+</html>

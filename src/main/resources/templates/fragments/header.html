@@ -1,0 +1,316 @@
+<th:block th:fragment="header(currentUser, activeMenu)">
+    <script src="/js/notification-manager.js?v=1.0"></script>
+    <header class="il-header" id="ilHeader">
+        <div class="il-header__inner">
+            <!-- Brand -->
+            <a href="/index.html" class="il-header__brand">
+                <span class="il-header__logo">iL</span>
+                <span class="il-header__title">iLink</span>
+            </a>
+
+            <!-- Navigation -->
+            <nav class="il-header__nav" id="ilHeaderNav">
+                <a th:classappend="${activeMenu == 'home'} ? ' il-header__link--active'" class="il-header__link" href="/index.html">首页</a>
+                <a th:classappend="${activeMenu == 'team'} ? ' il-header__link--active'" class="il-header__link" href="/team-market.html">组队大厅</a>
+                <a th:classappend="${activeMenu == 'teacher'} ? ' il-header__link--active'" class="il-header__link" href="/teacher-wall.html">导师招贤</a>
+                <a th:classappend="${activeMenu == 'community'} ? ' il-header__link--active'" class="il-header__link" href="/community.html">交流社区</a>
+                <a th:classappend="${activeMenu == 'competition'} ? ' il-header__link--active'" class="il-header__link" href="/competitions.html">竞赛目录</a>
+                <a th:classappend="${activeMenu == 'gallery'} ? ' il-header__link--active'" class="il-header__link" href="/gallery.html">成果展示</a>
+            </nav>
+            <!-- 移动端遮罩层 -->
+            <div class="il-header__overlay" id="ilHeaderOverlay"></div>
+
+            <!-- User Area -->
+            <div class="il-header__actions">
+                <!-- Logged in -->
+                <th:block th:if="${currentUser != null}">
+                    <div class="notification-bell notification-bell--hidden" id="notificationBell" onclick="toggleNotifications()" role="button" tabindex="0" aria-label="通知">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        <span class="badge notification-bell--hidden" id="unreadCount">0</span>
+                    </div>
+                    <div class="notification-dropdown notification-dropdown--hidden" id="notificationDropdown">
+                        <div class="notification-dropdown__header">
+                            <span class="notification-dropdown__title">通知</span>
+                            <button class="notification-dropdown__mark-read" onclick="markAllAsRead()">全部已读</button>
+                        </div>
+                        <div class="notification-dropdown__list" id="notificationList">
+                            <div class="notification-dropdown__empty">暂无通知</div>
+                        </div>
+                    </div>
+                    <a th:href="@{/profile.html}" class="il-header__user-link">
+                        <div class="il-header__avatar-container">
+                            <!-- Avatar Image -->
+                            <img class="il-header__avatar"
+                                 th:if="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
+                                 th:src="${currentUser.avatar}"
+                                 th:alt="${currentUser.username}"
+                                 onload="this.style.display='block';var fb=this.parentElement.querySelector('.il-header__avatar-fallback');if(fb){fb.classList.add('il-header__avatar-fallback--hidden');fb.style.display='';fb.setAttribute('aria-hidden','true');}"
+                                 onerror="this.style.display='none';var fb=this.parentElement.querySelector('.il-header__avatar-fallback');if(fb){fb.classList.remove('il-header__avatar-fallback--hidden');fb.style.display='flex';fb.removeAttribute('aria-hidden');}">
+                            <!-- Avatar Fallback：仅 username 首字 -->
+                            <span class="il-header__avatar-fallback"
+                                  th:unless="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
+                                  th:text="${currentUser.username != null && !currentUser.username.isEmpty() ? #strings.substring(currentUser.username, 0, 1) : '用'}">用</span>
+                            <span class="il-header__avatar-fallback il-header__avatar-fallback--hidden"
+                                  th:if="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
+                                  aria-hidden="true"
+                                  th:text="${currentUser.username != null && !currentUser.username.isEmpty() ? #strings.substring(currentUser.username, 0, 1) : '用'}">用</span>
+                        </div>
+                        <span class="il-header__username" th:text="${currentUser.username != null && !currentUser.username.isEmpty() ? currentUser.username : '用户'}">用户</span>
+                    </a>
+                    <div class="il-header__dropdown" id="userDropdown">
+                        <button class="il-header__dropdown-toggle" id="userDropdownToggle" type="button" aria-expanded="false" aria-haspopup="true">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        <div class="il-header__dropdown-menu">
+                            <a th:href="@{/profile.html}" class="il-header__dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                个人中心
+                            </a>
+                            <a th:if="${#strings.equals(currentUser.role, 'ADMIN')}" th:href="@{/admin.html}" class="il-header__dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 6h6M5 8.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                管理后台
+                            </a>
+                            <hr class="il-header__dropdown-divider">
+                            <a href="/api/logout" class="il-header__dropdown-item il-header__dropdown-item--danger">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M5.5 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                退出登录
+                            </a>
+                        </div>
+                    </div>
+                </th:block>
+
+                <!-- Not logged in -->
+                <th:block th:unless="${currentUser != null}">
+                    <div class="il-header__auth">
+                        <a href="/login.html" class="il-header__auth-link">登录</a>
+                        <a href="/register.html" class="il-header__auth-btn">注册</a>
+                    </div>
+                </th:block>
+
+                <!-- Mobile menu toggle -->
+                <button class="il-header__menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="ilHeaderNav" aria-label="打开菜单">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <nav class="il-mobile-tabbar" aria-label="移动端主导航">
+        <a th:classappend="${activeMenu == 'home'} ? ' il-mobile-tabbar__item--active'" class="il-mobile-tabbar__item" href="/index.html" aria-label="首页">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3l8.5 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-4.2v-6.2H9.2V21H5a1.5 1.5 0 0 1-1.5-1.5v-9Z"/></svg>
+            <span>首页</span>
+        </a>
+        <a th:classappend="${activeMenu == 'team'} ? ' il-mobile-tabbar__item--active'" class="il-mobile-tabbar__item" href="/team-market.html" aria-label="组队">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.5 20c.5-3.1 2.2-5 4.5-5s4 1.9 4.5 5m-.5-1.3c.8-2.3 2.2-3.7 4-3.7 2.3 0 4 1.9 4.5 5"/></svg>
+            <span>组队</span>
+        </a>
+        <a th:classappend="${activeMenu == 'teacher'} ? ' il-mobile-tabbar__item--active'" class="il-mobile-tabbar__item" href="/teacher-wall.html" aria-label="导师">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 3.5 8.2 12 12.4l8.5-4.2L12 4Zm-5.8 7.2v4.3c1.4 1.7 3.3 2.5 5.8 2.5s4.4-.8 5.8-2.5v-4.3"/></svg>
+            <span>导师</span>
+        </a>
+        <a th:classappend="${activeMenu == 'community'} ? ' il-mobile-tabbar__item--active'" class="il-mobile-tabbar__item" href="/community.html" aria-label="社区">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5.5h14v9.2H9.2L5 18.5v-13Z"/></svg>
+            <span>社区</span>
+        </a>
+        <button th:classappend="${activeMenu == 'competition' or activeMenu == 'gallery'} ? ' il-mobile-tabbar__item--active'" class="il-mobile-tabbar__item il-mobile-tabbar__more" id="ilMobileMoreToggle" type="button" aria-expanded="false" aria-controls="ilMobileMorePanel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg>
+            <span>更多</span>
+        </button>
+    </nav>
+
+    <div class="il-mobile-more-panel" id="ilMobileMorePanel" aria-hidden="true">
+        <a th:classappend="${activeMenu == 'competition'} ? ' il-mobile-more-panel__link--active'" class="il-mobile-more-panel__link" href="/competitions.html">
+            <span>竞赛目录</span>
+        </a>
+        <a th:classappend="${activeMenu == 'gallery'} ? ' il-mobile-more-panel__link--active'" class="il-mobile-more-panel__link" href="/gallery.html">
+            <span>成果展示</span>
+        </a>
+        <a th:if="${currentUser != null}" class="il-mobile-more-panel__link" href="/profile.html">
+            <span>个人中心</span>
+        </a>
+        <a th:if="${currentUser != null and #strings.equals(currentUser.role, 'ADMIN')}" class="il-mobile-more-panel__link" href="/admin.html">
+            <span>管理后台</span>
+        </a>
+    </div>
+
+    <script th:inline="javascript">
+        // Scroll effect for header
+        const header = document.getElementById('ilHeader');
+        if (header) {
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 20) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+        }
+
+        // Close dropdown on outside click
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown && !event.target.closest('.il-header__dropdown')) {
+                dropdown.classList.remove('il-header__dropdown--open');
+                const toggle = document.getElementById('userDropdownToggle');
+                if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const notificationBell = document.getElementById('notificationBell');
+            if (notificationDropdown && !event.target.closest('.notification-bell') && !event.target.closest('.notification-dropdown')) {
+                notificationDropdown.classList.remove('notification-dropdown--open');
+                notificationDropdown.classList.add('notification-dropdown--hidden');
+            }
+
+            const nav = document.getElementById('ilHeaderNav');
+            const menuToggle = event.target.closest('.il-header__menu-toggle');
+            if (nav && !event.target.closest('#ilHeaderNav') && !menuToggle) {
+                nav.classList.remove('il-header__nav--open');
+                const toggleBtn = document.getElementById('menuToggle');
+                if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        // User dropdown toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdownToggle = document.getElementById('userDropdownToggle');
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdownToggle && dropdown) {
+                dropdownToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isOpen = dropdown.classList.toggle('il-header__dropdown--open');
+                    dropdownToggle.setAttribute('aria-expanded', isOpen);
+                });
+            }
+
+            const menuToggle = document.getElementById('menuToggle');
+            const nav = document.getElementById('ilHeaderNav');
+            if (menuToggle && nav) {
+                menuToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isOpen = nav.classList.toggle('il-header__nav--open');
+                    menuToggle.setAttribute('aria-expanded', isOpen);
+                    // 锁定/解锁 body 滚动
+                    if (isOpen) {
+                        document.body.classList.add('nav-open');
+                        menuToggle.setAttribute('aria-label', '关闭菜单');
+                    } else {
+                        document.body.classList.remove('nav-open');
+                        menuToggle.setAttribute('aria-label', '打开菜单');
+                    }
+                });
+            }
+
+            const mobileMoreToggle = document.getElementById('ilMobileMoreToggle');
+            const mobileMorePanel = document.getElementById('ilMobileMorePanel');
+            const closeMobileMore = function() {
+                if (!mobileMoreToggle || !mobileMorePanel) return;
+                mobileMorePanel.classList.remove('il-mobile-more-panel--open');
+                mobileMorePanel.setAttribute('aria-hidden', 'true');
+                mobileMoreToggle.setAttribute('aria-expanded', 'false');
+            };
+
+            if (mobileMoreToggle && mobileMorePanel) {
+                mobileMoreToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isOpen = mobileMorePanel.classList.toggle('il-mobile-more-panel--open');
+                    mobileMorePanel.setAttribute('aria-hidden', String(!isOpen));
+                    mobileMoreToggle.setAttribute('aria-expanded', String(isOpen));
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!mobileMorePanel.classList.contains('il-mobile-more-panel--open')) return;
+                    if (e.target.closest('#ilMobileMorePanel') || e.target.closest('#ilMobileMoreToggle')) return;
+                    closeMobileMore();
+                });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') closeMobileMore();
+                });
+            }
+        });
+
+        // Close nav on outside tap (mobile) — 点击遮罩层或外部区域关闭
+        document.addEventListener('click', function(e) {
+            const nav = document.getElementById('ilHeaderNav');
+            if (!nav || !nav.classList.contains('il-header__nav--open')) return;
+            if (e.target.closest('#ilHeaderNav') || e.target.closest('#menuToggle')) return;
+            // 点击遮罩层关闭
+            const overlay = document.getElementById('ilHeaderOverlay');
+            if (overlay && e.target === overlay) {
+                nav.classList.remove('il-header__nav--open');
+                document.body.classList.remove('nav-open');
+                const toggleBtn = document.getElementById('menuToggle');
+                if (toggleBtn) {
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                    toggleBtn.setAttribute('aria-label', '打开菜单');
+                }
+                return;
+            }
+            // 点击页面其他区域也关闭
+            nav.classList.remove('il-header__nav--open');
+            document.body.classList.remove('nav-open');
+            const toggleBtn = document.getElementById('menuToggle');
+            if (toggleBtn) {
+                toggleBtn.setAttribute('aria-expanded', 'false');
+                toggleBtn.setAttribute('aria-label', '打开菜单');
+            }
+        });
+
+        // ESC 键关闭导航
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const nav = document.getElementById('ilHeaderNav');
+                if (nav && nav.classList.contains('il-header__nav--open')) {
+                    nav.classList.remove('il-header__nav--open');
+                    document.body.classList.remove('nav-open');
+                    const toggleBtn = document.getElementById('menuToggle');
+                    if (toggleBtn) {
+                        toggleBtn.setAttribute('aria-expanded', 'false');
+                        toggleBtn.setAttribute('aria-label', '打开菜单');
+                    }
+                }
+            }
+        });
+
+        // Initialize notification bell if user is logged in
+        const currentUserId = /*[[${currentUser != null ? currentUser.id : null}]]*/ null;
+        if (currentUserId) {
+            const notificationBell = document.getElementById('notificationBell');
+            if (notificationBell) {
+                notificationBell.classList.remove('notification-bell--hidden');
+                notificationBell.classList.add('notification-bell--visible');
+            }
+            if (typeof NotificationManager !== 'undefined') {
+                window.notificationManager = new NotificationManager(currentUserId);
+                window.notificationManager.init();
+            }
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) {
+                const isHidden = dropdown.classList.contains('notification-dropdown--hidden');
+                if (isHidden) {
+                    dropdown.classList.remove('notification-dropdown--hidden');
+                    dropdown.classList.add('notification-dropdown--open');
+                    if (window.notificationManager) {
+                        window.notificationManager.loadNotifications();
+                    }
+                } else {
+                    dropdown.classList.remove('notification-dropdown--open');
+                    dropdown.classList.add('notification-dropdown--hidden');
+                }
+            }
+        }
+
+        function markAllAsRead() {
+            if (window.notificationManager) {
+                window.notificationManager.markAllAsRead();
+            }
+        }
+    </script>
+</th:block>

@@ -1,0 +1,37 @@
+# 生产环境：java -jar -Dspring.profiles.active=prod
+spring:
+  thymeleaf:
+    cache: true
+  web:
+    resources:
+      cache:
+        period: 31536000
+
+logging:
+  level:
+    root: warn
+    cn.ilink: info
+
+app:
+  api:
+    expose-error-detail: false
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:/www/wwwroot/ilink/data/uploads}
+  access-url-prefix: ${FILE_ACCESS_URL_PREFIX:/uploads/}
+
+upload:
+  path: ${FILE_UPLOAD_DIR:/www/wwwroot/ilink/data/uploads}
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

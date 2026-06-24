@@ -1,0 +1,227 @@
+/* ========================================
+   iLink Design Tokens v7.4
+   Unified Black, White & Gray Design System
+   ======================================== */
+
+:root {
+  /* === Monochrome brand === */
+  --primary: #111827;
+  --primary-dark: #030712;
+  --primary-light: #F3F4F6;
+  --accent: #4B5563;
+  --secondary: #6B7280;
+
+  /* === Aliases (v7 layout CSS) === */
+  --brand: var(--primary);
+  --brand-deep: var(--primary-dark);
+  --brand-soft: var(--primary-light);
+  --brand-border: rgba(17, 24, 39, 0.12);
+  --brand-ring: rgba(17, 24, 39, 0.08);
+  --brand-glow: rgba(0, 0, 0, 0.12);
+  --accent-violet: var(--accent);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --danger: var(--error);
+  --info: #374151;
+
+  /* === Accent link (muted gray) === */
+  --color-link: var(--color-gray-600);
+  --color-link-hover: var(--color-gray-700);
+  --color-link-active: var(--color-black);
+  --color-link-soft: rgba(0, 0, 0, 0.06);
+
+  /* === Toast / inline feedback：白底轻提示，小面积语义色强调 === */
+  --toast-surface: rgba(255, 255, 255, 0.96);
+  --toast-success-bg: var(--toast-surface);
+  --toast-success-border: rgba(0, 181, 120, 0.22);
+  --toast-success-icon-bg: rgba(0, 181, 120, 0.12);
+  --toast-success-icon: #00B578;
+  --toast-success-text: #1A1A1A;
+
+  --toast-error-bg: var(--toast-surface);
+  --toast-error-border: rgba(255, 49, 65, 0.2);
+  --toast-error-icon-bg: rgba(255, 49, 65, 0.1);
+  --toast-error-icon: #FF3141;
+  --toast-error-text: #1A1A1A;
+
+  --toast-warning-bg: var(--toast-surface);
+  --toast-warning-border: rgba(255, 143, 31, 0.24);
+  --toast-warning-icon-bg: rgba(255, 143, 31, 0.12);
+  --toast-warning-icon: #FF8F1F;
+  --toast-warning-text: #1A1A1A;
+
+  --toast-info-bg: var(--toast-surface);
+  --toast-info-border: rgba(45, 111, 247, 0.2);
+  --toast-info-icon-bg: rgba(45, 111, 247, 0.1);
+  --toast-info-icon: #2D6FF7;
+  --toast-info-text: #1A1A1A;
+
+  /* === Compatibility Color Tokens === */
+  --color-black: #111827;
+  --color-dark: #111827;
+  --color-gray-700: #4A5568;
+  --color-gray-600: #666666;
+  --color-gray-500: #7A7F87;
+  --color-gray-400: #999999;
+  --color-gray-300: #D9D9D9;
+  --color-gray-200: #E8E8E8;
+  --color-gray-100: #F0F2F5;
+  --color-gray-50: #F9FAFB;
+  --color-white: #ffffff;
+  --color-primary: var(--primary);
+  --color-primary-light: #374151;
+  --color-primary-dark: var(--primary-dark);
+  --color-success: var(--success);
+  --color-success-light: #D1FAE5;
+  --color-warning: var(--warning);
+  --color-warning-light: #FEF3C7;
+  --color-danger: var(--error);
+  --color-danger-light: #FEE2E2;
+  --color-info: var(--info);
+  --color-info-light: #F3F4F6;
+
+  /* === Text Colors === */
+  --text-primary: var(--color-black);
+  --text-secondary: var(--color-gray-600);
+  --text-tertiary: var(--color-gray-400);
+  --text-white: var(--color-white);
+  --text-inverse: var(--color-white);
+  --text-link: var(--color-link);
+  --text-link-hover: var(--color-link-hover);
+
+  /* === Background Colors === */
+  --bg-body: var(--color-gray-50);
+  --bg-light: var(--color-gray-50);
+  --bg-gray: var(--color-gray-100);
+  --bg-white: var(--color-white);
+  --bg-surface: var(--color-white);
+  --bg-surface-hover: var(--color-gray-50);
+  --bg-muted: var(--color-gray-100);
+
+  /* === Border Colors === */
+  --border-light: var(--color-gray-200);
+  --border-default: var(--color-gray-300);
+  --border-dark: var(--color-gray-400);
+
+  /* === Shadows - Subtle Depth === */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.12);
+  --shadow-2xl: 0 24px 48px rgba(0, 0, 0, 0.16);
+
+  /* === Soft Surface Tokens, kept for existing glass classes === */
+  --glass-blur: 16px;
+  --glass-saturate: 1.2;
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-bg-light: rgba(255, 255, 255, 0.62);
+  --glass-bg-strong: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(17, 24, 39, 0.08);
+  --glass-border-strong: rgba(17, 24, 39, 0.14);
+  --glass-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.8);
+  --glass-highlight-soft: rgba(255, 255, 255, 0.4);
+
+  /* === Border Radius === */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* === Spacing === */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* === Page atmosphere (neutral gray) === */
+  --bg-grid: linear-gradient(rgba(17, 24, 39, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 24, 39, 0.03) 1px, transparent 1px);
+  --bg-mesh: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(17, 24, 39, 0.04), transparent 70%);
+
+  /* === Typography === */
+  --font-display: "DM Sans", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-family-en: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-code: "SF Mono", "Monaco", "Inconsolata", "Fira Code", Consolas, monospace;
+  --font-sans: var(--font-family);
+  --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+  --font-size-tiny: 10px;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+  --font-size-5xl: 48px;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* === Transitions - Smooth & Refined === */
+  --transition-fast: 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-normal: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-slow: 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-bounce: var(--transition-normal);
+  --transition-smooth: var(--transition-normal);
+
+  /* === Z-Index === */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-popover: 600;
+  --z-tooltip: 700;
+  --z-toast: 10050;
+
+  /* === Layout === */
+  --header-height: 64px;
+  --sidebar-width: 260px;
+  --container-max: 1200px;
+  --container-narrow: 960px;
+}
+
+/* Dark mode support (optional) */
+[data-theme="dark"] {
+  --text-primary: var(--color-white);
+  --text-secondary: var(--color-gray-300);
+  --text-tertiary: var(--color-gray-500);
+  --bg-body: #2A2A2A;
+  --bg-light: #2A2A2A;
+  --bg-white: #1A1A1A;
+  --bg-surface: #1A1A1A;
+  --bg-surface-hover: #333333;
+  --bg-muted: #333333;
+  --border-light: var(--color-gray-700);
+  --border-default: var(--color-gray-600);
+  --primary: #F9FAFB;
+  --primary-dark: #FFFFFF;
+  --primary-light: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(26, 26, 26, 0.96);
+  --glass-bg-light: rgba(42, 42, 42, 0.98);
+  --glass-bg-strong: #1A1A1A;
+  --glass-border: rgba(64, 64, 64, 0.95);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}

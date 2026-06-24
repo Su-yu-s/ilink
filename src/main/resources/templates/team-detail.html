@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>组队详情 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-app-page="team-detail" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="il-page-wrapper team-detail-page">
+        <canvas id="particleCanvas" class="particle-canvas" aria-hidden="true"></canvas>
+
+        <div class="team-detail-shell">
+            <article class="detail-view page-transition">
+                <header class="detail-view__header">
+                    <p class="detail-view__eyebrow">组队详情</p>
+                    <h1 class="detail-view__title" id="teamTitle">组队标题</h1>
+                </header>
+                <div class="detail-view__body">
+                    <!-- 编辑模式（仅队长可见） -->
+                    <div id="editModePanel" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label">需求标题</label>
+                            <input type="text" class="form-control" id="editTitle" maxlength="100">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">项目描述</label>
+                            <textarea class="form-control" id="editDescription" rows="5" maxlength="2000"></textarea>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">分类</label>
+                                <select class="form-select" id="editCategory">
+                                    <option value="技术开发">技术开发</option>
+                                    <option value="创意设计">创意设计</option>
+                                    <option value="市场营销">市场营销</option>
+                                    <option value="学术研究">学术研究</option>
+                                    <option value="竞赛协作">竞赛协作</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">所需技能</label>
+                                <input type="text" class="form-control" id="editSkills" placeholder="如：Java, Python, UI设计">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">需求人数</label>
+                                <input type="number" class="form-control" id="editMemberCount" min="1" max="50" placeholder="2">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">截止日期</label>
+                                <input type="date" class="form-control" id="editDeadline">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" id="saveTeamBtn">保存修改</button>
+                            <button type="button" class="btn btn-secondary" id="cancelEditBtn">取消编辑</button>
+                        </div>
+                    </div>
+
+                    <!-- 详情展示模式（默认） -->
+                    <dl class="detail-view__meta" id="detailViewMeta">
+                        <div class="detail-view__row">
+                            <dt>发布</dt>
+                            <dd id="teamPublisher">-</dd>
+                        </div>
+                        <div class="detail-view__row">
+                            <dt>分类</dt>
+                            <dd id="teamCategory">-</dd>
+                        </div>
+                        <div class="detail-view__row">
+                            <dt>状态</dt>
+                            <dd id="teamStatus">-</dd>
+                        </div>
+                        <div class="detail-view__row">
+                            <dt>所需人数</dt>
+                            <dd id="teamMemberCount">-</dd>
+                        </div>
+                        <div class="detail-view__row">
+                            <dt>截止日期</dt>
+                            <dd id="teamDeadline">-</dd>
+                        </div>
+                        <div class="detail-view__row">
+                            <dt>所需技能</dt>
+                            <dd id="teamSkills">-</dd>
+                        </div>
+                        <div class="detail-view__row">
+                            <dt>发布时间</dt>
+                            <dd id="teamCreateTime">-</dd>
+                        </div>
+                        <div class="detail-view__row detail-view__row--block">
+                            <dt>描述</dt>
+                            <dd>
+                                <p id="teamDescription" class="detail-view__text mb-0">-</p>
+                            </dd>
+                        </div>
+                        <div class="detail-view__row detail-view__row--block">
+                            <dt>成员</dt>
+                            <dd>
+                                <div id="teamMembers" class="d-flex flex-column gap-2">-</div>
+                            </dd>
+                        </div>
+                    </dl>
+                    <div class="detail-view__actions">
+                        <button type="button" id="editTeamBtn" class="il-btn il-btn-accent il-btn--block d-none">
+                            <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>编辑需求</span>
+                        </button>
+                        <button type="button" id="workspaceBtn" class="il-btn il-btn-secondary il-btn--block d-none">
+                            <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <span>任务看板</span>
+                        </button>
+                        <button type="button" id="assignTaskBtn" class="il-btn il-btn-accent il-btn--block d-none">
+                            <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="7" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                                <path d="M21 21v-2a4 4 0 00-3-3.87" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M17 8l4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>分配任务</span>
+                        </button>
+                        <button type="button" id="markTeamingBtn" class="il-btn il-btn-secondary il-btn--block d-none">标记为组队中</button>
+                        <button type="button" id="closeTeamBtn" class="il-btn il-btn-secondary il-btn--block d-none">结束项目</button>
+                        <button type="button" id="applyBtn" class="il-btn il-btn-primary il-btn--block">申请加入</button>
+                        <button type="button" id="backBtn" class="il-btn il-btn-secondary il-btn--block">返回组队大厅</button>
+                    </div>
+                </div>
+
+                <!-- 任务列表区域（仅队长和队员可见） -->
+                <section id="taskSection" class="detail-view page-transition d-none" style="margin-top: 32px;">
+                    <header class="detail-view__header">
+                        <p class="detail-view__eyebrow">团队任务</p>
+                        <h1 class="detail-view__title">任务列表</h1>
+                    </header>
+                    <div id="taskListContainer">
+                        <div class="il-empty-state">
+                            <p>正在加载任务…</p>
+                        </div>
+                    </div>
+                </section>
+            </article>
+        </div>
+    </div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/team-detail.js?v=4"></script>
+    <script src="/js/team-detail-tasks.js?v=2"></script>
+    <div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>
+
+    <!-- 分配任务弹窗 -->
+    <div class="modal fade" id="assignTaskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">分配任务</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">选择队员</label>
+                        <select class="form-select" id="assignMemberSelect">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">任务名称 *</label>
+                        <input type="text" class="form-control" id="assignTaskName" maxlength="200" placeholder="简要描述任务">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">任务描述</label>
+                        <textarea class="form-control" id="assignTaskDesc" rows="3" maxlength="2000" placeholder="详细说明任务要求和期望"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">截止日期（可选）</label>
+                        <input type="date" class="form-control" id="assignTaskDeadline">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitAssignBtn">确认分配</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务详情弹窗 -->
+    <div class="modal fade" id="taskDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskDetailTitle">任务详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <strong>任务描述：</strong>
+                        <p id="taskDetailDesc" class="mb-0 mt-1" style="white-space: pre-wrap;">-</p>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>状态：</strong><span id="taskDetailStatus" class="ms-2"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>负责人：</strong><span id="taskDetailAssignee" class="ms-2">-</span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>截止日期：</strong><span id="taskDetailDeadline" class="ms-2">-</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>创建时间：</strong><span id="taskDetailCreated" class="ms-2">-</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6>提交记录</h6>
+                    <div id="taskSubmissions"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提交材料弹窗 -->
+    <div class="modal fade" id="submitMaterialModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">提交材料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">提交备注</label>
+                        <textarea class="form-control" id="submitRemark" rows="3" placeholder="说明完成了哪些内容"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">上传附件（可选，最大 50MB）</label>
+                        <input type="file" class="form-control" id="submitFile" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip,.rar,.7z">
+                        <small class="text-muted">支持图片、PDF、Word、压缩包等格式</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitMaterialBtn">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

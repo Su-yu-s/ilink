@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  全站样式入口。用法：
+  <head th:replace="fragments/head-assets :: core"></head>
+  或带 Bootstrap：
+  <head th:replace="fragments/head-assets :: core(bootstrap=true)"></head>
+-->
+<th:block th:fragment="core(bootstrap)">
+    <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{/favicon.svg(v=5)}" href="/favicon.svg?v=5">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link th:if="${bootstrap}" href="/lib/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/design-tokens.css?v=7.5" rel="stylesheet">
+    <link href="/css/effects.css?v=7.11" rel="stylesheet">
+    <link href="/css/components.css?v=8.8" rel="stylesheet">
+    <link href="/css/layout.css?v=7.6" rel="stylesheet">
+    <link href="/css/profile.css?v=8.7" rel="stylesheet">
+    <link href="/css/style.css?v=13.4" rel="stylesheet">
+</th:block>
+
+<th:block th:fragment="auth">
+    <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{/favicon.svg(v=5)}" href="/favicon.svg?v=5">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&amp;family=Noto+Sans+SC:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="/css/design-tokens.css?v=7.6" rel="stylesheet">
+    <link href="/css/effects.css?v=7.11" rel="stylesheet">
+    <link href="/css/components.css?v=8.2" rel="stylesheet">
+    <link href="/css/layout.css?v=7.6" rel="stylesheet">
+    <link href="/css/auth.css?v=8.3" rel="stylesheet">
+</th:block>
+</body>
+</html>

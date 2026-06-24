@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导师详情 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-app-page="teacher-detail" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <main class="main-content teacher-detail-main">
+        <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+        <div class="teacher-detail-shell">
+            <a href="/teacher-wall.html" id="backBtn" class="teacher-detail-back">← 返回导师招贤</a>
+
+            <article class="detail-view teacher-detail-card page-transition">
+                <header class="detail-view__header teacher-detail__header">
+                    <div class="teacher-detail__identity">
+                        <div id="teacherHeaderAvatar" class="teacher-detail__avatar-slot" aria-hidden="false"></div>
+                        <div class="teacher-detail__title-wrap">
+                            <p class="detail-view__eyebrow">导师详情</p>
+                            <h1 class="detail-view__title mb-0" id="teacherName">导师姓名</h1>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="teacher-detail__body">
+                    <dl class="detail-view__meta teacher-detail__meta">
+                        <div class="detail-view__row">
+                            <dt>专业领域</dt>
+                            <dd id="teacherMajor">-</dd>
+                        </div>
+                        <div class="detail-view__row">
+                            <dt>职称</dt>
+                            <dd id="teacherTitle">-</dd>
+                        </div>
+                        <div class="detail-view__row">
+                            <dt>申请时间</dt>
+                            <dd id="applicationTime">-</dd>
+                        </div>
+                        <div class="detail-view__row detail-view__row--block">
+                            <dt>个人简介</dt>
+                            <dd>
+                                <p id="teacherBio" class="detail-view__text mb-0">-</p>
+                            </dd>
+                        </div>
+                        <div class="detail-view__row detail-view__row--block">
+                            <dt>研究方向</dt>
+                            <dd>
+                                <p id="teacherResearch" class="detail-view__text mb-0">-</p>
+                            </dd>
+                        </div>
+                    </dl>
+
+                    <section id="projectApplySection" class="teacher-detail__apply" aria-labelledby="projectApplyHeading">
+                        <h2 id="projectApplyHeading" class="teacher-detail__section-label">申请合作 / 课题意向</h2>
+                        <p id="projectApplyHint" class="teacher-detail__apply-hint">登录后可向该导师提交合作意向说明。</p>
+                        <textarea id="projectApplyMessage" class="teacher-detail__textarea" rows="4"
+                            placeholder="请简述您的背景、技能与希望参与的方向（选填）"></textarea>
+                        <div class="teacher-detail__apply-actions">
+                            <button type="button" id="projectApplyBtn" class="btn btn-primary teacher-detail__submit">提交申请</button>
+                        </div>
+                        <p id="projectApplyStatus" class="teacher-detail__apply-status" role="status"></p>
+                    </section>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/teacher-detail.js?v=3"></script>
+    <div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

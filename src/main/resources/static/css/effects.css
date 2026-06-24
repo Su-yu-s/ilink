@@ -1,0 +1,362 @@
+/* ========================================
+   iLink Glassmorphism Effects v4.3
+   macOS Liquid Glass Style
+   ======================================== */
+
+/* === Base Glass Classes === */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-light {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-light,
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.92);
+  }
+}
+
+/* === Glass Hover Effects === */
+.glass-hover {
+  transition: all var(--transition-normal);
+}
+
+.glass-hover:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow), 0 12px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* === Glass Panels === */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--glass-shadow), 0 16px 48px rgba(0, 0, 0, 0.12);
+}
+
+/* === Glass Navigation === */
+.glass-nav {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  transition: all var(--transition-normal);
+}
+
+.glass-nav.scrolled {
+  background: var(--glass-bg-strong);
+  box-shadow: var(--glass-shadow);
+}
+
+/* === Glass Cards === */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--glass-shadow), 0 20px 50px rgba(0, 0, 0, 0.1);
+  border-color: var(--glass-border-strong);
+}
+
+/* === Glass Buttons === */
+.glass-btn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+.glass-btn:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border-strong);
+  transform: translateY(-2px);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-btn:active {
+  transform: translateY(0);
+}
+
+/* === Glass Modal === */
+.glass-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: var(--space-6);
+}
+
+.glass-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: calc(var(--z-modal) - 1);
+  display: none;
+}
+
+.glass-modal-backdrop.show {
+  display: block;
+}
+
+.glass-modal-content {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--glass-shadow), var(--shadow-2xl);
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* === Glass Dropdown === */
+.glass-dropdown {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow), var(--shadow-lg);
+  overflow: hidden;
+}
+
+.glass-dropdown-item {
+  padding: var(--space-3) var(--space-4);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.glass-dropdown-item:hover {
+  background: var(--glass-bg-light);
+}
+
+/* === Glass Input === */
+.glass-input {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  transition: all var(--transition-fast);
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+/* === Glass List === */
+.glass-list {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.glass-list-item {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--glass-border);
+  transition: all var(--transition-fast);
+}
+
+.glass-list-item:last-child {
+  border-bottom: none;
+}
+
+.glass-list-item:hover {
+  background: var(--glass-bg-light);
+}
+
+/* === Glass Tab === */
+.glass-tab {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+.glass-tab:hover {
+  background: var(--glass-bg);
+}
+
+.glass-tab.active {
+  background: var(--glass-bg-strong);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* === Glass Progress === */
+.glass-progress {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  height: 8px;
+  overflow: hidden;
+}
+
+.glass-progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-slow);
+}
+
+/* === Glass Tooltip === */
+.glass-tooltip {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: var(--glass-shadow), var(--shadow-md);
+  font-size: var(--font-size-sm);
+  position: absolute;
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all var(--transition-fast);
+}
+
+.glass-tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === Glass Badge === */
+.glass-badge {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  padding: 2px var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+/* === Responsive Glass === */
+@media (max-width: 768px) {
+  .glass,
+  .glass-light,
+  .glass-strong,
+  .glass-panel,
+  .glass-card,
+  .glass-modal-content {
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  }
+}
+
+/* === Reduced Motion === */
+@media (prefers-reduced-motion: reduce) {
+  .glass,
+  .glass-light,
+  .glass-strong,
+  .glass-panel,
+  .glass-card,
+  .glass-btn,
+  .glass-modal-content,
+  .glass-dropdown,
+  .glass-input,
+  .glass-list-item,
+  .glass-tab,
+  .glass-progress-bar,
+  .glass-tooltip {
+    transition: none;
+  }
+  
+  .glass-card:hover,
+  .glass-btn:hover {
+    transform: none;
+  }
+}
+
+/* === Particle Canvas === */
+.particle-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* 仅在标记了 data-particles="true" 的页面上显示粒子特效（首页 / 登录 / 注册） */
+body[data-particles="true"] .particle-canvas {
+  opacity: 0.6;
+}
+
+/* 登录 / 注册页：粒子位于装饰玻璃块之下、表单卡片之下 */
+body[data-particles="true"] .particle-canvas--auth {
+  opacity: 0.85;                       /* 覆盖父级 0.6，提升 auth 页粒子可见度 */
+  transition: none;                    /* 禁止 opacity 渐变，避免 canvas 刚加载时全透明 */
+}

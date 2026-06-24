@@ -1,0 +1,362 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-app-page="admin" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="container main-content admin-shell">
+        <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+        <div class="page-header admin-page-header">
+            <div class="page-header-info">
+                <h1 class="neon-text">管理后台</h1>
+                <p class="page-subtitle">管理平台用户、组队需求、导师申请、成果作品与社区帖子</p>
+            </div>
+        </div>
+
+        <div class="stats-grid mb-4 admin-stats-grid">
+            <div class="stat-tile">
+                <span class="label">用户总数</span>
+                <span class="value" id="userCount">0</span>
+            </div>
+            <div class="stat-tile">
+                <span class="label">组队需求</span>
+                <span class="value" id="teamCount">0</span>
+            </div>
+            <div class="stat-tile">
+                <span class="label">导师申请</span>
+                <span class="value" id="teacherCount">0</span>
+            </div>
+            <div class="stat-tile">
+                <span class="label">成果作品</span>
+                <span class="value" id="assetCount">0</span>
+            </div>
+            <div class="stat-tile">
+                <span class="label">社区帖子</span>
+                <span class="value" id="postCount">0</span>
+            </div>
+        </div>
+
+        <div class="admin-workspace">
+            <aside class="admin-sidebar" aria-label="后台管理模块">
+                <div class="admin-sidebar-title">管理模块</div>
+                <ul class="nav nav-pills admin-tabs" id="adminTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+                            <span>用户管理</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">
+                            <span>组队管理</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab">
+                            <span>导师管理</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">
+                            <span>成果管理</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="community-tab" data-bs-toggle="tab" data-bs-target="#community" type="button" role="tab">
+                            <span>社区帖子</span>
+                        </button>
+                    </li>
+                </ul>
+            </aside>
+
+            <section class="admin-content-panel">
+                <div class="tab-content" id="adminTabContent">
+            <div class="tab-pane fade show active" id="users" role="tabpanel">
+                <div class="card admin-table-card">
+                    <div class="card-header"><h5 class="mb-0">用户列表</h5></div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center mb-3">
+                            <div class="col-md-8">
+                                <div th:replace="~{fragments/search-field :: field('userSearchInput', '搜索：用户名 / 姓名 / 学号 / 学校 / 角色', '搜索用户', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-4 d-flex justify-content-md-end gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="userSearchBtn">搜索</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="userSearchResetBtn">重置</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>姓名</th>
+                                        <th>学号</th>
+                                        <th>学校</th>
+                                        <th>角色</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                            <small class="text-muted" id="userListHint">共 0 条</small>
+                            <nav id="userPagination" class="admin-user-pager" aria-label="用户列表分页"></nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="teams" role="tabpanel">
+                <div class="card admin-table-card">
+                    <div class="card-header"><h5 class="mb-0">组队需求列表</h5></div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center mb-3">
+                            <div class="col-md-8">
+                                <div th:replace="~{fragments/search-field :: field('teamSearchInput', '搜索：标题 / 发布者 / 状态 / 技能', '搜索组队需求', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-4 d-flex justify-content-md-end gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="teamSearchBtn">搜索</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="teamSearchResetBtn">重置</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>标题</th>
+                                        <th>发布者</th>
+                                        <th>状态</th>
+                                        <th>发布时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teamTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-3" id="teamListHint">共 0 条</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="teachers" role="tabpanel">
+                <div class="card admin-table-card">
+                    <div class="card-header"><h5 class="mb-0">导师申请列表</h5></div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center mb-3">
+                            <div class="col-md-8">
+                                <div th:replace="~{fragments/search-field :: field('teacherSearchInput', '搜索：申请人 / 研究方向 / 状态 / 简介', '搜索导师申请', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-4 d-flex justify-content-md-end gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="teacherSearchBtn">搜索</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="teacherSearchResetBtn">重置</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>申请人</th>
+                                        <th>研究方向</th>
+                                        <th>状态</th>
+                                        <th>申请时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="teacherTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-3" id="teacherListHint">共 0 条</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="assets" role="tabpanel">
+                <div class="card admin-table-card">
+                    <div class="card-header"><h5 class="mb-0">成果列表</h5></div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center mb-3">
+                            <div class="col-md-8">
+                                <div th:replace="~{fragments/search-field :: field('assetSearchInput', '搜索：标题 / 作者 / 描述', '搜索成果', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-4 d-flex justify-content-md-end gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="assetSearchBtn">搜索</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="assetSearchResetBtn">重置</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>标题</th>
+                                        <th>作者</th>
+                                        <th>浏览量</th>
+                                        <th>发布时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assetTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-3" id="assetListHint">共 0 条</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="community" role="tabpanel">
+                <div class="card admin-table-card">
+                    <div class="card-header"><h5 class="mb-0">交流社区帖子</h5></div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center mb-3">
+                            <div class="col-md-8">
+                                <div th:replace="~{fragments/search-field :: field('communitySearchInput', '搜索：分区 / 标题 / 作者 / 内容', '搜索社区帖子', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-4 d-flex justify-content-md-end gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="communitySearchBtn">搜索</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="communitySearchResetBtn">重置</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>分区</th>
+                                        <th>标题</th>
+                                        <th>作者</th>
+                                        <th>阅读</th>
+                                        <th>发布时间</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="communityPostTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-3" id="communityListHint">共 0 条</small>
+                    </div>
+                </div>
+            </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminUserEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑用户信息</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="adminEditUserId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="adminEditUsername" class="form-label">用户名 *</label>
+                            <input type="text" class="form-control" id="adminEditUsername" maxlength="64">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditRole" class="form-label">角色 *</label>
+                            <select class="form-select" id="adminEditRole">
+                                <option value="STUDENT">学生</option>
+                                <option value="TEACHER">教师</option>
+                                <option value="ADMIN">管理员</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditEmail" class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="adminEditEmail" maxlength="128">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditRealName" class="form-label">姓名</label>
+                            <input type="text" class="form-control" id="adminEditRealName" maxlength="64">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditPhoneNumber" class="form-label">手机号</label>
+                            <input type="text" class="form-control" id="adminEditPhoneNumber" maxlength="32">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditStudentId" class="form-label">学号/工号</label>
+                            <input type="number" class="form-control" id="adminEditStudentId">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditGrade" class="form-label">年级</label>
+                            <input type="text" class="form-control" id="adminEditGrade" maxlength="32">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditMajor" class="form-label">专业</label>
+                            <input type="text" class="form-control" id="adminEditMajor" maxlength="64">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditSchool" class="form-label">学校</label>
+                            <input type="text" class="form-control" id="adminEditSchool" maxlength="128">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditCollege" class="form-label">学院</label>
+                            <input type="text" class="form-control" id="adminEditCollege" maxlength="128">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditGender" class="form-label">性别</label>
+                            <select class="form-select" id="adminEditGender">
+                                <option value="">未设置</option>
+                                <option value="MALE">男</option>
+                                <option value="FEMALE">女</option>
+                                <option value="OTHER">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="adminUserEditSaveBtn">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminUserDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">用户详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="adminUserDetailBody" class="admin-detail-grid"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminRecordDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminRecordDetailTitle">详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="adminRecordDetailBody" class="admin-detail-grid"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="fragments/footer :: footer"></div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=2.0"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/admin.js?v=2.8"></script>
+</body>
+</html>

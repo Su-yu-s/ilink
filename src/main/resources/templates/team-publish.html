@@ -1,0 +1,85 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发布组队需求 | iLink</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-app-page="team-publish" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    
+    <div th:replace="fragments/header :: header(${currentUser}, 'publish')"></div>
+
+    <div class="il-page-wrapper">
+        <!-- 页面头部 -->
+        <div class="il-hero">
+            <p class="il-hero-eyebrow">团队协作</p>
+            <h1 class="il-hero-title">发布组队需求</h1>
+            <p class="il-hero-desc">填写项目信息，寻找合适的队友。清晰的描述能吸引更多匹配的参与者。</p>
+        </div>
+
+        <!-- 表单卡片 -->
+        <div class="il-surface" style="padding: var(--space-8);">
+            <form id="publishForm">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="mb-4">
+                    <label for="title" class="il-form-label">标题 *</label>
+                    <input type="text" class="il-form-input" id="title" maxlength="100" placeholder="用一句话概括你的团队需求" required>
+                    <small class="form-text text-muted">好的标题能吸引更多关注</small>
+                </div>
+
+                <div class="mb-4">
+                    <label for="description" class="il-form-label">项目描述 *</label>
+                    <textarea class="il-form-input" id="description" rows="6" maxlength="2000" placeholder="描述项目背景、目标、进展阶段，以及你希望队友做什么..." required></textarea>
+                    <small class="form-text text-muted">详细描述能提高匹配质量</small>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="category" class="il-form-label">分类 *</label>
+                        <select class="il-form-select" id="category" required>
+                            <option value="">请选择分类</option>
+                            <option value="技术开发">技术开发</option>
+                            <option value="创意设计">创意设计</option>
+                            <option value="市场营销">市场营销</option>
+                            <option value="学术研究">学术研究</option>
+                            <option value="竞赛协作">竞赛协作</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="memberCount" class="il-form-label">所需人数 *</label>
+                        <input type="number" class="il-form-input" id="memberCount" min="1" max="50" placeholder="2" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="skills" class="il-form-label">所需技能 <small class="text-muted">(选填)</small></label>
+                    <input type="text" class="il-form-input" id="skills" placeholder="如：Java, Python, UI设计, 数据分析">
+                    <small class="form-text text-muted">用逗号分隔不同技能</small>
+                </div>
+
+                <div class="mb-4">
+                    <label for="deadline" class="il-form-label">截止日期 <small class="text-muted">(选填)</small></label>
+                    <input type="date" class="il-form-input" id="deadline">
+                    <small class="form-text text-muted">如果不设定，将一直招募</small>
+                </div>
+
+                <div class="d-flex gap-3 justify-content-end">
+                    <a href="/team-market.html" class="il-btn il-btn-secondary" id="cancelPublishBtn">取消</a>
+                    <button type="submit" class="il-btn il-btn-primary">
+                        <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span>发布需求</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
+    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/team-publish.js"></script>
+    <div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

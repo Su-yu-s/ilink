@@ -1,0 +1,44 @@
+/**
+ * 成果发布/编辑弹窗 v1.0 — 与详情分享页字段对齐
+ */
+.il-asset-publish-modal .modal-dialog {
+  max-width: 560px;
+}
+
+.il-asset-publish-modal__intro {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #4b5563;
+  background: #f9fafb;
+  border: 1px solid #f0f2f5;
+  border-radius: 8px;
+}
+
+.il-asset-publish-modal__intro strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.il-asset-publish-modal__optional {
+  font-size: 12px;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.il-asset-publish-modal__hint {
+  margin: 0.35rem 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #9ca3af;
+}
+
+.il-asset-publish-modal__file {
+  padding: 0.45rem 0.65rem;
+  font-size: 13px;
+}
+
+.il-asset-publish-modal .il-bs-form-modal__textarea {
+  min-height: 88px;
+}
