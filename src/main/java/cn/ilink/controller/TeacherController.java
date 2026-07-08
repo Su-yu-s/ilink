@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import static cn.ilink.common.ControllerUtils.safePage;
+import static cn.ilink.common.ControllerUtils.safeSize;
 
 @Controller
 @RequestMapping("/api/teacher")
@@ -72,8 +74,8 @@ public class TeacherController {
                 .or().like(TeacherApplication::getProjects, t));
         }
 
-        int safePage = Math.max(page, 1);
-        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = safePage(page);
+        int safeSize = safeSize(size, 100);
         Page<TeacherApplication> pageReq = new Page<>(safePage, safeSize);
         Page<TeacherApplication> result = teacherApplicationService.page(pageReq, wrapper);
         List<Map<String, Object>> data = enrichTeachersWithUsers(result.getRecords());

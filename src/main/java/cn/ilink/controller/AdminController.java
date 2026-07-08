@@ -18,6 +18,8 @@ import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
+import static cn.ilink.common.ControllerUtils.safePage;
+import static cn.ilink.common.ControllerUtils.safeSize;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -113,8 +115,8 @@ public class AdminController {
         }
 
         try {
-            int safeSize = Math.min(Math.max(size, 1), 100);
-            int safePage = Math.max(page, 1);
+            int safeSize = safeSize(size, 100);
+            int safePage = safePage(page);
             Page<User> result = userService.page(new Page<>(safePage, safeSize));
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
@@ -135,8 +137,8 @@ public class AdminController {
         }
 
         try {
-            int safeSize = Math.min(Math.max(size, 1), 100);
-            int safePage = Math.max(page, 1);
+            int safeSize = safeSize(size, 100);
+            int safePage = safePage(page);
             Page<cn.ilink.entity.TeamDemand> result = teamDemandService.page(new Page<>(safePage, safeSize));
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
@@ -156,8 +158,8 @@ public class AdminController {
             return Result.forbidden().toResponseEntity();
         }
         try {
-            int safeSize = Math.min(Math.max(size, 1), 100);
-            int safePage = Math.max(page, 1);
+            int safeSize = safeSize(size, 100);
+            int safePage = safePage(page);
             Page<cn.ilink.entity.TeacherApplication> result = teacherApplicationService.page(new Page<>(safePage, safeSize));
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
@@ -177,8 +179,8 @@ public class AdminController {
             return Result.forbidden().toResponseEntity();
         }
         try {
-            int safeSize = Math.min(Math.max(size, 1), 100);
-            int safePage = Math.max(page, 1);
+            int safeSize = safeSize(size, 100);
+            int safePage = safePage(page);
             Page<cn.ilink.entity.Asset> result = assetService.page(new Page<>(safePage, safeSize));
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
@@ -198,8 +200,8 @@ public class AdminController {
             return Result.forbidden().toResponseEntity();
         }
         try {
-            int safeSize = Math.min(Math.max(size, 1), 100);
-            int safePage = Math.max(page, 1);
+            int safeSize = safeSize(size, 100);
+            int safePage = safePage(page);
             Page<CommunityPost> result = communityPostService.page(
                 new Page<>(safePage, safeSize),
                 new LambdaQueryWrapper<CommunityPost>().orderByDesc(CommunityPost::getCreatedAt)

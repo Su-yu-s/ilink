@@ -28,6 +28,8 @@ import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import static cn.ilink.common.ControllerUtils.safePage;
+import static cn.ilink.common.ControllerUtils.safeSize;
 
 @Controller
 @RequestMapping("/api/community")
@@ -89,8 +91,8 @@ public class CommunityController {
                 .or().like(CommunityPost::getContent, kw));
         }
 
-        int safePage = Math.max(page, 1);
-        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = safePage(page);
+        int safeSize = safeSize(size, 100);
         Page<CommunityPost> pageObj = new Page<>(safePage, safeSize);
         Page<CommunityPost> result = communityPostService.page(pageObj, wrapper);
         List<CommunityPost> records = result.getRecords();
@@ -130,8 +132,8 @@ public class CommunityController {
         LambdaQueryWrapper<CommunityPost> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(CommunityPost::getAuthorId, viewer.getId()).orderByDesc(CommunityPost::getCreatedAt);
 
-        int safePage = Math.max(page, 1);
-        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = safePage(page);
+        int safeSize = safeSize(size, 100);
         Page<CommunityPost> pageObj = new Page<>(safePage, safeSize);
         Page<CommunityPost> result = communityPostService.page(pageObj, wrapper);
         List<CommunityPost> records = result.getRecords();
@@ -166,8 +168,8 @@ public class CommunityController {
         favWrapper.eq(CommunityPostFavorite::getUserId, viewer.getId())
             .orderByDesc(CommunityPostFavorite::getCreatedAt);
 
-        int safePage = Math.max(page, 1);
-        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = safePage(page);
+        int safeSize = safeSize(size, 100);
         Page<CommunityPostFavorite> favPage = new Page<>(safePage, safeSize);
         Page<CommunityPostFavorite> favResult = communityPostFavoriteMapper.selectPage(favPage, favWrapper);
         List<CommunityPostFavorite> favRecords = favResult.getRecords();

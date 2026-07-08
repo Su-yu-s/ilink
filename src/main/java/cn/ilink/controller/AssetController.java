@@ -40,6 +40,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import static cn.ilink.common.ControllerUtils.safePage;
+import static cn.ilink.common.ControllerUtils.safeSize;
 
 @Controller
 @RequestMapping("/api/asset")
@@ -82,8 +84,8 @@ public class AssetController {
             wrapper.and(w -> w.like(Asset::getTitle, cat).or().like(Asset::getDescription, cat));
         }
 
-        int safePage = Math.max(page, 1);
-        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = safePage(page);
+        int safeSize = safeSize(size, 100);
         Page<Asset> pageReq = new Page<>(safePage, safeSize);
         Page<Asset> result = assetService.page(pageReq, wrapper);
         List<Map<String, Object>> rows = enrichAssetsWithOwners(result.getRecords());
