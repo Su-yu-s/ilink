@@ -552,20 +552,20 @@
 /* team-market shell overrides — migrated from style.css */
 
 body[data-app-page="team-market"] .il-author-avatar {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  max-width: 32px !important;
-  min-height: 32px !important;
-  max-height: 32px !important;
-  flex-shrink: 0 !important;
-  overflow: hidden !important;
+  width: 32px ;
+  height: 32px ;
+  min-width: 32px ;
+  max-width: 32px ;
+  min-height: 32px ;
+  max-height: 32px ;
+  flex-shrink: 0 ;
+  overflow: hidden ;
 }
 body[data-app-page="team-market"] .il-author-avatar img {
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 0 !important;
-  object-fit: cover !important;
+  width: 100% ;
+  height: 100% ;
+  min-width: 0 ;
+  object-fit: cover ;
 }
 body[data-app-page]:not([data-app-page="team-market"]) .il-team-category,
 body[data-app-page] .recommendation-tag {
@@ -575,15 +575,15 @@ body[data-app-page] .recommendation-tag {
 }
 body[data-app-page="team-market"] .il-team-card-header {
   gap: 12px;
-  margin-bottom: 10px !important;
+  margin-bottom: 10px ;
 }
 body[data-app-page="team-market"] .il-team-meta,
 body[data-app-page="team-market"] .il-team-meta-item {
-  font-size: 12px !important;
+  font-size: 12px ;
 }
 body[data-app-page="team-market"] .il-skill-tag {
-  font-size: 11px !important;
-  padding: 3px 10px !important;
+  font-size: 11px ;
+  padding: 3px 10px ;
 }
 
 /* teacher-wall + team-market shared — migrated from style.css */
@@ -598,121 +598,121 @@ body[data-app-page] .competition-card {
 }
 body[data-app-page="team-market"] .il-toolbar,
 body[data-app-page="teacher-wall"] .il-toolbar {
-  padding: 10px 14px !important;
-  margin-bottom: 18px !important;
+  padding: 10px 14px ;
+  margin-bottom: 18px ;
 }
 body[data-app-page="team-market"] .il-toolbar-row,
 body[data-app-page="teacher-wall"] .il-toolbar-row {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  gap: 12px !important;
+  display: flex ;
+  flex-wrap: nowrap ;
+  align-items: center ;
+  gap: 12px ;
 }
 body[data-app-page="team-market"] .il-toolbar-filters,
 body[data-app-page="teacher-wall"] .il-toolbar-filters {
-  display: flex !important;
-  flex: 1 1 auto !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  gap: 10px !important;
-  min-width: 0 !important;
-  margin: 0 !important;
+  display: flex ;
+  flex: 1 1 auto ;
+  flex-wrap: nowrap ;
+  align-items: center ;
+  gap: 10px ;
+  min-width: 0 ;
+  margin: 0 ;
 }
 body[data-app-page="team-market"] .il-toolbar-search,
 body[data-app-page="teacher-wall"] .il-toolbar-search {
-  flex: 1 1 200px !important;
-  min-width: 0 !important;
+  flex: 1 1 200px ;
+  min-width: 0 ;
 }
 body[data-app-page="team-market"] .il-toolbar-search .il-search-field,
 body[data-app-page="team-market"] .il-toolbar-search .il-search-field--toolbar,
 body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field,
 body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field--toolbar {
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 0 !important;
-  min-height: 40px !important;
-  border-radius: 10px !important;
-  padding: 0 12px 0 40px !important;
-  border: 1px solid var(--border-light) !important;
-  background: var(--bg-white) !important;
+  width: 100% ;
+  max-width: none ;
+  min-width: 0 ;
+  min-height: 40px ;
+  border-radius: 10px ;
+  padding: 0 12px 0 40px ;
+  border: 1px solid var(--border-light) ;
+  background: var(--bg-white) ;
 }
 body[data-app-page="team-market"] .il-toolbar-search .il-search-field__input,
 body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field__input {
-  min-height: 38px !important;
-  font-size: 14px !important;
+  min-height: 38px ;
+  font-size: 14px ;
 }
 body[data-app-page="team-market"] .il-toolbar-select,
 body[data-app-page="teacher-wall"] .il-toolbar-select {
-  flex: 0 1 140px !important;
-  min-width: 120px !important;
-  width: auto !important;
-  min-height: 40px !important;
-  height: 40px !important;
-  border-radius: 10px !important;
-  border: 1px solid var(--border-light) !important;
-  padding: 0 32px 0 12px !important;
-  font-size: 14px !important;
-  color: var(--text-primary) !important;
-  background: var(--bg-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center !important;
-  appearance: none !important;
+  flex: 0 1 140px ;
+  min-width: 120px ;
+  width: auto ;
+  min-height: 40px ;
+  height: 40px ;
+  border-radius: 10px ;
+  border: 1px solid var(--border-light) ;
+  padding: 0 32px 0 12px ;
+  font-size: 14px ;
+  color: var(--text-primary) ;
+  background: var(--bg-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center ;
+  appearance: none ;
   cursor: pointer;
 }
 body[data-app-page="team-market"] .il-toolbar-select:focus,
 body[data-app-page="teacher-wall"] .il-toolbar-select:focus {
-  outline: none !important;
-  border-color: var(--border-default) !important;
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08) !important;
+  outline: none ;
+  border-color: var(--border-default) ;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08) ;
 }
 body[data-app-page="team-market"] .il-toolbar-filters .il-btn,
 body[data-app-page="team-market"] .il-toolbar-actions .il-btn,
 body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn,
 body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px !important;
-  min-height: 40px !important;
-  height: 40px !important;
-  padding: 0 14px !important;
-  border-radius: 10px !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
+  display: inline-flex ;
+  flex-direction: row ;
+  align-items: center ;
+  justify-content: center ;
+  gap: 6px ;
+  min-height: 40px ;
+  height: 40px ;
+  padding: 0 14px ;
+  border-radius: 10px ;
+  white-space: nowrap ;
+  flex-shrink: 0 ;
 }
 body[data-app-page="team-market"] .il-toolbar-filters .il-btn-primary,
 body[data-app-page="team-market"] .il-toolbar-actions .il-btn-primary,
 body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-primary,
 body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn-primary {
-  background: #111827 !important;
-  color: var(--text-white) !important;
-  border: 1px solid #111827 !important;
+  background: #111827 ;
+  color: var(--text-white) ;
+  border: 1px solid #111827 ;
 }
 body[data-app-page="team-market"] .il-toolbar-filters .il-btn-primary:hover,
 body[data-app-page="team-market"] .il-toolbar-actions .il-btn-primary:hover,
 body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-primary:hover,
 body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn-primary:hover {
-  background: #374151 !important;
-  border-color: #374151 !important;
+  background: #374151 ;
+  border-color: #374151 ;
 }
 body[data-app-page="team-market"] .il-toolbar-filters .il-btn-secondary,
 body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-secondary {
-  background: var(--bg-white) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-light) !important;
+  background: var(--bg-white) ;
+  color: var(--text-primary) ;
+  border: 1px solid var(--border-light) ;
 }
 body[data-app-page="team-market"] .il-toolbar-filters .il-btn-secondary:hover,
 body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-secondary:hover {
-  background: var(--color-gray-100) !important;
-  border-color: var(--border-default) !important;
+  background: var(--color-gray-100) ;
+  border-color: var(--border-default) ;
 }
 body[data-app-page="team-market"] .il-toolbar-actions,
 body[data-app-page="teacher-wall"] .il-toolbar-actions {
-  display: flex !important;
-  flex: 0 0 auto !important;
-  flex-wrap: nowrap !important;
-  align-items: center !important;
-  gap: 8px !important;
-  margin-left: auto !important;
+  display: flex ;
+  flex: 0 0 auto ;
+  flex-wrap: nowrap ;
+  align-items: center ;
+  gap: 8px ;
+  margin-left: auto ;
 }
 body[data-app-page="team-market"] .il-toolbar-actions .il-btn__icon,
 body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn__icon {
@@ -721,51 +721,51 @@ body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn__icon {
 }
 body[data-app-page="team-market"] #teamList,
 body[data-app-page="teacher-wall"] #teacherList {
-  display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 20px !important;
+  display: grid ;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) ;
+  gap: 20px ;
   width: 100%;
   align-items: stretch;
 }
 body[data-app-page="team-market"] .il-team-card-shell,
 body[data-app-page="teacher-wall"] .il-teacher-card-shell {
-  display: flex !important;
-  width: auto !important;
-  max-width: none !important;
-  margin: 0 !important;
-  min-width: 0 !important;
+  display: flex ;
+  width: auto ;
+  max-width: none ;
+  margin: 0 ;
+  min-width: 0 ;
 }
 body[data-app-page="team-market"] .il-team-card,
 body[data-app-page="teacher-wall"] .il-teacher-card {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  margin-bottom: 0 !important;
-  padding: 14px 16px !important;
-  display: flex !important;
+  width: 100% ;
+  max-width: 100% ;
+  min-width: 0 ;
+  min-height: 0 ;
+  max-height: none ;
+  margin-bottom: 0 ;
+  padding: 14px 16px ;
+  display: flex ;
   flex-direction: column;
-  box-sizing: border-box !important;
-  border-radius: 14px !important;
-  background: rgba(255, 255, 255, 0.96) !important;
-  border-color: var(--border-light) !important;
-  box-shadow: var(--shadow-sm) !important;
+  box-sizing: border-box ;
+  border-radius: 14px ;
+  background: rgba(255, 255, 255, 0.96) ;
+  border-color: var(--border-light) ;
+  box-shadow: var(--shadow-sm) ;
 }
 body[data-app-page="team-market"] .il-team-card:hover,
 body[data-app-page="teacher-wall"] .il-teacher-card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-2px) ;
+  box-shadow: var(--shadow-md) ;
 }
 body[data-app-page="team-market"] .il-team-card::before,
 body[data-app-page="teacher-wall"] .il-teacher-card::before {
-  display: none !important;
+  display: none ;
 }
 body[data-app-page="team-market"] .il-team-title,
 body[data-app-page="teacher-wall"] .il-teacher-name {
-  font-size: 16px !important;
-  line-height: 1.35 !important;
-  margin-bottom: 4px !important;
+  font-size: 16px ;
+  line-height: 1.35 ;
+  margin-bottom: 4px ;
 }
 body[data-app-page="team-market"] .il-team-category,
 body[data-app-page="teacher-wall"] .il-teacher-major,
@@ -776,45 +776,45 @@ body[data-app-page="team-market"] .il-team-status {
 body[data-app-page="team-market"] .il-team-category,
 body[data-app-page="teacher-wall"] .il-teacher-major {
   display: inline-block;
-  padding: 4px 10px !important;
-  border-radius: var(--radius-full) !important;
-  font-size: 12px !important;
-  font-weight: 500 !important;
-  background: var(--color-gray-100) !important;
-  color: var(--color-gray-700) !important;
-  border: 1px solid var(--border-light) !important;
+  padding: 4px 10px ;
+  border-radius: var(--radius-full) ;
+  font-size: 12px ;
+  font-weight: 500 ;
+  background: var(--color-gray-100) ;
+  color: var(--color-gray-700) ;
+  border: 1px solid var(--border-light) ;
 }
 body[data-app-page="team-market"] .il-skill-tag,
 body[data-app-page="team-market"] .il-skill-tag:nth-child(n),
 body[data-app-page="teacher-wall"] .il-research-tag,
 body[data-app-page="teacher-wall"] .il-research-tag:nth-child(n) {
-  background: var(--color-gray-100) !important;
-  color: var(--color-gray-700) !important;
-  border-color: var(--border-light) !important;
+  background: var(--color-gray-100) ;
+  color: var(--color-gray-700) ;
+  border-color: var(--border-light) ;
 }
 body[data-app-page="team-market"] .il-team-desc,
 body[data-app-page="teacher-wall"] .il-teacher-bio {
-  color: var(--text-secondary) !important;
-  font-size: 13px !important;
-  line-height: 1.55 !important;
-  margin-bottom: 8px !important;
+  color: var(--text-secondary) ;
+  font-size: 13px ;
+  line-height: 1.55 ;
+  margin-bottom: 8px ;
 }
 body[data-app-page="team-market"] .il-team-meta,
 body[data-app-page="team-market"] .il-team-skills,
 body[data-app-page="teacher-wall"] .il-teacher-research {
-  margin-bottom: 10px !important;
+  margin-bottom: 10px ;
 }
 body[data-app-page="team-market"] .il-team-skills,
 body[data-app-page="teacher-wall"] .il-teacher-research {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px !important;
+  gap: 8px ;
 }
 body[data-app-page="team-market"] .il-team-footer,
 body[data-app-page="teacher-wall"] .il-teacher-footer {
-  margin-top: auto !important;
-  padding-top: 12px !important;
-  border-top: 1px solid var(--border-light) !important;
+  margin-top: auto ;
+  padding-top: 12px ;
+  border-top: 1px solid var(--border-light) ;
 }
 body[data-app-page="team-market"] .il-list-empty,
 body[data-app-page="teacher-wall"] .il-list-empty {
@@ -823,7 +823,7 @@ body[data-app-page="teacher-wall"] .il-list-empty {
 @media (max-width: 768px) {
   body[data-app-page="team-market"] #teamList,
   body[data-app-page="teacher-wall"] #teacherList {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr ;
     gap: 16px;
   }
 }
