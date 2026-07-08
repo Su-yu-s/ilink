@@ -13,6 +13,10 @@ import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
 import cn.ilink.util.UserPreviewHelper;
+import cn.ilink.vo.MyTeamVO;
+import cn.ilink.vo.PendingApplicationVO;
+import cn.ilink.vo.TeamDemandVO;
+import cn.ilink.vo.TeamMemberViewVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,8 +113,7 @@ public class TeamController {
         int safeSize = safeSize(size, 100);
         Page<TeamDemand> pageReq = new Page<>(safePage, safeSize);
         Page<TeamDemand> result = teamDemandService.page(pageReq, wrapper);
-        List<Map<String, Object>> data = enrichTeamsWithCreators(result.getRecords());
-
+        List<TeamDemandVO> data = enrichTeamsWithCreators(result.getRecords());
         return Result.ok("获取成功", data).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
     }
 
@@ -131,12 +134,11 @@ public class TeamController {
         }
         applyMyTeamSort(wrapper, sort);
         List<TeamDemand> teams = teamDemandService.list(wrapper);
-        List<Map<String, Object>> rows = enrichTeamsWithCreators(teams);
+        List<TeamDemandVO> rows = enrichTeamsWithCreators(teams);
         if ("applicantsDesc".equalsIgnoreCase(sort)) {
-            rows.sort(Comparator.comparingLong((Map<String, Object> row) -> toLong(row.get("applicationCount"))).reversed());
+            rows.sort(Comparator.comparingLong((TeamDemandVO vo) -> vo.getApplicationCount()).reversed());
         }
-        List<Map<String, Object>> list = rows;
-        return Result.ok("获取成功", list).toResponseEntity();
+        return Result.ok("获取成功", rows).toResponseEntity();
     }
 
     /** 当前用户发起的组队申请（含队伍标题） */
@@ -437,33 +439,33 @@ public class TeamController {
             .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
     }
 
-    private Map<String, Object> teamDemandToMap(TeamDemand t, User creator) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", t.getId());
-        m.put("title", t.getTitle());
-        m.put("description", t.getDescription());
-        m.put("competitionId", t.getCompetitionId());
-        m.put("requiredSkills", t.getRequiredSkills());
-        m.put("requiredMemberCount", resolveRequiredMemberCount(t));
-        m.put("deadline", resolveDeadline(t));
-        m.put("status", t.getStatus());
-        m.put("statusLabel", statusLabel(t.getStatus()));
-        m.put("creatorId", t.getCreatorId());
-        m.put("createdAt", t.getCreatedAt());
-        m.put("updatedAt", t.getUpdatedAt());
-        m.put("creatorPreview", UserPreviewHelper.toPreview(creator));
+    private TeamDemandVO teamDemandToMap(TeamDemand t, User creator) {
+        TeamDemandVO vo = new TeamDemandVO();
+        vo.setId(t.getId());
+        vo.setTitle(t.getTitle());
+        vo.setDescription(t.getDescription());
+        vo.setCompetitionId(t.getCompetitionId() != null ? Long.valueOf(t.getCompetitionId()) : null);
+        vo.setRequiredSkills(t.getRequiredSkills());
+        vo.setRequiredMemberCount(resolveRequiredMemberCount(t));
+        vo.setDeadline(resolveDeadline(t));
+        vo.setStatus(t.getStatus());
+        vo.setStatusLabel(statusLabel(t.getStatus()));
+        vo.setCreatorId(t.getCreatorId());
+        vo.setCreatedAt(t.getCreatedAt());
+        vo.setUpdatedAt(t.getUpdatedAt());
+        vo.setCreatorPreview(UserPreviewHelper.toPreview(creator));
         long applicationCount = countApplications(t.getId());
         long approvedMemberCount = countApprovedMembers(t.getId());
-        m.put("applicationCount", applicationCount);
-        m.put("approvedMemberCount", approvedMemberCount);
-        m.put("currentMemberCount", approvedMemberCount + 1);
-        m.put("isFull", isTeamFull(t));
-        m.put("canEdit", STATUS_OPEN.equals(t.getStatus()));
-        m.put("canDelete", STATUS_OPEN.equals(t.getStatus()) && applicationCount == 0);
-        m.put("canMoveToTeaming", STATUS_OPEN.equals(t.getStatus()));
-        m.put("canClose", STATUS_OPEN.equals(t.getStatus()) || STATUS_TEAMING.equals(t.getStatus()));
-        m.put("members", buildTeamMemberViews(t, creator));
-        return m;
+        vo.setApplicationCount(applicationCount);
+        vo.setApprovedMemberCount(approvedMemberCount);
+        vo.setCurrentMemberCount(approvedMemberCount + 1);
+        vo.setFull(isTeamFull(t));
+        vo.setCanEdit(STATUS_OPEN.equals(t.getStatus()));
+        vo.setCanDelete(STATUS_OPEN.equals(t.getStatus()) && applicationCount == 0);
+        vo.setCanMoveToTeaming(STATUS_OPEN.equals(t.getStatus()));
+        vo.setCanClose(STATUS_OPEN.equals(t.getStatus()) || STATUS_TEAMING.equals(t.getStatus()));
+        vo.setMembers(buildTeamMemberViews(t, creator));
+        return vo;
     }
 
     private void applyMyTeamSort(LambdaQueryWrapper<TeamDemand> wrapper, String sort) {
@@ -584,8 +586,8 @@ public class TeamController {
         return requiredCount != null && requiredCount > 0 && countApprovedMembers(team.getId()) >= requiredCount;
     }
 
-    private List<Map<String, Object>> buildTeamMemberViews(TeamDemand team, User creator) {
-        List<Map<String, Object>> views = new ArrayList<>();
+    private List<TeamMemberViewVO> buildTeamMemberViews(TeamDemand team, User creator) {
+        List<TeamMemberViewVO> views = new ArrayList<>();
         if (creator != null) {
             views.add(userToMemberView(creator, "队长", team.getCreatedAt()));
         }
@@ -609,14 +611,14 @@ public class TeamController {
         return views;
     }
 
-    private Map<String, Object> userToMemberView(User user, String role, Date joinedAt) {
-        Map<String, Object> view = new LinkedHashMap<>();
-        view.put("userId", user.getId());
-        view.put("username", user.getRealName() != null ? user.getRealName() : user.getUsername());
-        view.put("avatar", user.getAvatar());
-        view.put("major", user.getMajor());
-        view.put("role", role);
-        view.put("joinedAt", joinedAt);
+    private TeamMemberViewVO userToMemberView(User user, String role, Date joinedAt) {
+        TeamMemberViewVO view = new TeamMemberViewVO();
+        view.setUserId(user.getId());
+        view.setUsername(user.getRealName() != null ? user.getRealName() : user.getUsername());
+        view.setAvatar(user.getAvatar());
+        view.setMajor(user.getMajor());
+        view.setRole(role);
+        view.setJoinedAt(joinedAt);
         return view;
     }
 
@@ -642,7 +644,7 @@ public class TeamController {
         }
     }
 
-    private List<Map<String, Object>> enrichTeamsWithCreators(List<TeamDemand> teams) {
+    private List<TeamDemandVO> enrichTeamsWithCreators(List<TeamDemand> teams) {
         Set<Long> ids = teams.stream()
             .map(TeamDemand::getCreatorId)
             .filter(Objects::nonNull)
@@ -688,29 +690,29 @@ public class TeamController {
             .collect(Collectors.toMap(TeamDemand::getId, t -> t, (a, b) -> a));
 
         // 构建结果：先放创建的团队（队长），再放加入的团队（队员）
-        List<Map<String, Object>> rows = new ArrayList<>();
+        List<MyTeamVO> rows = new ArrayList<>();
         // 队长创建的团队
         for (TeamDemand td : myCreatedTeams) {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("teamId", td.getId());
-            m.put("teamTitle", td.getTitle());
-            m.put("status", td.getStatus());
-            m.put("joinedAt", td.getCreatedAt());
-            m.put("isCreator", true);
-            rows.add(m);
+            MyTeamVO vo = new MyTeamVO();
+            vo.setTeamId(td.getId());
+            vo.setTeamTitle(td.getTitle());
+            vo.setStatus(td.getStatus());
+            vo.setJoinedAt(td.getCreatedAt());
+            vo.setCreator(true);
+            rows.add(vo);
         }
         // 加入的团队（排除已作为队长创建的）
         Set<Long> createdTeamIds = myCreatedTeams.stream().map(TeamDemand::getId).collect(Collectors.toSet());
         for (TeamApplication app : approvedApps) {
             if (createdTeamIds.contains(app.getTeamId())) continue;
             TeamDemand team = teamMap.get(app.getTeamId());
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("teamId", app.getTeamId());
-            m.put("teamTitle", team != null ? team.getTitle() : "（组队已删除）");
-            m.put("status", team != null ? team.getStatus() : null);
-            m.put("joinedAt", app.getCreatedAt());
-            m.put("isCreator", false);
-            rows.add(m);
+            MyTeamVO vo = new MyTeamVO();
+            vo.setTeamId(app.getTeamId());
+            vo.setTeamTitle(team != null ? team.getTitle() : "（组队已删除）");
+            vo.setStatus(team != null ? team.getStatus() : null);
+            vo.setJoinedAt(app.getCreatedAt());
+            vo.setCreator(false);
+            rows.add(vo);
         }
         return Result.ok("获取成功", rows).toResponseEntity();
     }
@@ -759,27 +761,27 @@ public class TeamController {
             }
         }
 
-        List<Map<String, Object>> views = new ArrayList<>();
+        List<PendingApplicationVO> views = new ArrayList<>();
         for (TeamApplication app : pendingApps) {
-            Map<String, Object> view = new LinkedHashMap<>();
-            view.put("id", app.getId());
-            view.put("teamId", app.getTeamId());
-            view.put("message", app.getMessage());
-            view.put("createdAt", app.getCreatedAt());
+            PendingApplicationVO vo = new PendingApplicationVO();
+            vo.setId(app.getId());
+            vo.setTeamId(app.getTeamId());
+            vo.setMessage(app.getMessage());
+            vo.setCreatedAt(app.getCreatedAt());
             // 内存查表
             TeamDemand team = teamMap.get(app.getTeamId());
-            if (team != null) view.put("teamName", team.getTitle());
+            if (team != null) vo.setTeamName(team.getTitle());
             User applicant = userMap.get(app.getUserId());
             if (applicant != null) {
-                view.put("applicantName", applicant.getRealName() != null ? applicant.getRealName() : applicant.getUsername());
-                view.put("applicantAvatar", applicant.getAvatar());
-                view.put("applicantMajor", applicant.getMajor());
-                view.put("applicantGrade", applicant.getGrade());
-                view.put("applicantSchool", applicant.getSchool());
-                view.put("applicantUserId", applicant.getId());
+                vo.setApplicantName(applicant.getRealName() != null ? applicant.getRealName() : applicant.getUsername());
+                vo.setApplicantAvatar(applicant.getAvatar());
+                vo.setApplicantMajor(applicant.getMajor());
+                vo.setApplicantGrade(applicant.getGrade());
+                vo.setApplicantSchool(applicant.getSchool());
+                vo.setApplicantUserId(applicant.getId());
             }
-            view.put("skills", skillsMap.getOrDefault(app.getUserId(), Collections.emptyList()));
-            views.add(view);
+            vo.setSkills(skillsMap.getOrDefault(app.getUserId(), Collections.emptyList()));
+            views.add(vo);
         }
         return Result.ok(views).toResponseEntity();
     }
@@ -879,7 +881,7 @@ public class TeamController {
         Map<Long, User> userMap = userIds.isEmpty() ? Collections.emptyMap()
             : userService.listByIds(userIds).stream()
                 .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
-        List<Map<String, Object>> views = new ArrayList<>();
+        List<TeamMemberViewVO> views = new ArrayList<>();
         User creator = loadCreator(team.getCreatorId());
         if (creator != null) {
             views.add(userToMemberView(creator, "队长", team.getCreatedAt()));

@@ -31,5 +31,5 @@ public class TeamDemandVO {
     private boolean canDelete;
     private boolean canMoveToTeaming;
     private boolean canClose;
-    private List<Map<String, Object>> members;
+    private List<TeamMemberViewVO> members;
 }

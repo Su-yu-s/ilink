@@ -13,6 +13,8 @@ import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.mapper.CommunityPostFavoriteMapper;
 import cn.ilink.util.HtmlSanitizer;
+import cn.ilink.vo.CommunityPostDetailVO;
+import cn.ilink.vo.CommunityPostListItemVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -107,7 +109,7 @@ public class CommunityController {
         Map<Long, Boolean> favoritedMap = viewer != null
             ? communityPostInteractionService.batchFavoritedStatus(viewer.getId(), postIds)
             : Collections.emptyMap();
-        List<Map<String, Object>> views = records.stream()
+        List<CommunityPostListItemVO> views = records.stream()
             .map(p -> toListItem(p, authorMap.get(p.getAuthorId()), viewer, likedMap, favoritedMap))
             .collect(Collectors.toList());
 
@@ -142,7 +144,7 @@ public class CommunityController {
         List<Long> postIds = records.stream().map(CommunityPost::getId).collect(Collectors.toList());
         Map<Long, Boolean> likedMap = communityPostInteractionService.batchLikedStatus(viewer.getId(), postIds);
         Map<Long, Boolean> favoritedMap = communityPostInteractionService.batchFavoritedStatus(viewer.getId(), postIds);
-        List<Map<String, Object>> views = records.stream()
+        List<CommunityPostListItemVO> views = records.stream()
             .map(p -> toListItem(p, viewer, viewer, likedMap, favoritedMap))
             .collect(Collectors.toList());
 
@@ -200,7 +202,7 @@ public class CommunityController {
         List<Long> allPostIds = ordered.stream().map(CommunityPost::getId).collect(Collectors.toList());
         Map<Long, Boolean> likedMap = communityPostInteractionService.batchLikedStatus(viewer.getId(), allPostIds);
         Map<Long, Boolean> favoritedMap = communityPostInteractionService.batchFavoritedStatus(viewer.getId(), allPostIds);
-        List<Map<String, Object>> views = ordered.stream()
+        List<CommunityPostListItemVO> views = ordered.stream()
             .map(p -> toListItem(p, authorMap.get(p.getAuthorId()), viewer, likedMap, favoritedMap))
             .collect(Collectors.toList());
 
@@ -568,56 +570,56 @@ public class CommunityController {
         return p.getFavoriteCount() == null ? 0 : p.getFavoriteCount();
     }
 
-    private Map<String, Object> toListItem(CommunityPost p, User author, User viewer,
+    private CommunityPostListItemVO toListItem(CommunityPost p, User author, User viewer,
                                             Map<Long, Boolean> likedMap, Map<Long, Boolean> favoritedMap) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", p.getId());
-        m.put("category", p.getCategory());
-        m.put("title", p.getTitle());
+        CommunityPostListItemVO vo = new CommunityPostListItemVO();
+        vo.setId(p.getId());
+        vo.setCategory(p.getCategory());
+        vo.setTitle(p.getTitle());
         String excerpt = HtmlSanitizer.plainTextExcerpt(p.getContent() == null ? "" : p.getContent(), EXCERPT_LEN);
-        m.put("excerpt", excerpt);
-        m.put("authorId", p.getAuthorId());
-        m.put("authorDisplay", authorDisplay(author));
-        m.put("authorAvatar", resolveAuthorAvatar(author, viewer));
-        m.put("viewCount", viewCountOf(p));
-        m.put("likeCount", likeCountOf(p));
-        m.put("favoriteCount", favoriteCountOf(p));
+        vo.setExcerpt(excerpt);
+        vo.setAuthorId(p.getAuthorId());
+        vo.setAuthorDisplay(authorDisplay(author));
+        vo.setAuthorAvatar(resolveAuthorAvatar(author, viewer));
+        vo.setViewCount((long) viewCountOf(p));
+        vo.setLikeCount((long) likeCountOf(p));
+        vo.setFavoriteCount((long) favoriteCountOf(p));
         if (viewer != null) {
-            m.put("liked", likedMap.getOrDefault(p.getId(), false));
-            m.put("favorited", favoritedMap.getOrDefault(p.getId(), false));
+            vo.setLiked(likedMap.getOrDefault(p.getId(), false));
+            vo.setFavorited(favoritedMap.getOrDefault(p.getId(), false));
         } else {
-            m.put("liked", false);
-            m.put("favorited", false);
+            vo.setLiked(false);
+            vo.setFavorited(false);
         }
-        m.put("createdAt", p.getCreatedAt());
-        return m;
+        vo.setCreatedAt(p.getCreatedAt());
+        return vo;
     }
 
-    private Map<String, Object> toDetail(CommunityPost p, User author, User viewer) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", p.getId());
-        m.put("category", p.getCategory());
-        m.put("title", p.getTitle());
-        m.put("content", p.getContent());
-        m.put("attachments", parseAttachmentsList(p.getAttachments()));
-        m.put("authorId", p.getAuthorId());
-        m.put("authorDisplay", authorDisplay(author));
-        m.put("authorAvatar", resolveAuthorAvatar(author, viewer));
-        m.put("viewCount", viewCountOf(p));
-        m.put("createdAt", p.getCreatedAt());
-        enrichInteraction(p, viewer, m);
-        return m;
+    private CommunityPostDetailVO toDetail(CommunityPost p, User author, User viewer) {
+        CommunityPostDetailVO vo = new CommunityPostDetailVO();
+        vo.setId(p.getId());
+        vo.setCategory(p.getCategory());
+        vo.setTitle(p.getTitle());
+        vo.setContent(p.getContent());
+        vo.setAttachments(parseAttachmentsList(p.getAttachments()));
+        vo.setAuthorId(p.getAuthorId());
+        vo.setAuthorDisplay(authorDisplay(author));
+        vo.setAuthorAvatar(resolveAuthorAvatar(author, viewer));
+        vo.setViewCount((long) viewCountOf(p));
+        vo.setCreatedAt(p.getCreatedAt());
+        enrichInteraction(p, viewer, vo);
+        return vo;
     }
 
-    private void enrichInteraction(CommunityPost p, User viewer, Map<String, Object> m) {
-        m.put("likeCount", likeCountOf(p));
-        m.put("favoriteCount", favoriteCountOf(p));
+    private void enrichInteraction(CommunityPost p, User viewer, CommunityPostDetailVO vo) {
+        vo.setLikeCount((long) likeCountOf(p));
+        vo.setFavoriteCount((long) favoriteCountOf(p));
         if (viewer != null) {
-            m.put("liked", communityPostInteractionService.hasLiked(p.getId(), viewer.getId()));
-            m.put("favorited", communityPostInteractionService.hasFavorited(p.getId(), viewer.getId()));
+            vo.setLiked(communityPostInteractionService.hasLiked(p.getId(), viewer.getId()));
+            vo.setFavorited(communityPostInteractionService.hasFavorited(p.getId(), viewer.getId()));
         } else {
-            m.put("liked", false);
-            m.put("favorited", false);
+            vo.setLiked(false);
+            vo.setFavorited(false);
         }
     }
 
