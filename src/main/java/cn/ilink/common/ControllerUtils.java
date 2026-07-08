@@ -3,6 +3,8 @@ package cn.ilink.common;
 import cn.ilink.entity.User;
 
 import javax.servlet.http.HttpSession;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * Controller 公共工具类
@@ -15,16 +17,26 @@ public final class ControllerUtils {
     }
 
     /**
-     * 从 Session 获取当前登录用户
+     * 从 Spring Security SecurityContext 获取当前登录用户。
+     * 优先从 SecurityContextHolder 读取，fallback 到 HttpSession（向后兼容）。
      *
-     * @param session HTTP 会话
+     * @param session HTTP 会话（用于 fallback）
      * @return 当前用户，未登录返回 null
      */
     public static User requireUser(HttpSession session) {
-        if (session == null) {
-            return null;
+        // 主路径：从 Spring Security 上下文获取
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User) {
+            return (User) auth.getPrincipal();
         }
-        return (User) session.getAttribute("user");
+        // Fallback：从 HttpSession 获取（兼容登录时手动设置的 session attribute）
+        if (session != null) {
+            Object user = session.getAttribute("user");
+            if (user instanceof User) {
+                return (User) user;
+            }
+        }
+        return null;
     }
 
     /**
