@@ -2358,9 +2358,6 @@ body[data-app-page] .category-filter .category-pill.active .count {
 
 /* Compact search/filter controls across product pages */
 body[data-app-page="competitions"] .competition-toolbar,
-body[data-app-page="community"] .il-toolbar,
-body[data-app-page="team-market"] .il-toolbar,
-body[data-app-page="teacher-wall"] .il-toolbar,
 body[data-app-page="gallery"] .il-toolbar,
 body[data-app-page="gallery"] .gallery-control-panel {
   background: rgba(255, 255, 255, 0.96) !important;
@@ -2373,7 +2370,6 @@ body[data-app-page="gallery"] .gallery-control-panel {
 
 
 body[data-app-page="competitions"] .competition-track-tab,
-body[data-app-page="community"] .il-tab,
 body[data-app-page="gallery"] .category-pill {
   min-height: 40px !important;
   border-radius: 10px !important;
@@ -2435,10 +2431,7 @@ body[data-app-page="gallery"] .category-pill {
 
 
 
-body[data-app-page="teacher-wall"] .il-search-field:focus-within,
 body[data-app-page="gallery"] .il-search-field:focus-within,
-body[data-app-page="team-market"] .il-search-field:focus-within,
-body[data-app-page="community"] .il-search-field:focus-within,
 body[data-app-page="competitions"] .competition-toolbar__search .il-search-field:focus-within {
   border-color: var(--border-default) !important;
   box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08) !important;
@@ -2571,27 +2564,6 @@ body[data-app-page="asset-detail"] .detail-view__author .il-avatar-fallback--hid
 
 
 @media (max-width: 1120px) {
-  body[data-app-page="community"] .il-toolbar-row {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-  }
-
-  body[data-app-page="community"] .il-tabs {
-    flex: 1 1 100% !important;
-    width: 100% !important;
-  }
-
-  body[data-app-page="community"] .il-toolbar-search {
-    flex: 1 1 220px !important;
-    order: 2;
-  }
-
-  body[data-app-page="community"] .il-toolbar-actions {
-    flex: 0 0 auto !important;
-    order: 3;
-    margin-left: auto;
-  }
-
   body[data-app-page="competitions"] .competition-toolbar .il-toolbar-row {
     flex-wrap: wrap !important;
   }
@@ -2600,35 +2572,6 @@ body[data-app-page="asset-detail"] .detail-view__author .il-avatar-fallback--hid
     flex: 1 1 100% !important;
     min-width: 0 !important;
     max-width: none !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-row,
-  body[data-app-page="teacher-wall"] .il-toolbar-row {
-    flex-wrap: wrap !important;
-    gap: 10px !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-filters,
-  body[data-app-page="teacher-wall"] .il-toolbar-filters {
-    flex: 1 1 100% !important;
-    flex-wrap: wrap !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-search,
-  body[data-app-page="teacher-wall"] .il-toolbar-search {
-    flex: 1 1 220px !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-select,
-  body[data-app-page="teacher-wall"] .il-toolbar-select {
-    flex: 1 1 calc(50% - 5px) !important;
-    min-width: 0 !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-actions,
-  body[data-app-page="teacher-wall"] .il-toolbar-actions {
-    flex: 0 0 auto !important;
-    margin-left: auto !important;
   }
 
   body[data-app-page="gallery"] .il-toolbar-row {
@@ -2659,72 +2602,6 @@ body[data-app-page="asset-detail"] .detail-view__author .il-avatar-fallback--hid
 
 
 @media (max-width: 720px) {
-  body[data-app-page="community"] .il-toolbar-row {
-    gap: 8px !important;
-  }
-
-  body[data-app-page="community"] .il-toolbar-search {
-    flex: 1 1 100% !important;
-    order: 2;
-  }
-
-  body[data-app-page="community"] .il-toolbar-actions {
-    flex: 1 1 100% !important;
-    order: 3;
-    justify-content: flex-end !important;
-    margin-left: 0;
-  }
-
-  body[data-app-page="community"] .il-toolbar-actions .il-btn {
-    width: auto !important;
-    flex: 0 1 auto;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-filters,
-  body[data-app-page="teacher-wall"] .il-toolbar-filters {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px !important;
-    align-items: stretch !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-search,
-  body[data-app-page="teacher-wall"] .il-toolbar-search {
-    grid-column: 1 / -1;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-search,
-  body[data-app-page="team-market"] .il-toolbar-select,
-  body[data-app-page="teacher-wall"] .il-toolbar-search,
-  body[data-app-page="teacher-wall"] .il-toolbar-select {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-filters .il-btn,
-  body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-row,
-  body[data-app-page="teacher-wall"] .il-toolbar-row {
-    gap: 8px !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-actions,
-  body[data-app-page="teacher-wall"] .il-toolbar-actions {
-    flex: 1 1 100% !important;
-    justify-content: stretch !important;
-    margin-left: 0 !important;
-  }
-
-  body[data-app-page="team-market"] .il-toolbar-actions .il-btn,
-  body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn {
-    flex: 1 1 auto !important;
-    width: 100% !important;
-  }
-
   body[data-app-page="gallery"] .il-toolbar-filters {
     display: grid !important;
     grid-template-columns: 1fr 1fr;
@@ -3962,10 +3839,7 @@ img.honors-preview-proof__img {
   }
 
   body[data-app-page] .il-toolbar-search,
-  body[data-app-page="team-market"] .il-toolbar-search,
-  body[data-app-page="teacher-wall"] .il-toolbar-search,
-  body[data-app-page="gallery"] .il-toolbar-search,
-  body[data-app-page="community"] .il-toolbar-search {
+  body[data-app-page="gallery"] .il-toolbar-search {
     flex: 0 0 auto !important;
     height: auto !important;
     min-height: 0 !important;
@@ -4129,9 +4003,6 @@ img.honors-preview-proof__img {
     min-height: 44px !important;
   }
 
-  body[data-app-page="community"] .il-toolbar-search .il-search-field,
-  body[data-app-page="team-market"] .il-toolbar-search .il-search-field,
-  body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field,
   body[data-app-page="gallery"] .il-toolbar-search .il-search-field,
   body[data-app-page="competitions"] .competition-toolbar__search .il-search-field {
     min-height: 46px !important;
@@ -4139,9 +4010,6 @@ img.honors-preview-proof__img {
     padding-bottom: 0 !important;
   }
 
-  body[data-app-page="community"] .il-toolbar-search .il-search-field__input,
-  body[data-app-page="team-market"] .il-toolbar-search .il-search-field__input,
-  body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field__input,
   body[data-app-page="gallery"] .il-toolbar-search .il-search-field__input,
   body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__input {
     min-height: 44px !important;
@@ -4153,14 +4021,12 @@ img.honors-preview-proof__img {
     min-height: 44px !important;
   }
 
-  body[data-app-page="community"] .il-tab,
   body[data-app-page="competitions"] .competition-track-tab {
     min-height: 44px !important;
     padding-top: 9px !important;
     padding-bottom: 9px !important;
   }
 
-  body[data-app-page="community"] .il-feed-action,
   body[data-app-page] .community-feed-action {
     min-width: 44px !important;
     min-height: 44px !important;
