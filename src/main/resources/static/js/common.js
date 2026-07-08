@@ -862,8 +862,8 @@ function initSmoothScroll() {
 // Initialize All Interactions
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Particle system — only if canvas exists
-    if (document.getElementById('particleCanvas')) {
+    // Particle system — only if canvas exists (loaded from ui-particles.js)
+    if (document.getElementById('particleCanvas') && typeof ParticleSystem !== 'undefined') {
         new ParticleSystem('particleCanvas', window.ILINK_PARTICLE_OPTIONS);
     }
     
