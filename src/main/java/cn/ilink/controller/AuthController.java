@@ -34,9 +34,6 @@ import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Controller
 public class AuthController {
@@ -51,10 +48,6 @@ public class AuthController {
 
     @Autowired(required = false)
     private HomeStatsService homeStatsService;
-
-    private final Map<String, AtomicInteger> registerCounts = new ConcurrentHashMap<>();
-    private final Map<String, Long> registerLastReset = new ConcurrentHashMap<>();
-    private final Set<String> registerLocks = ConcurrentHashMap.newKeySet();
 
     /** 读取登录前访问的地址，登录成功后跳回原页面。 */
     private final RequestCache requestCache = new HttpSessionRequestCache();
@@ -140,18 +133,8 @@ public class AuthController {
         if (clientIp == null || clientIp.isBlank()) {
             clientIp = request.getRemoteAddr();
         }
-        String registerKey = "register:" + clientIp;
-        synchronized (registerLocks) {
-            AtomicInteger count = registerCounts.computeIfAbsent(registerKey, k -> new AtomicInteger(0));
-            Long lastReset = registerLastReset.get(registerKey);
-            long now = System.currentTimeMillis();
-            if (lastReset == null || (now - lastReset) > 60000) {
-                count.set(0);
-                registerLastReset.put(registerKey, now);
-            }
-            if (count.incrementAndGet() > 3) {
-                return Result.badRequest("注册过于频繁，请 1 分钟后再试").toResponseEntity();
-            }
+        if (!loginAttemptService.tryRegister(clientIp)) {
+            return Result.badRequest("注册过于频繁，请 1 分钟后再试").toResponseEntity();
         }
 
         String regPhone = registerRequest.getPhoneNumber();

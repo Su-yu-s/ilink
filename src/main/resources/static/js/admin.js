@@ -1,23 +1,25 @@
 ﻿// 管理后台JavaScript
-let adminUsersById = new Map();
-let adminTeamsById = new Map();
-let adminTeachersById = new Map();
-let adminAssetsById = new Map();
-let adminCommunityPostsById = new Map();
-let adminUserEditModal = null;
-let adminUserDetailModal = null;
-let adminRecordDetailModal = null;
-let adminAllUsers = [];
-let adminFilteredUsers = [];
-let adminAllTeams = [];
-let adminFilteredTeams = [];
-let adminAllTeachers = [];
-let adminFilteredTeachers = [];
-let adminAllAssets = [];
-let adminFilteredAssets = [];
-let adminAllCommunityPosts = [];
-let adminFilteredCommunityPosts = [];
-let adminUserPage = 1;
+const AdminState = {
+    usersById: new Map(),
+    teamsById: new Map(),
+    teachersById: new Map(),
+    assetsById: new Map(),
+    communityPostsById: new Map(),
+    userEditModal: null,
+    userDetailModal: null,
+    recordDetailModal: null,
+    allUsers: [],
+    filteredUsers: [],
+    allTeams: [],
+    filteredTeams: [],
+    allTeachers: [],
+    filteredTeachers: [],
+    allAssets: [],
+    filteredAssets: [],
+    allCommunityPosts: [],
+    filteredCommunityPosts: [],
+    userPage: 1
+};
 const ADMIN_USER_PAGE_SIZE = 10;
 
 // 页面加载完成后初始化
@@ -36,17 +38,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const modalEl = document.getElementById('adminUserEditModal');
     if (modalEl && window.bootstrap && typeof window.bootstrap.Modal === 'function') {
-        adminUserEditModal = new window.bootstrap.Modal(modalEl);
+        AdminState.userEditModal = new window.bootstrap.Modal(modalEl);
     }
 
     const detailModalEl = document.getElementById('adminUserDetailModal');
     if (detailModalEl && window.bootstrap && typeof window.bootstrap.Modal === 'function') {
-        adminUserDetailModal = new window.bootstrap.Modal(detailModalEl);
+        AdminState.userDetailModal = new window.bootstrap.Modal(detailModalEl);
     }
 
     const recordDetailModalEl = document.getElementById('adminRecordDetailModal');
     if (recordDetailModalEl && window.bootstrap && typeof window.bootstrap.Modal === 'function') {
-        adminRecordDetailModal = new window.bootstrap.Modal(recordDetailModalEl);
+        AdminState.recordDetailModal = new window.bootstrap.Modal(recordDetailModalEl);
     }
 
     const saveBtn = document.getElementById('adminUserEditSaveBtn');
@@ -55,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     bindAdminSearch('userSearchInput', 'userSearchBtn', 'userSearchResetBtn', function() {
-        adminUserPage = 1;
+        AdminState.userPage = 1;
         applyUserSearchAndRender();
     });
     bindAdminSearch('teamSearchInput', 'teamSearchBtn', 'teamSearchResetBtn', applyTeamSearchAndRender);
@@ -112,7 +114,7 @@ function updateAdminListHint(hintId, total) {
 function getUserLabelById(userId) {
     const id = userId == null || userId === '' ? '' : String(userId);
     if (!id) return '未设置';
-    const user = adminUsersById.get(id);
+    const user = AdminState.usersById.get(id);
     if (!user) return `用户 #${id}`;
     const name = String(user.realName || user.username || '').trim() || `用户 #${id}`;
     return `${name}（ID:${id}）`;
@@ -203,9 +205,9 @@ function renderUserList(users) {
     const tbody = document.getElementById('userTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    adminUsersById = new Map((users || []).map(u => [String(u.id), u]));
-    adminAllUsers = Array.isArray(users) ? users.slice() : [];
-    adminUserPage = 1;
+    AdminState.usersById = new Map((users || []).map(u => [String(u.id), u]));
+    AdminState.allUsers = Array.isArray(users) ? users.slice() : [];
+    AdminState.userPage = 1;
     
     applyUserSearchAndRender();
 }
@@ -213,9 +215,9 @@ function renderUserList(users) {
 function applyUserSearchAndRender() {
     const kw = (document.getElementById('userSearchInput')?.value || '').trim().toLowerCase();
     if (!kw) {
-        adminFilteredUsers = adminAllUsers.slice();
+        AdminState.filteredUsers = AdminState.allUsers.slice();
     } else {
-        adminFilteredUsers = adminAllUsers.filter(user => {
+        AdminState.filteredUsers = AdminState.allUsers.filter(user => {
             const roleText = getUserRoleDisplayName(user.role || '');
             const haystack = [
                 user.id,
@@ -237,9 +239,9 @@ function applyUserSearchAndRender() {
             return haystack.includes(kw);
         });
     }
-    const maxPage = Math.max(1, Math.ceil(adminFilteredUsers.length / ADMIN_USER_PAGE_SIZE));
-    if (adminUserPage > maxPage) adminUserPage = maxPage;
-    renderUserPage(adminUserPage);
+    const maxPage = Math.max(1, Math.ceil(AdminState.filteredUsers.length / ADMIN_USER_PAGE_SIZE));
+    if (AdminState.userPage > maxPage) AdminState.userPage = maxPage;
+    renderUserPage(AdminState.userPage);
 }
 
 function renderUserPage(page) {
@@ -247,7 +249,7 @@ function renderUserPage(page) {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const total = adminFilteredUsers.length;
+    const total = AdminState.filteredUsers.length;
     if (total === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center admin-empty-cell">暂无匹配用户</td></tr>';
         renderUserPagination(0, 1);
@@ -257,10 +259,10 @@ function renderUserPage(page) {
 
     const maxPage = Math.max(1, Math.ceil(total / ADMIN_USER_PAGE_SIZE));
     const safePage = Math.min(Math.max(1, page), maxPage);
-    adminUserPage = safePage;
+    AdminState.userPage = safePage;
     const start = (safePage - 1) * ADMIN_USER_PAGE_SIZE;
     const end = Math.min(start + ADMIN_USER_PAGE_SIZE, total);
-    const pageItems = adminFilteredUsers.slice(start, end);
+    const pageItems = AdminState.filteredUsers.slice(start, end);
 
     pageItems.forEach(user => {
         const accountName = user && user.username ? String(user.username).trim() : '';
@@ -331,7 +333,7 @@ function renderUserPagination(total, currentPage) {
             e.preventDefault();
             const target = Number(this.getAttribute('data-page'));
             if (!Number.isFinite(target)) return;
-            if (target < 1 || target > maxPage || target === adminUserPage) return;
+            if (target < 1 || target > maxPage || target === AdminState.userPage) return;
             renderUserPage(target);
         });
     });
@@ -409,7 +411,7 @@ function renderAdminDetailAvatar(user, initial) {
 }
 
 function openUserDetailModal(userId) {
-    const user = adminUsersById.get(String(userId));
+    const user = AdminState.usersById.get(String(userId));
     if (!user) {
         showMessage('未找到用户信息', 'error');
         return;
@@ -451,8 +453,8 @@ function openUserDetailModal(userId) {
         </div>
     `;
 
-    if (adminUserDetailModal) {
-        adminUserDetailModal.show();
+    if (AdminState.userDetailModal) {
+        AdminState.userDetailModal.show();
     } else {
         const modalEl = document.getElementById('adminUserDetailModal');
         if (modalEl) modalEl.classList.add('show');
@@ -460,7 +462,7 @@ function openUserDetailModal(userId) {
 }
 
 function openUserEditModal(userId) {
-    const user = adminUsersById.get(String(userId));
+    const user = AdminState.usersById.get(String(userId));
     if (!user) {
         showMessage('未找到用户信息', 'error');
         return;
@@ -491,8 +493,8 @@ function openUserEditModal(userId) {
     if (schoolEl) schoolEl.value = user.school || '';
     if (collegeEl) collegeEl.value = user.college || '';
 
-    if (adminUserEditModal) {
-        adminUserEditModal.show();
+    if (AdminState.userEditModal) {
+        AdminState.userEditModal.show();
     } else {
         const modalEl = document.getElementById('adminUserEditModal');
         if (modalEl) modalEl.classList.add('show');
@@ -536,7 +538,7 @@ async function saveUserEditFromModal() {
         const result = await response.json();
         if (result.code === 200) {
             showMessage('用户信息更新成功', 'success');
-            if (adminUserEditModal) adminUserEditModal.hide();
+            if (AdminState.userEditModal) AdminState.userEditModal.hide();
             loadUsers();
         } else {
             showMessage(result.message || '更新失败', 'error');
@@ -627,8 +629,8 @@ function openAdminRecordDetailModal(title, summaryName, subtitle, fields) {
         </div>
     `;
 
-    if (adminRecordDetailModal) {
-        adminRecordDetailModal.show();
+    if (AdminState.recordDetailModal) {
+        AdminState.recordDetailModal.show();
     } else {
         const modalEl = document.getElementById('adminRecordDetailModal');
         if (modalEl) modalEl.classList.add('show');
@@ -654,14 +656,14 @@ async function loadTeams() {
 }
 
 function renderTeamList(teams) {
-    adminAllTeams = Array.isArray(teams) ? teams.slice() : [];
-    adminTeamsById = new Map(adminAllTeams.map(team => [String(team.id), team]));
+    AdminState.allTeams = Array.isArray(teams) ? teams.slice() : [];
+    AdminState.teamsById = new Map(AdminState.allTeams.map(team => [String(team.id), team]));
     applyTeamSearchAndRender();
 }
 
 function applyTeamSearchAndRender() {
     const keyword = document.getElementById('teamSearchInput')?.value || '';
-    adminFilteredTeams = adminAllTeams.filter(team => matchesKeyword([
+    AdminState.filteredTeams = AdminState.allTeams.filter(team => matchesKeyword([
         team.id,
         team.title,
         team.description,
@@ -673,8 +675,8 @@ function applyTeamSearchAndRender() {
         getUserLabelById(team.creatorId),
         formatTime(team.createdAt)
     ], keyword));
-    renderTeamRows(adminFilteredTeams);
-    updateAdminListHint('teamListHint', adminFilteredTeams.length);
+    renderTeamRows(AdminState.filteredTeams);
+    updateAdminListHint('teamListHint', AdminState.filteredTeams.length);
 }
 
 function renderTeamRows(teams) {
@@ -708,7 +710,7 @@ function renderTeamRows(teams) {
 }
 
 function openTeamDetailModal(teamId) {
-    const team = adminTeamsById.get(String(teamId));
+    const team = AdminState.teamsById.get(String(teamId));
     if (!team) {
         showMessage('未找到组队需求', 'error');
         return;
@@ -767,14 +769,14 @@ async function loadTeachers() {
 }
 
 function renderTeacherList(teachers) {
-    adminAllTeachers = Array.isArray(teachers) ? teachers.slice() : [];
-    adminTeachersById = new Map(adminAllTeachers.map(teacher => [String(teacher.id), teacher]));
+    AdminState.allTeachers = Array.isArray(teachers) ? teachers.slice() : [];
+    AdminState.teachersById = new Map(AdminState.allTeachers.map(teacher => [String(teacher.id), teacher]));
     applyTeacherSearchAndRender();
 }
 
 function applyTeacherSearchAndRender() {
     const keyword = document.getElementById('teacherSearchInput')?.value || '';
-    adminFilteredTeachers = adminAllTeachers.filter(teacher => matchesKeyword([
+    AdminState.filteredTeachers = AdminState.allTeachers.filter(teacher => matchesKeyword([
         teacher.id,
         teacher.userId,
         getUserLabelById(teacher.userId),
@@ -785,8 +787,8 @@ function applyTeacherSearchAndRender() {
         getStatusDisplayName(teacher.status, 'teacher'),
         formatTime(teacher.createdAt)
     ], keyword));
-    renderTeacherRows(adminFilteredTeachers);
-    updateAdminListHint('teacherListHint', adminFilteredTeachers.length);
+    renderTeacherRows(AdminState.filteredTeachers);
+    updateAdminListHint('teacherListHint', AdminState.filteredTeachers.length);
 }
 
 function renderTeacherRows(teachers) {
@@ -824,7 +826,7 @@ function renderTeacherRows(teachers) {
 }
 
 function openTeacherDetailModal(teacherId) {
-    const teacher = adminTeachersById.get(String(teacherId));
+    const teacher = AdminState.teachersById.get(String(teacherId));
     if (!teacher) {
         showMessage('未找到导师申请', 'error');
         return;
@@ -903,14 +905,14 @@ async function loadAssets() {
 }
 
 function renderAssetList(assets) {
-    adminAllAssets = Array.isArray(assets) ? assets.slice() : [];
-    adminAssetsById = new Map(adminAllAssets.map(asset => [String(asset.id), asset]));
+    AdminState.allAssets = Array.isArray(assets) ? assets.slice() : [];
+    AdminState.assetsById = new Map(AdminState.allAssets.map(asset => [String(asset.id), asset]));
     applyAssetSearchAndRender();
 }
 
 function applyAssetSearchAndRender() {
     const keyword = document.getElementById('assetSearchInput')?.value || '';
-    adminFilteredAssets = adminAllAssets.filter(asset => matchesKeyword([
+    AdminState.filteredAssets = AdminState.allAssets.filter(asset => matchesKeyword([
         asset.id,
         asset.title,
         asset.description,
@@ -920,8 +922,8 @@ function applyAssetSearchAndRender() {
         asset.viewCount,
         formatTime(asset.createdAt)
     ], keyword));
-    renderAssetRows(adminFilteredAssets);
-    updateAdminListHint('assetListHint', adminFilteredAssets.length);
+    renderAssetRows(AdminState.filteredAssets);
+    updateAdminListHint('assetListHint', AdminState.filteredAssets.length);
 }
 
 function renderAssetRows(assets) {
@@ -955,7 +957,7 @@ function renderAssetRows(assets) {
 }
 
 function openAssetDetailModal(assetId) {
-    const asset = adminAssetsById.get(String(assetId));
+    const asset = AdminState.assetsById.get(String(assetId));
     if (!asset) {
         showMessage('未找到成果信息', 'error');
         return;
@@ -1023,14 +1025,14 @@ function getCommunityCategoryLabel(category) {
 }
 
 function renderCommunityPostList(posts) {
-    adminAllCommunityPosts = Array.isArray(posts) ? posts.slice() : [];
-    adminCommunityPostsById = new Map(adminAllCommunityPosts.map(post => [String(post.id), post]));
+    AdminState.allCommunityPosts = Array.isArray(posts) ? posts.slice() : [];
+    AdminState.communityPostsById = new Map(AdminState.allCommunityPosts.map(post => [String(post.id), post]));
     applyCommunityPostSearchAndRender();
 }
 
 function applyCommunityPostSearchAndRender() {
     const keyword = document.getElementById('communitySearchInput')?.value || '';
-    adminFilteredCommunityPosts = adminAllCommunityPosts.filter(post => matchesKeyword([
+    AdminState.filteredCommunityPosts = AdminState.allCommunityPosts.filter(post => matchesKeyword([
         post.id,
         post.category,
         getCommunityCategoryLabel(post.category),
@@ -1044,8 +1046,8 @@ function applyCommunityPostSearchAndRender() {
         post.favoriteCount,
         formatTime(post.createdAt)
     ], keyword));
-    renderCommunityPostRows(adminFilteredCommunityPosts);
-    updateAdminListHint('communityListHint', adminFilteredCommunityPosts.length);
+    renderCommunityPostRows(AdminState.filteredCommunityPosts);
+    updateAdminListHint('communityListHint', AdminState.filteredCommunityPosts.length);
 }
 
 function renderCommunityPostRows(posts) {
@@ -1080,7 +1082,7 @@ function renderCommunityPostRows(posts) {
 }
 
 function openCommunityPostDetailModal(postId) {
-    const post = adminCommunityPostsById.get(String(postId));
+    const post = AdminState.communityPostsById.get(String(postId));
     if (!post) {
         showMessage('未找到帖子信息', 'error');
         return;
