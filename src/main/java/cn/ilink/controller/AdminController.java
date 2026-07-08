@@ -44,38 +44,41 @@ public class AdminController {
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
     private static final Set<String> ALLOWED_ROLES = Set.of("STUDENT", "TEACHER", "ADMIN");
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final TeamDemandServiceImpl teamDemandService;
+    private final TeacherApplicationServiceImpl teacherApplicationService;
+    private final AssetServiceImpl assetService;
+    private final CommunityPostServiceImpl communityPostService;
+    private final TeamApplicationServiceImpl teamApplicationService;
+    private final CommunityPostLikeMapper communityPostLikeMapper;
+    private final CommunityPostFavoriteMapper communityPostFavoriteMapper;
+    private final NotificationMapper notificationMapper;
+    private final ChatMessageMapper chatMessageMapper;
+    private final CommunityCommentMapper communityCommentMapper;
 
-    @Autowired
-    private TeamDemandServiceImpl teamDemandService;
-
-    @Autowired
-    private TeacherApplicationServiceImpl teacherApplicationService;
-
-    @Autowired
-    private AssetServiceImpl assetService;
-
-    @Autowired
-    private CommunityPostServiceImpl communityPostService;
-
-    @Autowired
-    private TeamApplicationServiceImpl teamApplicationService;
-
-    @Autowired
-    private CommunityPostLikeMapper communityPostLikeMapper;
-
-    @Autowired
-    private CommunityPostFavoriteMapper communityPostFavoriteMapper;
-
-    @Autowired
-    private NotificationMapper notificationMapper;
-
-    @Autowired
-    private ChatMessageMapper chatMessageMapper;
-
-    @Autowired
-    private CommunityCommentMapper communityCommentMapper;
+    public AdminController(UserService userService,
+                           TeamDemandServiceImpl teamDemandService,
+                           TeacherApplicationServiceImpl teacherApplicationService,
+                           AssetServiceImpl assetService,
+                           CommunityPostServiceImpl communityPostService,
+                           TeamApplicationServiceImpl teamApplicationService,
+                           CommunityPostLikeMapper communityPostLikeMapper,
+                           CommunityPostFavoriteMapper communityPostFavoriteMapper,
+                           NotificationMapper notificationMapper,
+                           ChatMessageMapper chatMessageMapper,
+                           CommunityCommentMapper communityCommentMapper) {
+        this.userService = userService;
+        this.teamDemandService = teamDemandService;
+        this.teacherApplicationService = teacherApplicationService;
+        this.assetService = assetService;
+        this.communityPostService = communityPostService;
+        this.teamApplicationService = teamApplicationService;
+        this.communityPostLikeMapper = communityPostLikeMapper;
+        this.communityPostFavoriteMapper = communityPostFavoriteMapper;
+        this.notificationMapper = notificationMapper;
+        this.chatMessageMapper = chatMessageMapper;
+        this.communityCommentMapper = communityCommentMapper;
+    }
 
     @GetMapping("/dashboard")
     @ResponseBody

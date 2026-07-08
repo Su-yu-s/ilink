@@ -58,20 +58,23 @@ public class TeamController {
     private static final Pattern LEGACY_DEADLINE_PATTERN =
         Pattern.compile("[（(]\\s*截止日期\\s*[：:]\\s*([0-9]{4}-[0-9]{2}-[0-9]{2}|[^）)]+)\\s*[）)]");
 
-    @Autowired
-    private TeamDemandServiceImpl teamDemandService;
+    private final TeamDemandServiceImpl teamDemandService;
+    private final TeamApplicationServiceImpl teamApplicationService;
+    private final UserService userService;
+    private final NotificationService notificationService;
+    private final UserSkillMapper userSkillMapper;
 
-    @Autowired
-    private TeamApplicationServiceImpl teamApplicationService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private NotificationService notificationService;
-
-    @Autowired
-    private UserSkillMapper userSkillMapper;
+    public TeamController(TeamDemandServiceImpl teamDemandService,
+                          TeamApplicationServiceImpl teamApplicationService,
+                          UserService userService,
+                          NotificationService notificationService,
+                          UserSkillMapper userSkillMapper) {
+        this.teamDemandService = teamDemandService;
+        this.teamApplicationService = teamApplicationService;
+        this.userService = userService;
+        this.notificationService = notificationService;
+        this.userSkillMapper = userSkillMapper;
+    }
 
     @GetMapping("/list")
     @ResponseBody

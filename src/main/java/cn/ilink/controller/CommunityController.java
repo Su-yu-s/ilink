@@ -47,26 +47,29 @@ public class CommunityController {
     private static final int COMMENT_MAX = 2000;
     private static final int EXCERPT_LEN = 220;
 
-    @Autowired
-    private CommunityPostServiceImpl communityPostService;
+    private final CommunityPostServiceImpl communityPostService;
+    private final CommunityPostInteractionService communityPostInteractionService;
+    private final CommunityPostFavoriteMapper communityPostFavoriteMapper;
+    private final CommunityCommentServiceImpl communityCommentService;
+    private final UserService userService;
+    private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
-    @Autowired
-    private CommunityPostInteractionService communityPostInteractionService;
-
-    @Autowired
-    private CommunityPostFavoriteMapper communityPostFavoriteMapper;
-
-    @Autowired
-    private CommunityCommentServiceImpl communityCommentService;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private NotificationService notificationService;
+    public CommunityController(CommunityPostServiceImpl communityPostService,
+                               CommunityPostInteractionService communityPostInteractionService,
+                               CommunityPostFavoriteMapper communityPostFavoriteMapper,
+                               CommunityCommentServiceImpl communityCommentService,
+                               UserService userService,
+                               ObjectMapper objectMapper,
+                               NotificationService notificationService) {
+        this.communityPostService = communityPostService;
+        this.communityPostInteractionService = communityPostInteractionService;
+        this.communityPostFavoriteMapper = communityPostFavoriteMapper;
+        this.communityCommentService = communityCommentService;
+        this.userService = userService;
+        this.objectMapper = objectMapper;
+        this.notificationService = notificationService;
+    }
 
     @GetMapping("/posts")
     @ResponseBody
