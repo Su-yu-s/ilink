@@ -44,7 +44,6 @@ async function request(url, options = {}) {
     const config = {
         headers: {
             'Content-Type': 'application/json',
-            'X-XSRF-TOKEN': getCsrfToken(),
             ...requestOptions.headers
         },
         credentials: 'same-origin',
@@ -933,6 +932,8 @@ window.ILink = {
     showFieldHint: showFieldHint,
     clearFieldHint: clearFieldHint,
     formatTime: formatTime,
+    teamStatusLabel: teamStatusLabel,
+    CATEGORY_LABELS: CATEGORY_LABELS,
     ParticleSystem: ParticleSystem,
     ScrollAnimator: ScrollAnimator,
     NumberCounter: NumberCounter
