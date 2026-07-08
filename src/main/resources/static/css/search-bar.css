@@ -1,0 +1,346 @@
+/* ========================================
+   iLink Unified Search Bar — 暖白金系
+   5 个页面共用：组队大厅 / 导师招贤 / 交流社区 / 竞赛目录 / 成果展示
+   ======================================== */
+
+/* === 搜索栏外壳 === */
+.il-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 72px;
+    padding: 0 20px;
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.il-search-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.il-search-bar:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-default);
+}
+
+/* === 搜索输入框 === */
+.il-search-bar__input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+}
+
+.il-search-bar__input-wrap svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+    pointer-events: none;
+}
+
+.il-search-bar__input {
+    width: 100%;
+    height: 40px;
+    padding: 0 16px 0 42px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-light);
+    font-size: 14px;
+    color: var(--text-primary);
+    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+.il-search-bar__input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.il-search-bar__input:focus {
+    border-color: var(--accent, #b8956a);
+    background: var(--bg-white);
+    box-shadow: 0 0 0 3px rgba(184, 149, 106, 0.12);
+}
+
+/* === 下拉选择器 === */
+.il-search-bar__select {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.il-search-bar__select select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    height: 40px;
+    padding: 0 36px 0 14px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-light);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    min-width: 100px;
+}
+
+.il-search-bar__select select:hover {
+    border-color: var(--border-default);
+    background: var(--bg-white);
+}
+
+.il-search-bar__select select:focus {
+    border-color: var(--accent, #b8956a);
+    box-shadow: 0 0 0 3px rgba(184, 149, 106, 0.12);
+    color: var(--text-primary);
+}
+
+.il-search-bar__select::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid var(--text-tertiary);
+    pointer-events: none;
+}
+
+/* === 分类标签（胶囊） === */
+.il-search-bar__tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-shrink: 0;
+}
+
+.il-search-bar__tags::-webkit-scrollbar {
+    display: none;
+}
+
+.il-search-bar__tag {
+    height: 32px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: #f0ebe5;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.il-search-bar__tag:hover {
+    background: var(--border-light);
+    color: var(--text-primary);
+}
+
+.il-search-bar__tag.active {
+    background: #3d3229;
+    color: #faf6f0;
+    border-color: #3d3229;
+}
+
+/* === 按钮 === */
+
+/* Primary（搜索/发布）— 黑棕底白字 */
+.il-search-bar__btn--primary {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif);
+    border: none;
+    background: #3d3229;
+    color: #faf9f7;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.il-search-bar__btn--primary:hover {
+    background: #2c2419;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.il-search-bar__btn--primary svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Secondary（重置/刷新）— 白底灰边 */
+.il-search-bar__btn--secondary {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif);
+    border: 1px solid var(--border-light);
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.il-search-bar__btn--secondary:hover {
+    background: var(--bg-hover, #f5f0eb);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+}
+
+.il-search-bar__btn--secondary svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Ghost（发布/写文章/申请）— 白底黑边 Hover 反色 */
+.il-search-bar__btn--ghost {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif);
+    border: 1px solid var(--text-primary);
+    background: var(--bg-white);
+    color: var(--text-primary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.il-search-bar__btn--ghost:hover {
+    background: #3d3229;
+    color: #faf6f0;
+    border-color: #3d3229;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.il-search-bar__btn--ghost svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* === Spacer（撑开左右间距） === */
+.il-search-bar__spacer {
+    flex: 1;
+    min-width: 0;
+}
+
+/* === 更多下拉按钮（竞赛目录用） === */
+.il-search-bar__more {
+    height: 32px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: #f0ebe5;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.il-search-bar__more:hover {
+    background: var(--border-light);
+    color: var(--text-primary);
+}
+
+.il-search-bar__more svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* === 搜索栏外壳容器 === */
+body[data-app-page="team-market"] .il-search-bar,
+body[data-app-page="teacher-wall"] .il-search-bar,
+body[data-app-page="community"] .il-search-bar,
+body[data-app-page="competitions"] .il-search-bar,
+body[data-app-page="gallery"] .il-search-bar {
+    margin: 0 auto;
+}
+
+/* === 响应式 === */
+@media (max-width: 768px) {
+    .il-search-bar {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 16px;
+        gap: 10px;
+    }
+
+    .il-search-bar__input-wrap {
+        min-width: 100%;
+        order: -1;
+    }
+
+    .il-search-bar__tags {
+        width: 100%;
+        order: -1;
+    }
+
+    .il-search-bar__spacer {
+        display: none;
+    }
+
+    .il-search-bar__select select,
+    .il-search-bar__btn--primary,
+    .il-search-bar__btn--secondary,
+    .il-search-bar__btn--ghost {
+        width: 100%;
+        justify-content: center;
+    }
+}

@@ -18,7 +18,7 @@ let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadCurrentUser();
-    document.querySelectorAll('#channelTabs .il-tab').forEach(btn => {
+    document.querySelectorAll('#channelTabs .il-search-bar__tag').forEach(btn => {
         btn.addEventListener('click', function() {
             const cat = this.getAttribute('data-category') || '';
             selectCategory(cat);
@@ -227,7 +227,7 @@ function selectCategory(cat) {
     currentCategory = cat == null ? '' : String(cat);
     currentPage = 1;
 
-    document.querySelectorAll('#channelTabs .il-tab').forEach(btn => {
+    document.querySelectorAll('#channelTabs .il-search-bar__tag').forEach(btn => {
         const bcat = btn.getAttribute('data-category') || '';
         btn.classList.toggle('active', bcat === currentCategory);
     });

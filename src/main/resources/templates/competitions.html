@@ -6,7 +6,8 @@
     <title>竞赛目录 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/competitions.css?v=2.9" rel="stylesheet">
+    <link href="/css/competitions.css?v=3.0" rel="stylesheet">
+    <link href="/css/search-bar.css?v=1.0" rel="stylesheet">
 </head>
 <body data-app-page="competitions" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'competition')"></div>
@@ -24,13 +25,19 @@
                 <p class="il-hero__desc">汇总国内高校常见学科竞赛与创新创业赛事，便于检索赛道、主办单位与大致赛季。具体章程与报名时间以各赛官网为准。</p>
             </div>
 
-            <div class="il-toolbar competition-toolbar">
-                <div class="il-toolbar-row">
-                    <nav class="competition-track-tabs"
-                         id="competitionTrackTabs" aria-label="竞赛分类">
-                    </nav>
-                    <div class="il-toolbar-search competition-toolbar__search" th:replace="~{fragments/search-field :: combo('compSearchInput', '搜索竞赛名称、标签…', 'compSearchBtn', '搜索', '搜索竞赛')}"></div>
+            <div class="il-search-bar competition-toolbar">
+                <div class="il-search-bar__tags competition-track-tabs" id="competitionTrackTabs">
                 </div>
+
+                <div class="il-search-bar__input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="search" id="compSearchInput" class="il-search-bar__input" placeholder="搜索竞赛名称、标签…" aria-label="搜索竞赛">
+                </div>
+
+                <button type="button" class="il-search-bar__btn il-search-bar__btn--primary" id="compSearchBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    搜索
+                </button>
             </div>
 
             <div id="competitionGrid" class="row g-4 competition-grid">

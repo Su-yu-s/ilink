@@ -49,118 +49,6 @@ body[data-app-page="gallery"] .il-hero__desc {
     margin: 0;
 }
 
-/* === Toolbar / Filter Bar === */
-/* Neutralise pages.css .il-toolbar background/border/shadows — gallery runs chrome-free */
-body[data-app-page="gallery"] .il-toolbar {
-    padding: 0 5vw 32px ;
-    max-width: 1400px ;
-    margin: 0 auto ;
-    background: transparent ;
-    border: 0 ;
-    border-radius: 0 ;
-    box-shadow: none ;
-}
-
-body[data-app-page="gallery"] .il-toolbar-inner {
-    display: flex ;
-    align-items: center ;
-    gap: 12px ;
-    flex-wrap: nowrap ;
-    background: transparent ;
-    border: 0 ;
-    border-radius: 0 ;
-    box-shadow: none ;
-}
-
-/* === Search Field (gc-search namespace avoids style.css conflicts) === */
-body[data-app-page="gallery"] .gc-search {
-    flex: 1 1 280px ;
-    min-width: 200px ;
-    display: flex ;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 16px ;
-    background: var(--bg, #f8f7f5) ;
-    border: 1px solid var(--border, #ebeae8) ;
-    border-radius: var(--radius, 12px) ;
-    transition: all 0.2s ease;
-    min-height: auto ;
-    box-shadow: none ;
-}
-
-body[data-app-page="gallery"] .gc-search:focus-within {
-    border-color: var(--accent, #c4a77d);
-    box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
-}
-
-body[data-app-page="gallery"] .gc-search svg {
-    width: 16px;
-    height: 16px;
-    color: var(--text-muted, #9a9a9a);
-    flex-shrink: 0;
-}
-
-body[data-app-page="gallery"] .gc-search input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    color: var(--text-primary, #1a1a1a);
-    outline: none;
-    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif);
-    min-height: auto ;
-    border-radius: 0 ;
-}
-
-body[data-app-page="gallery"] .gc-search input::placeholder {
-    color: var(--text-muted, #9a9a9a);
-}
-
-/* === Category / Sort Selects (gc-select namespace avoids style.css conflicts) === */
-body[data-app-page="gallery"] .gc-select {
-    position: relative;
-}
-
-body[data-app-page="gallery"] .gc-select select {
-    appearance: none ;
-    -webkit-appearance: none ;
-    -moz-appearance: none ;
-    padding: 10px 36px 10px 16px ;
-    background: var(--bg, #f8f7f5) ;
-    border: 1px solid var(--border, #ebeae8) ;
-    border-radius: var(--radius, 12px) ;
-    font-size: 14px ;
-    font-weight: 500 ;
-    color: var(--text-primary, #1a1a1a) ;
-    font-family: var(--font-sans, "Inter", "Noto Sans SC", sans-serif) ;
-    cursor: pointer ;
-    outline: none ;
-    transition: all 0.2s ease ;
-    min-height: auto ;
-    box-shadow: none ;
-    width: auto ;
-    display: inline-block ;
-}
-
-body[data-app-page="gallery"] .gc-select select:focus {
-    border-color: var(--accent, #c4a77d);
-    box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
-}
-
-body[data-app-page="gallery"] .gc-select::after {
-    content: "";
-    position: absolute;
-    right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid var(--text-muted, #9a9a9a);
-    pointer-events: none;
-}
-
 /* === Card Grid === */
 body[data-app-page="gallery"] .gc-grid {
     padding: 0 5vw 48px;
@@ -520,8 +408,6 @@ body[data-app-page="gallery"] .gc-empty p {
         align-items: stretch;
         flex-wrap: wrap ;
     }
-    body[data-app-page="gallery"] .gc-search { min-width: auto ; }
-    body[data-app-page="gallery"] .gc-select select { width: 100% ; }
 }
 
 /* Gallery shell overrides — migrated from style.css */

@@ -254,115 +254,6 @@ body[data-app-page="community"] .il-post-avatar img {
   min-width: 0 ;
   object-fit: cover ;
 }
-body[data-app-page="community"] .il-tab[data-category] {
-  background: var(--bg-white) ;
-  color: var(--text-secondary) ;
-  border: 1px solid var(--border-light) ;
-}
-body[data-app-page="community"] .il-tab[data-category]:hover {
-  background: var(--color-gray-100) ;
-  color: var(--text-primary) ;
-  border-color: var(--border-default) ;
-}
-body[data-app-page="community"] .il-tabs .il-tab.active {
-  background: #111827 ;
-  color: var(--text-white) ;
-  border-color: #111827 ;
-}
-body[data-app-page="community"] .il-toolbar {
-  padding: 10px 14px ;
-  margin-bottom: 18px ;
-}
-body[data-app-page="community"] .il-toolbar-row {
-  display: flex ;
-  flex-wrap: nowrap ;
-  align-items: center ;
-  gap: 12px ;
-}
-body[data-app-page="community"] .il-tabs {
-  flex: 0 1 auto ;
-  min-width: 0 ;
-  gap: 6px ;
-  justify-content: flex-start ;
-  flex-wrap: nowrap ;
-  overflow-x: auto ;
-  overflow-y: hidden ;
-  border-bottom: none ;
-  padding-bottom: 0 ;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-body[data-app-page="community"] .il-tabs::-webkit-scrollbar {
-  display: none;
-}
-body[data-app-page="community"] .il-tab {
-  flex: 0 0 auto ;
-  min-height: 36px ;
-  padding: 7px 14px ;
-  border-radius: 999px ;
-}
-body[data-app-page="community"] .il-toolbar-search {
-  flex: 1 1 200px ;
-  min-width: 0 ;
-}
-body[data-app-page="community"] .il-toolbar-search .il-search-field,
-body[data-app-page="community"] .il-toolbar-search .il-search-field--toolbar {
-  width: 100% ;
-  max-width: none ;
-  min-width: 0 ;
-  min-height: 40px ;
-  border-radius: 10px ;
-  padding: 0 12px 0 40px ;
-  border-color: var(--border-light) ;
-  background: var(--bg-white) ;
-}
-body[data-app-page="community"] .il-toolbar-search .il-search-field__input {
-  min-height: 38px ;
-  font-size: 14px ;
-}
-body[data-app-page="community"] .il-toolbar-actions {
-  display: flex ;
-  flex: 0 0 auto ;
-  flex-wrap: nowrap ;
-  align-items: center ;
-  gap: 8px ;
-}
-body[data-app-page="community"] .il-toolbar-actions .il-btn {
-  display: inline-flex ;
-  flex-direction: row ;
-  align-items: center ;
-  justify-content: center ;
-  gap: 6px ;
-  min-height: 40px ;
-  height: 40px ;
-  padding: 0 14px ;
-  border-radius: 10px ;
-  white-space: nowrap ;
-  flex-shrink: 0 ;
-}
-body[data-app-page="community"] .il-toolbar-actions .il-btn-primary {
-  background: #111827 ;
-  color: var(--text-white) ;
-  border: 1px solid #111827 ;
-}
-body[data-app-page="community"] .il-toolbar-actions .il-btn-primary:hover {
-  background: #374151 ;
-  border-color: #374151 ;
-}
-body[data-app-page="community"] .il-toolbar-actions .il-btn-secondary {
-  background: var(--bg-white) ;
-  color: var(--text-primary) ;
-  border: 1px solid var(--border-light) ;
-}
-body[data-app-page="community"] .il-toolbar-actions .il-btn-secondary:hover {
-  background: var(--color-gray-100) ;
-  border-color: var(--border-default) ;
-  color: var(--text-primary) ;
-}
-body[data-app-page="community"] .il-toolbar-actions .il-btn__icon {
-  flex-shrink: 0;
-  display: block;
-}
 body[data-app-page="community"] .il-modal-overlay {
   position: fixed;
   inset: 0;
@@ -376,19 +267,6 @@ body[data-app-page="community"] .il-modal-overlay {
 }
 body[data-app-page="community"] .il-modal-overlay.show {
   display: flex;
-}
-body[data-app-page="community"] .il-modal-overlay > .il-modal {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  width: 100%;
-  max-width: 700px;
-  box-shadow: var(--shadow-xl);
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: ilink-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 body[data-app-page="community"] .il-modal-header {
   padding: var(--space-5) var(--space-6);

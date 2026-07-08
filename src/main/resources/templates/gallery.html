@@ -6,7 +6,8 @@
     <title>成果展示 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/gallery.css?v=4.2" rel="stylesheet">
+    <link href="/css/gallery.css?v=4.3" rel="stylesheet">
+    <link href="/css/search-bar.css?v=1.0" rel="stylesheet">
     <link href="/css/asset-publish.css?v=1.0" rel="stylesheet">
     <style>
         /* publishBtn 右对齐 */
@@ -30,39 +31,47 @@
         </section>
 
         <!-- Filter Bar -->
-        <section class="il-toolbar" aria-label="成果筛选">
-            <div class="il-toolbar-inner">
-                <div th:replace="~{fragments/search-field :: field('keywordInput', '搜索成果名称、描述…', '搜索', 'text', 'il-search-field--gallery')}"></div>
-                <div class="gc-select">
-                    <select id="category" aria-label="分类">
-                        <option value="">全部分类</option>
-                        <option value="竞赛获奖">竞赛获奖</option>
-                        <option value="论文发表">论文发表</option>
-                        <option value="科研项目">科研项目</option>
-                        <option value="作品项目">作品 / 项目</option>
-                        <option value="荣誉称号">荣誉称号</option>
-                        <option value="奖学金">奖学金</option>
-                    </select>
-                </div>
-                <div class="gc-select">
-                    <select id="sort" aria-label="排序">
-                        <option value="latest">最新发布</option>
-                        <option value="popular">最多浏览</option>
-                    </select>
-                </div>
-                <button type="button" class="il-btn il-btn-ghost" id="resetBtn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 0 6.74 2.74L21 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
-                    重置
-                </button>
-                <button type="button" class="il-btn il-btn-dark" id="searchBtn">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    搜索
-                </button>
-                <button type="button" class="il-btn il-btn-dark" id="publishBtn" onclick="GalleryApp.openPublish()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                    发布成果
-                </button>
+        <section class="il-search-bar" aria-label="成果筛选">
+            <div class="il-search-bar__input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input type="search" id="keyword" class="il-search-bar__input" placeholder="搜索成果名称、描述…" aria-label="搜索">
             </div>
+
+            <div class="il-search-bar__select">
+                <select id="category" aria-label="分类">
+                    <option value="">全部分类</option>
+                    <option value="竞赛获奖">竞赛获奖</option>
+                    <option value="论文发表">论文发表</option>
+                    <option value="科研项目">科研项目</option>
+                    <option value="作品项目">作品 / 项目</option>
+                    <option value="荣誉称号">荣誉称号</option>
+                    <option value="奖学金">奖学金</option>
+                </select>
+            </div>
+
+            <div class="il-search-bar__select">
+                <select id="sort" aria-label="排序">
+                    <option value="latest">最新发布</option>
+                    <option value="popular">最多浏览</option>
+                </select>
+            </div>
+
+            <button type="button" class="il-search-bar__btn il-search-bar__btn--secondary" id="resetBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 0 6.74 2.74L21 8"/><path d="M3 3v5h5"/></svg>
+                重置
+            </button>
+
+            <button type="button" class="il-search-bar__btn il-search-bar__btn--primary" id="searchBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                搜索
+            </button>
+
+            <div class="il-search-bar__spacer"></div>
+
+            <button type="button" class="il-search-bar__btn il-search-bar__btn--ghost" onclick="GalleryApp.openPublish()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                发布成果
+            </button>
         </section>
 
         <!-- Card Grid -->
