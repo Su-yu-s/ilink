@@ -40,17 +40,19 @@ public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private LoginAttemptService loginAttemptService;
-
-    @Autowired(required = false)
-    private HomeStatsService homeStatsService;
+    private final UserService userService;
+    private final LoginAttemptService loginAttemptService;
+    private final HomeStatsService homeStatsService;
 
     /** 读取登录前访问的地址，登录成功后跳回原页面。 */
     private final RequestCache requestCache = new HttpSessionRequestCache();
+
+    public AuthController(UserService userService, LoginAttemptService loginAttemptService,
+                          @Autowired(required = false) HomeStatsService homeStatsService) {
+        this.userService = userService;
+        this.loginAttemptService = loginAttemptService;
+        this.homeStatsService = homeStatsService;
+    }
 
     @GetMapping("/login")
     public String loginPage(Model model, HttpSession session) {
