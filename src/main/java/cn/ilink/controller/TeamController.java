@@ -13,6 +13,7 @@ import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
 import cn.ilink.util.UserPreviewHelper;
+import cn.ilink.vo.MyTeamApplicationVO;
 import cn.ilink.vo.MyTeamVO;
 import cn.ilink.vo.PendingApplicationVO;
 import cn.ilink.vo.TeamDemandVO;
@@ -156,15 +157,15 @@ public class TeamController {
         Map<Long, TeamDemand> teamMap = teamIds.isEmpty() ? Collections.emptyMap()
             : teamDemandService.listByIds(teamIds).stream()
                 .collect(Collectors.toMap(TeamDemand::getId, t -> t, (a, b) -> a));
-        List<Map<String, Object>> rows = apps.stream().map((a) -> {
+        List<MyTeamApplicationVO> rows = apps.stream().map((a) -> {
             TeamDemand t = teamMap.get(a.getTeamId());
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id", a.getId());
-            m.put("teamId", a.getTeamId());
-            m.put("teamTitle", t != null ? t.getTitle() : "（组队已删除）");
-            m.put("status", a.getStatus());
-            m.put("createdAt", a.getCreatedAt());
-            return m;
+            MyTeamApplicationVO vo = new MyTeamApplicationVO();
+            vo.setId(a.getId());
+            vo.setTeamId(a.getTeamId());
+            vo.setTeamTitle(t != null ? t.getTitle() : "（组队已删除）");
+            vo.setStatus(a.getStatus());
+            vo.setCreatedAt(a.getCreatedAt());
+            return vo;
         }).collect(Collectors.toList());
         return Result.ok("获取成功", rows).toResponseEntity();
     }
