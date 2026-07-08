@@ -54,9 +54,9 @@ class ApiPathContractTest {
 
     @Test
     void galleryTemplateReadsPaginationFromExtra() throws Exception {
-        Path galleryHtml = Path.of("src/main/resources/templates/gallery.html");
-        assertTrue(Files.exists(galleryHtml), "gallery.html should exist");
-        String content = Files.readString(galleryHtml, StandardCharsets.UTF_8);
+        Path galleryJs = Path.of("src/main/resources/static/js/gallery.js");
+        assertTrue(Files.exists(galleryJs), "gallery.js should exist");
+        String content = Files.readString(galleryJs, StandardCharsets.UTF_8);
         assertTrue(content.contains("d.extra && d.extra.pagination"),
             "gallery must resolve pagination from Result.extra");
         assertFalse(content.contains("render(d.data, d.pagination)"),

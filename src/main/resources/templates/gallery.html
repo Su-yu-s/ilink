@@ -32,10 +32,7 @@
         <!-- Filter Bar -->
         <section class="il-toolbar" aria-label="成果筛选">
             <div class="il-toolbar-inner">
-                <div class="gc-search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                    <input type="text" id="keyword" placeholder="搜索成果名称、描述…">
-                </div>
+                <div th:replace="~{fragments/search-field :: field('keywordInput', '搜索成果名称、描述…', '搜索', 'text', 'il-search-field--gallery')}"></div>
                 <div class="gc-select">
                     <select id="category" aria-label="分类">
                         <option value="">全部分类</option>
