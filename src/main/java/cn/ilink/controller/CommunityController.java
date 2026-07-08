@@ -13,6 +13,7 @@ import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.mapper.CommunityPostFavoriteMapper;
 import cn.ilink.util.HtmlSanitizer;
+import cn.ilink.vo.CommunityCommentVO;
 import cn.ilink.vo.CommunityPostDetailVO;
 import cn.ilink.vo.CommunityPostListItemVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -366,7 +367,7 @@ public class CommunityController {
 
         Set<Long> uids = comments.stream().map(CommunityComment::getUserId).collect(Collectors.toSet());
         Map<Long, User> authorMap = loadAuthors(uids);
-        List<Map<String, Object>> list = comments.stream()
+        List<CommunityCommentVO> list = comments.stream()
             .map(c -> toCommentView(c, authorMap.get(c.getUserId()), currentUser))
             .collect(Collectors.toList());
 
@@ -623,20 +624,20 @@ public class CommunityController {
         }
     }
 
-    private Map<String, Object> toCommentView(CommunityComment c, User author, User currentUser) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("id", c.getId());
-        m.put("postId", c.getPostId());
-        m.put("userId", c.getUserId());
-        m.put("authorDisplay", authorDisplay(author));
-        m.put("authorAvatar", resolveAuthorAvatar(author, currentUser));
-        m.put("content", c.getContent());
-        m.put("createdAt", c.getCreatedAt());
+    private CommunityCommentVO toCommentView(CommunityComment c, User author, User currentUser) {
+        CommunityCommentVO vo = new CommunityCommentVO();
+        vo.setId(c.getId());
+        vo.setPostId(c.getPostId());
+        vo.setUserId(c.getUserId());
+        vo.setAuthorDisplay(authorDisplay(author));
+        vo.setAuthorAvatar(resolveAuthorAvatar(author, currentUser));
+        vo.setContent(c.getContent());
+        vo.setCreatedAt(c.getCreatedAt());
         boolean canDelete = currentUser != null && (
             "ADMIN".equals(currentUser.getRole()) || currentUser.getId().equals(c.getUserId())
         );
-        m.put("canDelete", canDelete);
-        return m;
+        vo.setCanDelete(canDelete);
+        return vo;
     }
 
     private List<Map<String, Object>> parseAttachmentsList(String json) {
