@@ -6,7 +6,8 @@
     <title>导师招贤 - iLink</title>
 
     <th:block th:replace="~{fragments/head-assets :: core(bootstrap=true)}"></th:block>
-    <link href="/css/teacher-wall.css?v=2.3" rel="stylesheet">
+    <link href="/css/teacher-wall.css?v=2.4" rel="stylesheet">
+    <link href="/css/search-bar.css?v=1.0" rel="stylesheet">
 </head>
 <body data-app-page="teacher-wall" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="~{fragments/header :: header(${currentUser}, 'teacher')}"></div>
@@ -27,13 +28,13 @@
         <!-- Search Panel -->
         <section class="toolbar-section">
             <div class="toolbar-inner">
-                <div class="search-panel">
-                    <div class="search-input-wrap">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        <div th:replace="~{fragments/search-field :: field('keyword', '搜索姓名、专业或研究方向', '', 'search', '')}"></div>
+                <div class="il-search-bar">
+                    <div class="il-search-bar__input-wrap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="search" id="keyword" class="il-search-bar__input" placeholder="搜索姓名、专业或研究方向" aria-label="搜索">
                     </div>
-                    <div class="search-divider"></div>
-                    <div class="search-select">
+
+                    <div class="il-search-bar__select">
                         <select id="major" aria-label="专业领域">
                             <option value="">全部专业</option>
                             <option value="计算机科学" th:selected="${major == '计算机科学'}">计算机科学</option>
@@ -42,7 +43,8 @@
                             <option value="生物医学" th:selected="${major == '生物医学'}">生物医学</option>
                         </select>
                     </div>
-                    <div class="search-select">
+
+                    <div class="il-search-bar__select">
                         <select id="title" aria-label="职称">
                             <option value="">全部职称</option>
                             <option value="教授" th:selected="${title == '教授'}">教授</option>
@@ -50,13 +52,18 @@
                             <option value="讲师" th:selected="${title == '讲师'}">讲师</option>
                         </select>
                     </div>
-                    <button type="button" class="search-btn" id="searchBtn">搜索</button>
-                    <div class="search-apply">
-                        <button type="button" class="btn-pill-accent" onclick="openApplyModal()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                            申请成为导师
-                        </button>
-                    </div>
+
+                    <button type="button" class="il-search-bar__btn il-search-bar__btn--primary" id="searchBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        搜索
+                    </button>
+
+                    <div class="il-search-bar__spacer"></div>
+
+                    <button type="button" class="il-search-bar__btn il-search-bar__btn--ghost" onclick="openApplyModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                        申请成为导师
+                    </button>
                 </div>
             </div>
         </section>
