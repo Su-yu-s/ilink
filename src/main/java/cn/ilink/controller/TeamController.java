@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import static cn.ilink.common.ControllerUtils.safePage;
+import static cn.ilink.common.ControllerUtils.safeSize;
 
 @Controller
 @RequestMapping("/api/team")
@@ -103,8 +105,8 @@ public class TeamController {
             }
         }
 
-        int safePage = Math.max(page, 1);
-        int safeSize = Math.min(Math.max(size, 1), 100);
+        int safePage = safePage(page);
+        int safeSize = safeSize(size, 100);
         Page<TeamDemand> pageReq = new Page<>(safePage, safeSize);
         Page<TeamDemand> result = teamDemandService.page(pageReq, wrapper);
         List<Map<String, Object>> data = enrichTeamsWithCreators(result.getRecords());

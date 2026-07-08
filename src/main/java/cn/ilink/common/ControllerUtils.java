@@ -85,4 +85,14 @@ public final class ControllerUtils {
     public static boolean isTeacher(User user) {
         return user != null && "TEACHER".equals(user.getRole());
     }
+
+    /** 统一分页参数安全处理：page≥1 */
+    public static int safePage(int page) {
+        return Math.max(page, 1);
+    }
+
+    /** 统一分页参数安全处理：1≤size≤max */
+    public static int safeSize(int size, int max) {
+        return Math.min(Math.max(size, 1), max);
+    }
 }
