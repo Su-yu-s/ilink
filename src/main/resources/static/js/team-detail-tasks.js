@@ -3,15 +3,6 @@ let currentTeamMembers = [];
 let currentTaskIdForSubmit = null;
 let currentEditingTaskId = null;
 
-function taskSafeText(value) {
-    if (typeof escapeHtml === 'function') return escapeHtml(value);
-    return String(value == null ? '' : value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
 
 function taskStatusLabel(status) {
     const map = {
@@ -87,7 +78,7 @@ async function loadTasks() {
 
 function renderTaskCard(task) {
     const statusText = taskStatusLabel(task.status);
-    const assignee = taskSafeText(task.assigneeName || '未分配');
+    const assignee = escapeHtml(task.assigneeName || '未分配');
     const deadline = task.deadline ? new Date(task.deadline).toLocaleDateString('zh-CN') : '无截止日期';
     const isLeader = isTeamLeaderForTasks();
     const isAssignee = Number(task.assignedTo) === Number(currentTaskUserId);
@@ -111,14 +102,14 @@ function renderTaskCard(task) {
     return `<article class="il-task-card" data-task-id="${Number(task.id)}">
         <div class="il-task-card__header">
             <div class="il-task-card__title-row">
-                <h3 class="il-task-card__title">${taskSafeText(task.taskTitle || '未命名任务')}</h3>
+                <h3 class="il-task-card__title">${escapeHtml(task.taskTitle || '未命名任务')}</h3>
                 <span class="${taskStatusClass(task.status)}">${statusText}</span>
             </div>
-            <p class="il-task-card__desc">${taskSafeText((task.taskDescription || '').slice(0, 120))}</p>
+            <p class="il-task-card__desc">${escapeHtml((task.taskDescription || '').slice(0, 120))}</p>
         </div>
         <div class="il-task-card__meta">
             <span class="il-task-card__meta-item">${assignee}</span>
-            <span class="il-task-card__meta-item">${taskSafeText(deadline)}</span>
+            <span class="il-task-card__meta-item">${escapeHtml(deadline)}</span>
         </div>
         <div class="il-task-card__footer">${actions.join('')}</div>
     </article>`;
@@ -229,18 +220,18 @@ function renderSubmission(item) {
 
     const attachmentHtml = Array.isArray(attachments) && attachments.length
         ? `<div class="mt-2 d-flex flex-wrap gap-2">${attachments.map((file) => {
-            const name = taskSafeText(file.name || '附件');
-            const url = taskSafeText(file.url || '');
+            const name = escapeHtml(file.name || '附件');
+            const url = escapeHtml(file.url || '');
             return url ? `<a class="btn btn-sm btn-outline-secondary" href="${url}" target="_blank" rel="noopener">${name}</a>` : '';
         }).join('')}</div>`
         : '';
 
     return `<div class="border p-3 mb-2">
         <div class="d-flex justify-content-between gap-2 small text-muted mb-2">
-            <span>${taskSafeText(item.submitterName || '提交人')}</span>
+            <span>${escapeHtml(item.submitterName || '提交人')}</span>
             <span>${item.createdAt ? formatTime(item.createdAt) : ''}</span>
         </div>
-        <div style="white-space:pre-wrap;">${taskSafeText(item.content || item.remark || '无说明')}</div>
+        <div style="white-space:pre-wrap;">${escapeHtml(item.content || item.remark || '无说明')}</div>
         ${attachmentHtml}
     </div>`;
 }

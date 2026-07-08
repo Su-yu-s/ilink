@@ -20,14 +20,6 @@
         return document.getElementById(id);
     }
 
-    function safeText(value) {
-        return String(value == null ? '' : value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
 
     function notify(message, type) {
         if (typeof showMessage === 'function') {
@@ -148,7 +140,7 @@
             '<div class="kanban-empty-icon" aria-hidden="true">' +
                 '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 13h5"/></svg>' +
             '</div>' +
-            '<p>' + safeText(text || '暂无内容') + '</p>' +
+            '<p>' + escapeHtml(text || '暂无内容') + '</p>' +
         '</div>';
     }
 
@@ -253,23 +245,23 @@
             var name = member.username || member.realName || '成员';
             var userId = member.userId || member.id || '';
             var avatar = avatarUrl(member.avatar);
-            var initials = safeText(name).slice(0, 2).toUpperCase();
+            var initials = escapeHtml(name).slice(0, 2).toUpperCase();
             var meta = [member.major, member.grade, member.school].filter(Boolean).map(safeText).join(' / ');
             var role = member.isLeader || member.role === 'LEADER' ? '队长' : (member.role || '队员');
             var skills = Array.isArray(member.skills) ? member.skills.slice(0, 4) : [];
             var skillHtml = skills.length ? '<div class="member-card-skills">' + skills.map(function (skill) {
-                return '<span class="skill-tag">' + safeText(skill) + '</span>';
+                return '<span class="skill-tag">' + escapeHtml(skill) + '</span>';
             }).join('') + '</div>' : '';
             var joinTime = member.joinedAt ? '<div class="member-card-meta">加入于 ' + formatDate(member.joinedAt) + '</div>' : '';
             var avatarHtml = avatar
-                ? '<img src="' + safeText(avatar) + '" alt="' + safeText(name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div class="avatar-placeholder" style="display:none;">' + initials + '</div>'
+                ? '<img src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div class="avatar-placeholder" style="display:none;">' + initials + '</div>'
                 : '<div class="avatar-placeholder">' + initials + '</div>';
 
-            return '<button type="button" class="member-card" onclick="window.location.href=\'/user-profile.html?id=' + safeText(userId) + '\'">' +
+            return '<button type="button" class="member-card" onclick="window.location.href=\'/user-profile.html?id=' + escapeHtml(userId) + '\'">' +
                 '<span class="member-card-avatar">' + avatarHtml + '<span class="member-online-dot ' + (member.online ? 'online' : 'offline') + '"></span></span>' +
                 '<span class="member-card-info">' +
-                    '<span class="member-card-name">' + safeText(name) + '</span>' +
-                    '<span class="member-card-role">' + safeText(role) + '</span>' +
+                    '<span class="member-card-name">' + escapeHtml(name) + '</span>' +
+                    '<span class="member-card-role">' + escapeHtml(role) + '</span>' +
                     (meta ? '<span class="member-card-meta">' + meta + '</span>' : '') +
                     joinTime +
                     skillHtml +
@@ -340,27 +332,27 @@
         var assigneeHtml = '';
         if (task.assigneeName) {
             var avatar = avatarUrl(task.assigneeAvatar);
-            var initials = safeText(task.assigneeName).slice(0, 2).toUpperCase();
+            var initials = escapeHtml(task.assigneeName).slice(0, 2).toUpperCase();
             assigneeHtml = '<span class="task-card-assignee">' +
                 (avatar
-                    ? '<img src="' + safeText(avatar) + '" alt="' + safeText(task.assigneeName) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';"><span style="display:none;">' + initials + '</span>'
+                    ? '<img src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(task.assigneeName) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';"><span style="display:none;">' + initials + '</span>'
                     : '<span>' + initials + '</span>') +
-                '<span>' + safeText(task.assigneeName) + '</span>' +
+                '<span>' + escapeHtml(task.assigneeName) + '</span>' +
             '</span>';
         }
 
-        return '<article class="task-card" data-task-id="' + safeText(task.id) + '" draggable="true" onclick="teamSpace.openTaskDetail(' + Number(task.id) + ')">' +
+        return '<article class="task-card" data-task-id="' + escapeHtml(task.id) + '" draggable="true" onclick="teamSpace.openTaskDetail(' + Number(task.id) + ')">' +
             '<header class="task-card-header">' +
-                '<h2 class="task-card-title">' + safeText(task.taskTitle) + '</h2>' +
+                '<h2 class="task-card-title">' + escapeHtml(task.taskTitle) + '</h2>' +
                 '<span class="' + statusBadgeClass(task.status) + '">' + statusLabel(task.status) + '</span>' +
             '</header>' +
-            (task.taskDescription ? '<p class="task-card-desc">' + safeText(task.taskDescription) + '</p>' : '') +
+            (task.taskDescription ? '<p class="task-card-desc">' + escapeHtml(task.taskDescription) + '</p>' : '') +
             '<div class="task-card-tags">' +
-                '<span class="task-card-tag">优先级 ' + safeText(priorityLabel(task.priority)) + '</span>' +
-                '<span class="task-card-tag">' + safeText(typeLabel(task.taskType)) + '</span>' +
+                '<span class="task-card-tag">优先级 ' + escapeHtml(priorityLabel(task.priority)) + '</span>' +
+                '<span class="task-card-tag">' + escapeHtml(typeLabel(task.taskType)) + '</span>' +
             '</div>' +
             '<footer class="task-card-footer">' +
-                (deadline ? '<span class="' + (overdue ? 'task-card-overdue' : '') + '">' + safeText(deadline) + (overdue ? ' 已逾期' : '') + '</span>' : '<span></span>') +
+                (deadline ? '<span class="' + (overdue ? 'task-card-overdue' : '') + '">' + escapeHtml(deadline) + (overdue ? ' 已逾期' : '') + '</span>' : '<span></span>') +
                 assigneeHtml +
             '</footer>' +
         '</article>';
@@ -444,18 +436,18 @@
         message = message || {};
         var sent = Number(message.senderId) === Number(currentUserId);
         var name = message.senderName || (sent ? currentUserName : '队友');
-        var initials = safeText(name).slice(0, 2).toUpperCase();
+        var initials = escapeHtml(name).slice(0, 2).toUpperCase();
         var avatar = avatarUrl(sent ? currentUserAvatar : message.senderAvatar);
         var avatarHtml = avatar
-            ? '<img src="' + safeText(avatar) + '" alt="' + safeText(name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><span style="display:none;">' + initials + '</span>'
+            ? '<img src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(name) + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><span style="display:none;">' + initials + '</span>'
             : '<span>' + initials + '</span>';
 
         return '<div class="chat-msg ' + (sent ? 'sent' : 'received') + '">' +
             '<div class="chat-msg-avatar">' + avatarHtml + '</div>' +
             '<div class="chat-msg-body">' +
-                (!sent ? '<div class="chat-msg-name">' + safeText(name) + '</div>' : '') +
+                (!sent ? '<div class="chat-msg-name">' + escapeHtml(name) + '</div>' : '') +
                 '<div class="chat-msg-bubble">' + renderMessageContent(message) + '</div>' +
-                '<div class="chat-msg-time">' + safeText(formatTime(message.createdAt)) + '</div>' +
+                '<div class="chat-msg-time">' + escapeHtml(formatTime(message.createdAt)) + '</div>' +
             '</div>' +
         '</div>';
     }
@@ -464,15 +456,15 @@
         var content = String(message.content || '');
         var type = String(message.messageType || message.type || '').toUpperCase();
         if (type === 'IMAGE') {
-            return '<img class="chat-image" src="' + safeText(content) + '" alt="聊天图片">';
+            return '<img class="chat-image" src="' + escapeHtml(content) + '" alt="聊天图片">';
         }
         if (type === 'FILE') {
             var parts = content.split('|');
             var url = parts[0] || '';
             var name = parts[1] || '下载附件';
-            return url ? '<a class="chat-file-link" href="' + safeText(url) + '" target="_blank" rel="noopener">' + safeText(name) + '</a>' : safeText(name);
+            return url ? '<a class="chat-file-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener">' + escapeHtml(name) + '</a>' : escapeHtml(name);
         }
-        return safeText(content).replace(/\n/g, '<br>');
+        return escapeHtml(content).replace(/\n/g, '<br>');
     }
 
     function scrollChatToBottom() {
