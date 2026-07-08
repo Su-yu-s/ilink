@@ -3,1005 +3,415 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <title>iLink - 高校竞赛协作平台</title>
-    <th:block th:replace="fragments/head-assets :: core(bootstrap=false)"></th:block>
-    <style>
-        body {
-            background-color: #f9fafb;
-            position: relative;
-        }
-        .il-page-wrapper {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 32px 24px 80px;
-            position: relative;
-            z-index: 1;
-        }
-        /* ===== Modern Hero Section ===== */
-        .il-hero-section {
-            position: relative;
-            min-height: 600px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 100px 24px;
-            background: linear-gradient(180deg, var(--color-gray-100) 0%, var(--color-white) 100%);
-            overflow: hidden;
-        }
-
-        .il-hero-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse at 50% 0%, rgba(17, 24, 39, 0.03) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        .il-hero-content {
-            position: relative;
-            z-index: 2;
-            max-width: 720px;
-        }
-
-        .il-hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--glass-blur));
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-full);
-            font-size: var(--font-size-sm);
-            color: var(--color-gray-600);
-            margin-bottom: 24px;
-        }
-
-        .il-hero-badge-dot {
-            width: 6px;
-            height: 6px;
-            background: var(--color-success);
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.2); }
-        }
-
-        .il-hero-title {
-            font-size: clamp(2.5rem, 6vw, 3.5rem);
-            font-weight: 700;
-            color: var(--color-black);
-            line-height: 1.15;
-            margin-bottom: 20px;
-            letter-spacing: -0.03em;
-        }
-
-        .il-hero-title span {
-            color: var(--color-gray-700);
-        }
-
-        .il-hero-section p {
-            font-size: 1.25rem;
-            color: var(--color-gray-600);
-            margin-bottom: 40px;
-            line-height: 1.7;
-        }
-
-        .il-hero-actions {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .il-hero-actions .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--color-black);
-            color: var(--color-white);
-            padding: 16px 32px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            text-decoration: none;
-            transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-            border: none;
-            cursor: pointer;
-        }
-
-        .il-hero-actions .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .il-hero-actions .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(var(--glass-blur));
-            color: var(--color-black);
-            padding: 16px 32px;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            text-decoration: none;
-            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-            border: 1px solid var(--border-light);
-            cursor: pointer;
-        }
-
-        .il-hero-actions .btn-secondary:hover {
-            background: var(--color-white);
-            border-color: var(--border-default);
-            transform: translateY(-2px);
-        }
-
-        /* Floating Cards Decoration */
-        .hero-float-cards {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .float-card {
-            position: absolute;
-            background: var(--glass-bg-strong);
-            backdrop-filter: blur(var(--glass-blur));
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            box-shadow: var(--glass-shadow);
-            opacity: 0.6;
-        }
-
-        .float-card--1 {
-            width: 200px;
-            top: 15%;
-            left: 5%;
-            animation: floatCard1 8s ease-in-out infinite;
-        }
-
-        .float-card--2 {
-            width: 160px;
-            top: 25%;
-            right: 8%;
-            animation: floatCard2 9s ease-in-out infinite;
-        }
-
-        .float-card--3 {
-            width: 180px;
-            bottom: 20%;
-            left: 10%;
-            animation: floatCard3 10s ease-in-out infinite;
-        }
-
-        @keyframes floatCard1 {
-            0%, 100% { transform: translateY(0) rotate(-2deg); }
-            50% { transform: translateY(-15px) rotate(2deg); }
-        }
-
-        @keyframes floatCard2 {
-            0%, 100% { transform: translateY(0) rotate(2deg); }
-            50% { transform: translateY(-20px) rotate(-2deg); }
-        }
-
-        @keyframes floatCard3 {
-            0%, 100% { transform: translateY(0) rotate(1deg); }
-            50% { transform: translateY(-12px) rotate(-1deg); }
-        }
-
-        /* ===== Features Section ===== */
-        .features-section {
-            padding: 100px 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 64px;
-        }
-
-        .section-header h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--color-black);
-            margin-bottom: 16px;
-            letter-spacing: -0.02em;
-        }
-
-        .section-header p {
-            font-size: 1.125rem;
-            color: var(--color-gray-600);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-
-        @media (max-width: 1024px) {
-            .features-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 640px) {
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-            .il-hero-title {
-                font-size: 2rem;
-            }
-            .il-hero-section {
-                min-height: 420px;
-                padding: 80px 16px;
-            }
-            .float-card {
-                display: none;
-            }
-            .il-hero-section p {
-                font-size: 1rem;
-                margin-bottom: 28px;
-            }
-            .il-hero-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .il-hero-actions .btn-primary,
-            .il-hero-actions .btn-secondary {
-                padding: 14px 24px;
-                font-size: 16px;
-                text-align: center;
-            }
-            .features-section {
-                padding: 60px 16px;
-            }
-            .section-header h2 {
-                font-size: 1.5rem;
-            }
-            .section-header p {
-                font-size: 0.95rem;
-            }
-            .il-feature-card {
-                padding: 24px;
-            }
-            .stats-section {
-                padding: 48px 16px;
-            }
-            .stat-number {
-                font-size: 2.2rem;
-            }
-            .stat-label {
-                font-size: 0.9rem;
-            }
-            .cta-section {
-                padding: 60px 16px;
-            }
-            .cta-section h2 {
-                font-size: 1.5rem;
-            }
-            .cta-section p {
-                font-size: 1rem;
-            }
-            .recommendation-section {
-                padding: 48px 16px;
-            }
-        }
-
-        .il-feature-card {
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(20px) saturate(1.8);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 16px;
-            padding: 32px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .il-feature-card:hover {
-            transform: translateY(-6px);
-            box-shadow: var(--glass-shadow), 0 20px 40px rgba(0, 0, 0, 0.08);
-            border-color: rgba(0, 0, 0, 0.12);
-        }
-
-        .il-feature-card .card-icon {
-            width: 48px;
-            height: 48px;
-            margin-bottom: 20px;
-            color: var(--color-primary);
-            opacity: 0.9;
-        }
-
-        .il-feature-card .card-icon svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .il-feature-card h3 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--color-black);
-            margin-bottom: 12px;
-        }
-
-        .il-feature-card p {
-            font-size: var(--font-size-base);
-            color: var(--color-gray-600);
-            line-height: 1.6;
-            margin: 0;
-        }
-
-        /* ===== Stats Section ===== */
-        .stats-section {
-            background: #111827 !important;
-            padding: 80px 24px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stats-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
-            pointer-events: none;
-        }
-
-        .stats-inner {
-            max-width: 1000px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 48px;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        @media (max-width: 768px) {
-            .stats-inner {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 40px;
-            }
-        }
-
-        .stat-item {
-            padding: 24px;
-        }
-
-        .stat-number {
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--color-white);
-            line-height: 1;
-            margin-bottom: 8px;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .stat-label {
-            font-size: 1rem;
-            color: var(--color-gray-400);
-        }
-
-        /* ===== CTA Section ===== */
-        .cta-section {
-            padding: 120px 24px;
-            text-align: center;
-            background: var(--color-gray-100);
-            position: relative;
-        }
-
-        .cta-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse at 50% 0%, rgba(17, 24, 39, 0.04) 0%, transparent 60%);
-            pointer-events: none;
-        }
-
-        .cta-content {
-            max-width: 600px;
-            margin: 0 auto;
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-section h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--color-black);
-            margin-bottom: 16px;
-            letter-spacing: -0.02em;
-        }
-
-        .cta-section p {
-            font-size: 1.25rem;
-            color: var(--color-gray-600);
-            margin-bottom: 40px;
-        }
-
-        .cta-section .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--color-black);
-            color: var(--color-white);
-            padding: 18px 40px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            text-decoration: none;
-            transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-            border: none;
-            cursor: pointer;
-        }
-
-        .cta-section .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-xl);
-        }
-
-        /* ===== Scroll Animations ===== */
-        .scroll-animate {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-        }
-
-        .scroll-animate.animate-in {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* ===== Reduced Motion ===== */
-        @media (prefers-reduced-motion: reduce) {
-            .il-hero-badge-dot,
-            .float-card,
-            .scroll-animate {
-                animation: none !important;
-                transition: none !important;
-            }
-            .scroll-animate {
-                opacity: 1;
-                transform: none;
-            }
-        }
-
-        /* ===== Recommendation Section ===== */
-        .recommendation-section {
-            padding: 80px 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .recommendation-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .recommendation-header h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--color-black);
-            margin: 0;
-            letter-spacing: -0.02em;
-        }
-
-        .recommendation-header p {
-            font-size: 1rem;
-            color: var(--color-gray-600);
-            margin: 8px 0 0 0;
-        }
-
-        .recommendation-more {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--color-primary);
-            font-weight: 500;
-            font-size: 0.95rem;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .recommendation-more:hover {
-            color: var(--color-gray-700);
-            gap: 10px;
-        }
-
-        .recommendation-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-        }
-
-        @media (max-width: 1024px) {
-            .recommendation-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 640px) {
-            .recommendation-grid {
-                grid-template-columns: 1fr;
-            }
-            .recommendation-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
-            }
-        }
-
-        .recommendation-card {
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 16px;
-            padding: 24px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .recommendation-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-            border-color: rgba(0, 0, 0, 0.12);
-        }
-
-        .recommendation-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
-        }
-
-        .match-score-badge {
-            background: linear-gradient(135deg, #374151 0%, #111827 100%);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .match-score-badge svg {
-            width: 14px;
-            height: 14px;
-        }
-
-        .team-status-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .team-status-badge.recruiting {
-            background: rgba(34, 197, 94, 0.1);
-            color: #16a34a;
-        }
-
-        .team-status-badge.full {
-            background: rgba(107, 114, 128, 0.1);
-            color: #6b7280;
-        }
-
-        .recommendation-card h3 {
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: var(--color-black);
-            margin: 0 0 8px 0;
-            line-height: 1.4;
-        }
-
-        .recommendation-card-description {
-            font-size: 0.9rem;
-            color: var(--color-gray-600);
-            margin: 0 0 16px 0;
-            line-height: 1.6;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .recommendation-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .recommendation-tag {
-            padding: 4px 10px;
-            background: var(--color-gray-100);
-            border-radius: 6px;
-            font-size: 0.8rem;
-            color: var(--color-gray-700);
-        }
-
-        .recommendation-match-reason {
-            padding: 12px;
-            background: rgba(17, 24, 39, 0.04);
-            border-radius: 10px;
-            font-size: 0.85rem;
-            color: var(--color-gray-700);
-            line-height: 1.5;
-        }
-
-        .recommendation-match-reason strong {
-            color: var(--color-primary);
-        }
-
-        .recommendation-card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid rgba(0, 0, 0, 0.06);
-        }
-
-        .recommendation-team-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .recommendation-team-avatar {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: var(--color-primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .recommendation-team-name {
-            font-size: 0.85rem;
-            color: var(--color-gray-700);
-            font-weight: 500;
-        }
-
-        .recommendation-view-btn {
-            padding: 6px 14px;
-            background: var(--color-black);
-            color: white;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .recommendation-card:hover .recommendation-view-btn {
-            background: var(--color-primary);
-        }
-
-        .recommendation-empty {
-            text-align: center;
-            padding: 60px 24px;
-            background: rgba(255, 255, 255, 0.72);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            border-radius: 16px;
-        }
-
-        .recommendation-empty-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 20px;
-            color: var(--color-gray-400);
-        }
-
-        .recommendation-empty h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--color-gray-700);
-            margin: 0 0 8px 0;
-        }
-
-        .recommendation-empty p {
-            font-size: 0.95rem;
-            color: var(--color-gray-500);
-            margin: 0;
-        }
-
-        .recommendation-loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 60px 24px;
-        }
-
-        .recommendation-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--color-gray-200);
-            border-top-color: var(--color-primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
+    <title>iLink — 同声相应，同气相求</title>
+    <meta name="description" content="频率相近的人，终会在某个路口相遇。iLink 帮高校学生找队友、对接导师、追踪竞赛信息并展示成果。">
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
 </head>
-<body data-particles="true" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
-    
-    <canvas id="particleCanvas" class="particle-canvas"></canvas>
-    <!-- Header -->
+<body data-app-page="home" class="ilink-page-bg home-page" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+
+    <!-- Scroll Progress -->
+    <div class="home-scroll-progress" id="homeScrollProgress" aria-hidden="true"></div>
+
+    <!-- Custom Cursor -->
+    <div class="home-cursor" id="homeCursor" aria-hidden="true"></div>
+
+    <!-- Corner Labels -->
+    <div class="home-corner home-corner--tl" aria-hidden="true">iLink / 2026</div>
+    <div class="home-corner home-corner--tr" aria-hidden="true">Scroll ↓</div>
+
     <div th:replace="fragments/header :: header(${currentUser}, 'home')"></div>
 
-    <!-- Hero Section -->
-    <section class="il-hero-section">
-        <div class="hero-float-cards">
-            <div class="float-card float-card--1">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                <span style="margin-left: 8px; font-size: 12px; color: var(--color-gray-500);">5人已组队</span>
+    <main class="home-shell" id="mainContent">
+
+        <!-- ═══════════════════════════════════════════════════
+             HERO — Editorial Split: massive type left, ambient right
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-hero" aria-labelledby="homeHeroTitle">
+            <canvas class="home-particle-canvas" id="homeParticleCanvas" aria-hidden="true"></canvas>
+            <div class="home-noise" aria-hidden="true"></div>
+
+            <div class="home-hero__grid">
+                <!-- Left: Typography -->
+                <div class="home-hero__text">
+                    <p class="home-eyebrow home-reveal">同声相应</p>
+                    <h1 class="home-hero__title" id="homeHeroTitle">
+                        <span class="home-split-line">频率相近的人，终会在某个路口相遇。</span>
+                    </h1>
+                    <p class="home-hero__lead home-reveal">
+                        你在这里找队友，队友也在这里找你。<br>
+                        从组队到答辩，从笔记到奖杯，一路同行。
+                    </p>
+                    <div class="home-hero__actions home-reveal">
+                        <th:block th:if="${currentUser != null}">
+                            <a class="home-btn-cta home-magnetic" href="/team-market.html">
+                                <span>去找队友</span>
+                                <span class="home-btn-cta__icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 13L13 1M13 1H3M13 1v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            </a>
+                            <a class="home-btn-ghost home-magnetic" href="/community.html">看看大家在聊什么</a>
+                        </th:block>
+                        <th:block th:unless="${currentUser != null}">
+                            <a class="home-btn-cta home-magnetic" href="/register.html">
+                                <span>加入 iLink</span>
+                                <span class="home-btn-cta__icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 13L13 1M13 1H3M13 1v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            </a>
+                            <a class="home-btn-ghost home-magnetic" href="#homeStory">往下看看</a>
+                        </th:block>
+                    </div>
+                </div>
+
+                <!-- Right: Ambient Visual -->
+                <div class="home-hero__visual home-reveal">
+                    <div class="home-hero__orb home-hero__orb--1" aria-hidden="true"></div>
+                    <div class="home-hero__orb home-hero__orb--2" aria-hidden="true"></div>
+                </div>
             </div>
-            <div class="float-card float-card--2">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                <span style="margin-left: 8px; font-size: 12px; color: var(--color-gray-500);">新成果发布</span>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             STORY — Centered editorial with macro whitespace
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-story" id="homeStory" aria-labelledby="homeStoryTitle">
+            <div class="home-story__inner">
+                <p class="home-eyebrow home-reveal">从想法到上场</p>
+                <h2 class="home-story__title home-reveal" id="homeStoryTitle">
+                    同舟共济扬帆起，<br>乘风破浪万里航。
+                </h2>
+                <p class="home-story__copy home-reveal">
+                    iLink 不把功能摊成表格。它把竞赛前后那些零散的动作串起来：找人、问导师、查赛题、开工、沉淀成果。
+                </p>
             </div>
-            <div class="float-card float-card--3">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                <span style="margin-left: 8px; font-size: 12px; color: var(--color-gray-500);">导师在线答疑</span>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             STATS — 聚沙成塔
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-stats" aria-labelledby="homeStatsTitle">
+            <div class="home-stats__grid">
+                <div class="home-stats__item home-reveal">
+                    <span class="home-stats__num" th:text="${userCount != null ? userCount : 0}">0</span>
+                    <span class="home-stats__label">聚沙成塔</span>
+                    <span class="home-stats__desc">覆盖全校各专业同学</span>
+                </div>
+                <div class="home-stats__item home-reveal">
+                    <span class="home-stats__num" th:text="${teamCount != null ? teamCount : 0}">0</span>
+                    <span class="home-stats__label">同舟共济</span>
+                    <span class="home-stats__desc">竞赛、项目、课设全覆盖</span>
+                </div>
+                <div class="home-stats__item home-reveal">
+                    <span class="home-stats__num" th:text="${teacherCount != null ? teacherCount : 0}">0</span>
+                    <span class="home-stats__label">高山景行</span>
+                    <span class="home-stats__desc">一线教师在线指导</span>
+                </div>
+                <div class="home-stats__item home-reveal">
+                    <span class="home-stats__num" th:text="${assetCount != null ? assetCount : 0}">0</span>
+                    <span class="home-stats__label">春华秋实</span>
+                    <span class="home-stats__desc">获奖作品、项目沉淀</span>
+                </div>
             </div>
-        </div>
-        
-        <div class="il-hero-content">
-            <div class="il-hero-badge">
-                <span class="il-hero-badge-dot"></span>
-                <span th:text="|平台已有 ${userCount != null ? userCount : 0} 位用户|">平台已有 0 位用户</span>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             FEATURES — Asymmetrical Bento Grid
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-features" aria-labelledby="homeFeatureTitle">
+            <div class="home-features__header">
+                <p class="home-eyebrow home-reveal">SERVICES</p>
+                <h2 class="home-section-title home-reveal" id="homeFeatureTitle">工欲善其事，<br>必先利其器。</h2>
             </div>
-            <h1 class="il-hero-title">连接竞赛力量<br><span>成就卓越团队</span></h1>
-            <p>高校竞赛协作平台，帮你找到最佳队友、对接专业导师、展示竞赛成果</p>
-            <div class="il-hero-actions">
-                <th:block th:if="${currentUser != null}">
-                    <a href="/team-market.html" class="btn-primary">
-                        浏览组队
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
+
+            <div class="home-bento">
+                <!-- Row 1 — Wide card -->
+                <article class="home-bento__row home-reveal">
+                    <div class="home-bento__item home-bento__item--featured">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1300&q=80" alt="学生团队围坐讨论" loading="lazy">
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">01</span>
+                                        <p class="home-bento__eyebrow">组队大厅</p>
+                                        <h3>嘤其鸣矣，求其友声。</h3>
+                                        <p>发出一条需求，等待频率相近的回应——当同频的声音相遇，队伍便有了心跳。</p>
+                                        <a class="home-bento__link" href="/team-market.html">去找队友 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Row 2 — Two small cards side by side -->
+                <article class="home-bento__row home-reveal">
+                    <div class="home-bento__item">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80" alt="导师与学生讨论" loading="lazy">
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">02</span>
+                                        <p class="home-bento__eyebrow">导师招募</p>
+                                        <h3>仰之弥高，钻之弥坚。</h3>
+                                        <p>循着前辈的足迹向上，每一步都走得更深、更稳，终见星辰。</p>
+                                        <a class="home-bento__link" href="/teacher-wall.html">寻师问道 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="home-bento__item">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80" alt="在线交流界面" loading="lazy">
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">03</span>
+                                        <p class="home-bento__eyebrow">交流社区</p>
+                                        <h3>旧学商量加邃密，新知培养转深沉。</h3>
+                                        <p>把想法抛进人群，让旧学问在碰撞里生长，在讨论中愈发精深。</p>
+                                        <a class="home-bento__link" href="/community.html">切磋交流 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Row 3 — Tall card -->
+                <article class="home-bento__row home-reveal">
+                    <div class="home-bento__item home-bento__item--tall">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80" alt="竞赛团队工作" loading="lazy">
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">04</span>
+                                        <p class="home-bento__eyebrow">竞赛目录</p>
+                                        <h3>欲穷大地三千界，须上高峰八百盘。</h3>
+                                        <p>赛题、规则、时间线，一张地图铺展眼前，让每一步攀登都心中有数。</p>
+                                        <a class="home-bento__link" href="/competitions.html">查看竞赛目录 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Row 4 — Two small cards -->
+                <article class="home-bento__row home-reveal">
+                    <div class="home-bento__item">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80" alt="团队展示成果" loading="lazy">
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">05</span>
+                                        <p class="home-bento__eyebrow">竞赛笔记</p>
+                                        <h3>千淘万漉虽辛苦，吹尽狂沙始到金。</h3>
+                                        <p>记录每一次试错与顿悟，千淘万漉之后，笔记里藏着闪光的金子。</p>
+                                        <a class="home-bento__link" href="/gallery.html">沉淀收获 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="home-bento__item">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80" alt="团队协作" loading="lazy">
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">06</span>
+                                        <p class="home-bento__eyebrow">团队空间</p>
+                                        <h3>乘众人之智，则无不任也。</h3>
+                                        <p>汇聚每个人的灵光，众智成城，拼成团队最坚硬的铠甲。</p>
+                                        <a class="home-bento__link" href="/profile.html#teams">携手同行 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             LIVE FEED — Editorial Split: PLATFORM FEATURES
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-live" aria-labelledby="homeLiveTitle">
+            <div class="home-live__grid">
+                <div class="home-live__text home-reveal">
+                    <p class="home-eyebrow">PLATFORM FEATURES</p>
+                    <h2 class="home-section-title" id="homeLiveTitle">凤凰鸣矣，<br>于彼高冈。</h2>
+                    <p class="home-live__desc">梧桐生矣，于彼朝阳。栽下梧桐树，引得凤凰来。</p>
+                </div>
+                <div class="home-live-feed" aria-live="polite">
+                    <div class="home-feed-item is-active home-reveal">
+                        <span class="home-feed-item__time">01</span>
+                        <strong class="home-feed-item__name">志同道合 · 同声相应</strong>
+                        <p>各怀其技，各尽其才，同频之人，不期而遇。不是发帖碰运气，是算法替你拨弦，引凤来仪。</p>
+                    </div>
+                    <div class="home-feed-item home-reveal">
+                        <span class="home-feed-item__time">02</span>
+                        <strong class="home-feed-item__name">良师在侧 · 疑义相析</strong>
+                        <p>高校导师在线，专业疑难有处问。不是远水难解，是迷津有渡，暗室有灯。</p>
+                    </div>
+                    <div class="home-feed-item home-reveal">
+                        <span class="home-feed-item__time">03</span>
+                        <strong class="home-feed-item__name">全链贯通 · 一站备赛</strong>
+                        <p>从组队到答辩，从笔记到奖杯，步步有凭。不是东市买鞍，是一处启程，全程抵达。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             MAGAZINE — Asymmetrical grid with hover depth
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-magazine" aria-labelledby="homeMagazineTitle">
+            <div class="home-magazine__header">
+                <div class="home-magazine__label-row">
+                    <p class="home-eyebrow home-reveal">竞赛目录</p>
+                    <a class="home-text-link home-reveal" href="/competitions.html">查看全部赛道 <span>→</span></a>
+                </div>
+                <h2 class="home-section-title home-reveal" id="homeMagazineTitle">欲穷大地三千界，<br>须上高峰八百盘。</h2>
+                <p class="home-magazine__sub home-reveal">每一条赛道背后，都有一群人不顾一切向前冲。</p>
+            </div>
+
+            <div class="home-magazine-grid">
+                <!-- Row 1 — Featured wide tile -->
+                <div class="home-mag-row home-reveal">
+                    <a class="home-mag-tile home-mag-tile--featured" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80" alt="计算机软件竞赛" loading="lazy">
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">计算机软件</span>
+                                        <strong>逻辑织经纬，代码写春秋。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </a>
-                    <a href="/community.html" class="btn-secondary">
-                        进入社区
+                </div>
+
+                <!-- Row 2 — Three tiles -->
+                <div class="home-mag-row home-reveal">
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1581092921461-39b9d08a9b21?auto=format&fit=crop&w=900&q=80" alt="电子信息" loading="lazy">
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">电子信息</span>
+                                        <strong>硅基藏日月，电路贯虹霓。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </a>
-                </th:block>
-                <th:block th:unless="${currentUser != null}">
-                    <a href="/register.html" class="btn-primary">
-                        立即加入
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80" alt="机器人" loading="lazy">
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">机器人 / 智能车</span>
+                                        <strong>钢铁生灵性，轮辙写纵横。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </a>
-                    <a href="#features" class="btn-secondary">
-                        了解更多
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80" alt="创新创业" loading="lazy">
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">创新创业</span>
+                                        <strong>磨璞方成玉，炼沙始作金。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </a>
-                </th:block>
-            </div>
-        </div>
-    </section>
-
-    <!-- Recommendation Section -->
-    <section class="recommendation-section" id="recommendations" th:if="${currentUser != null}">
-        <div class="recommendation-header scroll-animate">
-            <div>
-                <h2>为您推荐</h2>
-                <p>基于您的技能和偏好，智能匹配最适合您的团队</p>
-            </div>
-            <a href="/team-market.html" class="recommendation-more">
-                查看更多
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-            </a>
-        </div>
-        <div id="recommendationContainer">
-            <div class="recommendation-loading">
-                <div class="recommendation-spinner"></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features-section" id="features">
-        <div class="section-header scroll-animate">
-            <h2>核心功能</h2>
-            <p>一站式竞赛协作，覆盖组队、指导、展示与交流全流程</p>
-        </div>
-        
-        <div class="features-grid">
-            <!-- Card 1: 智能组队 -->
-            <div class="il-feature-card scroll-animate">
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="18" cy="16" r="6"/>
-                        <circle cx="34" cy="16" r="5"/>
-                        <path d="M6 38c0-6.627 5.373-12 12-12"/>
-                        <path d="M34 26c5.523 0 10 4.477 10 10"/>
-                        <circle cx="26" cy="14" r="5"/>
-                        <path d="M22 38c0-5.523 1.79-10 4-10s4 4.477 4 10"/>
-                    </svg>
                 </div>
-                <h3>智能组队</h3>
-                <p>基于技能、竞赛类型智能匹配最佳队友，快速组建高效团队</p>
-            </div>
 
-            <!-- Card 2: 导师对接 -->
-            <div class="il-feature-card scroll-animate">
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M24 4L28 14h10l-8 6 3 10-9-6-9 6 3-10-8-6h10z"/>
-                        <rect x="14" y="28" width="20" height="4" rx="1"/>
-                        <path d="M18 32v6c0 2 2 4 6 4s6-2 6-4v-6"/>
-                    </svg>
+                <!-- Row 3 — Two tiles -->
+                <div class="home-mag-row home-reveal">
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=900&q=80" alt="数理建模" loading="lazy">
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">数理建模</span>
+                                        <strong>推演穷数理，建模近天心。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80" alt="综合" loading="lazy">
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">综合 / 语言</span>
+                                        <strong>辞锋凝玉露，文气贯长虹。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
                 </div>
-                <h3>导师对接</h3>
-                <p>一键联系指导教师，获取专业指导与项目建议</p>
             </div>
+        </section>
 
-            <!-- Card 3: 成果展示 -->
-            <div class="il-feature-card scroll-animate">
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M8 40l6-16 10 6 8-20 8 12"/>
-                        <path d="M6 42h36"/>
-                        <rect x="6" y="42" width="36" height="2" rx="1"/>
-                        <path d="M16 8l4-4 4 4"/>
-                        <path d="M20 4v8"/>
-                    </svg>
-                </div>
-                <h3>成果展示</h3>
-                <p>上传展示竞赛成果，记录每一次突破与成长</p>
+        <!-- ═══════════════════════════════════════════════════
+             CTA — 奋楫笃行
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-cta" aria-labelledby="homeCtaTitle">
+            <div class="home-cta__orbits" aria-hidden="true">
+                <div class="home-hero__orb home-hero__orb--1"></div>
+                <div class="home-hero__orb home-hero__orb--2"></div>
             </div>
+            <div class="home-cta__inner home-reveal">
+                <p class="home-eyebrow">奋楫笃行</p>
+                <h2 id="homeCtaTitle">大鹏一日同风起，<br>扶摇直上九万里。</h2>
+                <p>写下你想去的方向，系统会帮你找到同路人。</p>
+                <form class="home-cta-form" action="/team-market.html">
+                    <label class="home-cta-form__label sr-only" for="homeIntent">想参加的竞赛方向</label>
+                    <input id="homeIntent" name="keyword" type="text" placeholder="我想参加数学建模 / 挑战杯 / Web 项目...">
+                    <button class="home-btn-cta home-magnetic" type="submit">
+                        <span>开始找人</span>
+                        <span class="home-btn-cta__icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 13L13 1M13 1H3M13 1v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
 
-            <!-- Card 4: 交流社区 -->
-            <div class="il-feature-card scroll-animate">
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M8 12h32v20H16l-8 8V12z"/>
-                        <line x1="16" y1="20" x2="32" y2="20"/>
-                        <line x1="16" y1="26" x2="26" y2="26"/>
-                    </svg>
-                </div>
-                <h3>交流社区</h3>
-                <p>分享竞赛经验，结识志同道合的伙伴</p>
-            </div>
+    <div th:replace="fragments/footer :: footer(showFooter=true)"></div>
 
-            <!-- Card 5: 竞赛目录 -->
-            <div class="il-feature-card scroll-animate">
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="8" y="6" width="32" height="36" rx="3"/>
-                        <line x1="16" y1="16" x2="32" y2="16"/>
-                        <line x1="16" y1="22" x2="32" y2="22"/>
-                        <line x1="16" y1="28" x2="26" y2="28"/>
-                        <circle cx="13" cy="16" r="1.5" fill="currentColor"/>
-                        <circle cx="13" cy="22" r="1.5" fill="currentColor"/>
-                        <circle cx="13" cy="28" r="1.5" fill="currentColor"/>
-                    </svg>
-                </div>
-                <h3>竞赛目录</h3>
-                <p>全面收录主流学科竞赛与双创赛事信息</p>
-            </div>
-
-            <!-- Card 6: 即时通讯 -->
-            <div class="il-feature-card scroll-animate">
-                <div class="card-icon">
-                    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="6" y="10" width="28" height="22" rx="3"/>
-                        <path d="M34 16h4a3 3 0 013 3v14a3 3 0 01-3 3H18l-6 5v-5h-3"/>
-                        <line x1="12" y1="18" x2="28" y2="18"/>
-                        <line x1="12" y1="24" x2="22" y2="24"/>
-                    </svg>
-                </div>
-                <h3>即时通讯</h3>
-                <p>实时沟通协作，高效推进团队项目进展</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="stats-section">
-        <div class="stats-inner">
-            <div class="stat-item scroll-animate">
-                <div class="stat-number" th:text="${userCount ?: 0}">0</div>
-                <div class="stat-label">注册用户</div>
-            </div>
-            <div class="stat-item scroll-animate">
-                <div class="stat-number" th:text="${teamCount ?: 0}">0</div>
-                <div class="stat-label">成功组队</div>
-            </div>
-            <div class="stat-item scroll-animate">
-                <div class="stat-number" th:text="${assetCount ?: 0}">0</div>
-                <div class="stat-label">竞赛成果</div>
-            </div>
-            <div class="stat-item scroll-animate">
-                <div class="stat-number" th:text="${teacherCount ?: 0}">0</div>
-                <div class="stat-label">专业导师</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="cta-content scroll-animate">
-            <h2>准备好开始了吗？</h2>
-            <th:block th:if="${currentUser != null}">
-                <p>欢迎回来！继续探索更多竞赛机会</p>
-                <a href="/team-market.html" class="btn-primary">
-                    浏览组队
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </th:block>
-            <th:block th:unless="${currentUser != null}">
-                <p>加入 iLink，开启你的竞赛之旅</p>
-                <a href="/register.html" class="btn-primary">
-                    立即注册
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                </a>
-            </th:block>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <div th:replace="fragments/footer :: footer"></div>
-
-    <script src="/js/common.js?v=7.5"></script>
-    <script src="/js/recommendation.js?v=4.3"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentUserId = document.body.getAttribute('data-user-id');
-            if (currentUserId && window.recommendationManager) {
-                window.recommendationManager.init(parseInt(currentUserId));
-            }
-        });
-    </script>
+    <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
+    <script src="/js/common.js?v=7.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="/js/home.js?v=2.7"></script>
 </body>
 </html>

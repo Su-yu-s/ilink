@@ -6,6 +6,7 @@
     <title>竞赛目录 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link href="/css/competitions.css?v=2.9" rel="stylesheet">
 </head>
 <body data-app-page="competitions" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'competition')"></div>
@@ -15,9 +16,12 @@
 
         <div class="competition-hub mx-auto">
             <div class="il-hero">
-                <p class="il-hero-eyebrow">赛事信息 · 备赛参考</p>
-                <h1 class="il-hero-title">竞赛目录</h1>
-                <p class="il-hero-desc">汇总国内高校常见学科竞赛与创新创业赛事，便于检索赛道、主办单位与大致赛季。具体章程与报名时间以各赛官网为准。</p>
+                <span class="il-hero__eyebrow">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    赛事信息 · 备赛参考
+                </span>
+                <h1 class="il-hero__title">竞赛目录</h1>
+                <p class="il-hero__desc">汇总国内高校常见学科竞赛与创新创业赛事，便于检索赛道、主办单位与大致赛季。具体章程与报名时间以各赛官网为准。</p>
             </div>
 
             <div class="il-toolbar competition-toolbar">
@@ -44,10 +48,10 @@
         </div>
     </div>
 
-    <div th:replace="fragments/footer :: footer"></div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=4.2"></script>
-    <script src="/js/common.js?v=7.4"></script>
-    <script src="/js/competitions.js?v=4.2"></script>
+    <script src="/js/common.js?v=7.8"></script>
+    <script src="/js/ui-particles.js?v=1.0"></script>
+    <script src="/js/competitions.js?v=4.4"></script>
 </body>
 </html>

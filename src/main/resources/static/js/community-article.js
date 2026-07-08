@@ -351,13 +351,6 @@ async function loadComments() {
     }
 }
 
-function escapeHtml(s) {
-    if (s == null) return '';
-    const div = document.createElement('div');
-    div.textContent = s;
-    return div.innerHTML;
-}
-
 async function submitComment() {
     const ta = document.getElementById('newCommentInput');
     const content = (ta?.value || '').trim();

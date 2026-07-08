@@ -7,7 +7,7 @@ import cn.ilink.entity.ProjectMilestone;
 import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.User;
 import cn.ilink.service.ProjectMilestoneService;
-import cn.ilink.service.TeamApplicationService;
+import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.vo.ProjectMilestoneVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,42 +27,42 @@ public class ProjectMilestoneController {
     private ProjectMilestoneService projectMilestoneService;
 
     @Autowired
-    private TeamApplicationService teamApplicationService;
+    private TeamApplicationServiceImpl teamApplicationService;
 
     @GetMapping("/team/{teamId}/milestones")
     @ResponseBody
-    public ResponseEntity<Result<List<ProjectMilestoneVO>>> getMilestonesByTeam(@PathVariable Long teamId) {
+    public ResponseEntity<Result<?>> getMilestonesByTeam(@PathVariable Long teamId) {
         List<ProjectMilestoneVO> milestones = projectMilestoneService.getByTeam(teamId);
-        return ResponseEntity.ok(Result.ok("获取成功", milestones));
+        return Result.ok("获取成功", milestones).toResponseEntity();
     }
 
     @GetMapping("/milestones/{id}")
     @ResponseBody
-    public ResponseEntity<Result<ProjectMilestoneVO>> getMilestoneById(@PathVariable Long id) {
+    public ResponseEntity<Result<?>> getMilestoneById(@PathVariable Long id) {
         ProjectMilestoneVO milestone = projectMilestoneService.getById(id);
         if (milestone != null) {
-            return ResponseEntity.ok(Result.ok("获取成功", milestone));
+            return Result.ok("获取成功", milestone).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.notFound("里程碑不存在"));
+            return Result.notFound("里程碑不存在").toResponseEntity();
         }
     }
 
     @PostMapping("/team/{teamId}/milestones")
     @ResponseBody
-    public ResponseEntity<Result<ProjectMilestoneVO>> createMilestone(@PathVariable Long teamId,
+    public ResponseEntity<Result<?>> createMilestone(@PathVariable Long teamId,
                                                                       @RequestBody ProjectMilestoneDTO dto,
                                                                       HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         // C-04: 校验用户是否为团队成员
         if (!isTeamMember(teamId, user)) {
-            return ResponseEntity.ok(Result.fail(403, "您不是该团队成员，无法创建里程碑"));
+            return Result.fail(403, "您不是该团队成员，无法创建里程碑").toResponseEntity();
         }
 
         if (dto.getMilestoneName() == null || dto.getMilestoneName().trim().isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("里程碑名称不能为空"));
+            return Result.badRequest("里程碑名称不能为空").toResponseEntity();
         }
 
         dto.setTeamId(teamId);
@@ -73,94 +73,94 @@ public class ProjectMilestoneController {
                     .filter(m -> m.getMilestoneName().equals(dto.getMilestoneName()))
                     .findFirst()
                     .orElse(null);
-            return ResponseEntity.ok(Result.ok("里程碑创建成功", created));
+            return Result.ok("里程碑创建成功", created).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.fail("里程碑创建失败"));
+            return Result.fail("里程碑创建失败").toResponseEntity();
         }
     }
 
     @PutMapping("/milestones/{id}")
     @ResponseBody
-    public ResponseEntity<Result<ProjectMilestoneVO>> updateMilestone(@PathVariable Long id,
+    public ResponseEntity<Result<?>> updateMilestone(@PathVariable Long id,
                                                                       @RequestBody ProjectMilestoneDTO dto,
                                                                       HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         ProjectMilestoneVO milestone = projectMilestoneService.getById(id);
         if (milestone == null) {
-            return ResponseEntity.ok(Result.notFound("里程碑不存在"));
+            return Result.notFound("里程碑不存在").toResponseEntity();
         }
         // C-04: 校验用户是否为团队成员
         if (!isTeamMember(milestone.getTeamId(), user)) {
-            return ResponseEntity.ok(Result.fail(403, "您不是该团队成员，无权编辑里程碑"));
+            return Result.fail(403, "您不是该团队成员，无权编辑里程碑").toResponseEntity();
         }
 
         boolean success = projectMilestoneService.update(id, dto);
         if (success) {
             ProjectMilestoneVO updated = projectMilestoneService.getById(id);
-            return ResponseEntity.ok(Result.ok("里程碑更新成功", updated));
+            return Result.ok("里程碑更新成功", updated).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.notFound("里程碑不存在"));
+            return Result.notFound("里程碑不存在").toResponseEntity();
         }
     }
 
     @PutMapping("/milestones/{id}/progress")
     @ResponseBody
-    public ResponseEntity<Result<Void>> updateMilestoneProgress(@PathVariable Long id,
+    public ResponseEntity<Result<?>> updateMilestoneProgress(@PathVariable Long id,
                                                                @RequestBody Map<String, Integer> body,
                                                                HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         Integer progress = body.get("progress");
         if (progress == null) {
-            return ResponseEntity.ok(Result.badRequest("进度不能为空"));
+            return Result.badRequest("进度不能为空").toResponseEntity();
         }
 
         ProjectMilestoneVO milestone = projectMilestoneService.getById(id);
         if (milestone == null) {
-            return ResponseEntity.ok(Result.notFound("里程碑不存在"));
+            return Result.notFound("里程碑不存在").toResponseEntity();
         }
         // C-04: 校验用户是否为团队成员
         if (!isTeamMember(milestone.getTeamId(), user)) {
-            return ResponseEntity.ok(Result.fail(403, "您不是该团队成员，无权修改里程碑进度"));
+            return Result.fail(403, "您不是该团队成员，无权修改里程碑进度").toResponseEntity();
         }
 
         boolean success = projectMilestoneService.updateProgress(id, progress);
         if (success) {
-            return ResponseEntity.ok(Result.ok("进度更新成功", null));
+            return Result.ok("进度更新成功", null).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.notFound("里程碑不存在"));
+            return Result.notFound("里程碑不存在").toResponseEntity();
         }
     }
 
     @DeleteMapping("/milestones/{id}")
     @ResponseBody
-    public ResponseEntity<Result<Void>> deleteMilestone(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Result<?>> deleteMilestone(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         ProjectMilestoneVO milestone = projectMilestoneService.getById(id);
         if (milestone == null) {
-            return ResponseEntity.ok(Result.notFound("里程碑不存在"));
+            return Result.notFound("里程碑不存在").toResponseEntity();
         }
         // C-04: 校验用户是否为团队成员
         if (!isTeamMember(milestone.getTeamId(), user)) {
-            return ResponseEntity.ok(Result.fail(403, "您不是该团队成员，无权删除里程碑"));
+            return Result.fail(403, "您不是该团队成员，无权删除里程碑").toResponseEntity();
         }
 
         boolean success = projectMilestoneService.delete(id);
         if (success) {
-            return ResponseEntity.ok(Result.ok("里程碑删除成功", null));
+            return Result.ok("里程碑删除成功", null).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.notFound("里程碑不存在"));
+            return Result.notFound("里程碑不存在").toResponseEntity();
         }
     }
 

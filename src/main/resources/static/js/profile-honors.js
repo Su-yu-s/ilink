@@ -9,16 +9,8 @@
 
     function $(id) { return document.getElementById(id); }
 
-    function toast(msg, type) {
-        var map = { ok: 'success', err: 'error', warn: 'warning' };
-        if (typeof showMessage === 'function') {
-            showMessage(msg, map[type] || type || 'info');
-        }
-    }
-
     function newId() { return 'h_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
     function norm(h) { if(!h) h={}; return { id:String(h.id||newId()), type:h.type||'other', title:h.title||'', level:h.level||'', issuer:h.issuer||'', period:h.period||'', detail:h.detail||'', proofUrl:h.proofUrl||'', awardRank:h.awardRank||'', teamScope:h.teamScope||'' }; }
-    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function parseList(raw) { if(!raw||!String(raw).trim()) return []; try { var a=JSON.parse(raw); return Array.isArray(a)?a:[]; } catch(e){ return []; } }
     function loadDraft() { try { var r=localStorage.getItem(DRAFT_KEY); return r?JSON.parse(r):null; } catch(e){ return null; } }
     function saveDraft() { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(honors)); } catch(e){} }
@@ -86,10 +78,10 @@
     function honorProofAsideHtml(proofUrl) {
         var u = String(proofUrl || '').trim();
         if (!u) return '';
-        var safe = esc(u);
+        var safe = escapeHtml(u);
         var kind = honorProofMediaKind(u);
         if (kind === 'image') {
-            var imgSrc = esc(honorProofSafeUrl(u));
+            var imgSrc = escapeHtml(honorProofSafeUrl(u));
             return '<div class="honors-preview-card__proof il-honor-item__proof">' +
                 '<a class="honors-preview-proof honors-preview-proof--image" href="' + safe + '" target="_blank" rel="noopener" title="查看证明材料">' +
                 '<img class="honors-preview-proof__img" src="' + imgSrc + '" data-raw-src="' + safe + '" alt="证明材料缩略图" loading="lazy" onerror="honorProofImageOnError(this)">' +
@@ -130,19 +122,19 @@
             var meta = parts.join(' · ');
             var proofAside = honorProofAsideHtml(h.proofUrl);
 
-            html += '<div class="honor-list-card honors-editor-block" data-honor-id="' + esc(h.id) + '">' +
+            html += '<div class="honor-list-card honors-editor-block" data-honor-id="' + escapeHtml(h.id) + '">' +
                 '<div class="il-honor-item' + (proofAside ? ' il-honor-item--with-proof' : '') + '">' +
                     '<input type="checkbox" class="honor-select il-honor-item__check" aria-label="选择成果">' +
                     '<div class="il-honor-item__main">' +
                         '<div class="il-honor-item__tags">' +
-                            '<span class="honor-chip honor-chip--type honor-chip--t-' + h.type + '">' + esc(t) + '</span>' +
-                            (lv ? '<span class="honor-level-pill ' + tier + '">' + esc(lv) + '</span>' : '') +
+                            '<span class="honor-chip honor-chip--type honor-chip--t-' + h.type + '">' + escapeHtml(t) + '</span>' +
+                            (lv ? '<span class="honor-level-pill ' + tier + '">' + escapeHtml(lv) + '</span>' : '') +
                         '</div>' +
-                        '<div class="il-honor-item__title">' + esc(h.title || '（未命名）') + '</div>' +
-                        (meta ? '<div class="il-honor-item__meta">' + esc(meta) + '</div>' : '') +
+                        '<div class="il-honor-item__title">' + escapeHtml(h.title || '（未命名）') + '</div>' +
+                        (meta ? '<div class="il-honor-item__meta">' + escapeHtml(meta) + '</div>' : '') +
                     '</div>' +
                     '<div class="il-honor-item__actions">' +
-                        '<button type="button" class="il-btn il-btn-ghost il-btn-sm btn-edit" data-eid="' + esc(h.id) + '">编辑</button>' +
+                        '<button type="button" class="il-btn il-btn-ghost il-btn-sm btn-edit" data-eid="' + escapeHtml(h.id) + '">编辑</button>' +
                     '</div>' +
                     (proofAside ? proofAside : '') +
                 '</div></div>';
@@ -220,7 +212,7 @@
 
     function commitModal(closeAfter) {
         var h = readForm();
-        if(!h.title) { toast('请填写名称', 'warn'); return; }
+        if(!h.title) { showMessage('请填写名称', 'warning'); return; }
         var idx = -1;
         for(var i = 0; i < honors.length; i++) { if(String(honors[i].id) === String(h.id)) { idx = i; break; } }
         if(idx >= 0) { honors[idx] = h; } else { honors.push(h); }
@@ -255,10 +247,10 @@
                     var url = result.data.url || result.data.URL;
                     var pfu = $('txtProofUrl'); if(pfu) pfu.value = url;
                     updateProofPreview(url);
-                    if(st) st.textContent = '已上传'; toast('上传成功', 'ok');
-                } else { if(st) st.textContent = ''; toast(result.message || '上传失败', 'err'); }
+                    if(st) st.textContent = '已上传'; showMessage('上传成功', 'success');
+                } else { if(st) st.textContent = ''; showMessage(result.message || '上传失败', 'error'); }
             })
-            .catch(function() { if(st) st.textContent = ''; toast('上传异常', 'err'); });
+            .catch(function() { if(st) st.textContent = ''; showMessage('上传异常', 'error'); });
     }
 
     function saveToServer() {
@@ -267,11 +259,11 @@
         apiFetch('/api/user/profile', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body:JSON.stringify({ honors: JSON.stringify(honors) }) })
             .then(function(r) { return r.json(); })
             .then(function(result) {
-                if(Number(result.code) === 200) { toast('保存成功', 'ok'); clearDraft(); }
-                else if(Number(result.code) === 401) { toast('请先登录', 'warn'); setTimeout(function() { window.location.href = '/login.html'; }, 1500); }
-                else { toast('保存失败: ' + (result.message || ''), 'err'); }
+                if(Number(result.code) === 200) { showMessage('保存成功', 'success'); clearDraft(); }
+                else if(Number(result.code) === 401) { showMessage('请先登录', 'warning'); setTimeout(function() { window.location.href = '/login.html'; }, 1500); }
+                else { showMessage('保存失败: ' + (result.message || ''), 'error'); }
             })
-            .catch(function() { toast('网络异常', 'err'); })
+            .catch(function() { showMessage('网络异常', 'error'); })
             .finally(function() { btn.disabled = false; btn.textContent = '保存成果'; });
     }
 
@@ -289,7 +281,7 @@
                     honors = (draft && draft.length > 0) ? draft.map(norm) : serverList;
                     updateNavbar(result.data);
                 } else if(Number(result.code) === 401) {
-                    toast('请先登录', 'warn');
+                    showMessage('请先登录', 'warning');
                     setTimeout(function() { window.location.href = '/login.html'; }, 1500);
                     return;
                 }
@@ -297,12 +289,12 @@
             })
             .catch(function(err) {
                 if(err.message === 'NOT_JSON') {
-                    toast('登录状态异常，请重新登录', 'warn');
+                    showMessage('登录状态异常，请重新登录', 'warning');
                     setTimeout(function() { window.location.href = '/login.html'; }, 1500);
                     return;
                 }
                 var draft = loadDraft();
-                if(draft && draft.length > 0) { honors = draft.map(norm); render(); toast('已加载本地缓存', 'warn'); }
+                if(draft && draft.length > 0) { honors = draft.map(norm); render(); showMessage('已加载本地缓存', 'warning'); }
             });
     }
 
@@ -344,7 +336,7 @@
             if(!confirm('确定删除选中的 ' + ids.length + ' 条成果？')) return;
             honors = honors.filter(function(h) { return ids.indexOf(h.id) === -1; });
             render(); saveDraft(); updateBatch();
-            toast('已删除 ' + ids.length + ' 条', 'ok');
+            showMessage('已删除 ' + ids.length + ' 条', 'success');
         };
 
         var editorEl = $('honorsEditor');
@@ -399,13 +391,13 @@
         var kind = honorProofMediaKind(u);
         if(kind === 'image') {
             if(img) { img.src = honorProofSafeUrl(u); img.setAttribute('data-raw-src', u); }
-            if(link) link.href = esc(u);
+            if(link) link.href = escapeHtml(u);
             if(box) box.style.display = '';
         } else if(kind === 'pdf') {
             if(pdfInd) pdfInd.style.display = '';
-            if(link) link.href = esc(u);
+            if(link) link.href = escapeHtml(u);
         } else {
-            if(link) link.href = esc(u);
+            if(link) link.href = escapeHtml(u);
         }
     }
 

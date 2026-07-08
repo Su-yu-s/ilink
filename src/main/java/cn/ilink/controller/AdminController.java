@@ -12,13 +12,15 @@ import cn.ilink.mapper.CommunityCommentMapper;
 import cn.ilink.mapper.CommunityPostFavoriteMapper;
 import cn.ilink.mapper.CommunityPostLikeMapper;
 import cn.ilink.mapper.NotificationMapper;
-import cn.ilink.service.AssetService;
-import cn.ilink.service.CommunityPostService;
-import cn.ilink.service.TeacherApplicationService;
-import cn.ilink.service.TeamApplicationService;
-import cn.ilink.service.TeamDemandService;
+import cn.ilink.service.impl.AssetServiceImpl;
+import cn.ilink.service.impl.CommunityPostServiceImpl;
+import cn.ilink.service.impl.TeacherApplicationServiceImpl;
+import cn.ilink.service.impl.TeamApplicationServiceImpl;
+import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/api/admin")
@@ -42,19 +45,19 @@ public class AdminController {
     private UserService userService;
 
     @Autowired
-    private TeamDemandService teamDemandService;
+    private TeamDemandServiceImpl teamDemandService;
 
     @Autowired
-    private TeacherApplicationService teacherApplicationService;
+    private TeacherApplicationServiceImpl teacherApplicationService;
 
     @Autowired
-    private AssetService assetService;
+    private AssetServiceImpl assetService;
 
     @Autowired
-    private CommunityPostService communityPostService;
+    private CommunityPostServiceImpl communityPostService;
 
     @Autowired
-    private TeamApplicationService teamApplicationService;
+    private TeamApplicationServiceImpl teamApplicationService;
 
     @Autowired
     private CommunityPostLikeMapper communityPostLikeMapper;
@@ -76,7 +79,7 @@ public class AdminController {
     public ResponseEntity<Result<?>> getDashboardData(HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
@@ -94,97 +97,117 @@ public class AdminController {
             data.put("assetCount", assetCount);
             data.put("postCount", postCount);
 
-            return ResponseEntity.ok(Result.ok("获取成功", data));
+            return Result.ok("获取成功", data).toResponseEntity();
         } catch (Exception e) {
             log.error("获取仪表盘数据失败", e);
-            return ResponseEntity.ok(Result.fail(500, "获取数据失败，请稍后重试"));
+            return Result.fail(500, "获取数据失败，请稍后重试").toResponseEntity();
         }
     }
 
     @GetMapping("/users")
     @ResponseBody
-    public ResponseEntity<Result<?>> getUserList(HttpSession session) {
+    public ResponseEntity<Result<?>> getUserList(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int size, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
-            List<User> users = userService.list();
-            return ResponseEntity.ok(Result.ok("获取成功", users));
+            int safeSize = Math.min(Math.max(size, 1), 100);
+            int safePage = Math.max(page, 1);
+            Page<User> result = userService.page(new Page<>(safePage, safeSize));
+            return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取用户列表失败", e);
-            return ResponseEntity.ok(Result.fail(500, "获取用户列表失败，请稍后重试"));
+            return Result.fail(500, "获取用户列表失败，请稍后重试").toResponseEntity();
         }
     }
 
     @GetMapping("/teams")
     @ResponseBody
-    public ResponseEntity<Result<?>> getTeamList(HttpSession session) {
+    public ResponseEntity<Result<?>> getTeamList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
-            List<cn.ilink.entity.TeamDemand> teams = teamDemandService.list();
-            return ResponseEntity.ok(Result.ok("获取成功", teams));
+            int safeSize = Math.min(Math.max(size, 1), 100);
+            int safePage = Math.max(page, 1);
+            Page<cn.ilink.entity.TeamDemand> result = teamDemandService.page(new Page<>(safePage, safeSize));
+            return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取团队列表失败", e);
-            return ResponseEntity.ok(Result.fail(500, "获取团队列表失败，请稍后重试"));
+            return Result.fail(500, "获取团队列表失败，请稍后重试").toResponseEntity();
         }
     }
 
     @GetMapping("/teachers")
     @ResponseBody
-    public ResponseEntity<Result<?>> getTeacherList(HttpSession session) {
+    public ResponseEntity<Result<?>> getTeacherList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
-
         try {
-            List<cn.ilink.entity.TeacherApplication> teachers = teacherApplicationService.list();
-            return ResponseEntity.ok(Result.ok("获取成功", teachers));
+            int safeSize = Math.min(Math.max(size, 1), 100);
+            int safePage = Math.max(page, 1);
+            Page<cn.ilink.entity.TeacherApplication> result = teacherApplicationService.page(new Page<>(safePage, safeSize));
+            return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取导师列表失败", e);
-            return ResponseEntity.ok(Result.fail(500, "获取导师列表失败，请稍后重试"));
+            return Result.fail(500, "获取导师列表失败，请稍后重试").toResponseEntity();
         }
     }
 
     @GetMapping("/assets")
     @ResponseBody
-    public ResponseEntity<Result<?>> getAssetList(HttpSession session) {
+    public ResponseEntity<Result<?>> getAssetList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
-
         try {
-            List<cn.ilink.entity.Asset> assets = assetService.list();
-            return ResponseEntity.ok(Result.ok("获取成功", assets));
+            int safeSize = Math.min(Math.max(size, 1), 100);
+            int safePage = Math.max(page, 1);
+            Page<cn.ilink.entity.Asset> result = assetService.page(new Page<>(safePage, safeSize));
+            return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取成果列表失败", e);
-            return ResponseEntity.ok(Result.fail(500, "获取成果列表失败，请稍后重试"));
+            return Result.fail(500, "获取成果列表失败，请稍后重试").toResponseEntity();
         }
     }
 
     @GetMapping("/community-posts")
     @ResponseBody
-    public ResponseEntity<Result<?>> getCommunityPostList(HttpSession session) {
+    public ResponseEntity<Result<?>> getCommunityPostList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
-
         try {
-            List<CommunityPost> posts = communityPostService.list(
+            int safeSize = Math.min(Math.max(size, 1), 100);
+            int safePage = Math.max(page, 1);
+            Page<CommunityPost> result = communityPostService.page(
+                new Page<>(safePage, safeSize),
                 new LambdaQueryWrapper<CommunityPost>().orderByDesc(CommunityPost::getCreatedAt)
             );
-            return ResponseEntity.ok(Result.ok("获取成功", posts));
+            return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取社区帖子失败", e);
-            return ResponseEntity.ok(Result.fail(500, "获取社区帖子失败，请稍后重试"));
+            return Result.fail(500, "获取社区帖子失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -193,7 +216,7 @@ public class AdminController {
     public ResponseEntity<Result<?>> deleteUser(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
@@ -201,11 +224,30 @@ public class AdminController {
             // 1. 组队申请
             teamApplicationService.remove(new LambdaQueryWrapper<cn.ilink.entity.TeamApplication>()
                     .eq(cn.ilink.entity.TeamApplication::getUserId, id));
-            // 2. 社区帖子点赞/收藏
+            // 2. 社区帖子点赞/收藏（先收集受影响帖子，删后回写计数）
+            List<CommunityPostLike> likes = communityPostLikeMapper.selectList(
+                new LambdaQueryWrapper<CommunityPostLike>().eq(CommunityPostLike::getUserId, id));
+            Set<Long> affectedPostIds = likes.stream().map(CommunityPostLike::getPostId).collect(Collectors.toSet());
             communityPostLikeMapper.delete(new LambdaQueryWrapper<CommunityPostLike>()
                     .eq(CommunityPostLike::getUserId, id));
+
+            List<CommunityPostFavorite> favs = communityPostFavoriteMapper.selectList(
+                new LambdaQueryWrapper<CommunityPostFavorite>().eq(CommunityPostFavorite::getUserId, id));
+            favs.forEach(f -> affectedPostIds.add(f.getPostId()));
             communityPostFavoriteMapper.delete(new LambdaQueryWrapper<CommunityPostFavorite>()
                     .eq(CommunityPostFavorite::getUserId, id));
+
+            // 回写帖子 like_count / favorite_count
+            for (Long postId : affectedPostIds) {
+                Long likeCount = communityPostLikeMapper.selectCount(
+                    new LambdaQueryWrapper<CommunityPostLike>().eq(CommunityPostLike::getPostId, postId));
+                Long favCount = communityPostFavoriteMapper.selectCount(
+                    new LambdaQueryWrapper<CommunityPostFavorite>().eq(CommunityPostFavorite::getPostId, postId));
+                communityPostService.update(new LambdaUpdateWrapper<CommunityPost>()
+                    .set(CommunityPost::getLikeCount, likeCount != null ? likeCount.intValue() : 0)
+                    .set(CommunityPost::getFavoriteCount, favCount != null ? favCount.intValue() : 0)
+                    .eq(CommunityPost::getId, postId));
+            }
             // 3. 通知
             notificationMapper.delete(new LambdaQueryWrapper<Notification>()
                     .eq(Notification::getUserId, id));
@@ -224,13 +266,13 @@ public class AdminController {
 
             boolean success = userService.removeById(id);
             if (success) {
-                return ResponseEntity.ok(Result.ok("删除成功", null));
+                return Result.ok("删除成功", null).toResponseEntity();
             } else {
-                return ResponseEntity.ok(Result.notFound("用户不存在"));
+                return Result.notFound("用户不存在").toResponseEntity();
             }
         } catch (Exception e) {
             log.error("删除用户失败", e);
-            return ResponseEntity.ok(Result.fail(500, "删除用户失败，请稍后重试"));
+            return Result.fail(500, "删除用户失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -243,38 +285,38 @@ public class AdminController {
     ) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
             User target = userService.getById(id);
             if (target == null) {
-                return ResponseEntity.ok(Result.notFound("用户不存在"));
+                return Result.notFound("用户不存在").toResponseEntity();
             }
 
             String role = payload == null || payload.get("role") == null
                 ? ""
                 : String.valueOf(payload.get("role")).trim().toUpperCase();
             if (!ALLOWED_ROLES.contains(role)) {
-                return ResponseEntity.ok(Result.badRequest("角色非法，仅支持 STUDENT / TEACHER / ADMIN"));
+                return Result.badRequest("角色非法，仅支持 STUDENT / TEACHER / ADMIN").toResponseEntity();
             }
 
             User current = ControllerUtils.requireUser(session);
             // 防止管理员把自己降级导致后台失控
             if (current != null && current.getId() != null && current.getId().equals(id) && !"ADMIN".equals(role)) {
-                return ResponseEntity.ok(Result.badRequest("不能修改当前登录管理员自己的身份"));
+                return Result.badRequest("不能修改当前登录管理员自己的身份").toResponseEntity();
             }
 
             target.setRole(role);
             boolean success = userService.updateById(target);
             if (!success) {
-                return ResponseEntity.ok(Result.fail(500, "更新失败"));
+                return Result.fail(500, "更新失败").toResponseEntity();
             }
 
-            return ResponseEntity.ok(Result.ok("身份更新成功", Map.of("id", target.getId(), "role", target.getRole())));
+            return Result.ok("身份更新成功", Map.of("id", target.getId(), "role", target.getRole())).toResponseEntity();
         } catch (Exception e) {
             log.error("更新身份失败", e);
-            return ResponseEntity.ok(Result.fail(500, "更新身份失败，请稍后重试"));
+            return Result.fail(500, "更新身份失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -287,27 +329,27 @@ public class AdminController {
     ) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
             User target = userService.getById(id);
             if (target == null) {
-                return ResponseEntity.ok(Result.notFound("用户不存在"));
+                return Result.notFound("用户不存在").toResponseEntity();
             }
 
             String username = str(payload.get("username"));
             String role = str(payload.get("role")).toUpperCase();
             if (username.isEmpty()) {
-                return ResponseEntity.ok(Result.badRequest("用户名不能为空"));
+                return Result.badRequest("用户名不能为空").toResponseEntity();
             }
             if (!ALLOWED_ROLES.contains(role)) {
-                return ResponseEntity.ok(Result.badRequest("角色非法，仅支持 STUDENT / TEACHER / ADMIN"));
+                return Result.badRequest("角色非法，仅支持 STUDENT / TEACHER / ADMIN").toResponseEntity();
             }
 
             User current = ControllerUtils.requireUser(session);
             if (current != null && current.getId() != null && current.getId().equals(id) && !"ADMIN".equals(role)) {
-                return ResponseEntity.ok(Result.badRequest("不能修改当前登录管理员自己的身份"));
+                return Result.badRequest("不能修改当前登录管理员自己的身份").toResponseEntity();
             }
 
             target.setUsername(username);
@@ -338,7 +380,7 @@ public class AdminController {
 
             boolean success = userService.updateById(target);
             if (!success) {
-                return ResponseEntity.ok(Result.fail(500, "更新失败"));
+                return Result.fail(500, "更新失败").toResponseEntity();
             }
 
             // 若编辑的是当前登录管理员本人，同步会话数据
@@ -359,12 +401,12 @@ public class AdminController {
                 session.setAttribute("user", current);
             }
 
-            return ResponseEntity.ok(Result.ok("用户信息更新成功", target));
+            return Result.ok("用户信息更新成功", target).toResponseEntity();
         } catch (NumberFormatException e) {
-            return ResponseEntity.ok(Result.badRequest("学号/工号必须是数字"));
+            return Result.badRequest("学号/工号必须是数字").toResponseEntity();
         } catch (Exception e) {
             log.error("更新用户失败", e);
-            return ResponseEntity.ok(Result.fail(500, "更新用户失败，请稍后重试"));
+            return Result.fail(500, "更新用户失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -381,19 +423,19 @@ public class AdminController {
     public ResponseEntity<Result<?>> deleteTeam(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
             boolean success = teamDemandService.removeById(id);
             if (success) {
-                return ResponseEntity.ok(Result.ok("删除成功", null));
+                return Result.ok("删除成功", null).toResponseEntity();
             } else {
-                return ResponseEntity.ok(Result.notFound("团队不存在"));
+                return Result.notFound("团队不存在").toResponseEntity();
             }
         } catch (Exception e) {
             log.error("删除团队失败", e);
-            return ResponseEntity.ok(Result.fail(500, "删除团队失败，请稍后重试"));
+            return Result.fail(500, "删除团队失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -402,7 +444,7 @@ public class AdminController {
     public ResponseEntity<Result<?>> approveTeacher(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
@@ -411,16 +453,16 @@ public class AdminController {
                 teacher.setStatus("APPROVED");
                 boolean success = teacherApplicationService.updateById(teacher);
                 if (success) {
-                    return ResponseEntity.ok(Result.ok("审批通过", null));
+                    return Result.ok("审批通过", null).toResponseEntity();
                 } else {
-                    return ResponseEntity.ok(Result.fail(500, "审批失败"));
+                    return Result.fail(500, "审批失败").toResponseEntity();
                 }
             } else {
-                return ResponseEntity.ok(Result.notFound("导师申请不存在"));
+                return Result.notFound("导师申请不存在").toResponseEntity();
             }
         } catch (Exception e) {
             log.error("审批失败", e);
-            return ResponseEntity.ok(Result.fail(500, "审批失败，请稍后重试"));
+            return Result.fail(500, "审批失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -429,19 +471,19 @@ public class AdminController {
     public ResponseEntity<Result<?>> deleteTeacher(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
             boolean success = teacherApplicationService.removeById(id);
             if (success) {
-                return ResponseEntity.ok(Result.ok("删除成功", null));
+                return Result.ok("删除成功", null).toResponseEntity();
             } else {
-                return ResponseEntity.ok(Result.notFound("导师申请不存在"));
+                return Result.notFound("导师申请不存在").toResponseEntity();
             }
         } catch (Exception e) {
             log.error("删除导师申请失败", e);
-            return ResponseEntity.ok(Result.fail(500, "删除导师申请失败，请稍后重试"));
+            return Result.fail(500, "删除导师申请失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -450,19 +492,19 @@ public class AdminController {
     public ResponseEntity<Result<?>> deleteAsset(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
             boolean success = assetService.removeById(id);
             if (success) {
-                return ResponseEntity.ok(Result.ok("删除成功", null));
+                return Result.ok("删除成功", null).toResponseEntity();
             } else {
-                return ResponseEntity.ok(Result.notFound("成果不存在"));
+                return Result.notFound("成果不存在").toResponseEntity();
             }
         } catch (Exception e) {
             log.error("删除成果失败", e);
-            return ResponseEntity.ok(Result.fail(500, "删除成果失败，请稍后重试"));
+            return Result.fail(500, "删除成果失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -471,19 +513,19 @@ public class AdminController {
     public ResponseEntity<Result<?>> deleteCommunityPost(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
 
         try {
             boolean success = communityPostService.removeById(id);
             if (success) {
-                return ResponseEntity.ok(Result.ok("删除成功", null));
+                return Result.ok("删除成功", null).toResponseEntity();
             } else {
-                return ResponseEntity.ok(Result.notFound("帖子不存在"));
+                return Result.notFound("帖子不存在").toResponseEntity();
             }
         } catch (Exception e) {
             log.error("删除帖子失败", e);
-            return ResponseEntity.ok(Result.fail(500, "删除帖子失败，请稍后重试"));
+            return Result.fail(500, "删除帖子失败，请稍后重试").toResponseEntity();
         }
     }
 }

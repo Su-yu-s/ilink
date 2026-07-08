@@ -1,126 +1,441 @@
-﻿// 个人主页JavaScript
+// iLink 首页沉浸叙事动效
 
-function escapeHtml(value) {
-    return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+(function () {
+    'use strict';
 
-// 页面加载完成后获取用户信息
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const response = await apiFetch('/api/user/profile');
-        const result = await response.json();
-        
-        if (result.code === 200) {
-            renderUserInfo(result.data);
+    if (!document.body || document.body.getAttribute('data-app-page') !== 'home') return;
+
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.body.classList.add('home-js');
+    if (!reduceMotion) document.body.classList.add('home-motion-ready');
+
+    function ready(fn) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fn);
         } else {
-            showMessage('获取用户信息失败: ' + result.message, 'error');
-            window.location.href = '/login';
+            fn();
         }
-    } catch (error) {
-        console.error('获取用户信息异常:', error);
-        showMessage('系统异常，请稍后重试', 'error');
-    }
-});
-
-// 渲染用户信息
-function renderUserInfo(user) {
-    const userInfoContainer = document.getElementById('userInfo');
-
-    const role = user.role || 'STUDENT';
-    const roleLabel = getUserRoleDisplayName(role);
-    const roleClass = role === 'ADMIN' ? 'admin' : (role === 'TEACHER' ? 'teacher' : 'student');
-
-    const initials = (user.username || 'i')
-        .trim()
-        .slice(0, 2)
-        .toUpperCase();
-
-    const avatarHtml = user.avatar
-        ? `<img src="${escapeHtml(user.avatar)}" alt="头像" class="user-avatar-img" onerror="this.style.display='none'; this.parentElement.querySelector('.user-avatar-initial').style.display='flex';">`
-        : `<div class="user-avatar-initial">${initials}</div>`;
-
-    userInfoContainer.innerHTML = `
-        <div class="home-hero-glass page-transition home-dashboard-hero">
-            <div class="d-flex align-items-center gap-3">
-                <div class="user-avatar">
-                    ${avatarHtml}
-                    ${user.avatar ? `<div class="user-avatar-initial d-none">${initials}</div>` : ''}
-                </div>
-                <div class="home-hero-glass__intro">
-                    <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
-                        <h2 class="mb-0 home-user-name">${escapeHtml(user.username)}</h2>
-                        <span class="role-badge ${roleClass}">${roleLabel}</span>
-                    </div>
-                    <p class="home-user-meta">真实姓名：${escapeHtml(user.realName || '未设置')}</p>
-                    <p class="home-user-meta">邮箱：${escapeHtml(user.email || '未设置')}</p>
-                    <p class="home-user-meta">注册时间：${formatTime(user.createdAt)}</p>
-                </div>
-            </div>
-
-            <div class="stats-grid home-stats-grid">
-                <div class="stat-tile">
-                    <span class="label">我的组队</span>
-                    <span class="value">—</span>
-                </div>
-                <div class="stat-tile">
-                    <span class="label">我的申请</span>
-                    <span class="value">—</span>
-                </div>
-                <div class="stat-tile">
-                    <span class="label">我的成果</span>
-                    <span class="value">—</span>
-                </div>
-                <div class="stat-tile">
-                    <span class="label">角色身份</span>
-                    <span class="value home-role-tile-value">${roleLabel}</span>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // 由于当前后端未提供“我的组队/我的申请/我的成果”的列表接口，这里先做友好占位
-    const myTeams = document.getElementById('myTeams');
-    if (myTeams && myTeams.children.length === 0) {
-        myTeams.innerHTML = `
-            <div class="empty-state home-empty">
-                <div class="home-empty__art" aria-hidden="true">
-                    <svg viewBox="0 0 120 100" width="120" height="100" class="home-empty__svg"><circle cx="40" cy="38" r="18" fill="rgba(58,90,169,0.15)"/><circle cx="82" cy="42" r="14" fill="rgba(42,143,134,0.18)"/><path d="M20 88 Q60 62 100 88" stroke="rgba(58,90,169,0.25)" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
-                </div>
-                <h4>暂无组队数据</h4>
-                <p>你发布的组队需求或加入的团队将显示在这里。</p>
-            </div>
-        `;
     }
 
-    const myApplications = document.getElementById('myApplications');
-    if (myApplications && myApplications.children.length === 0) {
-        myApplications.innerHTML = `
-            <div class="empty-state home-empty">
-                <div class="home-empty__art" aria-hidden="true">
-                    <svg viewBox="0 0 120 100" width="120" height="100" class="home-empty__svg home-empty__svg--doc"><rect x="36" y="22" width="48" height="62" rx="8" fill="rgba(255,255,255,0.55)" stroke="rgba(58,90,169,0.28)" stroke-width="2"/><path d="M48 40h24M48 52h24M48 64h16" stroke="rgba(71,85,105,0.45)" stroke-width="3" stroke-linecap="round"/></svg>
-                </div>
-                <h4>暂无申请记录</h4>
-                <p>申请加入团队、导师项目等记录将在这里展示。</p>
-            </div>
-        `;
-    }
-}
+    ready(function () {
+        splitHeroTitle();
+        initReveals();
+        initActivityFeed();
+        initMagneticButtons();
+        initCtaForm();
+        initScrollProgress();
+        initCursorFollower();
+        if (!reduceMotion) initParticleCanvas();
+        if (!reduceMotion) ensureGsap(initGsapMotion);
+    });
 
-// 获取用户角色显示名称
-function getUserRoleDisplayName(role) {
-    switch (role) {
-        case 'STUDENT':
-            return '学生';
-        case 'TEACHER':
-            return '教师';
-        case 'ADMIN':
-            return '管理员';
-        default:
-            return role;
+    function splitHeroTitle() {
+        document.querySelectorAll('.home-split-line').forEach(function (line) {
+            var text = line.textContent || '';
+            line.innerHTML = '';
+            Array.from(text).forEach(function (char) {
+                var span = document.createElement('span');
+                span.className = 'home-char';
+                span.textContent = char;
+                line.appendChild(span);
+            });
+        });
     }
-}
+
+    function initReveals() {
+        var items = Array.prototype.slice.call(document.querySelectorAll('.home-reveal'));
+        if (!items.length) return;
+
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+            items.forEach(function (item) { item.classList.add('is-visible'); });
+            return;
+        }
+
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            });
+        }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
+
+        items.forEach(function (item) { observer.observe(item); });
+    }
+
+    function ensureGsap(done) {
+        if (window.gsap) {
+            ensureScrollTrigger(done);
+            return;
+        }
+
+        loadScript('/lib/gsap.min.js?v=3.12.5', function () {
+            ensureScrollTrigger(done);
+        }, done);
+    }
+
+    function ensureScrollTrigger(done) {
+        if (!window.gsap || window.ScrollTrigger) {
+            done();
+            return;
+        }
+
+        loadScript('/lib/ScrollTrigger.min.js?v=3.12.5', done, done);
+    }
+
+    function loadScript(src, onload, onerror) {
+        var script = document.createElement('script');
+        script.src = src;
+        script.onload = onload;
+        script.onerror = onerror;
+        document.head.appendChild(script);
+    }
+
+    function initGsapMotion() {
+        if (!window.gsap) return;
+        var gsap = window.gsap;
+        var ScrollTrigger = window.ScrollTrigger;
+        if (ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
+
+        // 首屏标题逐字淡入，减少模板感，制造“开场”节奏。
+        gsap.fromTo('.home-char',
+            { opacity: 0, y: 36 },
+            { opacity: 1, y: 0, duration: 0.9, stagger: 0.045, ease: 'power3.out', delay: 0.12 }
+        );
+
+        if (!ScrollTrigger) return;
+
+        gsap.utils.toArray('.home-reveal').forEach(function (el) {
+            if (el.closest('.home-hero')) return;
+            gsap.fromTo(el,
+                { opacity: 0, y: 30 },
+                {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.82,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: el,
+                        start: 'top 84%',
+                        once: true
+                    }
+                }
+            );
+        });
+
+        // 图片视差只动 transform，不碰 layout，避免滚动卡顿。
+        gsap.utils.toArray('.home-bento__media img, .home-mag-tile__inner img').forEach(function (img) {
+            gsap.fromTo(img,
+                { yPercent: -4 },
+                {
+                    yPercent: 4,
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: img,
+                        start: 'top bottom',
+                        end: 'bottom top',
+                        scrub: true
+                    }
+                }
+            );
+        });
+    }
+
+    function initParticleCanvas() {
+        var canvas = document.getElementById('homeParticleCanvas');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        var particles = [];
+        var mouse = { x: -9999, y: -9999 };
+        var rafId = null;
+        var width = 0;
+        var height = 0;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        function particleCount() {
+            if (window.innerWidth < 640) return 36;
+            if (window.innerWidth < 1024) return 58;
+            return 84;
+        }
+
+        function resize() {
+            var rect = canvas.getBoundingClientRect();
+            width = Math.max(1, Math.floor(rect.width));
+            height = Math.max(1, Math.floor(rect.height));
+            canvas.width = Math.floor(width * dpr);
+            canvas.height = Math.floor(height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            createParticles();
+        }
+
+        function createParticles() {
+            var count = particleCount();
+            particles = [];
+            for (var i = 0; i < count; i++) {
+                particles.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.34,
+                    vy: (Math.random() - 0.5) * 0.34,
+                    r: Math.random() * 1.6 + 0.8
+                });
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(23, 21, 17, 0.48)';
+            ctx.strokeStyle = 'rgba(23, 21, 17, 0.16)';
+            ctx.lineWidth = 1;
+
+            for (var i = 0; i < particles.length; i++) {
+                var p = particles[i];
+                var dxMouse = p.x - mouse.x;
+                var dyMouse = p.y - mouse.y;
+                var mouseDist = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+                if (mouseDist < 120) {
+                    p.vx += dxMouse / 12000;
+                    p.vy += dyMouse / 12000;
+                }
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vx *= 0.995;
+                p.vy *= 0.995;
+
+                if (p.x < -20) p.x = width + 20;
+                if (p.x > width + 20) p.x = -20;
+                if (p.y < -20) p.y = height + 20;
+                if (p.y > height + 20) p.y = -20;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (var j = i + 1; j < particles.length; j++) {
+                    var q = particles[j];
+                    var dx = p.x - q.x;
+                    var dy = p.y - q.y;
+                    var dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist > 132) continue;
+                    ctx.globalAlpha = Math.max(0, 1 - dist / 132) * 0.72;
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(q.x, q.y);
+                    ctx.stroke();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            rafId = window.requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('resize', debounce(resize, 160), { passive: true });
+        window.addEventListener('pointermove', function (event) {
+            var rect = canvas.getBoundingClientRect();
+            mouse.x = event.clientX - rect.left;
+            mouse.y = event.clientY - rect.top;
+        }, { passive: true });
+        window.addEventListener('pointerleave', function () {
+            mouse.x = -9999;
+            mouse.y = -9999;
+        }, { passive: true });
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden && rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            } else if (!document.hidden && !rafId) {
+                draw();
+            }
+        });
+
+        resize();
+        draw();
+    }
+
+    function initActivityFeed() {
+        var items = Array.prototype.slice.call(document.querySelectorAll('.home-feed-item'));
+        if (items.length < 2 || reduceMotion) return;
+        var index = 0;
+        window.setInterval(function () {
+            items[index].classList.remove('is-active');
+            index = (index + 1) % items.length;
+            items[index].classList.add('is-active');
+        }, 2800);
+    }
+
+    function initMagneticButtons() {
+        if (reduceMotion || !window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
+        document.querySelectorAll('.home-magnetic').forEach(function (el) {
+            el.addEventListener('pointermove', function (event) {
+                var rect = el.getBoundingClientRect();
+                var x = (event.clientX - rect.left - rect.width / 2) * 0.18;
+                var y = (event.clientY - rect.top - rect.height / 2) * 0.18;
+                el.style.transform = 'translate(' + x.toFixed(1) + 'px, ' + y.toFixed(1) + 'px)';
+            });
+            el.addEventListener('pointerleave', function () {
+                el.style.transform = '';
+            });
+        });
+    }
+
+    function initCtaForm() {
+        var form = document.querySelector('.home-cta-form');
+        if (!form) return;
+        form.addEventListener('submit', function (event) {
+            var input = form.querySelector('input');
+            if (!input || input.value.trim()) return;
+            event.preventDefault();
+            window.location.href = '/team-market.html';
+        });
+    }
+
+    function initScrollProgress() {
+        var bar = document.getElementById('homeScrollProgress');
+        if (!bar) return;
+        var ticking = false;
+        function update() {
+            var scrollTop = window.scrollY || window.pageYOffset;
+            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            var progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            bar.style.width = progress + '%';
+            ticking = false;
+        }
+        window.addEventListener('scroll', function () {
+            if (!ticking) {
+                window.requestAnimationFrame(update);
+                ticking = true;
+            }
+        }, { passive: true });
+    }
+
+    function initCursorFollower() {
+        if (reduceMotion || !window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
+        var cursor = document.getElementById('homeCursor');
+        if (!cursor) return;
+        var mx = -100, my = -100, cx = -100, cy = -100;
+        var visible = false;
+        var rafId = null;
+
+        function loop() {
+            cx += (mx - cx) * 0.35;
+            cy += (my - cy) * 0.35;
+            cursor.style.transform = 'translate(' + cx.toFixed(1) + 'px, ' + cy.toFixed(1) + 'px)';
+            rafId = window.requestAnimationFrame(loop);
+        }
+
+        window.addEventListener('pointermove', function (e) {
+            mx = e.clientX;
+            my = e.clientY;
+            if (!visible) {
+                visible = true;
+                cursor.classList.add('is-visible');
+                cx = mx;
+                cy = my;
+                loop();
+            }
+        }, { passive: true });
+
+        window.addEventListener('pointerleave', function () {
+            visible = false;
+            cursor.classList.remove('is-visible');
+            if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+        }, { passive: true });
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden && rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            } else if (!document.hidden && visible && !rafId) {
+                loop();
+            }
+        });
+
+        var hoverEls = document.querySelectorAll('a, button, [data-magnetic]');
+        for (var i = 0; i < hoverEls.length; i++) {
+            hoverEls[i].addEventListener('pointerenter', function () { cursor.classList.add('is-hover'); });
+            hoverEls[i].addEventListener('pointerleave', function () { cursor.classList.remove('is-hover'); });
+        }
+
+        document.addEventListener('mousedown', function () { cursor.classList.add('is-click'); });
+        document.addEventListener('mouseup', function () { cursor.classList.remove('is-click'); });
+    }
+
+    function debounce(fn, delay) {
+        var timer = null;
+        return function () {
+            var args = arguments;
+            clearTimeout(timer);
+            timer = setTimeout(function () { fn.apply(null, args); }, delay);
+        };
+    }
+
+    // ── Desktop hamburger menu (home page only) ──
+    (function initDesktopMenu() {
+        var body = document.body;
+        if (!body || body.getAttribute('data-app-page') !== 'home') return;
+
+        var hamburger = document.getElementById('desktopHamburger');
+        var menuPanel = document.getElementById('desktopMenuPanel');
+        if (!hamburger || !menuPanel) return;
+
+        hamburger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var isOpen = menuPanel.classList.toggle('il-desktop-menu--open');
+            hamburger.setAttribute('aria-expanded', String(isOpen));
+            menuPanel.setAttribute('aria-hidden', String(!isOpen));
+            document.body.classList.toggle('desktop-menu-open', isOpen);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!menuPanel.classList.contains('il-desktop-menu--open')) return;
+            if (e.target.closest('#desktopMenuPanel') || e.target.closest('#desktopHamburger')) return;
+            menuPanel.classList.remove('il-desktop-menu--open');
+            hamburger.setAttribute('aria-expanded', 'false');
+            menuPanel.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('desktop-menu-open');
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && menuPanel.classList.contains('il-desktop-menu--open')) {
+                menuPanel.classList.remove('il-desktop-menu--open');
+                hamburger.setAttribute('aria-expanded', 'false');
+                menuPanel.setAttribute('aria-hidden', 'true');
+                document.body.classList.remove('desktop-menu-open');
+            }
+        });
+    })();
+
+    // ── Home page: hide navbar on first paint, show on scroll ──
+    (function initHomeNavbar() {
+        var body = document.body;
+        if (!body || body.getAttribute('data-app-page') !== 'home') return;
+
+        var header = document.getElementById('ilHeader');
+        if (!header) return;
+
+        var THRESHOLD = 100;
+        var ticking = false;
+
+        function applyNavState() {
+            var scrollY = window.scrollY || window.pageYOffset;
+            var expanded = scrollY >= THRESHOLD;
+            header.classList.toggle('il-header--home-expanded', expanded);
+            header.classList.toggle('il-header--home-compact', !expanded);
+        }
+
+        function onScroll() {
+            if (!ticking) {
+                window.requestAnimationFrame(function() {
+                    applyNavState();
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        }
+
+        applyNavState();
+        window.addEventListener('scroll', onScroll, { passive: true });
+    })();
+})();

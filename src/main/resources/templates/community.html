@@ -7,6 +7,13 @@
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" crossorigin="anonymous">
+    <style>
+        /* iLink 交流社区专用样式 */
+        body[data-app-page="community"] .il-hero__eyebrow { margin-bottom: 16px; }
+        body[data-app-page="community"] .il-hero__title { font-family: var(--font-display); font-weight: 700; max-width: 640px; }
+        body[data-app-page="community"] .il-hero__desc { font-size: 16px; color: var(--text-secondary); max-width: 520px; margin: 16px 0 0; }
+        body[data-app-page="community"] .il-btn--sm { font-size: 13px; }
+    </style>
 </head>
 <body data-app-page="community" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'community')"></div>
@@ -15,9 +22,12 @@
         <canvas id="particleCanvas" class="particle-canvas"></canvas>
 
         <div class="il-hero">
-            <p class="il-hero-eyebrow">经验博客 · 竞赛协作</p>
-            <h1 class="il-hero-title">交流社区</h1>
-            <p class="il-hero-desc">赛程复盘、备赛路线、工程闲聊与资源整理。写好一篇，帮到一群人。</p>
+            <div class="il-hero__eyebrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                COMMUNITY
+            </div>
+            <h1 class="il-hero__title">奇文共欣赏，<br>疑义相与析。</h1>
+            <p class="il-hero__desc">赛程复盘、备赛路线、工程闲聊与资源整理。写好一篇，帮到一群人。</p>
         </div>
 
         <div class="il-toolbar">
@@ -83,7 +93,7 @@
                     <label class="il-form-label">附件（可选）</label>
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
                         <input type="file" id="composeAttachmentInput" class="d-none" multiple>
-                        <button type="button" class="il-btn il-btn-secondary" id="composeAddAttachmentBtn" style="padding: 8px 16px; font-size: 0.8125rem;">上传文件</button>
+                        <button type="button" class="il-btn il-btn-secondary il-btn--sm" id="composeAddAttachmentBtn">上传文件</button>
                         <span class="small text-muted">与正文一并发布，最多 10 个</span>
                     </div>
                     <ul id="composeAttachmentList" class="list-unstyled small mb-0"></ul>
@@ -96,11 +106,10 @@
         </div>
     </div>
 
-    <div th:replace="fragments/footer :: footer"></div>
-
     <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/common.js?v=7.8"></script>
+    <script src="/js/ui-particles.js?v=1.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js" crossorigin="anonymous"></script>
-    <script src="/js/community.js?v=4.2"></script>
+    <script src="/js/community.js?v=4.5"></script>
 </body>
 </html>

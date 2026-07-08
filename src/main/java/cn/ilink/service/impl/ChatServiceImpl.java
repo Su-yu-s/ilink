@@ -7,6 +7,7 @@ import cn.ilink.service.ChatService;
 import cn.ilink.service.UserService;
 import cn.ilink.vo.ChatMessageVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -51,12 +52,13 @@ public class ChatServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage>
     @Override
     public List<ChatMessageVO> getHistory(Long teamId, int limit) {
         int safeLimit = Math.min(Math.max(limit, 1), 200);
+        Page<ChatMessage> page = new Page<>(1, safeLimit);
         LambdaQueryWrapper<ChatMessage> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ChatMessage::getTeamId, teamId)
-                .orderByDesc(ChatMessage::getCreatedAt)
-                .last("LIMIT " + safeLimit);
+                .orderByDesc(ChatMessage::getCreatedAt);
 
-        List<ChatMessage> messages = list(wrapper);
+        Page<ChatMessage> result = page(page, wrapper);
+        List<ChatMessage> messages = result.getRecords();
         if (messages.isEmpty()) {
             return Collections.emptyList();
         }
@@ -94,8 +96,22 @@ public class ChatServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage>
 
         if (sender != null) {
             vo.setSenderName(sender.getRealName() != null ? sender.getRealName() : sender.getUsername());
+            vo.setSenderAvatar(resolveAvatarUrl(sender.getAvatar()));
         }
 
         return vo;
+    }
+
+    private String resolveAvatarUrl(String avatar) {
+        if (avatar == null || avatar.trim().isEmpty()) {
+            return null;
+        }
+        if (avatar.startsWith("http://") || avatar.startsWith("https://") || avatar.startsWith("//")) {
+            return avatar;
+        }
+        if (!avatar.startsWith("/")) {
+            return "/uploads/" + avatar;
+        }
+        return avatar;
     }
 }

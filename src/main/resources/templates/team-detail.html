@@ -105,21 +105,31 @@
                             </dd>
                         </div>
                     </dl>
+
+                    <!-- 待审批申请区：仅队长可见，仅 OPEN 状态 -->
+                    <section id="pendingSection" class="team-pending-section d-none">
+                        <div class="pending-section__header">
+                            <h2 class="pending-section__title">待审批申请</h2>
+                            <span class="pending-section__badge" id="pendingCount">0</span>
+                        </div>
+                        <div id="pendingList" class="pending-list"></div>
+                    </section>
+
                     <div class="detail-view__actions">
-                        <button type="button" id="editTeamBtn" class="il-btn il-btn-accent il-btn--block d-none">
+                        <button type="button" id="editTeamBtn" class="il-btn d-none">
                             <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                             <span>编辑需求</span>
                         </button>
-                        <button type="button" id="workspaceBtn" class="il-btn il-btn-secondary il-btn--block d-none">
+                        <button type="button" id="workspaceBtn" class="il-btn d-none">
                             <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                             </svg>
                             <span>任务看板</span>
                         </button>
-                        <button type="button" id="assignTaskBtn" class="il-btn il-btn-accent il-btn--block d-none">
+                        <button type="button" id="assignTaskBtn" class="il-btn d-none">
                             <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 <circle cx="7" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
@@ -128,10 +138,10 @@
                             </svg>
                             <span>分配任务</span>
                         </button>
-                        <button type="button" id="markTeamingBtn" class="il-btn il-btn-secondary il-btn--block d-none">标记为组队中</button>
-                        <button type="button" id="closeTeamBtn" class="il-btn il-btn-secondary il-btn--block d-none">结束项目</button>
-                        <button type="button" id="applyBtn" class="il-btn il-btn-primary il-btn--block">申请加入</button>
-                        <button type="button" id="backBtn" class="il-btn il-btn-secondary il-btn--block">返回组队大厅</button>
+                        <button type="button" id="markTeamingBtn" class="il-btn d-none">标记为组队中</button>
+                        <button type="button" id="closeTeamBtn" class="il-btn d-none">结束项目</button>
+                        <button type="button" id="applyBtn" class="il-btn il-btn--primary">申请加入</button>
+                        <button type="button" id="backBtn" class="il-btn">返回组队大厅</button>
                     </div>
                 </div>
 
@@ -150,14 +160,6 @@
             </article>
         </div>
     </div>
-
-    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=7.4"></script>
-    <script src="/js/team-detail.js?v=4"></script>
-    <script src="/js/team-detail-tasks.js?v=2"></script>
-    <div th:replace="fragments/footer :: footer"></div>
-</body>
-</html>
 
     <!-- 分配任务弹窗 -->
     <div class="modal fade" id="assignTaskModal" tabindex="-1">
@@ -261,5 +263,81 @@
             </div>
         </div>
     </div>
+
+    <!-- 申请加入弹窗（填写自我介绍） -->
+    <div class="modal fade" id="applyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">申请加入</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3" id="applyTeamInfo">队伍：<span id="applyTeamName">-</span></p>
+                    <div class="mb-3">
+                        <label class="form-label">自我介绍（选填，让队长更快了解你的优势）</label>
+                        <textarea class="form-control" id="applyMessage" rows="4" maxlength="500" placeholder="我有丰富的 Python 数据分析经验，擅长数据清洗和可视化，希望能帮上忙！"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitApplyBtn">提交申请</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 审批弹窗（通过/拒绝） -->
+    <div class="modal fade" id="approveModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="approveModalTitle">通过申请</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="approveModalDesc">确认通过该申请？</p>
+                    <div class="mb-3">
+                        <label class="form-label" id="approveNoteLabel">给申请人留言（选填）</label>
+                        <textarea class="form-control" id="approveNote" rows="3" maxlength="200" placeholder="欢迎加入，明天下午3点开个短会讨论分工~"></textarea>
+                        <small class="text-muted" id="approveNoteHint"></small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmApproveBtn">确认通过</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 申请人资料浮层 -->
+    <div class="modal fade" id="profileOverlay" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">申请人资料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="profileOverlayBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <a href="/user-profile.html" class="btn btn-outline-primary" id="profileFullLink" target="_blank" rel="noopener">查看完整主页 →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
+    <script src="/js/common.js?v=7.8"></script>
+    <script src="/js/ui-particles.js?v=1.0"></script>
+    <script src="/js/team-detail.js?v=6"></script>
+    <script src="/js/team-detail-tasks.js?v=5"></script>
 </body>
 </html>

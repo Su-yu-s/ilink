@@ -53,7 +53,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean createTask(TeamTaskDTO dto, Long userId) {
         TeamTask task = new TeamTask();
         task.setTeamId(dto.getTeamId());
@@ -91,7 +91,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateTask(Long taskId, TeamTaskDTO dto) {
         TeamTask task = this.getById(taskId);
         if (task == null) {
@@ -123,7 +123,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateTaskStatus(Long taskId, String status) {
         TeamTask task = this.getById(taskId);
         if (task == null) {
@@ -138,7 +138,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteTask(Long taskId) {
         LambdaQueryWrapper<TaskParticipant> participantWrapper = new LambdaQueryWrapper<>();
         participantWrapper.eq(TaskParticipant::getTaskId, taskId);
@@ -152,7 +152,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean assignTask(Long taskId, Long userId) {
         TeamTask task = this.getById(taskId);
         if (task == null) {
@@ -201,7 +201,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean addParticipant(Long taskId, Long userId, String role) {
         LambdaQueryWrapper<TaskParticipant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TaskParticipant::getTaskId, taskId)
@@ -222,7 +222,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean removeParticipant(Long taskId, Long userId) {
         LambdaQueryWrapper<TaskParticipant> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TaskParticipant::getTaskId, taskId)
@@ -267,7 +267,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TaskCommentVO addComment(Long taskId, Long userId, String content, Long parentId) {
         TaskComment comment = new TaskComment();
         comment.setTaskId(taskId);

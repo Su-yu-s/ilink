@@ -39,7 +39,7 @@ body[data-app-page="community-article"] .community-article-breadcrumb {
 body[data-app-page="community-article"] .community-article-breadcrumb a {
   color: var(--text-secondary, #6b7280);
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color var(--transition-fast);
 }
 
 body[data-app-page="community-article"] .community-article-breadcrumb a:hover {
@@ -63,7 +63,7 @@ body[data-app-page="community-article"] .community-article-breadcrumb__current {
 /* Article card */
 body[data-app-page="community-article"] .community-article-card {
   border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bg-white, #fff);
   box-shadow:
     0 1px 2px rgba(17, 24, 39, 0.06),
@@ -144,7 +144,7 @@ body[data-app-page="community-article"] .community-article__action-btn {
   border: 1px solid var(--border-light, #e5e7eb);
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
 }
 
 body[data-app-page="community-article"] .community-article__action-btn:hover {
@@ -285,7 +285,7 @@ body[data-app-page="community-article"] .community-article__footer .il-btn-dange
 body[data-app-page="community-article"] .community-article-comments {
   margin-top: 1rem;
   border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--bg-white, #fff);
   box-shadow:
     0 1px 2px rgba(17, 24, 39, 0.05),
@@ -345,7 +345,7 @@ body[data-app-page="community-article"] .community-article-compose__textarea {
   border: 1px solid var(--border-normal, #d1d5db);
   border-radius: 10px;
   resize: vertical;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 body[data-app-page="community-article"] .community-article-compose__textarea::placeholder {

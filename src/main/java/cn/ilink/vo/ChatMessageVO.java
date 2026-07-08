@@ -9,6 +9,7 @@ public class ChatMessageVO {
     private Long teamId;
     private Long senderId;
     private String senderName;
+    private String senderAvatar;
     private String content;
     private String messageType;
     private Date createdAt;

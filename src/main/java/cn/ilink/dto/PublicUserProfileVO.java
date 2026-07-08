@@ -13,7 +13,6 @@ import java.util.Map;
 public class PublicUserProfileVO {
     private Long id;
     private String username;
-    private String realName;
     private String avatar;
     private String role;
     private String grade;

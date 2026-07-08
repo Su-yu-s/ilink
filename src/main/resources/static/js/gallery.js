@@ -1,286 +1,168 @@
-﻿// Gallery Page JavaScript - v5.4
-// 成果展示页面 — 服务端分页、筛选、发布
-class Gallery {
-    constructor() {
-        this.assets = [];
-        this.currentCategory = '';
-        this.currentSort = 'latest';
-        this.searchQuery = '';
-        this.currentPage = 1;
-        this.totalPages = 1;
-        this.pageSize = 12;
-        this.init();
+// Gallery Page — 成果展示 v5.5
+// 依赖：common.js (escapeHtml, showMessage), asset-publish.js (AssetPublish)
+(function () {
+  if (window.GalleryApp) return;
+
+  const PAGE_SIZE = 12;
+
+  const COVERS = {
+    '竞赛获奖': 'https://images.unsplash.com/photo-1546422904-90eab23c3d7e?w=600&h=400&fit=crop',
+    '论文发表': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&h=400&fit=crop',
+    '科研项目': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop',
+    '作品项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop',
+    '作品 / 项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop',
+    '荣誉称号': 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&h=400&fit=crop',
+    '奖学金': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop',
+    default: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop'
+  };
+
+  const TAG_CLASS = {
+    '竞赛获奖': 'gallery-tag--competition', '论文发表': 'gallery-tag--paper',
+    '科研项目': 'gallery-tag--research', '作品项目': 'gallery-tag--work',
+    '作品 / 项目': 'gallery-tag--work', '荣誉称号': 'gallery-tag--honor',
+    '奖学金': 'gallery-tag--scholarship', '技术创新': 'gallery-tag--tech'
+  };
+
+  // ── localStorage helpers ──
+  function storedActions(key) {
+    try {
+      return (JSON.parse(localStorage.getItem('ilink-asset-actions') || '{}')[key])
+        || { liked: false, faved: false, likeDelta: 0, favDelta: 0 };
+    } catch (e) { return { liked: false, faved: false, likeDelta: 0, favDelta: 0 }; }
+  }
+
+  function toggleStorage(key, action) {
+    try {
+      var data = JSON.parse(localStorage.getItem('ilink-asset-actions') || '{}');
+      var entry = data[key] || { liked: false, faved: false, likeDelta: 0, favDelta: 0 };
+      if (action === 'like') { entry.liked = !entry.liked; entry.likeDelta = entry.liked ? 1 : 0; }
+      else { entry.faved = !entry.faved; entry.favDelta = entry.faved ? 1 : 0; }
+      data[key] = entry;
+      localStorage.setItem('ilink-asset-actions', JSON.stringify(data));
+      return entry;
+    } catch (e) { return null; }
+  }
+
+  function fmtDate(d) {
+    if (!d) return '';
+    var dt = new Date(d);
+    if (Number.isNaN(dt.getTime())) return '';
+    return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+  }
+
+  function catTag(cat) { return TAG_CLASS[cat] || 'gallery-tag--tech'; }
+
+  function authorHtml(asset) {
+    var o = asset.ownerPreview;
+    if (!o || o.id == null) return '';
+    var name = typeof displayUsername === 'function' ? displayUsername(o) : '匿名用户';
+    var av = typeof galleryPublisherAvatarHtml === 'function' ? galleryPublisherAvatarHtml(o, 'gc-avatar') : '';
+    return '<div class="gc-author">' + av + '<span class="gc-author-name">' + escapeHtml(name) + '</span></div>';
+  }
+
+  // ── App ──
+  var app = {
+    page: 1,
+
+    $: function (id) { return document.getElementById(id); },
+
+    init: function () {
+      var k = this.$('keyword'); if (k) k.addEventListener('keyup', function (e) { if (e.key === 'Enter') app.load(1); });
+      var c = this.$('category'); if (c) c.addEventListener('change', function () { app.load(1); });
+      var s = this.$('sort'); if (s) s.addEventListener('change', function () { app.load(1); });
+      var r = this.$('resetBtn'); if (r) r.addEventListener('click', function () { app.load(1); });
+      var sb = this.$('searchBtn'); if (sb) sb.addEventListener('click', function () { app.load(1); });
+      if (window.AssetPublish) AssetPublish.bind({ onSuccess: function () { app.load(1); } });
+      this.load(1);
+    },
+
+    load: async function (page) {
+      app.page = Math.max(1, page || 1);
+      var params = new URLSearchParams({
+        page: app.page, size: PAGE_SIZE,
+        keyword: (app.$('keyword') || {}).value || '',
+        category: (app.$('category') || {}).value || '',
+        sort: (app.$('sort') || {}).value || 'latest'
+      });
+      try {
+        var r = await fetch('/api/asset/list?' + params);
+        var d = await r.json();
+        var pg = (d.extra && d.extra.pagination) || d.pagination;
+        if (d.code === 200) app.render(d.data, pg);
+        else showMessage(d.message || '加载失败', 'error');
+      } catch (e) { showMessage('网络异常', 'error'); }
+    },
+
+    render: function (rows, pg) {
+      var c = app.$('listContainer'); if (!c) return;
+      if (!rows || !rows.length) {
+        c.innerHTML = '<div class="gc-empty"><div class="gc-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div><h3>暂无成果</h3><p>还没有人发布成果，成为第一个吧。</p><button class="il-btn il-btn-primary" onclick="GalleryApp.openPublish()">发布成果</button></div>';
+        app.$('pagination').innerHTML = '';
+        return;
+      }
+      c.innerHTML = '<div class="gc-grid">' + rows.map(function (a) {
+        var raw = a.description || '';
+        var desc = raw.replace(/（分类：[^）]*）/g, '').trim();
+        var catM = raw.match(/（分类：([^）]+)）/);
+        var cat = a.category || (catM ? catM[1] : '');
+        var s = storedActions('asset-' + (a.id || ''));
+        var likes = (a.likeCount || 0) + (s.likeDelta || 0);
+        var favs = (a.favoriteCount || 0) + (s.favDelta || 0);
+        var cover = COVERS[cat] || COVERS.default;
+        return '<div class="gc-card" role="link" tabindex="0" onclick="location.href=\'/asset-detail.html?id=' + (a.id || '') + '\'">'
+          + '<div class="gc-cover"><img src="' + cover + '" alt="封面"><div class="gc-cover-overlay"></div>'
+          + '<span class="gc-cover-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span></div>'
+          + '<div class="gc-content">' + authorHtml(a)
+          + '<div class="gc-meta-row">' + (cat ? '<span class="gallery-tag ' + catTag(cat) + '">' + escapeHtml(cat) + '</span>' : '') + '<span class="gc-date">' + fmtDate(a.createdAt) + '</span></div>'
+          + '<div class="gc-body"><h3 class="gc-title">' + escapeHtml(a.title || '未命名成果') + '</h3>' + (desc ? '<p class="gc-desc">' + escapeHtml(desc) + '</p>' : '') + '</div>'
+          + '<div class="gc-stats">'
+          + '<button class="gc-action' + (s.liked ? ' gc-action--on' : '') + '" data-action="like" data-id="' + (a.id || '') + '" onclick="event.stopPropagation();GalleryApp.doAction(this)">'
+          + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 10V6.8c0-1.7 1.2-3.3 2.9-3.7l.7-.2c.7-.2 1.4.3 1.4 1v4.1H18c1.1 0 2 .9 2 2 0 .2 0 .4-.1.6l-1.5 6.2c-.2.9-1 1.6-2 1.6H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="10" width="4" height="9" stroke="currentColor" stroke-width="1.8"/></svg>'
+          + '<span class="gc-action-num">' + likes + '</span></button>'
+          + '<button class="gc-action' + (s.faved ? ' gc-action--on' : '') + '" data-action="fav" data-id="' + (a.id || '') + '" onclick="event.stopPropagation();GalleryApp.doAction(this)">'
+          + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.8l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.2 6.7 19.9l1-5.8L3.5 10l5.9-.9L12 3.8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+          + '<span class="gc-action-num">' + favs + '</span></button></div>'
+          + '<span class="gc-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>'
+          + '</div></div>';
+      }).join('') + '</div>';
+      if (typeof hideGalleryPublisherAvatarFallbacks === 'function') hideGalleryPublisherAvatarFallbacks(c);
+      app.paginate(pg);
+    },
+
+    paginate: function (pg) {
+      var el = app.$('pagination'); if (!el || !pg) return;
+      var total = Math.ceil(pg.total / (pg.size || PAGE_SIZE));
+      if (total <= 1) { el.innerHTML = ''; return; }
+      el.innerHTML = '<div class="pagination-wrap">'
+        + '<button class="page-btn" onclick="GalleryApp.load(' + (pg.page - 1) + ')"' + (pg.page <= 1 ? ' disabled' : '') + '>上一页</button>'
+        + '<span class="page-info">第 ' + pg.page + ' / ' + total + ' 页</span>'
+        + '<button class="page-btn" onclick="GalleryApp.load(' + (pg.page + 1) + ')"' + (pg.page >= total ? ' disabled' : '') + '>下一页</button>'
+        + '</div>';
+    },
+
+    doAction: function (btn) {
+      var id = btn.getAttribute('data-id'), act = btn.getAttribute('data-action');
+      if (!id || !act) return;
+      var key = 'asset-' + id;
+      var old = storedActions(key);
+      var wasOn = act === 'like' ? old.liked : old.faved;
+      var entry = toggleStorage(key, act);
+      if (!entry) return;
+      var isOn = act === 'like' ? entry.liked : entry.faved;
+      var num = btn.querySelector('.gc-action-num');
+      btn.classList.toggle('gc-action--on', isOn);
+      if (num) {
+        var cur = parseInt(num.textContent, 10) || 0;
+        if (!wasOn && isOn) num.textContent = cur + 1;
+        else if (wasOn && !isOn) num.textContent = Math.max(0, cur - 1);
+      }
+    },
+
+    openPublish: function () {
+      if (window.AssetPublish) AssetPublish.openCreate(function () { app.load(1); });
     }
+  };
 
-    async init() {
-        this.bindEvents();
-        await this.loadAssets(1);
-    }
-
-    bindEvents() {
-        document.querySelectorAll('.category-pill').forEach(pill => {
-            pill.addEventListener('click', () => {
-                this.filterByCategory(pill.dataset.category);
-            });
-        });
-
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            let searchTimeout;
-            searchInput.addEventListener('input', () => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    this.searchQuery = searchInput.value.toLowerCase();
-                    this.currentPage = 1;
-                    this.loadAssets(1);
-                }, 300);
-            });
-        }
-
-        const sortSelect = document.getElementById('sortSelect');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', (e) => {
-                this.currentSort = e.target.value;
-                this.currentPage = 1;
-                this.loadAssets(1);
-            });
-        }
-
-        const submitBtn = document.getElementById('submitUpload');
-        if (submitBtn) {
-            submitBtn.addEventListener('click', () => this.handleUpload());
-        }
-
-        // C-24: 事件委托处理分页按钮
-        const paginationEl = document.getElementById('pagination');
-        if (paginationEl) {
-            paginationEl.addEventListener('click', (e) => {
-                const btn = e.target.closest('.page-btn');
-                if (!btn || btn.disabled) return;
-                const page = parseInt(btn.dataset.page, 10);
-                if (page > 0) {
-                    this.loadAssets(page);
-                }
-            });
-        }
-    }
-
-    async loadAssets(page) {
-        this.currentPage = page || 1;
-        try {
-            this.showLoading();
-            const params = new URLSearchParams({
-                page: this.currentPage,
-                size: this.pageSize,
-                keyword: this.searchQuery,
-                category: this.currentCategory,
-                sort: this.currentSort
-            });
-            const response = await apiFetch(`/api/asset/list?${params}`, { credentials: 'same-origin' });
-            if (!response.ok) throw new Error('Failed to load assets');
-            const result = await response.json();
-            if (result.code === 200) {
-                this.assets = result.data || [];
-                const pagination = (result.extra && result.extra.pagination) || result.pagination;
-                this.totalPages = pagination ? Math.ceil(pagination.total / pagination.size) : 1;
-                this.render();
-                this.renderPagination();
-            } else {
-                this.showError();
-            }
-        } catch (error) {
-            console.error('Error loading assets:', error);
-            this.showError();
-        }
-    }
-
-    filterByCategory(category) {
-        this.currentCategory = category === 'all' ? '' : category;
-        this.currentPage = 1;
-        document.querySelectorAll('.category-pill').forEach(pill => {
-            pill.classList.toggle('active', pill.dataset.category === category);
-        });
-        this.loadAssets(1);
-    }
-
-    showLoading() {
-        const grid = document.getElementById('galleryGrid');
-        if (!grid) return;
-        let html = '';
-        for (let i = 0; i < 6; i++) {
-            html += `<div class="gallery-card skeleton-card"><div class="card-image skeleton" style="padding-top:${60 + (i % 3) * 15}%"></div><div class="card-content"><div class="skeleton-title skeleton"></div><div class="skeleton-text skeleton"></div></div></div>`;
-        }
-        grid.innerHTML = html;
-        const emptyState = document.getElementById('emptyState');
-        if (emptyState) emptyState.style.display = 'none';
-    }
-
-    showError() {
-        const grid = document.getElementById('galleryGrid');
-        if (grid) grid.innerHTML = '';
-        const emptyState = document.getElementById('emptyState');
-        if (emptyState) emptyState.style.display = 'block';
-    }
-
-    render() {
-        const grid = document.getElementById('galleryGrid');
-        const emptyState = document.getElementById('emptyState');
-        if (!grid) return;
-
-        if (!this.assets || this.assets.length === 0) {
-            grid.innerHTML = '';
-            if (emptyState) emptyState.style.display = 'block';
-            return;
-        }
-
-        if (emptyState) emptyState.style.display = 'none';
-        grid.innerHTML = this.assets.map((asset, index) => this.createCard(asset, index)).join('');
-    }
-
-    createCard(asset, index) {
-        const title = asset.title || '未命名成果';
-        const description = asset.description || '暂无描述';
-        const viewCount = asset.viewCount || 0;
-        const createdAt = asset.createdAt || new Date().toISOString();
-        const authorName = asset.authorName || '匿名用户';
-        const authorInitial = authorName.charAt(0).toUpperCase();
-        const dateStr = this.formatDate(createdAt);
-        // 从描述中提取分类（兼容旧格式 锛堝垎绫伙細XX锛?
-        const catMatch = (asset.description || '').match(/（分类：([^）]+)）/);
-        const category = asset.category || (catMatch ? catMatch[1] : '');
-        const cleanDesc = (asset.description || '').replace(/（分类：[^）]+）/g, '').trim();
-
-        return `
-            <div class="gallery-card" role="link" tabindex="0" data-asset-id="${asset.id}" style="animation: fadeInUp 0.5s ease ${index * 0.05}s both;">
-                <div class="card-image" style="padding-top: ${60 + (index % 3) * 15}%;">
-                    ${category ? `<span class="category-tag">${this.escapeHtml(category)}</span>` : ''}
-                    <span class="view-count">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        ${viewCount}
-                    </span>
-                    <div class="placeholder-icon">
-                        <svg viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                    </div>
-                </div>
-                <div class="card-content">
-                    <h3 class="card-title">${this.escapeHtml(title)}</h3>
-                    <p class="card-description">${this.escapeHtml(cleanDesc)}</p>
-                    <div class="card-footer">
-                        <div class="card-author">
-                            <div class="author-avatar">${authorInitial}</div>
-                            <div class="author-info">
-                                <span class="author-name">${this.escapeHtml(authorName)}</span>
-                                <span class="author-date">${dateStr}</span>
-                            </div>
-                        </div>
-                        <div class="card-stats">
-                            <span class="stat-item">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                ${viewCount}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-    }
-
-    renderPagination() {
-        const el = document.getElementById('pagination');
-        if (!el || this.totalPages <= 1) { if (el) el.innerHTML = ''; return; }
-        let h = '<div class="pagination-wrap">';
-        // C-24: 使用 data-page 属性 + 事件委托，避免全局 gallery 变量时序依赖
-        h += `<button class="page-btn page-prev" data-page="${this.currentPage - 1}"${this.currentPage <= 1 ? ' disabled' : ''}>上一页</button>`;
-        h += `<span class="page-info">第 ${this.currentPage} / ${this.totalPages} 页</span>`;
-        h += `<button class="page-btn page-next" data-page="${this.currentPage + 1}"${this.currentPage >= this.totalPages ? ' disabled' : ''}>下一页</button>`;
-        h += '</div>';
-        el.innerHTML = h;
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text || '';
-        return div.innerHTML;
-    }
-
-    formatDate(dateStr) {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diff = now - date;
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        if (days === 0) return '今天';
-        if (days === 1) return '昨天';
-        if (days < 7) return `${days}天前`;
-        if (days < 30) return `${Math.floor(days / 7)}周前`;
-        if (days < 365) return `${Math.floor(days / 30)}个月前`;
-        return `${Math.floor(days / 365)}年前`;
-    }
-
-    viewAsset(id) {
-        if (!id) return;
-        const url = `/asset-detail.html?id=${encodeURIComponent(id)}`;
-        if (window.ILink && window.ILink.navigate) {
-            window.ILink.navigate(url);
-        } else {
-            window.location.href = url;
-        }
-    }
-
-    async handleUpload() {
-        const title = document.getElementById('uploadTitle');
-        const description = document.getElementById('uploadDesc');
-        const category = document.getElementById('uploadCategory');
-        const file = document.getElementById('uploadFile');
-
-        if (!title || !title.value.trim()) { alert('请输入标题'); return; }
-        if (!category || !category.value) { alert('请选择分类'); return; }
-
-        const fd = new FormData();
-        fd.append('title', title.value.trim());
-        fd.append('description', (description ? description.value.trim() : '') + (category.value ? '（分类：' + category.value + '）' : ''));
-        if (file && file.files[0]) fd.append('file', file.files[0]);
-
-        try {
-            const response = await apiFetch('/api/asset/upload', { method: 'POST', body: fd, credentials: 'same-origin' });
-            const result = await response.json();
-            if (result.code === 200) {
-                if (window.ILink && window.ILink.showMessage) window.ILink.showMessage('发布成功', 'success');
-                const modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
-                if (modal) modal.hide();
-                title.value = '';
-                if (description) description.value = '';
-                this.loadAssets(1);
-            } else {
-                alert(result.message || '上传失败');
-            }
-        } catch (e) {
-            console.error(e);
-            alert('网络错误，请稍后重试');
-        }
-    }
-}
-
-// 添加动效样式
-if (!document.getElementById('galleryAnimStyles')) {
-    const style = document.createElement('style');
-    style.id = 'galleryAnimStyles';
-    style.textContent = '@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}';
-    document.head.appendChild(style);
-}
-
-let gallery;
-document.addEventListener('DOMContentLoaded', () => {
-    gallery = new Gallery();
-    window.gallery = gallery;
-    document.getElementById('galleryGrid')?.addEventListener('click', (event) => {
-        if (event.target.closest('button, a, input, select, textarea')) return;
-        const card = event.target.closest('.gallery-card[data-asset-id]');
-        if (card) gallery.viewAsset(card.dataset.assetId);
-    });
-    document.getElementById('galleryGrid')?.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        const card = event.target.closest('.gallery-card[data-asset-id]');
-        if (!card) return;
-        event.preventDefault();
-        gallery.viewAsset(card.dataset.assetId);
-    });
-});
+  window.GalleryApp = app;
+  document.addEventListener('DOMContentLoaded', function () { app.init(); });
+})();

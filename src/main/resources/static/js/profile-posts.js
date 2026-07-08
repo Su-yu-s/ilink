@@ -1,4 +1,4 @@
-﻿// 个人中心 · 我的文章列表（卡片式布局）
+// 个人中心 · 我的文章列表
 
 const CATEGORY_LABELS = {
     general: '综合交流',
@@ -13,13 +13,6 @@ let currentPage = 1;
 document.addEventListener('DOMContentLoaded', function() {
     loadMyPosts(1);
 });
-
-function escapeHtml(s) {
-    if (s == null) return '';
-    const div = document.createElement('div');
-    div.textContent = s;
-    return div.innerHTML;
-}
 
 function articlePublicUrl(id) {
     return `/community/article/${encodeURIComponent(String(id))}`;
@@ -47,7 +40,7 @@ async function loadMyPosts(page) {
             return;
         }
         if (result.code !== 200) {
-            listEl.innerHTML = `<p class="text-danger small mb-0">${escapeHtml(result.message || '加载失败')}</p>`;
+            listEl.innerHTML = `<p class="il-form-error">${escapeHtml(result.message || '加载失败')}</p>`;
             if (pager) pager.classList.add('d-none');
             return;
         }
@@ -57,17 +50,25 @@ async function loadMyPosts(page) {
 
         if (posts.length === 0) {
             listEl.innerHTML = `
-                <div class="profile-posts-empty text-center py-5 px-3 rounded-3 border border-dashed bg-white bg-opacity-75">
-                    <p class="text-muted mb-1 fw-semibold">还没有发布过文章</p>
-                    <p class="small text-secondary mb-3">在交流社区写第一篇，会显示在这个列表里</p>
-                    <a href="/community.html" class="btn btn-primary">前往交流社区</a>
+                <div class="profile-posts-empty">
+                    <div class="il-empty-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                        </svg>
+                    </div>
+                    <p class="il-empty-title">还没有发布过文章</p>
+                    <p class="il-empty-text">在交流社区写第一篇，会显示在这个列表里</p>
+                    <a href="/community.html" class="il-btn il-btn-primary il-btn-sm mt-3">前往交流社区</a>
                 </div>`;
             if (pager) pager.classList.add('d-none');
             return;
         }
 
         const wrap = document.createElement('div');
-        wrap.className = 'profile-post-list d-flex flex-column gap-3 w-100';
+        wrap.className = 'profile-post-list';
 
         posts.forEach(p => {
             const badge = CATEGORY_LABELS[p.category] || p.category;
@@ -76,7 +77,7 @@ async function loadMyPosts(page) {
             const favs = p.favoriteCount != null ? p.favoriteCount : 0;
             const timeStr = formatTime(p.createdAt);
             const art = document.createElement('article');
-            art.className = 'profile-post-card glass-panel';
+            art.className = 'profile-post-card';
             art.innerHTML = `
                 <div class="profile-post-card__body">
                     <div class="profile-post-card__main">
@@ -85,29 +86,16 @@ async function loadMyPosts(page) {
                         </h2>
                         <div class="profile-post-card__meta" role="list">
                             <span class="profile-post-card__chip" role="listitem">${escapeHtml(badge)}</span>
-                            <span class="profile-post-card__meta-item" role="listitem">
-                                <span class="profile-post-card__meta-key">发布时间</span>
-                                <time datetime="">${escapeHtml(timeStr)}</time>
-                            </span>
-                            <span class="profile-post-card__meta-item profile-post-card__meta-item--reads" role="listitem">
-                                <span class="profile-post-card__meta-key">阅读</span>
-                                <span class="profile-post-card__reads-num">${views}</span>
-                                <span class="profile-post-card__reads-unit">次</span>
-                            </span>
-                            <span class="profile-post-card__meta-item profile-post-card__meta-item--likes" role="listitem">
-                                <span class="profile-post-card__meta-key">点赞</span>
-                                <span class="profile-post-card__stat-num">${likes}</span>
-                            </span>
-                            <span class="profile-post-card__meta-item profile-post-card__meta-item--favs" role="listitem">
-                                <span class="profile-post-card__meta-key">收藏</span>
-                                <span class="profile-post-card__stat-num">${favs}</span>
-                            </span>
+                            <span role="listitem">发布时间 ${escapeHtml(timeStr)}</span>
+                            <span role="listitem">阅读 <strong>${views}</strong> 次</span>
+                            <span role="listitem">点赞 <strong>${likes}</strong></span>
+                            <span role="listitem">收藏 <strong>${favs}</strong></span>
                         </div>
                     </div>
                     <div class="profile-post-card__actions" aria-label="操作">
-                        <a href="${articlePublicUrl(p.id)}" class="btn btn-light border profile-post-card__btn" target="_blank" rel="noopener">查看</a>
-                        <a href="${editUrl(p.id)}" class="btn btn-primary profile-post-card__btn">编辑</a>
-                        <button type="button" class="btn btn-outline-danger profile-post-card__btn profile-delete-post" data-id="${p.id}">删除</button>
+                        <a href="${articlePublicUrl(p.id)}" class="il-btn il-btn-xs-ghost profile-post-card__btn" target="_blank" rel="noopener">查看</a>
+                        <a href="${editUrl(p.id)}" class="il-btn il-btn-xs-dark profile-post-card__btn">编辑</a>
+                        <button type="button" class="il-btn il-btn-xs-danger profile-post-card__btn profile-delete-post" data-id="${p.id}">删除</button>
                     </div>
                 </div>`;
             wrap.appendChild(art);
@@ -126,7 +114,7 @@ async function loadMyPosts(page) {
         renderPager(pag, pager, pagerInner);
     } catch (e) {
         console.error(e);
-        listEl.innerHTML = '<p class="text-danger small mb-0">网络错误</p>';
+        listEl.innerHTML = '<p class="il-form-error">网络错误</p>';
     }
 }
 
@@ -152,7 +140,7 @@ function renderPager(pag, pagerEl, innerEl) {
 
     const infoLi = document.createElement('li');
     infoLi.className = 'page-item disabled';
-    infoLi.innerHTML = `<span class="page-link text-secondary">${page} / ${totalPages}</span>`;
+    infoLi.innerHTML = `<span class="page-link">${page} / ${totalPages}</span>`;
     innerEl.appendChild(infoLi);
 
     const nextLi = document.createElement('li');

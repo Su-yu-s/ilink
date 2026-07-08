@@ -77,11 +77,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setEmail(registerRequest.getEmail());
         user.setRole(registerRequest.getRole() != null ? registerRequest.getRole() : "STUDENT");
-        String realName = registerRequest.getRealName();
-        if (realName == null || realName.isBlank()) {
-            realName = username;
-        }
-        user.setRealName(realName);
+        user.setRealName(username);
         user.setGender(registerRequest.getGender());
 
         return save(user);

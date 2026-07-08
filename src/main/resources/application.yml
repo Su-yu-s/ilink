@@ -16,9 +16,9 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/ilink?useUnicode=true&characterEncoding=utf8&useSSL=${DB_USE_SSL:true}&serverTimezone=Asia/Shanghai
-#    username: ${DB_USERNAME:root}
-#########     云数据库
-    username: ${DB_USERNAME:ilink}
+    username: ${DB_USERNAME:root}
+#     云数据库
+#    username: ${DB_USERNAME:ilink}
     password: ${DB_PASSWORD:changeme_in_production}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:

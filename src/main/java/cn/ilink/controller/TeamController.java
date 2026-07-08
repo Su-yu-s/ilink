@@ -6,14 +6,18 @@ import cn.ilink.dto.TeamDemandRequest;
 import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.User;
-import cn.ilink.service.TeamApplicationService;
-import cn.ilink.service.TeamDemandService;
+import cn.ilink.entity.UserSkill;
+import cn.ilink.mapper.UserSkillMapper;
+import cn.ilink.service.NotificationService;
+import cn.ilink.service.impl.TeamApplicationServiceImpl;
+import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
 import cn.ilink.util.UserPreviewHelper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -23,11 +27,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,13 +52,19 @@ public class TeamController {
         Pattern.compile("[（(]\\s*截止日期\\s*[：:]\\s*([0-9]{4}-[0-9]{2}-[0-9]{2}|[^）)]+)\\s*[）)]");
 
     @Autowired
-    private TeamDemandService teamDemandService;
+    private TeamDemandServiceImpl teamDemandService;
 
     @Autowired
-    private TeamApplicationService teamApplicationService;
+    private TeamApplicationServiceImpl teamApplicationService;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private UserSkillMapper userSkillMapper;
 
     @GetMapping("/list")
     @ResponseBody
@@ -96,7 +109,7 @@ public class TeamController {
         Page<TeamDemand> result = teamDemandService.page(pageReq, wrapper);
         List<Map<String, Object>> data = enrichTeamsWithCreators(result.getRecords());
 
-        return ResponseEntity.ok(Result.ok("获取成功", data).withPagination(safePage, safeSize, result.getTotal()));
+        return Result.ok("获取成功", data).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
     }
 
     /** 当前用户发布的组队需求 */
@@ -107,7 +120,7 @@ public class TeamController {
                                                        HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         LambdaQueryWrapper<TeamDemand> wrapper = new LambdaQueryWrapper<TeamDemand>()
             .eq(TeamDemand::getCreatorId, user.getId());
@@ -121,7 +134,7 @@ public class TeamController {
             rows.sort(Comparator.comparingLong((Map<String, Object> row) -> toLong(row.get("applicationCount"))).reversed());
         }
         List<Map<String, Object>> list = rows;
-        return ResponseEntity.ok(Result.ok("获取成功", list));
+        return Result.ok("获取成功", list).toResponseEntity();
     }
 
     /** 当前用户发起的组队申请（含队伍标题） */
@@ -130,7 +143,7 @@ public class TeamController {
     public ResponseEntity<Result<?>> myTeamApplications(HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         List<TeamApplication> apps = teamApplicationService.list(
             new LambdaQueryWrapper<TeamApplication>()
@@ -150,7 +163,7 @@ public class TeamController {
             m.put("createdAt", a.getCreatedAt());
             return m;
         }).collect(Collectors.toList());
-        return ResponseEntity.ok(Result.ok("获取成功", rows));
+        return Result.ok("获取成功", rows).toResponseEntity();
     }
 
     private Integer mapCategoryToCompetitionId(String category) {
@@ -174,9 +187,9 @@ public class TeamController {
     public ResponseEntity<Result<?>> getTeam(@PathVariable Long id, HttpSession session) {
         TeamDemand team = teamDemandService.getById(id);
         if (team != null) {
-            return ResponseEntity.ok(Result.ok("获取成功", teamDemandToMap(team, loadCreator(team.getCreatorId()))));
+            return Result.ok("获取成功", teamDemandToMap(team, loadCreator(team.getCreatorId()))).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.notFound("组队需求不存在"));
+            return Result.notFound("组队需求不存在").toResponseEntity();
         }
     }
 
@@ -188,7 +201,7 @@ public class TeamController {
         if (user != null) {
             String validationError = validateTeamDemandRequest(request);
             if (validationError != null) {
-                return ResponseEntity.ok(Result.badRequest(validationError));
+                return Result.badRequest(validationError).toResponseEntity();
             }
             TeamDemand team = new TeamDemand();
             team.setTitle(request.getTitle().trim());
@@ -204,12 +217,12 @@ public class TeamController {
 
             boolean success = teamDemandService.save(team);
             if (success) {
-                return ResponseEntity.ok(Result.ok("发布成功", team));
+                return Result.ok("发布成功", team).toResponseEntity();
             } else {
-                return ResponseEntity.ok(Result.fail("发布失败"));
+                return Result.fail("发布失败").toResponseEntity();
             }
         } else {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
     }
 
@@ -218,31 +231,31 @@ public class TeamController {
     public ResponseEntity<Result<?>> joinTeam(@RequestBody Map<String, Object> request, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         Object rawTeamId = request.get("teamId");
         if (rawTeamId == null) {
-            return ResponseEntity.ok(Result.badRequest("缺少团队ID参数"));
+            return Result.badRequest("缺少团队ID参数").toResponseEntity();
         }
         Long teamId = ControllerUtils.parseLongParam(rawTeamId);
         if (teamId == null) {
-            return ResponseEntity.ok(Result.badRequest("团队ID格式无效"));
+            return Result.badRequest("团队ID格式无效").toResponseEntity();
         }
 
         TeamDemand team = teamDemandService.getById(teamId);
         if (team == null) {
-            return ResponseEntity.ok(Result.notFound("团队不存在"));
+            return Result.notFound("团队不存在").toResponseEntity();
         }
 
         // 检查团队状态，仅 OPEN 状态允许申请加入
         if (!STATUS_OPEN.equals(team.getStatus())) {
-            return ResponseEntity.ok(Result.badRequest("该团队已停止招募"));
+            return Result.badRequest("该团队已停止招募").toResponseEntity();
         }
 
         // 检查是否已经是团队创建者
         if (team.getCreatorId() != null && team.getCreatorId().equals(user.getId())) {
-            return ResponseEntity.ok(Result.badRequest("您是该团队的创建者，无需申请加入"));
+            return Result.badRequest("您是该团队的创建者，无需申请加入").toResponseEntity();
         }
 
         // 检查是否已经申请过
@@ -253,22 +266,32 @@ public class TeamController {
         );
 
         if (existingApplication != null) {
-            return ResponseEntity.ok(Result.badRequest("您已经申请过该团队"));
+            return Result.badRequest("您已经申请过该团队").toResponseEntity();
         }
 
-        // 创建申请记录
-        TeamApplication application = new TeamApplication();
-        application.setTeamId(teamId);
-        application.setUserId(user.getId());
-        application.setStatus("PENDING");
-        application.setMessage("");
-        application.setCreatedAt(new Date());
+        // 创建申请记录（唯一索引兜底，捕获并发重复插入）
+        try {
+            TeamApplication application = new TeamApplication();
+            application.setTeamId(teamId);
+            application.setUserId(user.getId());
+            application.setStatus("PENDING");
+            application.setMessage(request.containsKey("message") ? request.get("message").toString() : "");
+            application.setCreatedAt(new Date());
+            teamApplicationService.save(application);
 
-        boolean success = teamApplicationService.save(application);
-        if (success) {
-            return ResponseEntity.ok(Result.ok("申请已提交，请等待团队创建者审核"));
-        } else {
-            return ResponseEntity.ok(Result.fail("申请提交失败"));
+            // 给队长发通知：有人申请加入
+            String applicantName = user.getRealName() != null ? user.getRealName() : user.getUsername();
+            notificationService.create(
+                team.getCreatorId(),
+                user.getId(),
+                "TEAM_APPLY",
+                "组队申请",
+                applicantName + " 申请加入你的队伍「" + team.getTitle() + "」",
+                teamId);
+
+            return Result.ok("申请已提交，请等待团队创建者审核").toResponseEntity();
+        } catch (DuplicateKeyException e) {
+            return Result.badRequest("您已经申请过该团队").toResponseEntity();
         }
     }
 
@@ -283,11 +306,11 @@ public class TeamController {
 
         if (user != null && team != null && team.getCreatorId() != null && team.getCreatorId().equals(user.getId())) {
             if (!STATUS_OPEN.equals(team.getStatus())) {
-                return ResponseEntity.ok(Result.badRequest("只有招募中的组队需求可以编辑"));
+                return Result.badRequest("只有招募中的组队需求可以编辑").toResponseEntity();
             }
             String validationError = validateTeamDemandRequest(request);
             if (validationError != null) {
-                return ResponseEntity.ok(Result.badRequest(validationError));
+                return Result.badRequest(validationError).toResponseEntity();
             }
             team.setTitle(request.getTitle().trim());
             team.setDescription(request.getDescription().trim());
@@ -299,16 +322,16 @@ public class TeamController {
 
             boolean success = teamDemandService.updateById(team);
             if (success) {
-                return ResponseEntity.ok(Result.ok("更新成功", team));
+                return Result.ok("更新成功", team).toResponseEntity();
             } else {
-                return ResponseEntity.ok(Result.fail("更新失败"));
+                return Result.fail("更新失败").toResponseEntity();
             }
         } else if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         } else if (team == null) {
-            return ResponseEntity.ok(Result.notFound("组队需求不存在"));
+            return Result.notFound("组队需求不存在").toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
     }
 
@@ -321,25 +344,25 @@ public class TeamController {
         User user = ControllerUtils.requireUser(session);
         TeamDemand team = teamDemandService.getById(id);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         if (team == null) {
-            return ResponseEntity.ok(Result.notFound("组队需求不存在"));
+            return Result.notFound("组队需求不存在").toResponseEntity();
         }
         if (team.getCreatorId() == null || !team.getCreatorId().equals(user.getId())) {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
         String targetStatus = normalizeTeamStatus(request == null ? null : request.get("status"));
         if (!isValidStatusTransition(team.getStatus(), targetStatus)) {
-            return ResponseEntity.ok(Result.badRequest("当前状态不允许执行该操作"));
+            return Result.badRequest("当前状态不允许执行该操作").toResponseEntity();
         }
         team.setStatus(targetStatus);
         team.setUpdatedAt(new Date());
         boolean success = teamDemandService.updateById(team);
         if (!success) {
-            return ResponseEntity.ok(Result.fail("状态更新失败"));
+            return Result.fail("状态更新失败").toResponseEntity();
         }
-        return ResponseEntity.ok(Result.ok("状态更新成功", teamDemandToMap(team, loadCreator(team.getCreatorId()))));
+        return Result.ok("状态更新成功", teamDemandToMap(team, loadCreator(team.getCreatorId()))).toResponseEntity();
     }
 
     @DeleteMapping("/{id}")
@@ -351,23 +374,23 @@ public class TeamController {
 
         if (user != null && team != null && team.getCreatorId() != null && team.getCreatorId().equals(user.getId())) {
             if (!STATUS_OPEN.equals(team.getStatus())) {
-                return ResponseEntity.ok(Result.badRequest("只有招募中的组队需求可以删除"));
+                return Result.badRequest("只有招募中的组队需求可以删除").toResponseEntity();
             }
             if (countApplications(id) > 0) {
-                return ResponseEntity.ok(Result.badRequest("已有报名记录，不能删除"));
+                return Result.badRequest("已有报名记录，不能删除").toResponseEntity();
             }
             boolean success = teamDemandService.removeById(id);
             if (success) {
-                return ResponseEntity.ok(Result.ok("删除成功"));
+                return Result.ok("删除成功").toResponseEntity();
             } else {
-                return ResponseEntity.ok(Result.fail("删除失败"));
+                return Result.fail("删除失败").toResponseEntity();
             }
         } else if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         } else if (team == null) {
-            return ResponseEntity.ok(Result.notFound("组队需求不存在"));
+            return Result.notFound("组队需求不存在").toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         }
     }
 
@@ -377,10 +400,10 @@ public class TeamController {
                                                             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         if (teamId == null) {
-            return ResponseEntity.ok(Result.badRequest("缺少团队ID参数"));
+            return Result.badRequest("缺少团队ID参数").toResponseEntity();
         }
 
         // 查询申请状态
@@ -391,9 +414,9 @@ public class TeamController {
         );
 
         if (application != null) {
-            return ResponseEntity.ok(Result.ok("获取成功", Map.of("status", application.getStatus())));
+            return Result.ok("获取成功", Map.of("status", application.getStatus())).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.ok("未申请", Map.of("status", "NOT_APPLIED")));
+            return Result.ok("未申请", Map.of("status", "NOT_APPLIED")).toResponseEntity();
         }
     }
 
@@ -465,7 +488,7 @@ public class TeamController {
         if ("招募中".equals(value)) {
             return STATUS_OPEN;
         }
-        if ("组队中".equals(value)) {
+        if ("组队中".equals(value) || "已组队".equals(value)) {
             return STATUS_TEAMING;
         }
         if ("已结束".equals(value)) {
@@ -479,7 +502,7 @@ public class TeamController {
             return "招募中";
         }
         if (STATUS_TEAMING.equals(status)) {
-            return "组队中";
+            return "已组队";
         }
         if (STATUS_CLOSED.equals(status)) {
             return "已结束";
@@ -628,16 +651,78 @@ public class TeamController {
             .collect(Collectors.toList());
     }
 
+    /** 当前用户已加入/创建的团队列表（作为队员或队长） */
+    @GetMapping("/my/joined")
+    @ResponseBody
+    public ResponseEntity<Result<?>> myJoinedTeams(HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
+        // 1. 查找当前用户所有 APPROVED 的申请（作为队员）
+        List<TeamApplication> approvedApps = teamApplicationService.list(
+            new LambdaQueryWrapper<TeamApplication>()
+                .eq(TeamApplication::getUserId, user.getId())
+                .eq(TeamApplication::getStatus, "APPROVED")
+                .orderByDesc(TeamApplication::getCreatedAt));
+        // 2. 查找当前用户创建的所有团队（作为队长）
+        List<TeamDemand> myCreatedTeams = teamDemandService.list(
+            new LambdaQueryWrapper<TeamDemand>()
+                .eq(TeamDemand::getCreatorId, user.getId())
+                .orderByDesc(TeamDemand::getCreatedAt));
+
+        // 合并去重
+        Set<Long> teamIds = new HashSet<>();
+        if (!approvedApps.isEmpty()) {
+            teamIds.addAll(approvedApps.stream().map(TeamApplication::getTeamId).filter(Objects::nonNull).collect(Collectors.toSet()));
+        }
+        if (!myCreatedTeams.isEmpty()) {
+            teamIds.addAll(myCreatedTeams.stream().map(TeamDemand::getId).collect(Collectors.toSet()));
+        }
+        if (teamIds.isEmpty()) {
+            return Result.ok("获取成功", Collections.emptyList()).toResponseEntity();
+        }
+        Map<Long, TeamDemand> teamMap = teamDemandService.listByIds(teamIds).stream()
+            .collect(Collectors.toMap(TeamDemand::getId, t -> t, (a, b) -> a));
+
+        // 构建结果：先放创建的团队（队长），再放加入的团队（队员）
+        List<Map<String, Object>> rows = new ArrayList<>();
+        // 队长创建的团队
+        for (TeamDemand td : myCreatedTeams) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("teamId", td.getId());
+            m.put("teamTitle", td.getTitle());
+            m.put("status", td.getStatus());
+            m.put("joinedAt", td.getCreatedAt());
+            m.put("isCreator", true);
+            rows.add(m);
+        }
+        // 加入的团队（排除已作为队长创建的）
+        Set<Long> createdTeamIds = myCreatedTeams.stream().map(TeamDemand::getId).collect(Collectors.toSet());
+        for (TeamApplication app : approvedApps) {
+            if (createdTeamIds.contains(app.getTeamId())) continue;
+            TeamDemand team = teamMap.get(app.getTeamId());
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("teamId", app.getTeamId());
+            m.put("teamTitle", team != null ? team.getTitle() : "（组队已删除）");
+            m.put("status", team != null ? team.getStatus() : null);
+            m.put("joinedAt", app.getCreatedAt());
+            m.put("isCreator", false);
+            rows.add(m);
+        }
+        return Result.ok("获取成功", rows).toResponseEntity();
+    }
+
     /** Get pending applications for teams I created */
     @GetMapping("/my/pending-applications")
     @ResponseBody
-    public ResponseEntity<Result<List<Map<String, Object>>>> getPendingApplications(HttpSession session) {
+    public ResponseEntity<Result<?>> getPendingApplications(HttpSession session) {
         User user = ControllerUtils.requireUser(session);
-        if (user == null) return ResponseEntity.ok(Result.unauthorized());
+        if (user == null) return Result.unauthorized().toResponseEntity();
         // Find all team demands created by this user
         List<TeamDemand> myTeams = teamDemandService.list(
             new LambdaQueryWrapper<TeamDemand>().eq(TeamDemand::getCreatorId, user.getId()));
-        if (myTeams.isEmpty()) return ResponseEntity.ok(Result.ok(Collections.emptyList()));
+        if (myTeams.isEmpty()) return Result.ok(Collections.emptyList()).toResponseEntity();
         List<Long> teamIds = myTeams.stream().map(TeamDemand::getId).collect(Collectors.toList());
         // Find pending applications for those teams
         List<TeamApplication> pendingApps = teamApplicationService.list(
@@ -645,7 +730,33 @@ public class TeamController {
                 .in(TeamApplication::getTeamId, teamIds)
                 .eq(TeamApplication::getStatus, "PENDING")
                 .orderByDesc(TeamApplication::getCreatedAt));
-        // Build response with user info
+        // Build response with user info（批量查询，避免 N+1）
+        List<Long> userIds = pendingApps.stream().map(TeamApplication::getUserId).distinct().collect(Collectors.toList());
+
+        Map<Long, TeamDemand> teamMap = new HashMap<>();
+        if (!teamIds.isEmpty()) {
+            for (TeamDemand td : teamDemandService.listByIds(teamIds)) {
+                teamMap.put(td.getId(), td);
+            }
+        }
+        Map<Long, User> userMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            for (User u : userService.listByIds(userIds)) {
+                u.setPassword(null);
+                userMap.put(u.getId(), u);
+            }
+        }
+
+        // 批量查询申请人技能
+        Map<Long, List<Map<String, Object>>> skillsMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            List<UserSkill> allSkills = userSkillMapper.selectList(
+                new LambdaQueryWrapper<UserSkill>().in(UserSkill::getUserId, userIds));
+            for (UserSkill s : allSkills) {
+                skillsMap.computeIfAbsent(s.getUserId(), k -> new ArrayList<>()).add(skillToView(s));
+            }
+        }
+
         List<Map<String, Object>> views = new ArrayList<>();
         for (TeamApplication app : pendingApps) {
             Map<String, Object> view = new LinkedHashMap<>();
@@ -653,51 +764,110 @@ public class TeamController {
             view.put("teamId", app.getTeamId());
             view.put("message", app.getMessage());
             view.put("createdAt", app.getCreatedAt());
-            // Find team name
-            TeamDemand team = teamDemandService.getById(app.getTeamId());
+            // 内存查表
+            TeamDemand team = teamMap.get(app.getTeamId());
             if (team != null) view.put("teamName", team.getTitle());
-            // Find applicant info
-            User applicant = userService.getById(app.getUserId());
+            User applicant = userMap.get(app.getUserId());
             if (applicant != null) {
                 view.put("applicantName", applicant.getRealName() != null ? applicant.getRealName() : applicant.getUsername());
                 view.put("applicantAvatar", applicant.getAvatar());
+                view.put("applicantMajor", applicant.getMajor());
+                view.put("applicantGrade", applicant.getGrade());
+                view.put("applicantSchool", applicant.getSchool());
+                view.put("applicantUserId", applicant.getId());
             }
+            view.put("skills", skillsMap.getOrDefault(app.getUserId(), Collections.emptyList()));
             views.add(view);
         }
-        return ResponseEntity.ok(Result.ok(views));
+        return Result.ok(views).toResponseEntity();
+    }
+
+    /** 将技能实体转为前端视图 */
+    private Map<String, Object> skillToView(UserSkill s) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("name", s.getSkillName());
+        m.put("level", s.getSkillLevel());
+        m.put("category", s.getSkillCategory());
+        return m;
     }
 
     /** Approve or reject a team application */
     @PutMapping("/application/{id}/approve")
     @ResponseBody
-    public ResponseEntity<Result<Void>> approveApplication(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<Result<?>> approveApplication(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
-        if (user == null) return ResponseEntity.ok(Result.unauthorized());
+        if (user == null) return Result.unauthorized().toResponseEntity();
         TeamApplication app = teamApplicationService.getById(id);
-        if (app == null) return ResponseEntity.ok(Result.notFound("申请不存在"));
+        if (app == null) return Result.notFound("申请不存在").toResponseEntity();
         TeamDemand team = teamDemandService.getById(app.getTeamId());
         if (team == null || team.getCreatorId() == null || !team.getCreatorId().equals(user.getId()))
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
+        if (!"PENDING".equals(app.getStatus()))
+            return Result.badRequest("该申请已被处理").toResponseEntity();
         String action = body.getOrDefault("action", "");
         if (!"APPROVED".equals(action) && !"REJECTED".equals(action))
-            return ResponseEntity.ok(Result.badRequest("无效的操作"));
+            return Result.badRequest("无效的操作").toResponseEntity();
+        String note = body.get("note");
+        if ("REJECTED".equals(action) && (note == null || note.trim().length() < 10))
+            return Result.badRequest("拒绝理由至少填写 10 个字").toResponseEntity();
+        if (note != null && note.length() > 500)
+            return Result.badRequest("备注不能超过 500 字").toResponseEntity();
+
+        // 检查队伍是否已满
+        if ("APPROVED".equals(action) && isTeamFull(team))
+            return Result.badRequest("队伍已满，无法通过更多申请").toResponseEntity();
+
+        // 更新申请状态
         app.setStatus(action);
+        app.setReviewerNote(note != null ? note.trim() : null);
+        app.setReviewedAt(new Date());
         teamApplicationService.updateById(app);
+
+        // 满员自动切换状态
         if ("APPROVED".equals(action) && STATUS_OPEN.equals(team.getStatus()) && isTeamFull(team)) {
             team.setStatus(STATUS_TEAMING);
             team.setUpdatedAt(new Date());
             teamDemandService.updateById(team);
         }
-        return ResponseEntity.ok(Result.ok(action.equals("APPROVED") ? "已通过申请" : "已拒绝申请", null));
+
+        // 通知申请人
+        String teamTitle = team.getTitle() != null ? team.getTitle() : "未知队伍";
+        if ("APPROVED".equals(action)) {
+            String content = "你已成功加入队伍「" + teamTitle + "」";
+            if (note != null && !note.trim().isEmpty()) {
+                content += "\n队长留言：" + note.trim();
+            }
+            notificationService.create(
+                app.getUserId(),
+                user.getId(),
+                "TEAM_APPROVED",
+                "申请通过",
+                content,
+                app.getTeamId());
+        } else {
+            String content = "你的申请未被通过「" + teamTitle + "」";
+            if (note != null && !note.trim().isEmpty()) {
+                content += "\n队长留言：" + note.trim();
+            }
+            notificationService.create(
+                app.getUserId(),
+                user.getId(),
+                "TEAM_REJECTED",
+                "申请未通过",
+                content,
+                app.getTeamId());
+        }
+
+        return Result.ok(action.equals("APPROVED") ? "已通过申请" : "已拒绝申请", null).toResponseEntity();
     }
 
     /** Get team members (approved applications) */
     @GetMapping("/{id}/members")
     @ResponseBody
-    public ResponseEntity<Result<List<Map<String, Object>>>> getTeamMembers(@PathVariable Long id) {
+    public ResponseEntity<Result<?>> getTeamMembers(@PathVariable Long id) {
         TeamDemand team = teamDemandService.getById(id);
         if (team == null) {
-            return ResponseEntity.ok(Result.notFound("组队需求不存在"));
+            return Result.notFound("组队需求不存在").toResponseEntity();
         }
         List<TeamApplication> members = teamApplicationService.list(
             new LambdaQueryWrapper<TeamApplication>()
@@ -718,6 +888,6 @@ public class TeamController {
                 views.add(userToMemberView(u, "队员", m.getCreatedAt()));
             }
         }
-        return ResponseEntity.ok(Result.ok(views));
+        return Result.ok(views).toResponseEntity();
     }
 }

@@ -1,6 +1,5 @@
-﻿// 导师招贤页面JavaScript
+// 导师招贤页面JavaScript (Editorial)
 
-// 当前页码
 let currentPage = 1;
 const pageSize = 10;
 
@@ -31,66 +30,62 @@ function initApplyModal() {
     });
 }
 
-function escapeHtml(value) {
-    return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-function getPaginationMetaFromResult(result) {
-    if (result && result.extra && result.extra.pagination) return result.extra.pagination;
-    if (result && result.pagination) return result.pagination;
-    return null;
-}
-
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     initApplyModal();
 
-    // 加载导师列表
-    loadTeacherList();
-    
-    // 绑定筛选表单提交事件
-    const filterForm = document.getElementById('filterForm');
-    if (filterForm) {
-        filterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+    // 绑定搜索按钮
+    var searchBtn = document.getElementById('searchBtn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', function() {
             currentPage = 1;
             loadTeacherList();
         });
     }
-    
-    // 绑定重置按钮事件
-    const resetBtn = document.querySelector('#filterForm button[type="reset"]');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            setTimeout(() => {
+
+    // 绑定 Enter 键搜索
+    var keywordInput = document.getElementById('keyword');
+    if (keywordInput) {
+        keywordInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
                 currentPage = 1;
                 loadTeacherList();
-            }, 100);
+            }
         });
     }
-    
+
+    // 筛选变化时自动搜索
+    ['major', 'title'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', function() {
+                currentPage = 1;
+                loadTeacherList();
+            });
+        }
+    });
+
     // 绑定提交申请按钮事件
-    const submitApplyBtn = document.getElementById('submitApply');
+    var submitApplyBtn = document.getElementById('submitApply');
     if (submitApplyBtn) {
         submitApplyBtn.addEventListener('click', function() {
             submitTeacherApplication();
         });
     }
+
+    // 加载导师列表
+    loadTeacherList();
 });
 
 // 加载导师列表
 async function loadTeacherList() {
     try {
-        const keyword = document.getElementById('keyword') ? document.getElementById('keyword').value : '';
-        const major = document.getElementById('major') ? document.getElementById('major').value : '';
-        const title = document.getElementById('title') ? document.getElementById('title').value : '';
+        var keyword = document.getElementById('keyword') ? document.getElementById('keyword').value : '';
+        var major = document.getElementById('major') ? document.getElementById('major').value : '';
+        var title = document.getElementById('title') ? document.getElementById('title').value : '';
 
-        const params = new URLSearchParams({
+        var params = new URLSearchParams({
             page: currentPage,
             size: pageSize,
             keyword: keyword,
@@ -98,12 +93,12 @@ async function loadTeacherList() {
             title: title
         });
 
-        const response = await apiFetch(`/api/teacher/list?${params}`, { credentials: 'same-origin' });
-        const result = await response.json();
-        
+        var response = await apiFetch('/api/teacher/list?' + params, { credentials: 'same-origin' });
+        var result = await response.json();
+
         if (result.code === 200) {
             renderTeacherList(result.data);
-            const pagination = (result.extra && result.extra.pagination) || result.pagination;
+            var pagination = (result.extra && result.extra.pagination) || result.pagination;
             renderPagination(pagination);
         } else {
             console.error('获取导师列表失败:', result.message);
@@ -116,35 +111,36 @@ async function loadTeacherList() {
 }
 
 function renderPagination(pagination) {
-    const paginationNav = document.getElementById('pagination');
+    var paginationNav = document.getElementById('pagination');
     if (!paginationNav || !pagination) return;
 
-    const { page, size, total } = pagination;
-    const safePage = page || 1;
-    const safeSize = size || pageSize;
-    const safeTotal = total || 0;
-    const totalPages = Math.max(1, Math.ceil(safeTotal / safeSize));
+    var page = pagination.page || 1;
+    var size = pagination.size || pageSize;
+    var total = pagination.total || 0;
+    var totalPages = Math.max(1, Math.ceil(total / size));
 
     if (totalPages <= 1) {
         paginationNav.classList.add('d-none');
         return;
     }
 
-    const ul = paginationNav.querySelector('ul.pagination') || paginationNav.querySelector('ul');
+    var ul = paginationNav.querySelector('ul.pagination') || paginationNav.querySelector('ul');
     if (!ul) return;
 
     ul.innerHTML = '';
     paginationNav.classList.remove('d-none');
 
-    const makeItem = (label, targetPage, isActive = false, isDisabled = false) => {
-        const li = document.createElement('li');
-        li.className = `page-item${isActive ? ' active' : ''}${isDisabled ? ' disabled' : ''}`;
+    var makeItem = function(label, targetPage, isActive, isDisabled) {
+        isActive = isActive || false;
+        isDisabled = isDisabled || false;
+        var li = document.createElement('li');
+        li.className = 'page-item' + (isActive ? ' active' : '') + (isDisabled ? ' disabled' : '');
 
-        const a = document.createElement('a');
+        var a = document.createElement('a');
         a.className = 'page-link';
         a.href = '#';
         a.textContent = label;
-        a.addEventListener('click', (e) => {
+        a.addEventListener('click', function(e) {
             e.preventDefault();
             if (isDisabled || !targetPage) return;
             currentPage = targetPage;
@@ -154,164 +150,197 @@ function renderPagination(pagination) {
         return li;
     };
 
-    const prevPage = safePage - 1;
+    var prevPage = page - 1;
     ul.appendChild(makeItem('上一页', prevPage >= 1 ? prevPage : null, false, prevPage < 1));
 
-    let start = Math.max(1, safePage - 2);
-    let end = Math.min(totalPages, safePage + 2);
+    var start = Math.max(1, page - 2);
+    var end = Math.min(totalPages, page + 2);
     if (end - start < 4) {
         if (start === 1) end = Math.min(totalPages, start + 4);
         if (end === totalPages) start = Math.max(1, end - 4);
     }
 
     if (start > 1) {
-        ul.appendChild(makeItem('1', 1, safePage === 1));
+        ul.appendChild(makeItem('1', 1, page === 1));
         if (start > 2) {
-            const ellipsisLi = document.createElement('li');
+            var ellipsisLi = document.createElement('li');
             ellipsisLi.className = 'page-item disabled';
-            ellipsisLi.innerHTML = `<a class="page-link" href="#">...</a>`;
-            const ellipsisA = ellipsisLi.querySelector('a');
-            if (ellipsisA) ellipsisA.addEventListener('click', (e) => e.preventDefault());
+            ellipsisLi.innerHTML = '<a class="page-link" href="#">...</a>';
+            var ellipsisA = ellipsisLi.querySelector('a');
+            if (ellipsisA) ellipsisA.addEventListener('click', function(e) { e.preventDefault(); });
             ul.appendChild(ellipsisLi);
         }
     }
 
-    for (let p = start; p <= end; p++) {
-        ul.appendChild(makeItem(String(p), p, p === safePage));
+    for (var p = start; p <= end; p++) {
+        ul.appendChild(makeItem(String(p), p, p === page));
     }
 
     if (end < totalPages) {
         if (end < totalPages - 1) {
-            const ellipsisLi = document.createElement('li');
-            ellipsisLi.className = 'page-item disabled';
-            ellipsisLi.innerHTML = `<a class="page-link" href="#">...</a>`;
-            const ellipsisA = ellipsisLi.querySelector('a');
-            if (ellipsisA) ellipsisA.addEventListener('click', (e) => e.preventDefault());
-            ul.appendChild(ellipsisLi);
+            var ellipsisLi2 = document.createElement('li');
+            ellipsisLi2.className = 'page-item disabled';
+            ellipsisLi2.innerHTML = '<a class="page-link" href="#">...</a>';
+            var ellipsisA2 = ellipsisLi2.querySelector('a');
+            if (ellipsisA2) ellipsisA2.addEventListener('click', function(e) { e.preventDefault(); });
+            ul.appendChild(ellipsisLi2);
         }
-        ul.appendChild(makeItem(String(totalPages), totalPages, safePage === totalPages));
+        ul.appendChild(makeItem(String(totalPages), totalPages, page === totalPages));
     }
 
-    const nextPage = safePage + 1;
+    var nextPage = page + 1;
     ul.appendChild(makeItem('下一页', nextPage <= totalPages ? nextPage : null, false, nextPage > totalPages));
 }
 
-// 渲染导师列表
+// 渲染导师列表（Editorial Card Style）
 function renderTeacherList(teachers) {
-    const teacherListContainer = document.getElementById('teacherList');
-    teacherListContainer.innerHTML = '';
-    
+    var container = document.getElementById('teacherList');
+    container.innerHTML = '';
+
     if (!teachers || teachers.length === 0) {
-        teacherListContainer.innerHTML = `
-            <div class="il-list-empty" style="text-align: center; padding: 60px 24px; color: #6b7280;">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" style="margin: 0 auto 16px; display: block; opacity: 0.5;">
-                    <path d="M12 14c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM20 22v-2c0-2.21-3.58-4-8-4s-8 1.79-8 4v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <p style="font-size: 1rem;">暂无导师信息</p>
-                <p style="font-size: 0.875rem; color: #9ca3af;">成为第一个申请导师的人吧！</p>
-            </div>
-        `;
+        container.innerHTML =
+            '<div class="empty-state">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<path d="M12 14c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM20 22v-2c0-2.21-3.58-4-8-4s-8 1.79-8 4v2"/>' +
+                '</svg>' +
+                '<p>暂无导师信息</p>' +
+                '<span>成为第一个申请导师的人吧！</span>' +
+            '</div>';
         return;
     }
-    
-    teachers.forEach(teacher => {
-        const teacherCard = document.createElement('div');
-        teacherCard.className = 'il-teacher-card-shell';
-        
-        const introduction = teacher.introduction || '暂无简介';
-        const truncatedIntro = introduction.length > 120 ? introduction.substring(0, 120) + '...' : introduction;
-        
-        const prev = teacher.userPreview;
-        let teacherName = '导师 #' + teacher.id;
-        let teacherAvatar = '导';
-        let teacherAvatarUrl = null;
+
+    teachers.forEach(function(teacher) {
+        var shell = document.createElement('div');
+        shell.className = 'mentor-card-shell';
+        shell.setAttribute('data-teacher-id', teacher.id);
+
+        // 基本信息
+        var introduction = teacher.introduction || '暂无简介';
+        var prev = teacher.userPreview;
+        var name = '导师 #' + teacher.id;
+        var char = '导';
+        var avatarUrl = null;
         if (prev && prev.id != null) {
-            teacherName = (prev.realName && String(prev.realName).trim()) || (prev.username && String(prev.username).trim()) || teacherName;
-            teacherAvatar = teacherName.charAt(0).toUpperCase();
-            teacherAvatarUrl = prev.avatar || null;
+            name = (prev.realName && String(prev.realName).trim()) || (prev.username && String(prev.username).trim()) || name;
+            char = name.charAt(0).toUpperCase();
+            avatarUrl = prev.avatar || null;
         }
 
-        function buildTeacherAvatarHtml(avatarUrl, fallbackChar, name) {
-            if (avatarUrl) {
-                return `<div class="il-teacher-avatar">
-                    <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(name)}"
-                         onerror="this.style.display='none'; this.parentElement.querySelector('.il-teacher-avatar-fallback').style.display='flex';">
-                    <span class="il-teacher-avatar-fallback" style="display:none;">${escapeHtml(fallbackChar)}</span>
-                </div>`;
-            }
-            return `<div class="il-teacher-avatar"><span class="il-teacher-avatar-fallback">${escapeHtml(fallbackChar)}</span></div>`;
-        }
-        
-        // 解析研究方向标签
-        let researchTags = [];
-        if (teacher.researchDirection) {
-            researchTags = String(teacher.researchDirection).split(/[,，;；\s]+/).filter(s => s.trim()).slice(0, 5);
-        }
-        
         // 解析职称和专业
-        let major = '其他';
-        let title = '';
+        var dept = '其他';
+        var titleText = '';
         if (teacher.projects) {
-            const projectsStr = String(teacher.projects);
-            const titleMatch = projectsStr.match(/（(.+?)）/);
+            var projectsStr = String(teacher.projects);
+            var titleMatch = projectsStr.match(/（(.+?)）/);
             if (titleMatch) {
-                title = titleMatch[1];
-                major = projectsStr.replace(/（.+?）/, '').trim() || major;
+                titleText = titleMatch[1];
+                dept = projectsStr.replace(/（.+?）/, '').trim() || dept;
             } else {
-                major = projectsStr || major;
+                dept = projectsStr || dept;
             }
         }
-        
-        teacherCard.innerHTML = `
-            <div class="il-teacher-card" onclick="window.ILink && window.ILink.navigate ? window.ILink.navigate('/teacher-detail.html?id=${teacher.id}') : window.location.href='/teacher-detail.html?id=${teacher.id}'">
-                <div class="il-teacher-header">
-                    ${buildTeacherAvatarHtml(teacherAvatarUrl, teacherAvatar, teacherName)}
-                    <div class="il-teacher-info">
-                        <h3 class="il-teacher-name">${escapeHtml(teacherName)}</h3>
-                        ${title ? `<p class="il-teacher-title">${escapeHtml(title)}</p>` : ''}
-                        <span class="il-teacher-major">${escapeHtml(major)}</span>
-                    </div>
-                </div>
-                <p class="il-teacher-bio">${escapeHtml(truncatedIntro)}</p>
-                ${researchTags.length > 0 ? `
-                    <div class="il-teacher-research">
-                        ${researchTags.map(tag => `<span class="il-research-tag">${escapeHtml(tag.trim())}</span>`).join('')}
-                    </div>
-                ` : ''}
-                <div class="il-teacher-footer">
-                    <a href="/teacher-detail.html?id=${teacher.id}" class="il-btn il-btn-primary" style="padding: 8px 16px; font-size: 0.875rem;">查看详情</a>
-                </div>
-            </div>
-        `;
-        teacherListContainer.appendChild(teacherCard);
+
+        // 解析研究方向标签
+        var tags = [];
+        if (teacher.researchDirection) {
+            tags = String(teacher.researchDirection).split(/[,，;；\s]+/).filter(function(s) { return s.trim(); }).slice(0, 5);
+        }
+
+        // 头像 HTML
+        var avatarHtml;
+        if (avatarUrl) {
+            avatarHtml = '<div class="mentor-avatar">' +
+                '<img src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(name) + '"' +
+                ' onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.avatar-fallback\').style.display=\'flex\';">' +
+                '<span class="avatar-fallback" style="display:none;">' + escapeHtml(char) + '</span>' +
+                '</div>';
+        } else {
+            avatarHtml = '<div class="mentor-avatar">' +
+                '<span class="avatar-fallback">' + escapeHtml(char) + '</span>' +
+                '</div>';
+        }
+
+        // 职称行
+        var titleRowHtml = titleText ? '<div class="mentor-title-row">' + escapeHtml(titleText) + '</div>' : '';
+
+        // 详情链接
+        var detailUrl = '/teacher-detail.html?id=' + teacher.id;
+
+        // 研究方向标签
+        var tagsHtml = tags.length > 0
+            ? '<div class="mentor-tags">' +
+                tags.map(function(t) { return '<span class="mentor-tag">' + escapeHtml(t.trim()) + '</span>'; }).join('') +
+              '</div>'
+            : '';
+
+        shell.innerHTML =
+            '<!-- Corner Decoration -->' +
+            '<div class="mentor-corner">' +
+                '<svg viewBox="0 0 32 32"><path d="M8 2 L2 2 L2 8"/><path d="M24 2 L30 2 L30 8"/><path d="M8 30 L2 30 L2 24"/><path d="M24 30 L30 30 L30 24"/></svg>' +
+            '</div>' +
+            '<div class="mentor-header">' +
+                avatarHtml +
+                '<div class="mentor-info">' +
+                    '<div class="mentor-name">' + escapeHtml(name) + '</div>' +
+                    titleRowHtml +
+                    '<span class="mentor-dept">' + escapeHtml(dept) + '</span>' +
+                '</div>' +
+            '</div>' +
+            '<div class="mentor-divider"></div>' +
+            '<div class="mentor-bio">' + escapeHtml(introduction) + '</div>' +
+            tagsHtml +
+            '<div class="mentor-footer">' +
+                '<div class="mentor-stats">' +
+                    '<div class="mentor-stat">' +
+                        '<span class="mentor-stat-value">—</span>' +
+                        '<span class="mentor-stat-label">指导队伍</span>' +
+                    '</div>' +
+                    '<div class="mentor-stat">' +
+                        '<span class="mentor-stat-value">—</span>' +
+                        '<span class="mentor-stat-label">获奖数量</span>' +
+                    '</div>' +
+                '</div>' +
+                '<a href="' + detailUrl + '" class="mentor-btn" onclick="event.stopPropagation();">' +
+                    '查看详情' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' +
+                '</a>' +
+            '</div>';
+
+        // 点击整卡跳转详情
+        shell.addEventListener('click', function(e) {
+            if (e.target.closest('.mentor-btn') || e.target.closest('a')) return;
+            window.location.href = detailUrl;
+        });
+
+        container.appendChild(shell);
     });
 }
 
 // 提交导师申请
 async function submitTeacherApplication() {
-    const introduction = document.getElementById('applicationBio');
-    const researchDirection = document.getElementById('applicationResearch');
-    const projects = document.getElementById('applicationMajor');
-    const applicationTitle = document.getElementById('applicationTitle');
-    
+    var introduction = document.getElementById('applicationBio');
+    var researchDirection = document.getElementById('applicationResearch');
+    var projects = document.getElementById('applicationMajor');
+    var applicationTitle = document.getElementById('applicationTitle');
+
     if (!introduction || !researchDirection || !applicationTitle) {
         showMessage('请填写完整信息', 'error');
         return;
     }
-    
-    const applicationData = {
+
+    var applicationData = {
         introduction: introduction.value,
         researchDirection: researchDirection.value,
         projects: (function() {
-            const majorVal = projects ? projects.value : '';
-            const titleVal = applicationTitle ? applicationTitle.value : '';
+            var majorVal = projects ? projects.value : '';
+            var titleVal = applicationTitle ? applicationTitle.value : '';
             if (titleVal) {
-                return `${majorVal || ''}（${titleVal}）`.trim();
+                return (majorVal || '') + '（' + titleVal + '）'.trim();
             }
             return majorVal || '';
         })()
     };
-    
+
     if (!applicationData.introduction || !applicationData.researchDirection) {
         showMessage('请填写必填字段', 'error');
         return;
@@ -321,35 +350,28 @@ async function submitTeacherApplication() {
         showMessage('请填写专业领域与职称', 'error');
         return;
     }
-    
+
     try {
-        const response = await apiFetch('/api/teacher/apply', {
+        var response = await apiFetch('/api/teacher/apply', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
             body: JSON.stringify(applicationData)
         });
-        
-        const result = await response.json();
-        
+
+        var result = await response.json();
+
         if (result.code === 200) {
             showMessage('申请已提交，请等待管理员审核', 'success');
-            // 关闭模态框
             closeApplyModal();
-            // 清空表单
             if (introduction) introduction.value = '';
             if (researchDirection) researchDirection.value = '';
             if (projects) projects.value = '';
             if (applicationTitle) applicationTitle.value = '';
-            // 重新加载导师列表
             loadTeacherList();
         } else if (result.code === 401) {
             showMessage('请先登录', 'warning');
-            setTimeout(() => {
-                window.location.href = '/login.html';
-            }, 1500);
+            setTimeout(function() { window.location.href = '/login.html'; }, 1500);
         } else {
             showMessage('申请提交失败: ' + result.message, 'error');
         }

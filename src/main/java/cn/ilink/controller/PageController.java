@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.security.web.csrf.CsrfToken;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,9 @@ public class PageController {
         "index",
         "login",
         "register",
+        "forgot-password",
+        "terms",
+        "privacy",
         "home",
         "profile",
         "profile-edit",
@@ -63,6 +67,8 @@ public class PageController {
         "team-detail",
         "team-publish",
         "team-workspace",
+        "team-chat",
+        "team-space",
         "teacher-wall",
         "teacher-detail",
         "asset-detail",
@@ -75,9 +81,11 @@ public class PageController {
     );
 
     @GetMapping("/{page}.html")
-    public String page(@PathVariable String page, Model model, HttpSession session, HttpServletRequest request) {
+    public String page(@PathVariable String page, Model model, HttpSession session,
+                       HttpServletRequest request, HttpServletResponse response) {
         if (!ALLOWED_PAGES.contains(page)) {
-            return "redirect:/";
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return "404";
         }
         model.addAttribute("currentUser", session.getAttribute("user"));
         if ("index".equals(page)) {

@@ -41,7 +41,7 @@ public class ProjectMilestoneServiceImpl extends ServiceImpl<ProjectMilestoneMap
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean create(ProjectMilestoneDTO dto, Long userId) {
         ProjectMilestone milestone = new ProjectMilestone();
         milestone.setTeamId(dto.getTeamId());
@@ -61,7 +61,7 @@ public class ProjectMilestoneServiceImpl extends ServiceImpl<ProjectMilestoneMap
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean update(Long id, ProjectMilestoneDTO dto) {
         ProjectMilestone milestone = this.baseMapper.selectById(id);
         if (milestone == null) {
@@ -95,7 +95,7 @@ public class ProjectMilestoneServiceImpl extends ServiceImpl<ProjectMilestoneMap
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateProgress(Long id, int progress) {
         ProjectMilestone milestone = this.baseMapper.selectById(id);
         if (milestone == null) {
@@ -115,7 +115,7 @@ public class ProjectMilestoneServiceImpl extends ServiceImpl<ProjectMilestoneMap
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean delete(Long id) {
         return this.removeById(id);
     }

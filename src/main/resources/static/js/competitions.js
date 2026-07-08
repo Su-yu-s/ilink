@@ -681,13 +681,6 @@ function resolveScope(item) {
     return '省赛';
 }
 
-function escapeHtml(s) {
-    if (s == null) return '';
-    const div = document.createElement('div');
-    div.textContent = s;
-    return div.innerHTML;
-}
-
 function buildTrackTabs() {
     const nav = document.getElementById('competitionTrackTabs');
     if (!nav) return;
@@ -738,11 +731,14 @@ function renderPager(totalItems) {
             (disabled ? ' disabled' : '') +
             (active ? ' active' : '') +
             '">' +
-            '<a class="page-link" href="#" data-page="' +
+            '<button class="page-link" type="button" data-page="' +
             page +
-            '">' +
+            '"' +
+            (disabled ? ' disabled' : '') +
+            (active ? ' aria-current="page"' : '') +
+            '>' +
             label +
-            '</a></li>'
+            '</button></li>'
         );
     };
 
@@ -763,7 +759,7 @@ function renderPager(totalItems) {
     inner.innerHTML = pieces.join('');
     pager.classList.remove('d-none');
 
-    inner.querySelectorAll('a[data-page]').forEach(function (a) {
+    inner.querySelectorAll('button[data-page]').forEach(function (a) {
         a.addEventListener('click', function (e) {
             e.preventDefault();
             const page = parseInt(a.getAttribute('data-page') || '1', 10);
@@ -846,27 +842,35 @@ function renderGrid() {
                     escapeHtml(url) +
                     '" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer">访问官网</a>'
                 :   '<span class="text-muted small">官网请自行检索</span>';
-            return (
-                '<div class="col-md-6 mb-4">' +
+                var scopeClass = 'scope--default';
+                if (scope === '国赛' || scope === '国际赛' || scope === '国际级') scopeClass = 'scope--national';
+                else if (scope === '省赛' || scope === '省级') scopeClass = 'scope--province';
+                else if (scope === '校赛' || scope === '校级') scopeClass = 'scope--school';
+                return (
                 '<article class="competition-card h-100">' +
-                '<div class="d-flex justify-content-between align-items-start gap-2 mb-2">' +
+                '<div class="competition-card__header">' +
                 '<h2 class="competition-card__title mb-0">' +
                 escapeHtml(item.name) +
                 '</h2>' +
                 '<div class="competition-card__levels">' +
-                '<span class="competition-card__level competition-card__level--scope">' +
+                '<span class="competition-card__level competition-card__level--scope ' + scopeClass + '">' +
                 escapeHtml(scope) +
                 '</span>' +
-                '<span class="competition-card__level competition-card__level--class">' +
+                '<span class="competition-card__level competition-card__level--class level--' +
+                (levelClass.includes('一类A') ? '1a' :
+                 levelClass.includes('一类B') ? '1b' :
+                 levelClass.includes('二类A') ? '2a' :
+                 levelClass.includes('二类B') ? '2b' :
+                 levelClass.includes('三类') ? '3' : 'default') + '">' +
                 escapeHtml(levelClass) +
                 '</span>' +
                 '</div>' +
                 '</div>' +
                 '<div class="competition-card__meta small text-muted mb-2">' +
-                '<span class="d-block"><strong>主办：</strong>' +
+                '<span class="meta-item"><strong>主办：</strong>' +
                 escapeHtml(item.organizer || '') +
                 '</span>' +
-                '<span class="d-block mt-1"><strong>赛季参考：</strong>' +
+                '<span class="meta-item mt-1"><strong>赛季参考：</strong>' +
                 escapeHtml(item.season || '') +
                 '</span>' +
                 '</div>' +
@@ -879,7 +883,7 @@ function renderGrid() {
                 '<div class="competition-card__foot mt-auto">' +
                 link +
                 '</div>' +
-                '</article></div>'
+                '</div></article>'
             );
         })
         .join('');

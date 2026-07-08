@@ -1,4 +1,4 @@
-﻿// 个人中心 · 我的收藏（收藏夹）
+// 个人中心 · 我的收藏
 
 const CATEGORY_LABELS = {
     general: '综合交流',
@@ -14,21 +14,14 @@ document.addEventListener('DOMContentLoaded', function() {
     loadMyFavorites(1);
 });
 
-function escapeHtml(s) {
-    if (s == null) return '';
-    const div = document.createElement('div');
-    div.textContent = s;
-    return div.innerHTML;
-}
-
 function articlePublicUrl(id) {
     return `/community/article/${encodeURIComponent(String(id))}`;
 }
 
 function iconStarSvg() {
     return (
-        '<svg viewBox="0 0 24 24" aria-hidden="true" class="community-feed-action__icon">' +
-        '<path d="M12 3.8l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.2 6.7 19.9l1-5.8L3.5 10l5.9-.9L12 3.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round">' +
+        '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>' +
         '</svg>'
     );
 }
@@ -52,7 +45,7 @@ async function loadMyFavorites(page) {
             return;
         }
         if (result.code !== 200) {
-            listEl.innerHTML = `<p class="text-danger small mb-0">${escapeHtml(result.message || '加载失败')}</p>`;
+            listEl.innerHTML = `<p class="il-form-error">${escapeHtml(result.message || '加载失败')}</p>`;
             if (pager) pager.classList.add('d-none');
             return;
         }
@@ -62,17 +55,22 @@ async function loadMyFavorites(page) {
 
         if (posts.length === 0) {
             listEl.innerHTML = `
-                <div class="text-center py-5 px-3 rounded-3 border border-dashed bg-white bg-opacity-50">
-                    <p class="text-muted mb-2 fw-semibold">还没有收藏内容</p>
-                    <p class="small text-secondary mb-3">在社区列表点击星标收藏文章</p>
-                    <a href="/community.html" class="btn btn-primary">去社区看看</a>
+                <div class="profile-favorites-empty">
+                    <div class="il-empty-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                        </svg>
+                    </div>
+                    <p class="il-empty-title">还没有收藏内容</p>
+                    <p class="il-empty-text">在社区列表点击星标收藏文章</p>
+                    <a href="/community.html" class="il-btn il-btn-primary il-btn-sm mt-3">去社区看看</a>
                 </div>`;
             if (pager) pager.classList.add('d-none');
             return;
         }
 
         const wrap = document.createElement('div');
-        wrap.className = 'profile-post-list d-flex flex-column gap-3 w-100';
+        wrap.className = 'profile-post-list';
 
         posts.forEach(p => {
             const badge = CATEGORY_LABELS[p.category] || p.category;
@@ -82,7 +80,7 @@ async function loadMyFavorites(page) {
             const timeStr = formatTime(p.createdAt);
 
             const art = document.createElement('article');
-            art.className = 'profile-post-card glass-panel';
+            art.className = 'profile-post-card';
             art.innerHTML = `
                 <div class="profile-post-card__body">
                     <div class="profile-post-card__main">
@@ -91,30 +89,16 @@ async function loadMyFavorites(page) {
                         </h2>
                         <div class="profile-post-card__meta" role="list">
                             <span class="profile-post-card__chip" role="listitem">${escapeHtml(badge)}</span>
-                            <span class="profile-post-card__meta-item" role="listitem">
-                                <span class="profile-post-card__meta-key">发布时间</span>
-                                <time datetime="">${escapeHtml(timeStr)}</time>
-                            </span>
-                            <span class="profile-post-card__meta-item profile-post-card__meta-item--reads" role="listitem">
-                                <span class="profile-post-card__meta-key">阅读</span>
-                                <span class="profile-post-card__reads-num">${views}</span>
-                                <span class="profile-post-card__reads-unit">次</span>
-                            </span>
-                            <span class="profile-post-card__meta-item" role="listitem">
-                                <span class="profile-post-card__meta-key">点赞</span>
-                                <span class="profile-post-card__stat-num">${likes}</span>
-                            </span>
-                            <span class="profile-post-card__meta-item" role="listitem">
-                                <span class="profile-post-card__meta-key">收藏</span>
-                                <span class="profile-post-card__stat-num">${favs}</span>
-                            </span>
+                            <span role="listitem">发布时间 ${escapeHtml(timeStr)}</span>
+                            <span role="listitem">阅读 <strong>${views}</strong> 次</span>
+                            <span role="listitem">点赞 <strong>${likes}</strong></span>
+                            <span role="listitem">收藏 <strong>${favs}</strong></span>
                         </div>
                     </div>
                     <div class="profile-post-card__actions">
-                        <a href="${articlePublicUrl(p.id)}" class="btn btn-light border profile-post-card__btn" target="_blank" rel="noopener">查看</a>
-                        <button type="button" class="community-feed-action community-feed-action--fav profile-unfavorite-btn" data-id="${p.id}">
+                        <a href="${articlePublicUrl(p.id)}" class="il-btn il-btn-xs-ghost profile-post-card__btn" target="_blank" rel="noopener">查看</a>
+                        <button type="button" class="community-feed-action community-feed-action--fav profile-unfavorite-btn" data-id="${p.id}" title="取消收藏">
                             ${iconStarSvg()}
-                            <span class="community-feed-action__num">${favs}</span>
                         </button>
                     </div>
                 </div>`;
@@ -135,7 +119,7 @@ async function loadMyFavorites(page) {
         renderPager(pag, pager, pagerInner);
     } catch (e) {
         console.error(e);
-        listEl.innerHTML = '<p class="text-danger small mb-0">网络错误</p>';
+        listEl.innerHTML = '<p class="il-form-error">网络错误</p>';
         if (pager) pager.classList.add('d-none');
     }
 }
@@ -153,6 +137,7 @@ function renderPager(pag, pagerEl, innerEl) {
     }
 
     pagerEl.classList.remove('d-none');
+    pagerEl.classList.add('profile-posts-pager');
     innerEl.innerHTML = '';
 
     const prevLi = document.createElement('li');
@@ -162,7 +147,7 @@ function renderPager(pag, pagerEl, innerEl) {
 
     const infoLi = document.createElement('li');
     infoLi.className = 'page-item disabled';
-    infoLi.innerHTML = `<span class="page-link text-secondary">${page} / ${totalPages}</span>`;
+    infoLi.innerHTML = `<span class="page-link">${page} / ${totalPages}</span>`;
     innerEl.appendChild(infoLi);
 
     const nextLi = document.createElement('li');
@@ -207,4 +192,3 @@ async function unfavorite(id) {
         showMessage('网络错误', 'error');
     }
 }
-

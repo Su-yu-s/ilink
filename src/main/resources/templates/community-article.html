@@ -25,7 +25,21 @@
 
             <article class="community-article-card page-transition">
                 <header class="community-article-card__header">
-                    <h1 class="community-article__title" id="articleTitle">加载中…</h1>
+                    <div class="community-article-card__header-top">
+                        <h1 class="community-article__title" id="articleTitle">加载中…</h1>
+                        <div class="community-article__header-actions" id="articleHeaderActions">
+                            <button type="button" id="articleLikeBtn" class="il-feed-action" data-action="like" aria-label="点赞">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;"><path d="M9 10V6.8c0-1.7 1.2-3.3 2.9-3.7l.7-.2c.7-.2 1.4.3 1.4 1v4.1H18c1.1 0 2 .9 2 2 0 .2 0 .4-.1.6l-1.5 6.2c-.2.9-1 1.6-2 1.6H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="10" width="4" height="9" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                                <span id="articleLikeCount" class="il-feed-action__num">0</span>
+                            </button>
+                            <button type="button" id="articleFavBtn" class="il-feed-action" data-action="favorite" aria-label="收藏">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;"><path d="M12 3.8l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.2 6.7 19.9l1-5.8L3.5 10l5.9-.9L12 3.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                                <span id="articleFavCount" class="il-feed-action__num">0</span>
+                            </button>
+                            <a href="/community.html" class="il-btn community-article__header-back">返回社区</a>
+                            <button type="button" class="il-btn il-btn-danger-outline d-none" id="deleteArticleBtn">删除文章</button>
+                        </div>
+                    </div>
                     <div class="community-article__meta-stats" id="articleMetaStats">
                         <span id="articleMetaCategory" class="community-article__meta-item"></span>
                         <span class="community-article__meta-sep" aria-hidden="true">·</span>
@@ -42,22 +56,6 @@
                 <div class="community-article-card__body">
                     <div id="articleBody" class="community-article__content community-post-body"></div>
                     <div id="articleAttachments" class="community-article-attachments d-none"></div>
-                    <footer class="community-article__footer">
-                        <a href="/community.html" class="il-btn il-btn-secondary community-article__footer-back">返回社区</a>
-                        <div id="articleInteractionBar" class="community-article__interactions" aria-label="互动">
-                            <button type="button" id="articleLikeBtn" class="community-article__action-btn" aria-pressed="false">
-                                <span class="community-article__action-label">点赞</span>
-                                <span id="articleLikeCount" class="community-article__action-num">0</span>
-                            </button>
-                            <button type="button" id="articleFavBtn" class="community-article__action-btn" aria-pressed="false">
-                                <span class="community-article__action-label">收藏</span>
-                                <span id="articleFavCount" class="community-article__action-num">0</span>
-                            </button>
-                        </div>
-                        <div class="community-article__footer-actions">
-                            <button type="button" class="il-btn il-btn-danger-outline d-none" id="deleteArticleBtn">删除文章</button>
-                        </div>
-                    </footer>
                 </div>
             </article>
 
@@ -84,9 +82,9 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/common.js?v=7.8"></script>
+    <script src="/js/ui-particles.js?v=1.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
     <script src="/js/community-article.js?v=39"></script>
-    <div th:replace="fragments/footer :: footer"></div>
 </body>
 </html>

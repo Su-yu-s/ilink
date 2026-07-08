@@ -142,13 +142,6 @@ async function uploadCommunityAttachment(file) {
     }
 }
 
-function escapeHtml(s) {
-    if (s == null) return '';
-    const div = document.createElement('div');
-    div.textContent = s;
-    return div.innerHTML;
-}
-
 function renderAttachments() {
     const ul = document.getElementById('editAttachmentList');
     if (!ul) return;

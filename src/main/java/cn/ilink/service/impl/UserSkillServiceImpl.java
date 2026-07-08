@@ -38,7 +38,7 @@ public class UserSkillServiceImpl extends ServiceImpl<UserSkillMapper, UserSkill
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteSkill(Long userId, Long skillId) {
         if (userId == null || skillId == null) {
             return false;

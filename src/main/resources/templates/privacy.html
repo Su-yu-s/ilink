@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隐私政策 - iLink</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-app-page="legal" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+    <main class="legal-page">
+        <p class="legal-page__eyebrow">隐私说明</p>
+        <h1>隐私政策</h1>
+        <section>
+            <h2>我们收集什么</h2>
+            <p>为支持登录、组队、导师招募、社区交流和成果展示，平台会保存你主动提交的账号信息、公开资料、发布内容和协作记录。</p>
+        </section>
+        <section>
+            <h2>我们如何使用</h2>
+            <p>这些信息用于身份识别、内容展示、申请审批、消息通知和基础安全审计。非公开联系方式不会展示在公开主页中。</p>
+        </section>
+        <section>
+            <h2>你可以做什么</h2>
+            <p>你可以在个人中心编辑资料、管理发布内容，或联系管理员处理账号与数据相关请求。</p>
+        </section>
+        <div class="legal-page__actions">
+            <a href="/register.html" class="il-btn il-btn-primary">回到注册</a>
+            <a href="/index.html" class="il-btn il-btn-secondary">返回首页</a>
+        </div>
+    </main>
+    <script src="/lib/bootstrap.bundle.min.js?v=4.3"></script>
+    <script src="/js/common.js?v=7.8"></script>
+</body>
+</html>

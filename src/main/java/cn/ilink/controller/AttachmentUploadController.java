@@ -1,5 +1,6 @@
 package cn.ilink.controller;
 
+import cn.ilink.common.Result;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -62,25 +62,18 @@ public class AttachmentUploadController {
      */
     @PostMapping("/attachment")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> uploadAttachment(@RequestParam("file") MultipartFile file,
-                                                                @RequestParam(value = "kind", defaultValue = "proof") String kind,
-                                                                HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<Result<?>> uploadAttachment(@RequestParam("file") MultipartFile file,
+                                                       @RequestParam(value = "kind", defaultValue = "proof") String kind,
+                                                       HttpSession session) {
         User user = resolveCurrentUser(session);
         if (user == null) {
-            response.put("code", 401);
-            response.put("message", "未登录");
-            response.put("timestamp", System.currentTimeMillis());
-            return ResponseEntity.ok(response);
+            return Result.unauthorized().toResponseEntity();
         }
         if (file == null || file.isEmpty()) {
-            response.put("code", 400);
-            response.put("message", "请选择文件");
-            response.put("timestamp", System.currentTimeMillis());
-            return ResponseEntity.ok(response);
+            return Result.badRequest("请选择文件").toResponseEntity();
         }
 
-        // C-20: 安全校验 — 不仅检查扩展名，还检查 MIME 类型
+        // 安全校验 — 不仅检查扩展名，还检查 MIME 类型
         String contentType = file.getContentType();
         if (contentType != null && !contentType.toLowerCase(Locale.ROOT).startsWith("image/")
                 && !contentType.equals("application/pdf")
@@ -88,14 +81,10 @@ public class AttachmentUploadController {
                 && !contentType.startsWith("application/vnd.openxmlformats")
                 && !contentType.startsWith("application/zip")
                 && !contentType.startsWith("text/")) {
-            response.put("code", 400);
-            response.put("message", "不支持的文件类型");
-            response.put("timestamp", System.currentTimeMillis());
-            return ResponseEntity.ok(response);
+            return Result.badRequest("不支持的文件类型").toResponseEntity();
         }
 
         String originalFilename = file.getOriginalFilename();
-        // C-20: 清理文件名，防止路径遍历
         if (originalFilename != null) {
             originalFilename = originalFilename.replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5\\-_.]", "_");
         }
@@ -108,12 +97,9 @@ public class AttachmentUploadController {
         boolean task = "task".equalsIgnoreCase(kind);
         Set<String> allowed = avatar ? AVATAR_EXTENSIONS : community ? COMMUNITY_EXTENSIONS : task ? TASK_EXTENSIONS : PROOF_EXTENSIONS;
         if (extension.isEmpty() || !allowed.contains(extension)) {
-            response.put("code", 400);
-            response.put("message", avatar ? "仅支持 jpg、png、gif、webp 图片"
+            return Result.badRequest(avatar ? "仅支持 jpg、png、gif、webp 图片"
                 : community ? "不支持的文件类型（可用图片、pdf、office、压缩包、txt 等）"
-                : "仅支持 jpg、png、gif、webp 图片或 pdf");
-            response.put("timestamp", System.currentTimeMillis());
-            return ResponseEntity.ok(response);
+                : "仅支持 jpg、png、gif、webp 图片或 pdf").toResponseEntity();
         }
 
         try {
@@ -125,15 +111,10 @@ public class AttachmentUploadController {
             Path filePath = Paths.get(uploadPath, filename);
             Files.write(filePath, file.getBytes());
             String url = "/uploads/" + filename;
-            response.put("code", 200);
-            response.put("message", "上传成功");
-            response.put("data", Map.of("url", url));
+            return Result.ok("上传成功", Map.of("url", url)).toResponseEntity();
         } catch (IOException e) {
-            response.put("code", 500);
-            response.put("message", "文件上传失败，请稍后重试");
+            return Result.fail(500, "文件上传失败，请稍后重试").toResponseEntity();
         }
-        response.put("timestamp", System.currentTimeMillis());
-        return ResponseEntity.ok(response);
     }
 
     /**

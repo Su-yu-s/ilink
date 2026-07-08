@@ -101,6 +101,7 @@ let lastActivity = { published: [], applications: [] };
 function teamDemandStatusLabel(status) {
     if (status === 'OPEN') return '招募中';
     if (status === 'CLOSED') return '已结束';
+    if (status === 'TEAMING') return '已组队';
     return status || '';
 }
 
@@ -1028,7 +1029,14 @@ function renderPublicOverview(vo, honorsList) {
 }
 
 function getProfilePage() {
-    return document.body.getAttribute('data-profile-page') || 'overview';
+    var hash = (window.location.hash || '').replace(/^#/, '');
+    if (hash === 'teams') return 'teams';
+    var page = document.body.getAttribute('data-profile-page');
+    if (page) return page;
+    // 如果没有 data-profile-page 属性但有 hash，也返回对应值
+    if (hash === 'settings') return 'overview';
+    if (hash === 'honors') return 'overview';
+    return 'overview';
 }
 
 async function fetchPublicProfileById(userId) {
@@ -1047,7 +1055,197 @@ async function fetchPublicProfileById(userId) {
     return null;
 }
 
-/** 将接口返回的用户数据写入「编辑资料」页的表单（元素不存在时自动跳过） */
+/** 竞赛小队：展示用户已加入的团队列表，支持选择团队进入二级子面板 */
+async function renderJoinedTeams() {
+    const container = document.getElementById('joinedTeamsList');
+    if (!container) return;
+    try {
+        const res = await apiFetch('/api/team/my/joined');
+        const data = await res.json();
+        if (data.code !== 200 || !Array.isArray(data.data)) {
+            container.innerHTML = '<div class="text-center py-4 text-muted">加载失败</div>';
+            return;
+        }
+        const teams = data.data;
+        if (!teams.length) {
+            container.innerHTML =
+                '<div class="il-empty-state">' +
+                    '<div class="il-empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>' +
+                    '<p class="il-empty-title">还没有加入任何团队</p>' +
+                    '<p class="il-empty-text">去组队大厅看看，找到志同道合的伙伴</p>' +
+                '</div>';
+            return;
+        }
+        container.innerHTML = teams.map(function (t) {
+            var teamId = Number(t.teamId);
+            var title = escapeHtml(t.teamTitle || '未命名');
+            var status = t.status || '';
+            var statusLabel = teamDemandStatusLabel(status);
+            var statusClass = teamDemandStatusBadgeClass(status);
+            var joined = t.joinedAt ? formatTime(t.joinedAt) : '';
+            var isCreator = !!t.isCreator;
+            var badge = isCreator ? ' <span class="meta-chip meta-chip--primary">队长</span>' : '';
+            // 异步加载成员数和任务数（不阻塞渲染）
+            (function fetchTeamExtras(tid) {
+                Promise.all([
+                    apiFetch('/api/team/' + tid + '/members').then(function(r){ return r.json(); }).then(function(j){ return Array.isArray(j.data) ? j.data.length : 0; }).catch(function(){ return 0; }),
+                    apiFetch('/api/tasks?teamId=' + tid).then(function(r){ return r.json(); }).then(function(j){
+                        var tasks = Array.isArray(j.data) ? j.data : [];
+                        var pending = 0;
+                        for (var i = 0; i < tasks.length; i++) {
+                            var s = (tasks[i].status || 'pending').toLowerCase();
+                            if (s === 'pending' || s === 'todo') pending++;
+                        }
+                        return { total: tasks.length, pending: pending };
+                    }).catch(function(){ return { total: 0, pending: 0 }; })
+                ]).then(function(results) {
+                    var memberCount = results[0];
+                    var taskInfo = results[1];
+                    var card = document.querySelector('[data-team-id="' + tid + '"]');
+                    if (!card) return;
+                    var metaEl = card.querySelector('.il-team-card__meta');
+                    if (metaEl) {
+                        metaEl.innerHTML = '<span>加入于 ' + joined + '</span>' +
+                            ' <span class="il-team-card__meta-sep">·</span>' +
+                            '<span class="il-team-card__stat">成员 <span class="il-team-card__stat-value">' + memberCount + '</span> 人</span>' +
+                            ' <span class="il-team-card__meta-sep">·</span>' +
+                            '<span class="il-team-card__stat">待办 <span class="il-team-card__stat-value">' + taskInfo.pending + '</span> 个</span>';
+                    }
+                    var actionsEl = card.querySelector('.il-team-card__actions');
+                    if (actionsEl && (status === 'TEAMING' || status === 'CLOSED')) {
+                        actionsEl.innerHTML =
+                            '<a href="/team-space.html?id=' + tid + '" class="il-team-card__btn il-team-card__btn--primary">进入空间</a>' +
+                            '<a href="/team-detail.html?id=' + tid + '" class="il-team-card__btn">查看详情</a>';
+                    }
+                });
+            })(teamId);
+            return '<div class="il-team-card ' + teamCardStatusClass(status) + '" data-team-id="' + teamId + '">' +
+                '<div class="il-team-card__inner">' +
+                '<div class="il-team-card__header">' +
+                    '<div class="il-team-card__icon">' + teamIconSvg + '</div>' +
+                    '<div class="il-team-card__body">' +
+                        '<a class="il-team-card__title" href="/team-detail.html?id=' + teamId + '">' + title + badge + '</a>' +
+                        '<div class="il-team-card__meta">' +
+                            '<span>加载中...</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<span class="il-team-card__badge ' + statusClass + '">' + statusLabel + '</span>' +
+                    '<span class="il-team-card__arrow" aria-hidden="true">' + arrowSvg + '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="il-team-card__divider"></div>' +
+                '<div class="il-team-card__actions">' +
+                    '<a href="/team-detail.html?id=' + teamId + '" class="il-team-card__btn">查看详情</a>' +
+                    (status === 'TEAMING' || status === 'CLOSED' ? '<a href="/team-space.html?id=' + teamId + '" class="il-team-card__btn il-team-card__btn--secondary">进入空间</a>' : '') +
+                '</div>' +
+            '</div>';
+        }).join('');
+    } catch (e) {
+        console.error('加载竞赛小队失败', e);
+        container.innerHTML = '<div class="text-center py-4 text-muted">网络异常，请稍后重试</div>';
+    }
+}
+
+// 竞赛小队图标 & 箭头 SVG（复用）
+var teamIconSvg = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>';
+var arrowSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+
+/** 在竞赛小队 tab 内渲染二级子面板（选择团队后） */
+async function renderTeamSubPanel(teamId) {
+    var container = document.getElementById('joinedTeamsList');
+    if (!container) return;
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"></div></div>';
+
+    try {
+        // 加载团队信息
+        var teamRes = await apiFetch('/api/team/' + teamId);
+        var teamData = await teamRes.json();
+        var team = (teamData.code === 200) ? teamData.data : null;
+        var teamName = team ? escapeHtml(team.title || '未知团队') : '未知团队';
+
+        // 加载任务列表
+        var tasksRes = await apiFetch('/api/team/' + teamId + '/tasks');
+        var tasksData = await tasksRes.json();
+        var tasks = (tasksData.code === 200) ? (Array.isArray(tasksData.data) ? tasksData.data : []) : [];
+
+        // 统计各状态任务数
+        var todoCount = 0, inProgressCount = 0, reviewCount = 0, completedCount = 0;
+        tasks.forEach(function(t) {
+            var s = (t.status || 'pending').toLowerCase();
+            if (s === 'pending' || s === 'todo') todoCount++;
+            else if (s === 'in_progress' || s === 'progress') inProgressCount++;
+            else if (s === 'review' || s === 'rework') reviewCount++;
+            else completedCount++;
+        });
+
+        container.innerHTML =
+            '<div class="il-team-sub-panel">' +
+                '<div class="il-team-sub-panel__header">' +
+                    '<button type="button" class="il-back-btn" onclick="renderJoinedTeams()">' +
+                        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19L5 12L12 5"/></svg>' +
+                        '返回团队列表' +
+                    '</button>' +
+                    '<h3 class="il-team-sub-panel__title">' + teamName + '</h3>' +
+                '</div>' +
+                '<div class="il-team-sub-panel__stats">' +
+                    '<div class="il-stat-pill"><span class="il-stat-pill__label">待办</span><span class="il-stat-pill__value">' + todoCount + '</span></div>' +
+                    '<div class="il-stat-pill"><span class="il-stat-pill__label">进行中</span><span class="il-stat-pill__value">' + inProgressCount + '</span></div>' +
+                    '<div class="il-stat-pill"><span class="il-stat-pill__label">待审核</span><span class="il-stat-pill__value">' + reviewCount + '</span></div>' +
+                    '<div class="il-stat-pill"><span class="il-stat-pill__label">已完成</span><span class="il-stat-pill__value">' + completedCount + '</span></div>' +
+                '</div>' +
+                '<div class="il-team-sub-panel__tabs">' +
+                    '<button class="il-tab active" onclick="switchSubTab(\'kanban\', this)">任务看板</button>' +
+                    '<button class="il-tab" onclick="switchSubTab(\'assign\', this)">分配任务</button>' +
+                    '<button class="il-tab" onclick="switchSubTab(\'chat\', this)">交流沟通</button>' +
+                '</div>' +
+                '<div id="subTab-kanban" class="sub-tab-content">' +
+                    (tasks.length ? renderKanbanTasks(tasks) : '<div class="kanban-empty"><p>暂无任务</p></div>') +
+                '</div>' +
+                '<div id="subTab-assign" class="sub-tab-content" style="display:none;">' +
+                    '<div class="kanban-empty"><p>任务分配功能开发中</p></div>' +
+                '</div>' +
+                '<div id="subTab-chat" class="sub-tab-content" style="display:none;">' +
+                    '<div class="kanban-empty"><p>团队交流功能开发中</p></div>' +
+                '</div>' +
+            '</div>';
+    } catch (e) {
+        console.error('加载团队子面板失败', e);
+        container.innerHTML = '<div class="text-center py-4 text-muted">加载失败，请稍后重试</div>';
+    }
+}
+
+function switchSubTab(tabName, btn) {
+    document.querySelectorAll('.sub-tab-content').forEach(function(el) { el.style.display = 'none'; });
+    document.querySelectorAll('.il-team-sub-panel__tabs .il-tab').forEach(function(t) { t.classList.remove('active'); });
+    var target = document.getElementById('subTab-' + tabName);
+    if (target) target.style.display = 'block';
+    if (btn) btn.classList.add('active');
+}
+
+function renderKanbanTasks(tasks) {
+    if (!tasks || tasks.length === 0) return '<div class="kanban-empty"><p>暂无任务</p></div>';
+    return '<div class="kanban-mini-list">' + tasks.map(function(t) {
+        var title = escapeHtml(t.taskTitle || '未命名任务');
+        var status = (t.status || 'pending').toLowerCase();
+        var statusMap = { pending: '待办', todo: '待办', in_progress: '进行中', progress: '进行中', review: '待审核', rework: '待审核', completed: '已完成', done: '已完成' };
+        var statusLabel = statusMap[status] || status;
+        var deadline = t.deadline ? formatDateOnlyProfile(t.deadline) : '';
+        return '<div class="kanban-mini-card">' +
+            '<div class="kanban-mini-card__head">' +
+                '<span class="kanban-mini-card__title">' + title + '</span>' +
+                '<span class="meta-chip meta-chip--muted">' + statusLabel + '</span>' +
+            '</div>' +
+            (deadline ? '<div class="kanban-mini-card__meta">截止：' + deadline + '</div>' : '') +
+        '</div>';
+    }).join('') + '</div>';
+}
+
+function formatDateOnlyProfile(value) {
+    if (!value) return '长期有效';
+    var d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
 function applyUserToProfileForm(user) {
     if (!user) return;
     const usernameElem = document.getElementById('username');
@@ -1119,13 +1317,23 @@ let myTeamsStatusFilter = 'ALL';
 let myTeamsSort = 'createdDesc';
 
 function teamDemandStatusLabel(status) {
-    const map = { OPEN: '招募中', TEAMING: '组队中', CLOSED: '已结束' };
+    const map = { OPEN: '招募中', TEAMING: '已组队', CLOSED: '已结束' };
     return map[status] || status || '';
 }
 
-function teamDemandStatusClass(status) {
-    const map = { OPEN: 'bg-success', TEAMING: 'bg-primary', CLOSED: 'bg-secondary' };
-    return map[status] || 'bg-secondary';
+function teamDemandStatusBadgeClass(status) {
+    const map = { OPEN: 'il-team-card__badge--open', TEAMING: 'il-team-card__badge--teaming', CLOSED: 'il-team-card__badge--closed' };
+    return map[status] || 'il-team-card__badge--closed';
+}
+
+function teamCardStatusClass(status) {
+    const map = { OPEN: 'il-team-card--open', TEAMING: 'il-team-card--teaming', CLOSED: 'il-team-card--closed' };
+    return map[status] || 'il-team-card--closed';
+}
+
+function teamApplicationStatusBadge(status) {
+    const map = { PENDING: 'il-team-card__badge--pending', APPROVED: 'il-team-card__badge--approved', REJECTED: 'il-team-card__badge--rejected' };
+    return map[status] || 'il-team-card__badge--closed';
 }
 
 function formatDateOnlyProfile(value) {
@@ -1154,19 +1362,19 @@ function filteredProfileTeams(published) {
 
 function profileTeamActionsHtml(team) {
     const id = Number(team.id);
-    const actions = [`<a href="/team-detail.html?id=${id}" class="btn btn-sm btn-outline-primary">查看详情</a>`];
+    const actions = [`<a href="/team-detail.html?id=${id}" class="il-team-card__btn">查看详情</a>`];
     if (team.canEdit) {
-        actions.push(`<a href="/team-detail.html?id=${id}" class="btn btn-sm btn-primary">编辑</a>`);
+        actions.push(`<a href="/team-detail.html?id=${id}" class="il-team-card__btn">编辑</a>`);
     }
     if (team.canMoveToTeaming) {
-        const label = team.isFull ? '标记为组队中' : '手动确认组队';
-        actions.push(`<button type="button" class="btn btn-sm btn-outline-primary profile-team-action" data-action="teaming" data-id="${id}">${label}</button>`);
+        const label = team.isFull ? '标记为已组队' : '完成组队';
+        actions.push(`<button type="button" class="il-team-card__btn profile-team-action" data-action="teaming" data-id="${id}">${label}</button>`);
     }
     if (team.canClose) {
-        actions.push(`<button type="button" class="btn btn-sm btn-outline-secondary profile-team-action" data-action="close" data-id="${id}">结束项目</button>`);
+        actions.push(`<button type="button" class="il-team-card__btn profile-team-action" data-action="close" data-id="${id}">结束项目</button>`);
     }
     if (team.canDelete) {
-        actions.push(`<button type="button" class="btn btn-sm btn-outline-danger profile-team-action" data-action="delete" data-id="${id}">删除</button>`);
+        actions.push(`<button type="button" class="il-team-card__btn il-team-card__btn--danger profile-team-action" data-action="delete" data-id="${id}">删除</button>`);
     }
     return actions.join('');
 }
@@ -1179,69 +1387,98 @@ function renderTeamActivityLists(activity) {
     const applications = activity?.applications || [];
     const visibleTeams = filteredProfileTeams(published);
 
+    const teamIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>';
+    const docIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>';
+    const arrowSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+
     const controls = `
-        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
-            <div class="d-flex flex-wrap gap-2">
-                <select class="form-select form-select-sm" id="myTeamsStatusFilter" style="width:auto;">
+        <div class="il-activity-toolbar">
+            <div class="il-activity-toolbar__filters">
+                <select class="il-activity-toolbar__select" id="myTeamsStatusFilter">
                     <option value="ALL"${myTeamsStatusFilter === 'ALL' ? ' selected' : ''}>全部状态</option>
                     <option value="OPEN"${myTeamsStatusFilter === 'OPEN' ? ' selected' : ''}>招募中</option>
-                    <option value="TEAMING"${myTeamsStatusFilter === 'TEAMING' ? ' selected' : ''}>组队中</option>
+                    <option value="TEAMING"${myTeamsStatusFilter === 'TEAMING' ? ' selected' : ''}>已组队</option>
                     <option value="CLOSED"${myTeamsStatusFilter === 'CLOSED' ? ' selected' : ''}>已结束</option>
                 </select>
-                <select class="form-select form-select-sm" id="myTeamsSort" style="width:auto;">
+                <select class="il-activity-toolbar__select" id="myTeamsSort">
                     <option value="createdDesc"${myTeamsSort === 'createdDesc' ? ' selected' : ''}>最新发布</option>
                     <option value="createdAsc"${myTeamsSort === 'createdAsc' ? ' selected' : ''}>最早发布</option>
                     <option value="deadlineAsc"${myTeamsSort === 'deadlineAsc' ? ' selected' : ''}>截止时间近</option>
                     <option value="applicantsDesc"${myTeamsSort === 'applicantsDesc' ? ' selected' : ''}>报名人数多</option>
                 </select>
             </div>
-            <a href="/team-publish.html" class="btn btn-sm btn-primary">发布组队</a>
+            <a href="/team-publish.html" class="il-activity-toolbar__action">发布组队</a>
         </div>`;
 
     if (!published.length) {
-        myTeams.innerHTML = `${controls}<div class="il-empty-state"><p class="il-empty-title">还没有组队</p><p class="il-empty-text">发布需求后，将在这里集中管理。</p></div>`;
+        myTeams.innerHTML = `${controls}<div class="il-empty-state"><div class="il-empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><p class="il-empty-title">还没有组队</p><p class="il-empty-text">发布需求后，将在这里集中管理</p></div>`;
     } else if (!visibleTeams.length) {
-        myTeams.innerHTML = `${controls}<div class="il-empty-state"><p class="il-empty-title">当前筛选无结果</p><p class="il-empty-text">切换状态筛选查看其他组队。</p></div>`;
+        myTeams.innerHTML = `${controls}<div class="il-empty-state"><p class="il-empty-title">当前筛选无结果</p><p class="il-empty-text">切换状态筛选查看其他组队</p></div>`;
     } else {
-        myTeams.innerHTML = `${controls}<div class="list-group list-group-flush profile-activity-list">
-            ${visibleTeams.map((team) => {
-                const id = Number(team.id);
-                const title = escapeHtml(team.title || '未命名组队');
-                const requiredCount = team.requiredMemberCount || '待定';
-                const applicationCount = Number(team.applicationCount || 0);
-                const approvedCount = Number(team.approvedMemberCount || 0);
-                return `<div class="list-group-item px-0 py-3">
-                    <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
-                        <div class="min-w-0">
-                            <a class="fw-semibold text-decoration-none text-truncate d-inline-block mw-100" href="/team-detail.html?id=${id}">${title}</a>
-                            <div class="small text-muted mt-1">发布：${formatTime(team.createdAt)} · 截止：${formatDateOnlyProfile(team.deadline)}</div>
-                            <div class="small text-muted mt-1">报名 ${applicationCount} 人 · 已加入 ${approvedCount} 人 · 需求 ${requiredCount} 人</div>
-                        </div>
-                        <span class="badge ${teamDemandStatusClass(team.status)}">${escapeHtml(teamDemandStatusLabel(team.status))}</span>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2 mt-3">${profileTeamActionsHtml(team)}</div>
-                </div>`;
-            }).join('')}
-        </div>`;
+        myTeams.innerHTML = `${controls}${visibleTeams.map((team) => {
+            const id = Number(team.id);
+            const title = escapeHtml(team.title || '未命名组队');
+            const requiredCount = team.requiredMemberCount || '待定';
+            const applicationCount = Number(team.applicationCount || 0);
+            const approvedCount = Number(team.approvedMemberCount || 0);
+            return '<div class="il-team-card ' + teamCardStatusClass(team.status) + '">' +
+                '<div class="il-team-card__inner">' +
+                '<div class="il-team-card__header">' +
+                    '<div class="il-team-card__icon">' + teamIcon + '</div>' +
+                    '<div class="il-team-card__body">' +
+                        '<a class="il-team-card__title" href="/team-detail.html?id=' + id + '">' + title + '</a>' +
+                        '<div class="il-team-card__meta">' +
+                            '<span>发布：' + formatTime(team.createdAt) + '</span>' +
+                            '<span class="il-team-card__meta-sep">·</span>' +
+                            '<span>截止：' + formatDateOnlyProfile(team.deadline) + '</span>' +
+                        '</div>' +
+                        '<div class="il-team-card__meta">' +
+                            '<span class="il-team-card__stat">报名 <span class="il-team-card__stat-value">' + applicationCount + '</span> 人</span>' +
+                            '<span class="il-team-card__meta-sep">·</span>' +
+                            '<span class="il-team-card__stat">已加入 <span class="il-team-card__stat-value">' + approvedCount + '</span> 人</span>' +
+                            '<span class="il-team-card__meta-sep">·</span>' +
+                            '<span class="il-team-card__stat">需求 <span class="il-team-card__stat-value">' + requiredCount + '</span> 人</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<span class="il-team-card__badge ' + teamDemandStatusBadgeClass(team.status) + '">' + escapeHtml(teamDemandStatusLabel(team.status)) + '</span>' +
+                    '<span class="il-team-card__arrow" aria-hidden="true">' + arrowSvg + '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="il-team-card__divider"></div>' +
+                '<div class="il-team-card__actions">' + profileTeamActionsHtml(team) + '</div>' +
+            '</div>';
+        }).join('')}`;
     }
 
     if (!applications.length) {
-        myApplications.innerHTML = `<div class="il-empty-state"><p class="il-empty-title">还没有申请</p><p class="il-empty-text">申请加入感兴趣的团队吧。</p></div>`;
+        myApplications.innerHTML = '<div class="il-empty-state"><div class="il-empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg></div><p class="il-empty-title">还没有申请</p><p class="il-empty-text">申请加入感兴趣的团队吧</p></div>';
     } else {
-        myApplications.innerHTML = `<ul class="list-group list-group-flush profile-activity-list">
-            ${applications.map((a) => {
-                const title = escapeHtml(a.teamTitle || '组队');
-                const st = teamApplicationStatusLabel(a.status);
-                const tid = a.teamId != null ? Number(a.teamId) : '';
-                return `<li class="list-group-item d-flex flex-wrap align-items-center justify-content-between gap-2 px-0 py-3">
-                    <div class="min-w-0">
-                        <a class="fw-semibold text-decoration-none text-truncate d-inline-block mw-100" href="/team-detail.html?id=${tid}">${title}</a>
-                        <div class="small text-muted mt-1">${escapeHtml(st)} · ${formatTime(a.createdAt)}</div>
-                    </div>
-                    <a href="/team-detail.html?id=${tid}" class="btn btn-sm btn-outline-primary flex-shrink-0">查看组队</a>
-                </li>`;
-            }).join('')}
-        </ul>`;
+        myApplications.innerHTML = applications.map((a) => {
+            const title = escapeHtml(a.teamTitle || '组队');
+            const st = teamApplicationStatusLabel(a.status);
+            const tid = a.teamId != null ? Number(a.teamId) : '';
+            return '<div class="il-team-card">' +
+                '<div class="il-team-card__inner">' +
+                '<div class="il-team-card__header">' +
+                    '<div class="il-team-card__icon">' + docIcon + '</div>' +
+                    '<div class="il-team-card__body">' +
+                        '<a class="il-team-card__title" href="/team-detail.html?id=' + tid + '">' + title + '</a>' +
+                        '<div class="il-team-card__meta">' +
+                            '<span>' + escapeHtml(st) + '</span>' +
+                            '<span class="il-team-card__meta-sep">·</span>' +
+                            '<span>' + formatTime(a.createdAt) + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<span class="il-team-card__badge ' + teamApplicationStatusBadge(a.status) + '">' + escapeHtml(st) + '</span>' +
+                    '<span class="il-team-card__arrow" aria-hidden="true">' + arrowSvg + '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="il-team-card__divider"></div>' +
+                '<div class="il-team-card__actions">' +
+                    '<a href="/team-detail.html?id=' + tid + '" class="il-team-card__btn">查看组队</a>' +
+                '</div>' +
+            '</div>';
+        }).join('');
     }
 
     bindProfileTeamActivityControls();
@@ -1274,7 +1511,7 @@ function bindProfileTeamActivityControls() {
 async function handleProfileTeamAction(id, action) {
     if (!id) return;
     const actionConfig = {
-        teaming: { status: 'TEAMING', confirmText: '确认将该组队标记为组队中？' },
+        teaming: { status: 'TEAMING', confirmText: '确认完成组队，状态变为已组队？' },
         close: { status: 'CLOSED', confirmText: '确认结束该项目？' }
     };
     try {
@@ -1762,6 +1999,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else if (page === 'honors') {
                 renderHonorsEditor();
                 persistHonorsDraft();
+            } else if (page === 'teams') {
+                // 隐藏"我的活动"标题和tab栏，改为"我的小队"
+                var titleEl = document.getElementById('activitySectionTitle');
+                var tabsEl = document.getElementById('activityTabs');
+                if (titleEl) titleEl.textContent = '我的小队';
+                if (tabsEl) tabsEl.style.display = 'none';
+                renderJoinedTeams();
             }
         } else {
             showMessage('获取用户信息失败: ' + result.message, 'error');

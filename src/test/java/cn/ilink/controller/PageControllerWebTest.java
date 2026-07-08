@@ -9,7 +9,6 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -40,10 +39,10 @@ class PageControllerWebTest {
     }
 
     @Test
-    void unknownHtmlRedirectsToRoot() throws Exception {
+    void unknownHtmlShows404() throws Exception {
         mockMvc.perform(get("/not-a-real-page.html"))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/"));
+            .andExpect(status().isNotFound())
+            .andExpect(view().name("404"));
     }
 
     @Test

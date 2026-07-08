@@ -27,11 +27,11 @@ public class FileController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<Result<String>> upload(@RequestParam("file") MultipartFile file,
+    public ResponseEntity<Result<?>> upload(@RequestParam("file") MultipartFile file,
                                                  @RequestParam("bizType") String bizType) {
         try {
             String url = fileService.upload(file, bizType);
-            return ResponseEntity.ok(Result.ok("\u4e0a\u4f20\u6210\u529f", url));
+            return Result.ok("\u4e0a\u4f20\u6210\u529f", url).toResponseEntity();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Result.badRequest(e.getMessage()));
         } catch (IOException e) {

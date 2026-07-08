@@ -10,6 +10,7 @@ import cn.ilink.mapper.TeamDemandMapper;
 import cn.ilink.mapper.UserMapper;
 import cn.ilink.service.RecommendationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,12 +50,12 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
 
         // C-06: 限制查询数量，避免全表扫描
         int fetchLimit = Math.min(safeLimit * 10, 100);
-        List<TeamDemand> allTeams = teamDemandMapper.selectList(
+        Page<TeamDemand> page = new Page<>(1, fetchLimit);
+        List<TeamDemand> allTeams = teamDemandMapper.selectPage(page,
             new LambdaQueryWrapper<TeamDemand>()
                 .eq(TeamDemand::getStatus, "OPEN")
                 .orderByDesc(TeamDemand::getCreatedAt)
-                .last("LIMIT " + fetchLimit)
-        );
+        ).getRecords();
 
         List<RecommendedTeamVO> recommendations = new ArrayList<>();
 
@@ -89,12 +90,12 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
         }
 
         // C-06: 分页查询，避免加载所有用户
-        List<User> allUsers = userMapper.selectList(
+        Page<User> page = new Page<>(1, 200);
+        List<User> allUsers = userMapper.selectPage(page,
             new LambdaQueryWrapper<User>()
                 .ne(User::getId, team.getCreatorId())
                 .orderByDesc(User::getCreatedAt)
-                .last("LIMIT 200")
-        );
+        ).getRecords();
 
         List<RecommendedUserVO> recommendations = new ArrayList<>();
 
@@ -233,13 +234,13 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
         List<RecommendationLog> logs;
         try {
             // C-06: 使用 list + stream 替代 getOne()，避免多条记录时抛异常
-            logs = list(
+            Page<RecommendationLog> page = new Page<>(1, 1);
+            logs = page(page,
                 new LambdaQueryWrapper<RecommendationLog>()
                     .eq(RecommendationLog::getUserId, userId)
                     .eq(RecommendationLog::getRecommendedTeamId, teamId)
                     .orderByDesc(RecommendationLog::getCreatedAt)
-                    .last("LIMIT 1")
-            );
+            ).getRecords();
         } catch (DataAccessException e) {
             log.warn("推荐日志读取失败，历史评分使用默认值：{}", rootMessage(e));
             return 100.0;

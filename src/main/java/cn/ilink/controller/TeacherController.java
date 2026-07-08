@@ -6,14 +6,15 @@ import cn.ilink.dto.TeacherApplicationRequest;
 import cn.ilink.entity.ProjectApplication;
 import cn.ilink.entity.TeacherApplication;
 import cn.ilink.entity.User;
-import cn.ilink.service.ProjectApplicationService;
-import cn.ilink.service.TeacherApplicationService;
+import cn.ilink.service.impl.ProjectApplicationServiceImpl;
+import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.UserService;
 import cn.ilink.util.UserPreviewHelper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -34,10 +35,10 @@ import java.util.stream.Collectors;
 public class TeacherController {
 
     @Autowired
-    private TeacherApplicationService teacherApplicationService;
+    private TeacherApplicationServiceImpl teacherApplicationService;
 
     @Autowired
-    private ProjectApplicationService projectApplicationService;
+    private ProjectApplicationServiceImpl projectApplicationService;
 
     @Autowired
     private UserService userService;
@@ -77,7 +78,7 @@ public class TeacherController {
         Page<TeacherApplication> result = teacherApplicationService.page(pageReq, wrapper);
         List<Map<String, Object>> data = enrichTeachersWithUsers(result.getRecords());
 
-        return ResponseEntity.ok(Result.ok("获取成功", data).withPagination(safePage, safeSize, result.getTotal()));
+        return Result.ok("获取成功", data).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
     }
 
     @GetMapping("/project-application-status")
@@ -86,10 +87,10 @@ public class TeacherController {
                                                                         HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         if (teacherId == null) {
-            return ResponseEntity.ok(Result.badRequest("缺少导师ID参数"));
+            return Result.badRequest("缺少导师ID参数").toResponseEntity();
         }
 
         ProjectApplication application = projectApplicationService.getOne(
@@ -99,9 +100,9 @@ public class TeacherController {
         );
 
         if (application != null) {
-            return ResponseEntity.ok(Result.ok("获取成功", Map.of("status", application.getStatus())));
+            return Result.ok("获取成功", Map.of("status", application.getStatus())).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.ok("未申请", Map.of("status", "NOT_APPLIED")));
+            return Result.ok("未申请", Map.of("status", "NOT_APPLIED")).toResponseEntity();
         }
     }
 
@@ -111,9 +112,9 @@ public class TeacherController {
     public ResponseEntity<Result<?>> getTeacher(@PathVariable Long id) {
         TeacherApplication teacher = teacherApplicationService.getById(id);
         if (teacher != null) {
-            return ResponseEntity.ok(Result.ok("获取成功", teacherToMap(teacher, userService.getById(teacher.getUserId()))));
+            return Result.ok("获取成功", teacherToMap(teacher, userService.getById(teacher.getUserId()))).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.notFound("导师不存在"));
+            return Result.notFound("导师不存在").toResponseEntity();
         }
     }
 
@@ -122,7 +123,7 @@ public class TeacherController {
     public ResponseEntity<Result<?>> applyAsTeacher(@RequestBody TeacherApplicationRequest request, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         // 检查是否已经申请过
@@ -132,22 +133,22 @@ public class TeacherController {
         );
 
         if (existingApplication != null) {
-            return ResponseEntity.ok(Result.badRequest("您已经申请过成为导师"));
+            return Result.badRequest("您已经申请过成为导师").toResponseEntity();
         }
 
-        TeacherApplication application = new TeacherApplication();
-        application.setUserId(user.getId());
-        application.setIntroduction(request.getIntroduction());
-        application.setResearchDirection(request.getResearchDirection());
-        application.setProjects(request.getProjects());
-        application.setStatus("PENDING");
-        application.setCreatedAt(new Date());
-
-        boolean success = teacherApplicationService.save(application);
-        if (success) {
-            return ResponseEntity.ok(Result.ok("申请已提交，请等待管理员审核", null));
-        } else {
-            return ResponseEntity.ok(Result.fail("申请提交失败"));
+        // 创建申请（唯一索引兜底，捕获并发重复插入）
+        try {
+            TeacherApplication application = new TeacherApplication();
+            application.setUserId(user.getId());
+            application.setIntroduction(request.getIntroduction());
+            application.setResearchDirection(request.getResearchDirection());
+            application.setProjects(request.getProjects());
+            application.setStatus("PENDING");
+            application.setCreatedAt(new Date());
+            teacherApplicationService.save(application);
+            return Result.ok("申请已提交，请等待管理员审核", null).toResponseEntity();
+        } catch (DuplicateKeyException e) {
+            return Result.badRequest("您已经申请过成为导师").toResponseEntity();
         }
     }
 
@@ -156,22 +157,22 @@ public class TeacherController {
     public ResponseEntity<Result<?>> applyForProject(@RequestBody Map<String, Object> request, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         Object rawTeacherId = request.get("teacherId");
         if (rawTeacherId == null) {
-            return ResponseEntity.ok(Result.badRequest("缺少导师ID参数"));
+            return Result.badRequest("缺少导师ID参数").toResponseEntity();
         }
         Long teacherId = ControllerUtils.parseLongParam(rawTeacherId);
         if (teacherId == null) {
-            return ResponseEntity.ok(Result.badRequest("导师ID格式无效"));
+            return Result.badRequest("导师ID格式无效").toResponseEntity();
         }
         String message = request.get("message") != null ? String.valueOf(request.get("message")) : null;
 
         TeacherApplication teacher = teacherApplicationService.getById(teacherId);
         if (teacher == null) {
-            return ResponseEntity.ok(Result.notFound("导师不存在"));
+            return Result.notFound("导师不存在").toResponseEntity();
         }
 
         // 检查是否已经申请过
@@ -182,21 +183,21 @@ public class TeacherController {
         );
 
         if (existingApplication != null) {
-            return ResponseEntity.ok(Result.badRequest("您已经申请过该项目"));
+            return Result.badRequest("您已经申请过该项目").toResponseEntity();
         }
 
-        ProjectApplication application = new ProjectApplication();
-        application.setTeacherId(teacherId);
-        application.setUserId(user.getId());
-        application.setStatus("PENDING");
-        application.setMessage(message);
-        application.setCreatedAt(new Date());
-
-        boolean success = projectApplicationService.save(application);
-        if (success) {
-            return ResponseEntity.ok(Result.ok("申请已提交，请等待导师审核", null));
-        } else {
-            return ResponseEntity.ok(Result.fail("申请提交失败"));
+        // 创建项目申请（唯一索引兜底，捕获并发重复插入）
+        try {
+            ProjectApplication application = new ProjectApplication();
+            application.setTeacherId(teacherId);
+            application.setUserId(user.getId());
+            application.setStatus("PENDING");
+            application.setMessage(message);
+            application.setCreatedAt(new Date());
+            projectApplicationService.save(application);
+            return Result.ok("申请已提交，请等待导师审核", null).toResponseEntity();
+        } catch (DuplicateKeyException e) {
+            return Result.badRequest("您已经申请过该项目").toResponseEntity();
         }
     }
 
@@ -229,15 +230,15 @@ public class TeacherController {
     /** Teacher: get pending project applications */
     @GetMapping("/my/project-applications")
     @ResponseBody
-    public ResponseEntity<Result<List<Map<String, Object>>>> getMyProjectApplications(HttpSession session) {
+    public ResponseEntity<Result<?>> getMyProjectApplications(HttpSession session) {
         User user = ControllerUtils.requireUser(session);
-        if (user == null) return ResponseEntity.ok(Result.unauthorized());
+        if (user == null) return Result.unauthorized().toResponseEntity();
         // Find teacher application for this user
         TeacherApplication teacherApp = teacherApplicationService.getOne(
             new LambdaQueryWrapper<TeacherApplication>()
                 .eq(TeacherApplication::getUserId, user.getId())
                 .eq(TeacherApplication::getStatus, "APPROVED"));
-        if (teacherApp == null) return ResponseEntity.ok(Result.ok(Collections.emptyList()));
+        if (teacherApp == null) return Result.ok(Collections.emptyList()).toResponseEntity();
         List<ProjectApplication> pendingApps = projectApplicationService.list(
             new LambdaQueryWrapper<ProjectApplication>()
                 .eq(ProjectApplication::getTeacherId, teacherApp.getId())
@@ -256,25 +257,25 @@ public class TeacherController {
             }
             views.add(view);
         }
-        return ResponseEntity.ok(Result.ok(views));
+        return Result.ok(views).toResponseEntity();
     }
 
     /** Teacher: approve/reject project application */
     @PutMapping("/project-application/{id}/approve")
     @ResponseBody
-    public ResponseEntity<Result<Void>> approveProjectApplication(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<Result<?>> approveProjectApplication(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
-        if (user == null) return ResponseEntity.ok(Result.unauthorized());
+        if (user == null) return Result.unauthorized().toResponseEntity();
         ProjectApplication app = projectApplicationService.getById(id);
-        if (app == null) return ResponseEntity.ok(Result.notFound("申请不存在"));
+        if (app == null) return Result.notFound("申请不存在").toResponseEntity();
         TeacherApplication teacherApp = teacherApplicationService.getById(app.getTeacherId());
         if (teacherApp == null || !teacherApp.getUserId().equals(user.getId()))
-            return ResponseEntity.ok(Result.forbidden());
+            return Result.forbidden().toResponseEntity();
         String action = body.getOrDefault("action", "");
         if (!"APPROVED".equals(action) && !"REJECTED".equals(action))
-            return ResponseEntity.ok(Result.badRequest("无效的操作"));
+            return Result.badRequest("无效的操作").toResponseEntity();
         app.setStatus(action);
         projectApplicationService.updateById(app);
-        return ResponseEntity.ok(Result.ok(action.equals("APPROVED") ? "已通过申请" : "已拒绝申请", null));
+        return Result.ok(action.equals("APPROVED") ? "已通过申请" : "已拒绝申请", null).toResponseEntity();
     }
 }

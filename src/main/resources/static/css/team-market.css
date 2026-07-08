@@ -1,0 +1,829 @@
+/* ========================================
+   iLink Team Market — 组队大厅 (Editorial)
+   ======================================== */
+
+/* === Hero Section === */
+.hero-section {
+    padding: 32px 24px 24px;
+    background: transparent;
+}
+
+.hero-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hero-eyebrow {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 12px;
+}
+
+.hero-title {
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 600;
+    line-height: 1.3;
+    color: #111;
+    max-width: 600px;
+    margin-bottom: 12px;
+}
+
+.hero-desc {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #444;
+    margin-top: 16px;
+    max-width: 480px;
+}
+
+/* === Toolbar Section === */
+.toolbar-section {
+    padding: 0 24px 24px;
+    background: transparent;
+}
+
+.toolbar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.search-panel {
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.03);
+}
+
+.search-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: #faf9f7;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: border-color 0.3s ease;
+    min-width: 0;
+}
+
+.search-input-wrap:focus-within {
+    border-color: #c4a77d;
+}
+
+.search-input-wrap svg {
+    flex-shrink: 0;
+    color: #888;
+}
+
+.search-input-wrap input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    color: #111;
+    outline: none;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    min-width: 0;
+}
+
+.search-input-wrap input::placeholder {
+    color: #888;
+}
+
+.search-divider {
+    width: 1px;
+    height: 32px;
+    background: rgba(0,0,0,0.06);
+    flex-shrink: 0;
+}
+
+.search-select {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.search-select select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 10px 36px 10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: #fff;
+    font-size: 14px;
+    color: #444;
+    cursor: pointer;
+    outline: none;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    transition: border-color 0.3s ease;
+    white-space: nowrap;
+}
+
+.search-select select:hover {
+    border-color: #c4a77d;
+}
+
+.search-select::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #888;
+    pointer-events: none;
+}
+
+.search-btn {
+    padding: 10px 24px;
+    border-radius: 999px;
+    border: none;
+    background: #1a1a1a;
+    color: #faf9f7;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    flex-shrink: 0;
+}
+
+.search-btn:hover {
+    background: #c4a77d;
+    transform: translateY(-2px);
+}
+
+.search-reset {
+    padding: 10px 20px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: transparent;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    flex-shrink: 0;
+}
+
+.search-reset:hover {
+    border-color: #1a1a1a;
+    color: #111;
+}
+
+.search-apply {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.btn-pill-accent {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1.5px solid #c4a77d;
+    color: #111;
+    background: transparent;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+}
+
+.btn-pill-accent:hover {
+    background: #c4a77d;
+    color: #faf9f7;
+    transform: translateY(-2px);
+}
+
+/* === Content Section === */
+.content-section {
+    padding: 0 24px 80px;
+    background: transparent;
+}
+
+.content-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* === Team Card Shell === */
+.il-team-card-shell {
+    background: transparent;
+    border-radius: 20px;
+    padding: 2px;
+    margin-bottom: 24px;
+}
+
+/* === Team Card Inner === */
+.il-team-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 28px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.il-team-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.07), 0 6px 14px rgba(0,0,0,0.03);
+    border-color: rgba(196, 167, 125, 0.25);
+}
+
+/* === Card Header === */
+.il-team-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.il-team-title {
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #111;
+    line-height: 1.4;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+}
+
+.il-team-category {
+    flex-shrink: 0;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    background: #faf9f7;
+    color: #666;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+.il-team-category--dev {
+    background: rgba(196, 167, 125, 0.1);
+    color: #a88b5e;
+    border-color: rgba(196, 167, 125, 0.2);
+}
+
+.il-team-category--design {
+    background: rgba(139, 92, 246, 0.08);
+    color: #7c3aed;
+    border-color: rgba(139, 92, 246, 0.15);
+}
+
+.il-team-category--market {
+    background: rgba(16, 185, 129, 0.08);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.15);
+}
+
+.il-team-category--research {
+    background: rgba(59, 130, 246, 0.08);
+    color: #2563eb;
+    border-color: rgba(59, 130, 246, 0.15);
+}
+
+/* === Card Meta === */
+.il-team-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.il-team-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.il-team-meta-item svg {
+    flex-shrink: 0;
+    opacity: 0.6;
+}
+
+/* === Skill Tags === */
+.il-team-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.il-skill-tag {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #888;
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    letter-spacing: 0.02em;
+}
+
+.il-team-card:hover .il-skill-tag {
+    border-color: rgba(196, 167, 125, 0.4);
+    color: #444;
+}
+
+/* === Description === */
+.il-team-desc {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #444;
+    margin: 0 0 20px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+/* === Card Footer === */
+.il-team-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 14px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+.il-team-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.il-author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.il-author-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.il-author-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #c4a77d, #a88b5e);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.il-author-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #444;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* === Status Badges === */
+.il-team-status {
+    flex-shrink: 0;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.il-status-recruiting {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.il-status-closed {
+    background: #faf9f7;
+    color: #888;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* === Card Grid === */
+#teamList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 24px;
+}
+
+/* === Empty State === */
+.empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: #888;
+}
+
+.empty-state svg {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    display: block;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+/* === Pagination === */
+#pagination {
+    margin: 40px auto 60px;
+    text-align: center;
+}
+
+#pagination ul {
+    display: inline-flex;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#pagination li {
+    margin: 0;
+}
+
+#pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #444;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+#pagination .page-link:hover {
+    border-color: #c4a77d;
+    color: #111;
+}
+
+#pagination .page-item.active .page-link {
+    background: #1a1a1a;
+    color: #faf9f7;
+    border-color: #1a1a1a;
+}
+
+#pagination .page-item.disabled .page-link {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* === Responsive === */
+@media (max-width: 1024px) {
+    .search-panel {
+        flex-wrap: wrap;
+    }
+    .search-apply {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 8px;
+    }
+    .btn-pill-accent {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    #teamList {
+        grid-template-columns: 1fr;
+    }
+    .search-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 20px;
+    }
+    .search-divider { display: none; }
+    .search-select select { width: 100%; }
+    .search-btn, .search-reset { width: 100%; }
+    .il-team-card { padding: 24px; }
+    .il-team-footer { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+/* team-market shell overrides — migrated from style.css */
+
+body[data-app-page="team-market"] .il-author-avatar {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+}
+body[data-app-page="team-market"] .il-author-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  object-fit: cover !important;
+}
+body[data-app-page]:not([data-app-page="team-market"]) .il-team-category,
+body[data-app-page] .recommendation-tag {
+  background: var(--tag-violet-soft) !important;
+  color: var(--tag-violet) !important;
+  border-color: rgba(124, 58, 237, 0.18) !important;
+}
+body[data-app-page="team-market"] .il-team-card-header {
+  gap: 12px;
+  margin-bottom: 10px !important;
+}
+body[data-app-page="team-market"] .il-team-meta,
+body[data-app-page="team-market"] .il-team-meta-item {
+  font-size: 12px !important;
+}
+body[data-app-page="team-market"] .il-skill-tag {
+  font-size: 11px !important;
+  padding: 3px 10px !important;
+}
+
+/* teacher-wall + team-market shared — migrated from style.css */
+
+body[data-app-page]:not([data-app-page="team-market"]):not([data-app-page="teacher-wall"]) .il-team-card,
+body[data-app-page]:not([data-app-page="team-market"]):not([data-app-page="teacher-wall"]) .il-teacher-card,
+body[data-app-page] .il-post-card,
+body[data-app-page] .competition-card {
+  min-height: 188px;
+  padding: 20px !important;
+  margin-bottom: 16px !important;
+}
+body[data-app-page="team-market"] .il-toolbar,
+body[data-app-page="teacher-wall"] .il-toolbar {
+  padding: 10px 14px !important;
+  margin-bottom: 18px !important;
+}
+body[data-app-page="team-market"] .il-toolbar-row,
+body[data-app-page="teacher-wall"] .il-toolbar-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters,
+body[data-app-page="teacher-wall"] .il-toolbar-filters {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-search,
+body[data-app-page="teacher-wall"] .il-toolbar-search {
+  flex: 1 1 200px !important;
+  min-width: 0 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-search .il-search-field,
+body[data-app-page="team-market"] .il-toolbar-search .il-search-field--toolbar,
+body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field,
+body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field--toolbar {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+  border-radius: 10px !important;
+  padding: 0 12px 0 40px !important;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-white) !important;
+}
+body[data-app-page="team-market"] .il-toolbar-search .il-search-field__input,
+body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field__input {
+  min-height: 38px !important;
+  font-size: 14px !important;
+}
+body[data-app-page="team-market"] .il-toolbar-select,
+body[data-app-page="teacher-wall"] .il-toolbar-select {
+  flex: 0 1 140px !important;
+  min-width: 120px !important;
+  width: auto !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border-light) !important;
+  padding: 0 32px 0 12px !important;
+  font-size: 14px !important;
+  color: var(--text-primary) !important;
+  background: var(--bg-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center !important;
+  appearance: none !important;
+  cursor: pointer;
+}
+body[data-app-page="team-market"] .il-toolbar-select:focus,
+body[data-app-page="teacher-wall"] .il-toolbar-select:focus {
+  outline: none !important;
+  border-color: var(--border-default) !important;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08) !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn,
+body[data-app-page="team-market"] .il-toolbar-actions .il-btn,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn,
+body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn-primary,
+body[data-app-page="team-market"] .il-toolbar-actions .il-btn-primary,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-primary,
+body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn-primary {
+  background: #111827 !important;
+  color: var(--text-white) !important;
+  border: 1px solid #111827 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn-primary:hover,
+body[data-app-page="team-market"] .il-toolbar-actions .il-btn-primary:hover,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-primary:hover,
+body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn-primary:hover {
+  background: #374151 !important;
+  border-color: #374151 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn-secondary,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-secondary {
+  background: var(--bg-white) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-light) !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn-secondary:hover,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-secondary:hover {
+  background: var(--color-gray-100) !important;
+  border-color: var(--border-default) !important;
+}
+body[data-app-page="team-market"] .il-toolbar-actions,
+body[data-app-page="teacher-wall"] .il-toolbar-actions {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+body[data-app-page="team-market"] .il-toolbar-actions .il-btn__icon,
+body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn__icon {
+  flex-shrink: 0;
+  display: block;
+}
+body[data-app-page="team-market"] #teamList,
+body[data-app-page="teacher-wall"] #teacherList {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  width: 100%;
+  align-items: stretch;
+}
+body[data-app-page="team-market"] .il-team-card-shell,
+body[data-app-page="teacher-wall"] .il-teacher-card-shell {
+  display: flex !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+body[data-app-page="team-market"] .il-team-card,
+body[data-app-page="teacher-wall"] .il-teacher-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin-bottom: 0 !important;
+  padding: 14px 16px !important;
+  display: flex !important;
+  flex-direction: column;
+  box-sizing: border-box !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: var(--border-light) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+body[data-app-page="team-market"] .il-team-card:hover,
+body[data-app-page="teacher-wall"] .il-teacher-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+body[data-app-page="team-market"] .il-team-card::before,
+body[data-app-page="teacher-wall"] .il-teacher-card::before {
+  display: none !important;
+}
+body[data-app-page="team-market"] .il-team-title,
+body[data-app-page="teacher-wall"] .il-teacher-name {
+  font-size: 16px !important;
+  line-height: 1.35 !important;
+  margin-bottom: 4px !important;
+}
+body[data-app-page="team-market"] .il-team-category,
+body[data-app-page="teacher-wall"] .il-teacher-major,
+body[data-app-page="team-market"] .il-team-status {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+body[data-app-page="team-market"] .il-team-category,
+body[data-app-page="teacher-wall"] .il-teacher-major {
+  display: inline-block;
+  padding: 4px 10px !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  background: var(--color-gray-100) !important;
+  color: var(--color-gray-700) !important;
+  border: 1px solid var(--border-light) !important;
+}
+body[data-app-page="team-market"] .il-skill-tag,
+body[data-app-page="team-market"] .il-skill-tag:nth-child(n),
+body[data-app-page="teacher-wall"] .il-research-tag,
+body[data-app-page="teacher-wall"] .il-research-tag:nth-child(n) {
+  background: var(--color-gray-100) !important;
+  color: var(--color-gray-700) !important;
+  border-color: var(--border-light) !important;
+}
+body[data-app-page="team-market"] .il-team-desc,
+body[data-app-page="teacher-wall"] .il-teacher-bio {
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  margin-bottom: 8px !important;
+}
+body[data-app-page="team-market"] .il-team-meta,
+body[data-app-page="team-market"] .il-team-skills,
+body[data-app-page="teacher-wall"] .il-teacher-research {
+  margin-bottom: 10px !important;
+}
+body[data-app-page="team-market"] .il-team-skills,
+body[data-app-page="teacher-wall"] .il-teacher-research {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px !important;
+}
+body[data-app-page="team-market"] .il-team-footer,
+body[data-app-page="teacher-wall"] .il-teacher-footer {
+  margin-top: auto !important;
+  padding-top: 12px !important;
+  border-top: 1px solid var(--border-light) !important;
+}
+body[data-app-page="team-market"] .il-list-empty,
+body[data-app-page="teacher-wall"] .il-list-empty {
+  grid-column: 1 / -1;
+}
+@media (max-width: 768px) {
+  body[data-app-page="team-market"] #teamList,
+  body[data-app-page="teacher-wall"] #teacherList {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+}

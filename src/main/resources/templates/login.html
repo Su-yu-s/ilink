@@ -5,31 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户登录 - iLink</title>
     <th:block th:replace="fragments/head-assets :: auth"></th:block>
-    <!-- 粒子配置钩子：必须在 common.js 之前设置，由其统一初始化，避免双重实例化 -->
-    <script>
-        window.ILINK_PARTICLE_OPTIONS = {
-            density: 0.00015,
-            minParticles: 80,
-            maxParticles: 150,
-            sizeRange: [2, 4],
-            speedScale: 0.35,
-            opacityRange: [0.35, 0.6],
-            colors: ['45, 111, 247', '74, 140, 255'],  // 学术蓝双色调
-            connectDistance: 150,
-            connectOpacity: 0.6,
-            lineWidth: 1.2,
-            mouseRadius: 130,
-            mouseForce: 1.5,
-            pulse: true,
-            pulseSpeed: 0.014,
-            pulseAmount: 0.1
-        };
-    </script>
 </head>
-<body class="auth-page--login" data-particles="true" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
-    <!-- 粒子背景（与首页一致的 ParticleSystem，此处用更稀疏柔和的配置） -->
-    <canvas id="particleCanvas" class="particle-canvas particle-canvas--auth" aria-hidden="true"></canvas>
-
+<body class="auth-page--login">
     <div class="floating-shapes" aria-hidden="true">
         <div class="shape shape--1"></div>
         <div class="shape shape--2"></div>
@@ -84,7 +61,7 @@
                         <input type="checkbox" id="rememberMe" name="rememberMe">
                         <span>记住我</span>
                     </label>
-                    <a href="#" class="il-link">忘记密码?</a>
+                    <a href="/forgot-password.html" class="il-link">忘记密码?</a>
                 </div>
 
                 <button type="submit" class="btn-submit" id="loginBtn">登录</button>
@@ -97,7 +74,7 @@
         </div>
     </div>
 
-    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/common.js?v=7.8"></script>
     <script src="/js/login.js?v=7.5"></script>
     <script>
         function togglePasswordVisibility() {

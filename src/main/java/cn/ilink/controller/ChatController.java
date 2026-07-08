@@ -6,8 +6,8 @@ import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.User;
 import cn.ilink.service.ChatService;
-import cn.ilink.service.TeamApplicationService;
-import cn.ilink.service.TeamDemandService;
+import cn.ilink.service.impl.TeamApplicationServiceImpl;
+import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.vo.ChatMessageVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,10 +31,10 @@ public class ChatController {
     private ChatService chatService;
 
     @Autowired
-    private TeamApplicationService teamApplicationService;
+    private TeamApplicationServiceImpl teamApplicationService;
 
     @Autowired
-    private TeamDemandService teamDemandService;
+    private TeamDemandServiceImpl teamDemandService;
 
     @GetMapping("/{teamId}/messages")
     @ResponseBody
@@ -43,15 +43,15 @@ public class ChatController {
                                                  HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         if (!isTeamMember(teamId, user.getId())) {
-            return ResponseEntity.ok(Result.fail(403, "你不是该团队成员，无权查看消息"));
+            return Result.fail(403, "你不是该团队成员，无权查看消息").toResponseEntity();
         }
 
         List<ChatMessageVO> messages = chatService.getHistory(teamId, limit);
-        return ResponseEntity.ok(Result.ok("获取成功", messages));
+        return Result.ok("获取成功", messages).toResponseEntity();
     }
 
     @PostMapping("/{teamId}/messages")
@@ -61,22 +61,22 @@ public class ChatController {
                                                   HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         if (!isTeamMember(teamId, user.getId())) {
-            return ResponseEntity.ok(Result.fail(403, "你不是该团队成员，无权发送消息"));
+            return Result.fail(403, "你不是该团队成员，无权发送消息").toResponseEntity();
         }
 
         String content = (String) request.get("content");
         String type = (String) request.getOrDefault("type", "TEXT");
 
         if (content == null || content.trim().isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("消息内容不能为空"));
+            return Result.badRequest("消息内容不能为空").toResponseEntity();
         }
 
         ChatMessageVO message = chatService.sendMessage(teamId, user.getId(), content.trim(), type);
-        return ResponseEntity.ok(Result.ok("发送成功", message));
+        return Result.ok("发送成功", message).toResponseEntity();
     }
 
     /**

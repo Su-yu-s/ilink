@@ -1,0 +1,1486 @@
+/* ========================================
+   iLink Admin Shell v1.0 — 管理后台专属样式
+   从 style.css 分离, 仅 admin.html 加载
+   ======================================== */
+
+body[data-app-page="admin"] .admin-shell {
+  max-width: 1320px !important;
+}
+body[data-app-page="admin"] .admin-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 8px !important;
+}
+body[data-app-page="admin"] .neon-text {
+  text-shadow: none !important;
+}
+body[data-app-page="admin"] .admin-stats-grid,
+body[data-app-page="admin"] .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px !important;
+}
+body[data-app-page="admin"] .stat-tile {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 18px 16px;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+body[data-app-page="admin"] .stat-tile .label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+body[data-app-page="admin"] .stat-tile .value {
+  color: var(--text-primary);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+}
+body[data-app-page="admin"] .admin-tabs {
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 6px !important;
+  gap: 4px;
+  background: var(--bg-white);
+  box-shadow: var(--shadow-sm);
+}
+body[data-app-page="admin"] .admin-tabs .nav-item {
+  flex: 1 1 auto;
+}
+body[data-app-page="admin"] .admin-tabs .nav-link {
+  width: 100%;
+  border: 0 !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-secondary) !important;
+  font-size: 14px;
+  font-weight: 500;
+  min-height: 40px;
+}
+body[data-app-page="admin"] .admin-tabs .nav-link:hover {
+  background: var(--color-gray-100) !important;
+  color: var(--text-primary) !important;
+}
+body[data-app-page="admin"] .admin-tabs .nav-link.active {
+  background: var(--primary) !important;
+  color: var(--text-white) !important;
+}
+body[data-app-page="admin"] .admin-table-card {
+  border-radius: var(--radius-lg) !important;
+}
+body[data-app-page="admin"] .admin-table-card .card-header {
+  background: var(--bg-white) !important;
+  border-bottom: 1px solid var(--border-light) !important;
+  padding: 16px 18px !important;
+}
+body[data-app-page="admin"] .admin-table-card .card-header h5 {
+  font-size: 16px !important;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+body[data-app-page="admin"] .admin-table-card .card-body {
+  padding: 18px !important;
+}
+body[data-app-page="admin"] .table-responsive {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  overflow: auto;
+}
+body[data-app-page="admin"] .admin-table {
+  margin: 0;
+  min-width: 900px;
+  font-size: 13px;
+}
+body[data-app-page="admin"] .admin-table thead th {
+  background: var(--color-gray-50);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 12px;
+}
+body[data-app-page="admin"] .admin-table tbody td {
+  color: var(--text-primary);
+  border-color: var(--border-light);
+  padding: 12px;
+  vertical-align: middle;
+}
+body[data-app-page="admin"] .admin-table tbody tr:hover {
+  background: var(--color-gray-50);
+}
+body[data-app-page="admin"] .btn-sm {
+  min-height: 32px;
+  padding: 5px 10px;
+  font-size: 12px !important;
+}
+body[data-app-page="admin"] .btn-danger,
+body[data-app-page="admin"] .btn-success,
+body[data-app-page="admin"] .btn-outline-secondary {
+  background: var(--bg-white) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-light) !important;
+}
+body[data-app-page="admin"] .btn-danger:hover,
+body[data-app-page="admin"] .btn-success:hover,
+body[data-app-page="admin"] .btn-outline-secondary:hover {
+  background: var(--color-gray-100) !important;
+  border-color: var(--border-default) !important;
+}
+body[data-app-page="admin"] .modal-dialog {
+  max-width: 840px;
+}
+body[data-app-page="admin"] .modal-content {
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-xl) !important;
+}
+@media (max-width: 1200px) {
+  body[data-app-page] .gallery-container {
+    column-count: 2 !important;
+  }
+
+  body[data-app-page="admin"] .admin-stats-grid,
+  body[data-app-page="admin"] .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 768px) {
+  body[data-app-page] .main-content,
+  body[data-app-page] .il-page-wrapper {
+    padding: 24px 16px 64px !important;
+  }
+
+  body[data-app-page] .search-section,
+  body[data-app-page] .sort-wrapper,
+  body[data-app-page] .category-filter,
+  body[data-app-page] .gallery-container {
+    width: calc(100% - 32px) !important;
+  }
+
+  body[data-app-page] .il-page-title,
+  body[data-app-page] .il-hero-title,
+  body[data-app-page] .gallery-title,
+  body[data-app-page] .page-header h1 {
+    font-size: 24px !important;
+  }
+
+  body[data-app-page] .gallery-container {
+    column-count: 1 !important;
+  }
+
+  body[data-app-page="admin"] .admin-stats-grid,
+  body[data-app-page="admin"] .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-item {
+    flex-basis: calc(50% - 4px);
+  }
+}
+@media (max-width: 520px) {
+  body[data-app-page="admin"] .admin-stats-grid,
+  body[data-app-page="admin"] .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+body[data-app-page="admin"] .admin-shell {
+  max-width: 1480px !important;
+}
+body[data-app-page="admin"] .admin-stats-grid,
+body[data-app-page="admin"] .stats-grid {
+  grid-template-columns: repeat(5, minmax(148px, 1fr)) !important;
+  gap: 12px !important;
+}
+body[data-app-page="admin"] .stat-tile {
+  min-height: 88px !important;
+  padding: 16px 18px !important;
+}
+body[data-app-page="admin"] .stat-tile .value {
+  font-size: 26px !important;
+}
+body[data-app-page="admin"] .admin-workspace {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+body[data-app-page="admin"] .admin-sidebar {
+  position: sticky;
+  top: 82px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 14px;
+}
+body[data-app-page="admin"] .admin-sidebar-title {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  padding: 4px 6px 12px;
+}
+body[data-app-page="admin"] .admin-content-panel {
+  min-width: 0;
+}
+body[data-app-page="admin"] .admin-content-panel .tab-content > .tab-pane {
+  display: none;
+}
+body[data-app-page="admin"] .admin-content-panel .tab-content > .active {
+  display: block;
+}
+body[data-app-page="admin"] .admin-tabs {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100%;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+body[data-app-page="admin"] .admin-tabs .nav-item {
+  width: 100%;
+  flex: 0 0 auto !important;
+}
+body[data-app-page="admin"] .admin-tabs .nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-secondary) !important;
+  text-align: left;
+  line-height: 1.2;
+}
+body[data-app-page="admin"] .admin-tabs .nav-link span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-app-page="admin"] .admin-tabs .nav-link.active {
+  background: var(--primary) !important;
+  color: var(--text-white) !important;
+  box-shadow: none !important;
+}
+body[data-app-page="admin"] .admin-table-card {
+  width: 100%;
+  overflow: hidden;
+}
+body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin-left: 0;
+  margin-right: 0;
+}
+body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > [class*="col-"] {
+  padding-left: 0;
+  padding-right: 0;
+}
+body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > .col-md-8 {
+  flex: 1 1 auto;
+  width: auto;
+  max-width: none;
+}
+body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > .col-md-4 {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: none;
+}
+body[data-app-page="admin"] .table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+body[data-app-page="admin"] .admin-table {
+  width: 100%;
+  min-width: 1040px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+body[data-app-page="admin"] #users .admin-table {
+  min-width: 1540px;
+}
+body[data-app-page="admin"] .admin-table th,
+body[data-app-page="admin"] .admin-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.35;
+}
+body[data-app-page="admin"] .admin-table td {
+  height: 56px;
+}
+body[data-app-page="admin"] .admin-table td:last-child,
+body[data-app-page="admin"] .admin-table th:last-child {
+  overflow: visible;
+  text-overflow: clip;
+}
+body[data-app-page="admin"] .admin-cell-text,
+body[data-app-page="admin"] .admin-cell-empty {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body[data-app-page="admin"] .admin-cell-empty {
+  color: var(--text-tertiary);
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(1),
+body[data-app-page="admin"] #users .admin-table td:nth-child(1) {
+  width: 60px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(2),
+body[data-app-page="admin"] #users .admin-table td:nth-child(2) {
+  width: 110px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(3),
+body[data-app-page="admin"] #users .admin-table td:nth-child(3) {
+  width: 100px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(4),
+body[data-app-page="admin"] #users .admin-table td:nth-child(4) {
+  width: 190px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(5),
+body[data-app-page="admin"] #users .admin-table td:nth-child(5) {
+  width: 130px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(6),
+body[data-app-page="admin"] #users .admin-table td:nth-child(6) {
+  width: 122px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(7),
+body[data-app-page="admin"] #users .admin-table td:nth-child(7) {
+  width: 72px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(8),
+body[data-app-page="admin"] #users .admin-table td:nth-child(8) {
+  width: 76px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(9),
+body[data-app-page="admin"] #users .admin-table td:nth-child(9) {
+  width: 124px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(10),
+body[data-app-page="admin"] #users .admin-table td:nth-child(10) {
+  width: 146px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(11),
+body[data-app-page="admin"] #users .admin-table td:nth-child(11) {
+  width: 156px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(12),
+body[data-app-page="admin"] #users .admin-table td:nth-child(12) {
+  width: 92px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(13),
+body[data-app-page="admin"] #users .admin-table td:nth-child(13) {
+  width: 142px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(14),
+body[data-app-page="admin"] #users .admin-table td:nth-child(14) {
+  width: 120px;
+}
+body[data-app-page="admin"] #users .admin-table {
+  min-width: 840px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(1),
+body[data-app-page="admin"] #users .admin-table td:nth-child(1) {
+  width: 170px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(2),
+body[data-app-page="admin"] #users .admin-table td:nth-child(2) {
+  width: 140px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(3),
+body[data-app-page="admin"] #users .admin-table td:nth-child(3) {
+  width: 160px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(4),
+body[data-app-page="admin"] #users .admin-table td:nth-child(4) {
+  width: 260px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(5),
+body[data-app-page="admin"] #users .admin-table td:nth-child(5) {
+  width: 120px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(6),
+body[data-app-page="admin"] #users .admin-table td:nth-child(6) {
+  width: 220px;
+}
+body[data-app-page="admin"] .admin-user-actions {
+  white-space: nowrap;
+}
+body[data-app-page="admin"] .admin-table td:last-child .btn {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+body[data-app-page="admin"] .admin-detail-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 18px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 18px;
+}
+body[data-app-page="admin"] .admin-detail-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: var(--text-white);
+  font-size: 22px;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  flex: 0 0 54px;
+  position: relative;
+}
+body[data-app-page="admin"] .admin-detail-avatar__img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+}
+body[data-app-page="admin"] .admin-detail-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+}
+body[data-app-page="admin"] .admin-detail-name {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+body[data-app-page="admin"] .admin-detail-subtitle {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 4px;
+}
+body[data-app-page="admin"] .admin-detail-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+body[data-app-page="admin"] .admin-detail-item {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-gray-50);
+}
+body[data-app-page="admin"] .admin-detail-item--wide {
+  grid-column: 1 / -1;
+}
+body[data-app-page="admin"] .admin-detail-label {
+  display: block;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+body[data-app-page="admin"] .admin-detail-value {
+  display: block;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+body[data-app-page="admin"] .admin-detail-value--empty {
+  color: var(--text-tertiary);
+}
+body[data-app-page="admin"] .admin-table-card {
+  overflow: visible !important;
+}
+body[data-app-page="admin"] .table-responsive {
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+body[data-app-page="admin"] .admin-table,
+body[data-app-page="admin"] #users .admin-table {
+  width: 100% !important;
+  min-width: 0 !important;
+  table-layout: fixed;
+}
+body[data-app-page="admin"] .admin-table th,
+body[data-app-page="admin"] .admin-table td {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+body[data-app-page="admin"] .admin-table td {
+  height: auto !important;
+  min-height: 56px;
+}
+body[data-app-page="admin"] .admin-empty-cell {
+  padding: 28px 16px !important;
+  text-align: center !important;
+  color: var(--text-tertiary);
+}
+body[data-app-page="admin"] .admin-row-actions,
+body[data-app-page="admin"] .admin-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  white-space: normal !important;
+}
+body[data-app-page="admin"] .admin-row-actions .btn,
+body[data-app-page="admin"] .admin-user-actions .btn {
+  margin: 0 !important;
+  flex: 0 0 auto;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(1),
+body[data-app-page="admin"] #users .admin-table td:nth-child(1) {
+  width: 15% !important;
+  min-width: 80px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(2),
+body[data-app-page="admin"] #users .admin-table td:nth-child(2) {
+  width: 12% !important;
+  min-width: 60px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(3),
+body[data-app-page="admin"] #users .admin-table td:nth-child(3) {
+  width: 12% !important;
+  min-width: 60px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(4),
+body[data-app-page="admin"] #users .admin-table td:nth-child(4) {
+  width: 18% !important;
+  min-width: 80px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(5),
+body[data-app-page="admin"] #users .admin-table td:nth-child(5) {
+  width: 10% !important;
+  min-width: 50px;
+}
+body[data-app-page="admin"] #users .admin-table th:nth-child(6),
+body[data-app-page="admin"] #users .admin-table td:nth-child(6) {
+  width: auto !important;
+  min-width: 220px;
+  white-space: nowrap;
+}
+body[data-app-page="admin"] #teams .admin-table th:nth-child(1),
+body[data-app-page="admin"] #teams .admin-table td:nth-child(1) {
+  width: 28%;
+}
+body[data-app-page="admin"] #teams .admin-table th:nth-child(2),
+body[data-app-page="admin"] #teams .admin-table td:nth-child(2) {
+  width: 18%;
+}
+body[data-app-page="admin"] #teams .admin-table th:nth-child(3),
+body[data-app-page="admin"] #teams .admin-table td:nth-child(3) {
+  width: 10%;
+}
+body[data-app-page="admin"] #teams .admin-table th:nth-child(4),
+body[data-app-page="admin"] #teams .admin-table td:nth-child(4) {
+  width: 13%;
+}
+body[data-app-page="admin"] #teams .admin-table th:nth-child(5),
+body[data-app-page="admin"] #teams .admin-table td:nth-child(5) {
+  width: auto !important;
+  min-width: 200px;
+  white-space: nowrap;
+}
+body[data-app-page="admin"] #teachers .admin-table th:nth-child(1),
+body[data-app-page="admin"] #teachers .admin-table td:nth-child(1) {
+  width: 22%;
+}
+body[data-app-page="admin"] #teachers .admin-table th:nth-child(2),
+body[data-app-page="admin"] #teachers .admin-table td:nth-child(2) {
+  width: 26%;
+}
+body[data-app-page="admin"] #teachers .admin-table th:nth-child(3),
+body[data-app-page="admin"] #teachers .admin-table td:nth-child(3) {
+  width: 13%;
+}
+body[data-app-page="admin"] #teachers .admin-table th:nth-child(4),
+body[data-app-page="admin"] #teachers .admin-table td:nth-child(4) {
+  width: 14%;
+}
+body[data-app-page="admin"] #teachers .admin-table th:nth-child(5),
+body[data-app-page="admin"] #teachers .admin-table td:nth-child(5) {
+  width: auto !important;
+  min-width: 200px;
+  white-space: nowrap;
+}
+body[data-app-page="admin"] #assets .admin-table th:nth-child(1),
+body[data-app-page="admin"] #assets .admin-table td:nth-child(1) {
+  width: 30%;
+}
+body[data-app-page="admin"] #assets .admin-table th:nth-child(2),
+body[data-app-page="admin"] #assets .admin-table td:nth-child(2) {
+  width: 22%;
+}
+body[data-app-page="admin"] #assets .admin-table th:nth-child(3),
+body[data-app-page="admin"] #assets .admin-table td:nth-child(3) {
+  width: 10%;
+}
+body[data-app-page="admin"] #assets .admin-table th:nth-child(4),
+body[data-app-page="admin"] #assets .admin-table td:nth-child(4) {
+  width: 13%;
+}
+body[data-app-page="admin"] #assets .admin-table th:nth-child(5),
+body[data-app-page="admin"] #assets .admin-table td:nth-child(5) {
+  width: auto !important;
+  min-width: 200px;
+  white-space: nowrap;
+}
+body[data-app-page="admin"] #community .admin-table th:nth-child(1),
+body[data-app-page="admin"] #community .admin-table td:nth-child(1) {
+  width: 13%;
+}
+body[data-app-page="admin"] #community .admin-table th:nth-child(2),
+body[data-app-page="admin"] #community .admin-table td:nth-child(2) {
+  width: 27%;
+}
+body[data-app-page="admin"] #community .admin-table th:nth-child(3),
+body[data-app-page="admin"] #community .admin-table td:nth-child(3) {
+  width: 18%;
+}
+body[data-app-page="admin"] #community .admin-table th:nth-child(4),
+body[data-app-page="admin"] #community .admin-table td:nth-child(4) {
+  width: 9%;
+}
+body[data-app-page="admin"] #community .admin-table th:nth-child(5),
+body[data-app-page="admin"] #community .admin-table td:nth-child(5) {
+  width: 16%;
+}
+body[data-app-page="admin"] #community .admin-table th:nth-child(6),
+body[data-app-page="admin"] #community .admin-table td:nth-child(6) {
+  width: auto !important;
+  min-width: 200px;
+  white-space: nowrap;
+}
+@media (max-width: 1180px) {
+  body[data-app-page="admin"] .admin-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-app-page="admin"] .admin-sidebar {
+    position: static;
+  }
+
+  body[data-app-page="admin"] .admin-tabs {
+    flex-direction: row !important;
+    overflow-x: auto;
+    padding-bottom: 2px !important;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-item {
+    width: auto;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-link {
+    min-width: 108px;
+    justify-content: center;
+    text-align: center;
+  }
+}
+@media (max-width: 900px) {
+  body[data-app-page="admin"] .admin-stats-grid,
+  body[data-app-page="admin"] .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 {
+    flex-wrap: wrap;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > .col-md-8,
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > .col-md-4 {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > .col-md-4 {
+    justify-content: flex-start !important;
+  }
+}
+@media (max-width: 760px) {
+  body[data-app-page="admin"] .admin-shell {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body[data-app-page="admin"] .admin-page-header {
+    margin-bottom: 18px;
+  }
+
+  body[data-app-page="admin"] .page-subtitle {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  body[data-app-page="admin"] .admin-sidebar {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  body[data-app-page="admin"] .admin-tabs {
+    gap: 8px !important;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-link {
+    min-width: 96px;
+    min-height: 40px;
+    padding: 9px 10px !important;
+    font-size: 13px;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-header {
+    padding: 14px 16px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body {
+    padding: 14px !important;
+  }
+
+  body[data-app-page="admin"] .table-responsive {
+    border: 0;
+    border-radius: 0;
+  }
+
+  body[data-app-page="admin"] .admin-table,
+  body[data-app-page="admin"] .admin-table thead,
+  body[data-app-page="admin"] .admin-table tbody,
+  body[data-app-page="admin"] .admin-table tr,
+  body[data-app-page="admin"] .admin-table th,
+  body[data-app-page="admin"] .admin-table td {
+    display: block;
+    width: 100% !important;
+  }
+
+  body[data-app-page="admin"] .admin-table thead {
+    display: none;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody tr {
+    margin: 0 0 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--bg-white);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody tr:hover {
+    background: var(--bg-white);
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-height: 0;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-light);
+    text-align: right;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 76px;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td.admin-row-actions,
+  body[data-app-page="admin"] .admin-table tbody td.admin-user-actions {
+    justify-content: flex-start;
+    padding-top: 12px;
+    background: var(--color-gray-50);
+    text-align: left;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td.admin-row-actions::before,
+  body[data-app-page="admin"] .admin-table tbody td.admin-user-actions::before,
+  body[data-app-page="admin"] .admin-table tbody td.admin-empty-cell::before {
+    display: none;
+  }
+
+  body[data-app-page="admin"] .admin-row-actions .btn,
+  body[data-app-page="admin"] .admin-user-actions .btn {
+    flex: 1 1 86px;
+    min-width: 86px;
+  }
+
+  body[data-app-page="admin"] .admin-cell-text,
+  body[data-app-page="admin"] .admin-cell-empty {
+    white-space: normal;
+    text-align: right;
+  }
+
+  body[data-app-page="admin"] .admin-detail-summary {
+    align-items: flex-start;
+  }
+
+  body[data-app-page="admin"] .admin-detail-list {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  body[data-app-page="admin"] .admin-stats-grid,
+  body[data-app-page="admin"] .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body[data-app-page="admin"] .stat-tile {
+    padding: 14px 16px !important;
+    min-height: 72px !important;
+  }
+
+  body[data-app-page="admin"] .stat-tile .value {
+    font-size: 22px !important;
+  }
+
+  body[data-app-page="admin"] .stat-tile .label {
+    font-size: 12px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody tr {
+    border-radius: 10px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td::before {
+    flex: 0 0 64px !important;
+    font-size: 11px !important;
+  }
+
+  body[data-app-page="admin"] .admin-row-actions .btn,
+  body[data-app-page="admin"] .admin-user-actions .btn {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+}
+body[data-app-page="admin"] .btn-success {
+  background: var(--success-soft) !important;
+  color: var(--success) !important;
+  border-color: rgba(5, 150, 105, 0.24) !important;
+}
+body[data-app-page="admin"] .btn-danger {
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
+  border-color: rgba(220, 38, 38, 0.24) !important;
+}
+body[data-app-page="admin"] .btn-success:hover {
+  background: var(--success) !important;
+  color: var(--text-white) !important;
+  border-color: var(--success) !important;
+}
+body[data-app-page="admin"] .btn-danger:hover {
+  background: var(--danger) !important;
+  color: var(--text-white) !important;
+  border-color: var(--danger) !important;
+}
+@media (max-width: 768px) {
+  .il-header__brand,
+  .il-header__auth-link,
+  .il-header__auth-btn,
+  .il-header__user-link,
+  .notification-bell,
+  .il-header__dropdown-toggle {
+    min-height: 44px !important;
+  }
+
+  .il-header__auth-link,
+  .il-header__auth-btn {
+    min-width: 54px !important;
+    padding: 0 12px !important;
+  }
+
+  .notification-bell {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+  }
+
+  body[data-app-page] .il-form-input,
+  body[data-app-page] .il-form-select,
+  body[data-profile-page] .il-form-input,
+  body[data-profile-page] .il-form-select,
+  body[data-app-page] input[type="text"],
+  body[data-app-page] input[type="number"],
+  body[data-app-page] input[type="date"],
+  body[data-app-page] input[type="email"],
+  body[data-app-page] input[type="password"],
+  body[data-app-page] select,
+  body[data-app-page] textarea {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 11px 14px !important;
+    display: block !important;
+    font-size: 15px !important;
+    line-height: 1.45 !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  body[data-app-page] textarea,
+  body[data-profile-page] textarea {
+    min-height: 132px !important;
+  }
+
+  body[data-app-page] .il-surface,
+  body[data-profile-page] .il-surface {
+    width: 100% !important;
+    padding: 18px !important;
+    border-radius: 16px !important;
+  }
+
+  body[data-app-page] .row,
+  body[data-profile-page] .row {
+    --bs-gutter-x: 0 !important;
+  }
+
+  body[data-app-page] .d-flex.justify-content-end,
+  body[data-profile-page] .d-flex.justify-content-end,
+  body[data-app-page] .form-actions,
+  body[data-profile-page] .il-form-footer {
+    width: 100% !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  body[data-app-page] .d-flex.justify-content-end .il-btn,
+  body[data-profile-page] .il-form-footer .il-btn {
+    width: 100% !important;
+  }
+
+  body[data-app-page="admin"] .admin-shell,
+  body[data-app-page="admin"] .admin-page-header,
+  body[data-app-page="admin"] .admin-workspace,
+  body[data-app-page="admin"] .admin-sidebar,
+  body[data-app-page="admin"] .admin-content-panel,
+  body[data-app-page="admin"] .admin-table-card,
+  body[data-app-page="admin"] .tab-content,
+  body[data-app-page="admin"] .tab-pane,
+  body[data-app-page="admin"] .table-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  body[data-app-page="admin"] .admin-shell {
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+    overflow-x: hidden !important;
+  }
+
+  body[data-app-page="admin"] .admin-workspace {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  body[data-app-page="admin"] .admin-sidebar {
+    position: static !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+  }
+
+  body[data-app-page="admin"] .admin-sidebar-title {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body[data-app-page="admin"] .admin-tabs {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 0 2px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-app-page="admin"] .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-item {
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-link {
+    min-width: auto !important;
+    min-height: 42px !important;
+    padding: 0 14px !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+  }
+
+  body[data-app-page="admin"] .admin-stats-grid,
+  body[data-app-page="admin"] .stats-grid {
+    width: 100% !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2,
+  body[data-app-page="admin"] .admin-search-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > [class*="col-"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 auto !important;
+    padding: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody tr {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-row-actions,
+  body[data-app-page="admin"] .admin-user-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px !important;
+  }
+
+  body[data-app-page="admin"] .admin-row-actions .btn,
+  body[data-app-page="admin"] .admin-user-actions .btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 40px !important;
+  }
+}
+@media (max-width: 768px) {
+  body[data-app-page="admin"] {
+    background-color: #f6f7f9 !important;
+  }
+
+  body[data-app-page="admin"] .admin-shell,
+  body[data-app-page="admin"] .main-content.admin-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 18px 14px calc(98px + env(safe-area-inset-bottom)) !important;
+    overflow-x: hidden !important;
+  }
+
+  body[data-app-page="admin"] .admin-page-header {
+    margin: 0 0 14px !important;
+    padding: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-page-header h1 {
+    font-size: 28px !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-page-header .page-subtitle {
+    margin-top: 8px !important;
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+  }
+
+  body[data-app-page="admin"] .admin-stats-grid,
+  body[data-app-page="admin"] .stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  body[data-app-page="admin"] .stat-tile {
+    min-height: 78px !important;
+    padding: 12px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  body[data-app-page="admin"] .stat-tile .label {
+    font-size: 12px !important;
+  }
+
+  body[data-app-page="admin"] .stat-tile .value {
+    margin-top: 4px !important;
+    font-size: 26px !important;
+    line-height: 1.05 !important;
+  }
+
+  body[data-app-page="admin"] .admin-workspace {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-sidebar {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+  }
+
+  body[data-app-page="admin"] .admin-sidebar-title {
+    margin: 0 0 8px !important;
+    font-size: 13px !important;
+  }
+
+  body[data-app-page="admin"] .admin-tabs {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    flex-wrap: initial !important;
+    gap: 8px !important;
+    overflow-x: visible !important;
+    overflow-y: hidden !important;
+    padding: 0 !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body[data-app-page="admin"] .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-item {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-link {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding: 0 14px !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+    font-size: 13px !important;
+  }
+
+  body[data-app-page="admin"] .admin-content-panel,
+  body[data-app-page="admin"] .tab-content,
+  body[data-app-page="admin"] .tab-pane,
+  body[data-app-page="admin"] .admin-table-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card {
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08) !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-header {
+    padding: 16px !important;
+    background: #fff !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-header h5 {
+    font-size: 18px !important;
+    line-height: 1.25 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body {
+    padding: 14px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin: 0 0 14px !important;
+    width: 100% !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > [class*="col-"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 auto !important;
+    padding: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > .col-md-4 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card .card-body > .row.g-2 > .col-md-4 .btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+  }
+
+  body[data-app-page="admin"] .il-search-field--admin,
+  body[data-app-page="admin"] .il-search-field--admin .il-search-field__input {
+    min-height: 48px !important;
+    font-size: 15px !important;
+  }
+
+  body[data-app-page="admin"] .table-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table,
+  body[data-app-page="admin"] .admin-table thead,
+  body[data-app-page="admin"] .admin-table tbody,
+  body[data-app-page="admin"] .admin-table tr,
+  body[data-app-page="admin"] .admin-table th,
+  body[data-app-page="admin"] .admin-table td {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table {
+    margin: 0 !important;
+    border: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table thead {
+    display: none !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody {
+    display: grid !important;
+    gap: 12px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody tr {
+    margin: 0 !important;
+    padding: 12px 14px !important;
+    border: 1px solid rgba(15, 23, 42, 0.08) !important;
+    border-radius: 16px !important;
+    background: #fff !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06) !important;
+    overflow: hidden !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody tr:hover {
+    background: #fff !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td {
+    display: grid !important;
+    grid-template-columns: 74px minmax(0, 1fr) !important;
+    align-items: start !important;
+    justify-content: initial !important;
+    gap: 12px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 8px 0 !important;
+    border: 0 !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+    background: transparent !important;
+    text-align: left !important;
+    color: #111827 !important;
+  }
+
+  body[data-app-page="admin"] #users .admin-table tbody td:nth-child(n),
+  body[data-app-page="admin"] #teams .admin-table tbody td:nth-child(n),
+  body[data-app-page="admin"] #teachers .admin-table tbody td:nth-child(n),
+  body[data-app-page="admin"] #assets .admin-table tbody td:nth-child(n),
+  body[data-app-page="admin"] #community .admin-table tbody td:nth-child(n) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td::before {
+    content: attr(data-label) !important;
+    display: block !important;
+    width: auto !important;
+    flex: none !important;
+    color: #8a8f98 !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td > * {
+    min-width: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-cell-text,
+  body[data-app-page="admin"] .admin-cell-empty,
+  body[data-app-page="admin"] .status-badge {
+    max-width: 100% !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: left !important;
+  }
+
+  body[data-app-page="admin"] .admin-cell-text {
+    color: #111827 !important;
+    font-size: 15px !important;
+    line-height: 1.45 !important;
+  }
+
+  body[data-app-page="admin"] .admin-cell-empty {
+    color: #9ca3af !important;
+    font-size: 15px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td:last-child {
+    border-bottom: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td.admin-row-actions,
+  body[data-app-page="admin"] .admin-table tbody td.admin-user-actions {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)) !important;
+    gap: 8px !important;
+    margin-top: 4px !important;
+    padding: 12px 0 0 !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+    border-bottom: 0 !important;
+    background: transparent !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td.admin-row-actions::before,
+  body[data-app-page="admin"] .admin-table tbody td.admin-user-actions::before,
+  body[data-app-page="admin"] .admin-table tbody td.admin-empty-cell::before {
+    display: none !important;
+  }
+
+  body[data-app-page="admin"] .admin-row-actions .btn,
+  body[data-app-page="admin"] .admin-user-actions .btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding: 9px 10px !important;
+    border-radius: 11px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+
+  body[data-app-page="admin"] .admin-empty-cell {
+    display: block !important;
+    padding: 22px 14px !important;
+    text-align: center !important;
+    color: #8a8f98 !important;
+  }
+
+  body[data-app-page="admin"] .admin-user-pager .pagination,
+  body[data-app-page="admin"] #userPagination .pagination {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+
+  body[data-app-page="admin"] .modal-dialog {
+    width: calc(100% - 20px) !important;
+    max-width: none !important;
+    margin: 10px auto !important;
+  }
+
+  body[data-app-page="admin"] .modal-content {
+    max-height: calc(100dvh - 20px) !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+  }
+
+  body[data-app-page="admin"] .modal-header,
+  body[data-app-page="admin"] .modal-footer {
+    padding: 14px 16px !important;
+  }
+
+  body[data-app-page="admin"] .modal-body {
+    padding: 16px !important;
+  }
+
+  body[data-app-page="admin"] .modal-footer {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  body[data-app-page="admin"] .modal-footer .btn {
+    width: 100% !important;
+    min-height: 44px !important;
+  }
+
+  body[data-app-page="admin"] .admin-detail-summary {
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  body[data-app-page="admin"] .admin-detail-list {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+}
