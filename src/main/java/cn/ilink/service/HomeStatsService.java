@@ -1,5 +1,8 @@
 package cn.ilink.service;
 
+import cn.ilink.service.impl.AssetServiceImpl;
+import cn.ilink.service.impl.TeacherApplicationServiceImpl;
+import cn.ilink.service.impl.TeamDemandServiceImpl;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,13 +16,13 @@ public class HomeStatsService {
     private UserService userService;
 
     @Autowired(required = false)
-    private TeamDemandService teamDemandService;
+    private TeamDemandServiceImpl teamDemandService;
 
     @Autowired(required = false)
-    private TeacherApplicationService teacherApplicationService;
+    private TeacherApplicationServiceImpl teacherApplicationService;
 
     @Autowired(required = false)
-    private AssetService assetService;
+    private AssetServiceImpl assetService;
 
     public Map<String, Long> resolveIndexStats() {
         long userCount = safeCount(userService);
