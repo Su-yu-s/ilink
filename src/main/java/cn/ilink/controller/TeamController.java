@@ -16,6 +16,7 @@ import cn.ilink.util.UserPreviewHelper;
 import cn.ilink.vo.MyTeamApplicationVO;
 import cn.ilink.vo.MyTeamVO;
 import cn.ilink.vo.PendingApplicationVO;
+import cn.ilink.vo.SkillViewVO;
 import cn.ilink.vo.TeamDemandVO;
 import cn.ilink.vo.TeamMemberViewVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -752,7 +753,7 @@ public class TeamController {
         }
 
         // 批量查询申请人技能
-        Map<Long, List<Map<String, Object>>> skillsMap = new HashMap<>();
+        Map<Long, List<SkillViewVO>> skillsMap = new HashMap<>();
         if (!userIds.isEmpty()) {
             List<UserSkill> allSkills = userSkillMapper.selectList(
                 new LambdaQueryWrapper<UserSkill>().in(UserSkill::getUserId, userIds));
@@ -787,12 +788,12 @@ public class TeamController {
     }
 
     /** 将技能实体转为前端视图 */
-    private Map<String, Object> skillToView(UserSkill s) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("name", s.getSkillName());
-        m.put("level", s.getSkillLevel());
-        m.put("category", s.getSkillCategory());
-        return m;
+    private SkillViewVO skillToView(UserSkill s) {
+        SkillViewVO vo = new SkillViewVO();
+        vo.setName(s.getSkillName());
+        vo.setLevel(s.getSkillLevel());
+        vo.setCategory(s.getSkillCategory());
+        return vo;
     }
 
     /** Approve or reject a team application */
