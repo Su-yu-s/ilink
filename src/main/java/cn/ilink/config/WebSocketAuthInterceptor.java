@@ -7,6 +7,8 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpSession;
@@ -51,7 +53,12 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 return (User) user;
             }
         }
-        // 2. 原生 WebSocket：从当前线程的 HTTP Session 读取
+        // 2. 从 Spring Security 上下文读取
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof User) {
+            return (User) auth.getPrincipal();
+        }
+        // 3. Fallback：HTTP Session（向后兼容）
         try {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
