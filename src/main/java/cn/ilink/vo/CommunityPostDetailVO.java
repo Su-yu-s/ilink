@@ -25,7 +25,7 @@ public class CommunityPostDetailVO {
     private Long favoriteCount;
     private boolean liked;
     private boolean favorited;
-    private boolean isPinned;
+    private boolean pinned;
     private Date createdAt;
     private Date updatedAt;
     private List<Map<String, Object>> attachments;
