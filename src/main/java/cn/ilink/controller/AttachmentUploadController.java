@@ -1,5 +1,6 @@
 package cn.ilink.controller;
 
+import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.UserMapper;
@@ -121,7 +122,7 @@ public class AttachmentUploadController {
      * 以 session 中的 user 为准；若丢失但 Spring Security 仍已登录，则按 principal（用户名）补查，避免上传接口误报未登录。
      */
     private User resolveCurrentUser(HttpSession session) {
-        User user = (User) session.getAttribute("user");
+        User user = ControllerUtils.requireUser(session);
         if (user != null) {
             return user;
         }

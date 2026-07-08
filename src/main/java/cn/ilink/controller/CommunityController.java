@@ -105,7 +105,7 @@ public class CommunityController {
         long total = result.getTotal();
 
         Map<Long, User> authorMap = loadAuthors(records.stream().map(CommunityPost::getAuthorId).collect(Collectors.toSet()));
-        User viewer = (User) session.getAttribute("user");
+        User viewer = ControllerUtils.requireUser(session);
         List<Long> postIds = records.stream().map(CommunityPost::getId).collect(Collectors.toList());
         Map<Long, Boolean> likedMap = viewer != null
             ? communityPostInteractionService.batchLikedStatus(viewer.getId(), postIds)
@@ -352,7 +352,7 @@ public class CommunityController {
     @GetMapping("/posts/{postId}/comments")
     @ResponseBody
     public ResponseEntity<Result<?>> listComments(@PathVariable Long postId, HttpSession session) {
-        User currentUser = (User) session.getAttribute("user");
+        User currentUser = ControllerUtils.requireUser(session);
         if (currentUser == null) {
             return Result.unauthorized().toResponseEntity();
         }
