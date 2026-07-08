@@ -1,6 +1,6 @@
 // 交流社区：顶部分类标签、全部分区、博客式列表与分页
 
-const CATEGORY_LABELS = {
+const COMM_FEED_CATEGORY_LABELS = {
     '': '全部',
     general: '综合交流',
     tech: '技术讨论',
@@ -217,10 +217,11 @@ function fillComposeCategorySelect() {
     ['general', 'tech', 'competition', 'resource'].forEach(key => {
         const opt = document.createElement('option');
         opt.value = key;
-        opt.textContent = CATEGORY_LABELS[key];
-        sel.appendChild(opt);
+        opt.textContent = COMM_FEED_CATEGORY_LABELS[key];
+
     });
 }
+
 
 function selectCategory(cat) {
     currentCategory = cat == null ? '' : String(cat);
@@ -407,7 +408,7 @@ async function loadPosts(page) {
 
         listEl.innerHTML = '';
         posts.forEach(p => {
-            const badge = CATEGORY_LABELS[p.category] || p.category;
+            const badge = COMM_FEED_CATEGORY_LABELS[p.category] || p.category;
             const tagClassMap = {
                 '综合交流': 'il-tag--general',
                 '技术讨论': 'il-tag--tech',
