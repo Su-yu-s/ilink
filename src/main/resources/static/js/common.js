@@ -921,6 +921,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+/**
+ * 组队状态标签映射
+ */
+function teamStatusLabel(status) {
+    var map = { OPEN: '招募中', TEAMING: '已组队', CLOSED: '已结束' };
+    return map[status] || status || '';
+}
+
+/**
+ * 社区分区标签映射（公共定义）
+ */
+var CATEGORY_LABELS = {
+    '': '全部',
+    general: '综合交流',
+    tech: '技术讨论',
+    competition: '竞赛经验',
+    resource: '资源分享'
+};
+
 // Expose public API via namespace
 window.ILink = {
     apiFetch: apiFetch,
@@ -934,11 +953,9 @@ window.ILink = {
     formatTime: formatTime,
     teamStatusLabel: teamStatusLabel,
     CATEGORY_LABELS: CATEGORY_LABELS,
-    ParticleSystem: ParticleSystem,
     ScrollAnimator: ScrollAnimator,
     NumberCounter: NumberCounter
 };
 
-window.ParticleSystem = ParticleSystem;
 window.ScrollAnimator = ScrollAnimator;
 window.NumberCounter = NumberCounter;
