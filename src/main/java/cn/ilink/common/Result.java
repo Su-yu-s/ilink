@@ -1,6 +1,8 @@
 package cn.ilink.common;
 
 import lombok.Data;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -99,5 +101,25 @@ public class Result<T> {
             this.extra.putAll(extra);
         }
         return this;
+    }
+
+    // ==================== HTTP 状态码映射 ====================
+
+    /** 根据 Result.code 映射到正确的 HTTP 状态码 */
+    public HttpStatus toHttpStatus() {
+        switch (this.code) {
+            case 400: return HttpStatus.BAD_REQUEST;
+            case 401: return HttpStatus.UNAUTHORIZED;
+            case 403: return HttpStatus.FORBIDDEN;
+            case 404: return HttpStatus.NOT_FOUND;
+            case 500: return HttpStatus.INTERNAL_SERVER_ERROR;
+            default:  return HttpStatus.OK;
+        }
+    }
+
+    /** 快捷方法：返回带正确 HTTP 状态码的 ResponseEntity */
+    @SuppressWarnings("unchecked")
+    public ResponseEntity<Result<?>> toResponseEntity() {
+        return ResponseEntity.status(toHttpStatus()).body((Result<?>) this);
     }
 }

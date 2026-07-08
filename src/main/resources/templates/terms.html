@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户协议 - iLink</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-app-page="legal" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+    <main class="legal-page">
+        <p class="legal-page__eyebrow">平台规则</p>
+        <h1>用户协议</h1>
+        <section>
+            <h2>账号与身份</h2>
+            <p>请使用真实、可联系的身份信息参与组队、导师申请和成果发布。冒用他人身份、发布虚假招募信息或恶意干扰协作，平台可限制相关账号操作。</p>
+        </section>
+        <section>
+            <h2>内容与协作</h2>
+            <p>你发布的文字、成果、组队需求应与高校竞赛协作相关，并确保不侵犯他人知识产权、隐私权或其他合法权益。</p>
+        </section>
+        <section>
+            <h2>责任边界</h2>
+            <p>iLink 提供信息连接与协作管理工具，不对竞赛结果、队伍线下行为或第三方赛事规则变化作保证。报名与参赛请以赛事官方信息为准。</p>
+        </section>
+        <div class="legal-page__actions">
+            <a href="/register.html" class="il-btn il-btn-primary">回到注册</a>
+            <a href="/index.html" class="il-btn il-btn-secondary">返回首页</a>
+        </div>
+    </main>
+    <script src="/lib/bootstrap.bundle.min.js?v=4.3"></script>
+    <script src="/js/common.js?v=7.8"></script>
+</body>
+</html>

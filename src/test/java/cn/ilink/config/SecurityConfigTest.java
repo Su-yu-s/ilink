@@ -18,9 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 需要完整 Spring 上下文（含数据库），仅在 CI 环境或本地 MySQL 可用时运行。
  * 本地开发无 MySQL 时自动跳过，不影响日常编译。
  */
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-@Disabled("需要完整数据库上下文，本地开发时跳过。CI/MySQL 可用后请删除此行。")
 class SecurityConfigTest {
 
     @Autowired

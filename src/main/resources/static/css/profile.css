@@ -1,162 +1,235 @@
 /* ========================================
-   iLink Profile Center v8.3
+   iLink Profile Center v9.0
+   Warm minimal personal center design system
    ======================================== */
 
-.ilink-app body[data-profile-page] .il-page-wrapper {
-  max-width: var(--container-max);
+/* --------------------------------------------------------------------------
+   Profile-scoped custom properties
+   -------------------------------------------------------------------------- */
+body[data-profile-page] {
+  --pf-bg: #f8f7f5;
+  --pf-card: #ffffff;
+  --pf-text: #1a1a1a;
+  --pf-text-secondary: #5c5c5c;
+  --pf-text-muted: #9a9a9a;
+  --pf-accent: #c4a77d;
+  --pf-accent-light: #f0e8db;
+  --pf-accent-dark: #a88b5e;
+  --pf-border: #ebeae8;
+  --pf-border-light: #f2f1ef;
+  --pf-success: #4a9b7f;
+  --pf-success-light: #e8f5f0;
+  --pf-warning: #d4a03c;
+  --pf-warning-light: #fdf6e8;
+  --pf-danger: #c75b5b;
+  --pf-danger-light: #fce8e8;
+  --pf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --pf-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --pf-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --pf-radius: 12px;
+  --pf-radius-lg: 16px;
+  --pf-radius-xl: 20px;
+  --pf-header-height: var(--header-height, 64px);
+}
+
+/* --------------------------------------------------------------------------
+   Page wrapper & layout
+   -------------------------------------------------------------------------- */
+body[data-profile-page] .il-page-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  min-height: calc(100vh - var(--pf-header-height));
+  background: transparent !important;
 }
 
 .ilink-app body[data-profile-page] .il-profile-layout {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: var(--space-6);
-  align-items: start;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
 }
 
+/* --------------------------------------------------------------------------
+   Page transitions
+   -------------------------------------------------------------------------- */
+body[data-profile-page] {
+  opacity: 0;
+  animation: pf-page-enter 0.35s ease 0.05s forwards;
+}
+
+@keyframes pf-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pf-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ilink-app body[data-profile-page] .il-fade-in {
+  animation: pf-panel-enter 0.25s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-profile-page],
+  .ilink-app body[data-profile-page] .il-fade-in {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar
+   -------------------------------------------------------------------------- */
 .ilink-app body[data-profile-page] .il-profile-sidebar {
   position: sticky !important;
-  top: calc(var(--header-height, 64px) + var(--space-5)) !important;
+  top: calc(var(--pf-header-height) + 24px) !important;
   align-self: start;
-  max-height: calc(100vh - var(--header-height, 64px) - var(--space-10));
+  width: 260px;
+  flex-shrink: 0;
+  max-height: calc(100vh - var(--pf-header-height) - 48px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(17, 24, 39, 0.08);
-  border-radius: var(--radius-xl);
-  padding: 22px 18px;
-  height: fit-content;
-  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: var(--pf-card) !important;
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  padding: 28px 18px;
+  box-shadow: var(--pf-shadow-sm);
   z-index: 20;
 }
 
-.ilink-app body[data-profile-page] .il-profile-sidebar::before {
-  content: "";
-  display: block;
-  width: 40px;
-  height: 4px;
-  margin: 0 0 var(--space-4);
-  border-radius: var(--radius-full);
-  background: linear-gradient(90deg, #2D6FF7, #111827);
-}
-
 .ilink-app body[data-profile-page] .il-profile-sidebar-title {
-  font-family: var(--font-display);
-  font-size: var(--font-size-xl);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  margin: 0 0 var(--space-1);
+  color: var(--pf-text);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
 }
 
 .ilink-app body[data-profile-page] .il-profile-sidebar-subtitle {
   font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin: 0 0 var(--space-5);
+  color: var(--pf-text-muted);
+  margin: 0 0 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--pf-border);
 }
 
 .ilink-app body[data-profile-page] .il-profile-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 4px;
 }
 
 .ilink-app body[data-profile-page] .il-profile-nav-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  min-height: 46px;
+  gap: 12px;
   padding: 11px 14px;
-  border: 1px solid transparent;
   border-radius: 10px;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
+  color: var(--pf-text-secondary);
   text-decoration: none;
-  transition:
-    background-color var(--transition-fast),
-    border-color var(--transition-fast),
-    color var(--transition-fast),
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
 }
 
 .ilink-app body[data-profile-page] .il-profile-nav-item svg {
-  flex: 0 0 auto;
-}
-
-.ilink-app body[data-profile-page] .il-profile-nav-item::before {
-  content: "";
-  position: absolute;
-  left: -1px;
-  top: 12px;
-  bottom: 12px;
-  width: 3px;
-  border-radius: var(--radius-full);
-  background: transparent;
-  transition: background-color var(--transition-fast);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke-width: 2;
 }
 
 .ilink-app body[data-profile-page] .il-profile-nav-item:hover {
-  background: #f8fafc;
-  border-color: rgba(17, 24, 39, 0.08);
-  color: #111827;
-  transform: translateX(2px);
+  background: var(--pf-border-light);
+  color: var(--pf-text);
 }
 
 .ilink-app body[data-profile-page] .il-profile-nav-item.active {
-  background: #111827;
-  border-color: #111827;
-  color: #fff !important;
-  box-shadow: 0 10px 22px rgba(17, 24, 39, 0.18);
-}
-
-.ilink-app body[data-profile-page] .il-profile-nav-item.active::before {
-  background: #2D6FF7;
+  background: var(--pf-text);
+  color: #ffffff;
+  box-shadow: var(--pf-shadow-sm);
 }
 
 .ilink-app body[data-profile-page] .il-profile-nav-item.active:hover {
-  background: #111827;
-  color: #fff !important;
+  background: var(--pf-text);
+  color: #ffffff;
 }
 
+/* --------------------------------------------------------------------------
+   Content area
+   -------------------------------------------------------------------------- */
 .ilink-app body[data-profile-page] .il-profile-content {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: 24px;
 }
 
+/* --------------------------------------------------------------------------
+   Cards
+   -------------------------------------------------------------------------- */
 .ilink-app body[data-profile-page] .il-profile-card,
 .ilink-app body[data-profile-page] .il-section-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  box-shadow: var(--pf-shadow-sm);
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.2s ease;
+}
+
+.ilink-app body[data-profile-page] .il-profile-card:hover,
+.ilink-app body[data-profile-page] .il-section-card:hover {
+  box-shadow: var(--pf-shadow);
 }
 
 .ilink-app body[data-profile-page] .il-profile-card {
-  padding: var(--space-8);
+  padding: 32px;
   display: flex;
-  gap: var(--space-6);
+  gap: 24px;
   align-items: center;
 }
 
+.ilink-app body[data-profile-page] .il-section-card {
+  padding: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   Profile header card
+   -------------------------------------------------------------------------- */
 .ilink-app body[data-profile-page] .il-profile-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: var(--radius-full);
-  background: var(--primary);
-  color: var(--text-white);
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--pf-text);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: var(--font-weight-bold);
   flex-shrink: 0;
-  box-shadow: var(--shadow-md);
   overflow: hidden;
-  border: 3px solid var(--bg-white);
+  border: 3px solid var(--pf-border);
   position: relative;
 }
 
@@ -164,7 +237,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-full);
 }
 
 .ilink-app body[data-profile-page] .il-profile-avatar-fallback {
@@ -181,79 +253,352 @@
 }
 
 .ilink-app body[data-profile-page] .il-profile-name {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  margin: 0 0 var(--space-2);
-  letter-spacing: -0.02em;
+  color: var(--pf-text);
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
 }
 
 .ilink-app body[data-profile-page] .il-profile-meta {
   display: flex;
-  gap: var(--space-4);
-  margin-bottom: var(--space-3);
+  gap: 20px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
 }
 
 .ilink-app body[data-profile-page] .il-profile-meta-item {
   font-size: var(--font-size-sm);
-  color: var(--text-secondary);
+  color: var(--pf-text-secondary);
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
+}
+
+.ilink-app body[data-profile-page] .il-profile-meta-item svg {
+  width: 16px;
+  height: 16px;
+  color: var(--pf-text-muted);
+  flex-shrink: 0;
 }
 
 .ilink-app body[data-profile-page] .il-profile-bio {
   font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
-  line-height: var(--line-height-relaxed);
+  color: var(--pf-text-muted);
+  line-height: 1.6;
+  margin: 0;
 }
 
-.ilink-app body[data-profile-page] .il-section-card {
-  padding: var(--space-6);
-}
-
+/* --------------------------------------------------------------------------
+   Section headers
+   -------------------------------------------------------------------------- */
 .ilink-app body[data-profile-page] .il-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-5);
-}
-
-.ilink-app body[data-profile-page] .il-section-title {
-  font-family: var(--font-display);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-/* Profile edit — avatar uploader (constrain intrinsic img size) */
-.ilink-app body[data-profile-page] .il-avatar-wrapper {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-5);
+  margin-bottom: 20px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
+.ilink-app body[data-profile-page] .il-section-header__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ilink-app body[data-profile-page] .il-section-title {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.ilink-app body[data-profile-page] .il-section-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-muted);
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page] .il-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: var(--font-sans);
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+.ilink-app body[data-profile-page] .il-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.ilink-app body[data-profile-page] .il-btn-primary,
+.ilink-app body[data-profile-page] .il-btn-dark {
+  background: var(--pf-text);
+  color: #ffffff;
+  border-color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page] .il-btn-primary:hover,
+.ilink-app body[data-profile-page] .il-btn-dark:hover {
+  background: var(--pf-accent-dark);
+  border-color: var(--pf-accent-dark);
+  transform: translateY(-1px);
+}
+
+.ilink-app body[data-profile-page] .il-btn-ghost {
+  background: transparent;
+  color: var(--pf-text-secondary);
+  border-color: var(--pf-border);
+}
+
+.ilink-app body[data-profile-page] .il-btn-ghost:hover {
+  background: var(--pf-border-light);
+  color: var(--pf-text);
+  border-color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page] .il-btn-danger {
+  background: var(--pf-card);
+  color: var(--pf-danger);
+  border-color: var(--pf-danger);
+}
+
+.ilink-app body[data-profile-page] .il-btn-danger:hover {
+  background: var(--pf-danger);
+  color: #ffffff;
+}
+
+.ilink-app body[data-profile-page] .il-btn-success {
+  background: var(--pf-success);
+  color: #ffffff;
+  border-color: var(--pf-success);
+}
+
+.ilink-app body[data-profile-page] .il-btn-success:hover {
+  opacity: 0.9;
+}
+
+.ilink-app body[data-profile-page] .il-btn-sm {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: var(--font-size-xs);
+}
+
+.ilink-app body[data-profile-page] .il-btn-xs {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ilink-app body[data-profile-page] .il-btn-xs-ghost {
+  background: var(--pf-card);
+  color: var(--pf-text-secondary);
+  border-color: var(--pf-border);
+}
+
+.ilink-app body[data-profile-page] .il-btn-xs-ghost:hover {
+  background: var(--pf-border-light);
+  border-color: var(--pf-text-secondary);
+  color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page] .il-btn-xs-dark {
+  background: var(--pf-text);
+  color: #ffffff;
+  border-color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page] .il-btn-xs-dark:hover {
+  background: var(--pf-accent-dark);
+  border-color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page] .il-btn-xs-danger {
+  background: var(--pf-card);
+  color: var(--pf-danger);
+  border-color: var(--pf-danger);
+}
+
+.ilink-app body[data-profile-page] .il-btn-xs-danger:hover {
+  background: var(--pf-danger);
+  color: #ffffff;
+}
+
+.ilink-app body[data-profile-page] .il-btn:disabled,
+.ilink-app body[data-profile-page] .il-btn.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* --------------------------------------------------------------------------
+   Tabs
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page] .il-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--pf-border-light);
+  border-radius: 10px;
+  margin-bottom: 20px;
+  width: fit-content;
+}
+
+.ilink-app body[data-profile-page] .il-tab {
+  padding: 9px 18px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-sans);
+}
+
+.ilink-app body[data-profile-page] .il-tab:hover {
+  color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page] .il-tab.active {
+  background: var(--pf-text);
+  color: #ffffff;
+  box-shadow: var(--pf-shadow-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Forms
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page] .il-form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 20px;
+}
+
+@media (min-width: 768px) {
+  .ilink-app body[data-profile-page] .il-form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ilink-app body[data-profile-page] .il-form-group {
+  margin-bottom: 20px;
+  gap: 8px;
+}
+
+.ilink-app body[data-profile-page] .il-form-group--compact {
+  margin-bottom: 0;
+}
+
+.ilink-app body[data-profile-page] .il-form-label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--pf-text-secondary);
+  margin-bottom: 8px;
+}
+
+.ilink-app body[data-profile-page] .il-form-label--required::after {
+  content: " *";
+  color: var(--pf-danger);
+}
+
+.ilink-app body[data-profile-page] .il-form-input,
+.ilink-app body[data-profile-page] .il-form-select,
+.ilink-app body[data-profile-page] textarea.il-form-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--pf-text);
+  background: var(--pf-card) !important;
+  border: 1px solid var(--pf-border) !important;
+  border-radius: var(--pf-radius) !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.ilink-app body[data-profile-page] .il-form-select {
+  cursor: pointer;
+  appearance: auto;
+}
+
+.ilink-app body[data-profile-page] textarea.il-form-input {
+  min-height: 100px;
+  padding-top: 12px;
+  resize: vertical;
+}
+
+.ilink-app body[data-profile-page] .il-form-input::placeholder,
+.ilink-app body[data-profile-page] textarea.il-form-input::placeholder {
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page] .il-form-input:focus,
+.ilink-app body[data-profile-page] .il-form-select:focus,
+.ilink-app body[data-profile-page] textarea.il-form-input:focus {
+  border-color: var(--pf-accent) !important;
+  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1) !important;
+}
+
+.ilink-app body[data-profile-page] .il-form-input.is-invalid,
+.ilink-app body[data-profile-page] .il-form-select.is-invalid {
+  border-color: var(--pf-danger) !important;
+}
+
+.ilink-app body[data-profile-page] .il-form-hint {
+  font-size: var(--font-size-xs);
+  color: var(--pf-text-muted);
+  margin: 6px 0 0;
+}
+
+.ilink-app body[data-profile-page] .il-form-error {
+  font-size: var(--font-size-xs);
+  color: var(--pf-danger);
+  margin-top: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Avatar uploader
+   -------------------------------------------------------------------------- */
 .ilink-app body[data-profile-page="edit"] #avatarContainer,
 .ilink-app body[data-profile-page="edit"] .il-avatar-preview,
 .ilink-app body[data-profile-page="edit"] .il-avatar-container {
-  width: 104px !important;
-  height: 104px !important;
-  min-width: 104px !important;
-  min-height: 104px !important;
-  max-width: 104px !important;
-  max-height: 104px !important;
-  flex-shrink: 0 !important;
+  width: 88px !important;
+  height: 88px !important;
+  min-width: 88px !important;
+  min-height: 88px !important;
+  max-width: 88px !important;
+  max-height: 88px !important;
   border-radius: 50% !important;
   overflow: hidden !important;
   position: relative !important;
   cursor: pointer;
-  background: var(--primary);
-  box-shadow: var(--shadow-sm);
+  background: var(--pf-text);
+  border: 3px solid var(--pf-border);
   box-sizing: border-box;
 }
 
@@ -263,8 +608,6 @@
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
   object-fit: cover !important;
   display: block !important;
   margin: 0 !important;
@@ -278,21 +621,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: var(--font-weight-bold);
-  color: var(--text-white);
+  color: #ffffff;
 }
 
-.ilink-app body[data-profile-page="edit"] .il-avatar-fallback.il-avatar-fallback--hidden {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
+.ilink-app body[data-profile-page="edit"] .il-avatar-fallback.il-avatar-fallback--hidden,
 .ilink-app body[data-profile-page="edit"] #avatarPreviewImg.il-avatar-img--hidden,
 .ilink-app body[data-profile-page="edit"] .il-avatar-img.il-avatar-img--hidden {
   display: none !important;
   visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .ilink-app body[data-profile-page] .il-avatar-overlay {
@@ -301,10 +640,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.45);
-  color: var(--text-white);
+  background: rgba(0, 0, 0, 0.4);
+  color: #ffffff;
   opacity: 0;
-  transition: opacity var(--transition-fast);
+  transition: opacity 0.2s ease;
   pointer-events: none;
 }
 
@@ -314,137 +653,53 @@
 }
 
 .ilink-app body[data-profile-page] .il-avatar-overlay svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
+}
+
+.ilink-app body[data-profile-page] .il-avatar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--pf-border);
+  flex-wrap: wrap;
 }
 
 .ilink-app body[data-profile-page] .il-avatar-hint {
   font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  line-height: var(--line-height-relaxed);
+  color: var(--pf-text-secondary);
+  line-height: 1.5;
 }
 
 .ilink-app body[data-profile-page] .il-avatar-hint span {
   display: block;
   font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-  margin-top: var(--space-1);
+  color: var(--pf-text-muted);
+  margin-top: 4px;
 }
 
-/* --- Profile edit: form layout & fields --- */
-.ilink-app body[data-profile-page="edit"] #profileForm > .il-section-title:first-of-type {
-  margin-bottom: var(--space-6);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-section-divider {
-  margin-top: var(--space-6);
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--border-light);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-avatar-wrapper {
-  gap: var(--space-5);
-  margin-bottom: var(--space-6);
-  padding-bottom: var(--space-6);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-avatar-hint {
-  flex: 1;
-  min-width: 12rem;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-  line-height: var(--line-height-normal);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-avatar-hint span {
-  margin-top: var(--space-2);
-  font-weight: var(--font-weight-normal);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-avatar-upload-hint {
+.ilink-app body[data-profile-page] .il-avatar-upload-hint {
   margin-left: auto;
   font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+  color: var(--pf-text-muted);
 }
 
-.ilink-app body[data-profile-page="edit"] .il-form-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0 var(--space-5);
-}
-
-@media (min-width: 768px) {
-  .ilink-app body[data-profile-page="edit"] .il-form-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.ilink-app body[data-profile-page="edit"] .il-form-group {
-  margin-bottom: var(--space-5);
-  gap: var(--space-2);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-form-group--compact {
-  margin-bottom: 0;
-}
-
-.ilink-app body[data-profile-page="edit"] .il-form-label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-form-input,
-.ilink-app body[data-profile-page="edit"] .il-form-select,
-.ilink-app body[data-profile-page="edit"] textarea.il-form-input {
-  width: 100%;
-  min-height: 42px;
-  padding: 10px 14px;
-  font-family: var(--font-sans);
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
-  color: var(--text-primary);
-  background: var(--bg-white) !important;
-  border: 1px solid var(--border-default) !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: none !important;
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-form-select {
-  padding-right: 2.25rem;
-  cursor: pointer;
-  appearance: auto;
-}
-
-.ilink-app body[data-profile-page="edit"] textarea.il-form-input {
-  min-height: 120px;
-  padding-top: 12px;
-  resize: vertical;
-}
-
-.ilink-app body[data-profile-page="edit"] .il-form-input::placeholder,
-.ilink-app body[data-profile-page="edit"] textarea.il-form-input::placeholder {
-  color: var(--text-tertiary);
-}
-
-.ilink-app body[data-profile-page="edit"] .il-form-input:focus,
-.ilink-app body[data-profile-page="edit"] .il-form-select:focus,
-.ilink-app body[data-profile-page="edit"] textarea.il-form-input:focus {
-  outline: none !important;
-  border-color: var(--border-dark) !important;
-  box-shadow: var(--shadow-xs) !important;
+/* --------------------------------------------------------------------------
+   Skills
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page="edit"] .il-section-divider {
+  margin-top: 28px;
+  padding-top: 28px;
+  border-top: 1px solid var(--pf-border);
 }
 
 .ilink-app body[data-profile-page="edit"] .il-skills-list {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  gap: 10px;
+  margin-bottom: 16px;
   min-height: 0;
 }
 
@@ -455,19 +710,19 @@
 .ilink-app body[data-profile-page="edit"] .il-skill-tag {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: 6px 12px;
-  background: var(--bg-gray);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
+  color: var(--pf-text-secondary);
 }
 
 .ilink-app body[data-profile-page="edit"] .il-skill-level {
   font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+  color: var(--pf-text-muted);
   font-weight: var(--font-weight-normal);
 }
 
@@ -477,24 +732,22 @@
   justify-content: center;
   width: 18px;
   height: 18px;
-  margin-left: var(--space-1);
-  border-radius: var(--radius-sm);
-  color: var(--text-tertiary);
+  margin-left: 4px;
+  border-radius: 50%;
+  color: var(--pf-text-muted);
   cursor: pointer;
-  transition:
-    color var(--transition-fast),
-    background-color var(--transition-fast);
+  transition: all 0.2s ease;
 }
 
 .ilink-app body[data-profile-page="edit"] .il-skill-remove:hover {
-  color: var(--color-danger);
-  background: var(--color-danger-light);
+  color: var(--pf-danger);
+  background: var(--pf-danger-light);
 }
 
 .ilink-app body[data-profile-page="edit"] .il-skill-form {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-3);
+  gap: 12px;
   align-items: end;
 }
 
@@ -505,190 +758,191 @@
 }
 
 .ilink-app body[data-profile-page="edit"] .il-skill-form .il-btn-sm {
-  min-height: 42px;
-  padding-inline: var(--space-5);
-  border-radius: var(--radius-md);
+  min-height: 44px;
+  padding-inline: 20px;
+  border-radius: var(--pf-radius);
 }
 
 .ilink-app body[data-profile-page="edit"] .il-form-footer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-4);
-  margin-top: var(--space-6);
-  padding-top: var(--space-6);
-  border-top: 1px solid var(--border-light);
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 28px;
+  border-top: 1px solid var(--pf-border);
 }
 
 .ilink-app body[data-profile-page="edit"] .il-form-footer .il-btn-primary {
-  min-height: 42px;
-  padding-inline: var(--space-6);
-  border-radius: var(--radius-md);
+  min-height: 44px;
+  padding-inline: 24px;
+  border-radius: var(--pf-radius);
 }
 
-.ilink-app body[data-profile-page="edit"] .il-form-hint {
-  margin: 0;
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-}
-
-.ilink-app body[data-profile-page] .il-tabs {
-  display: flex;
-  gap: var(--space-2);
-  padding: var(--space-1);
-  background: var(--bg-gray);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-5);
-}
-
-.ilink-app body[data-profile-page] .il-tab {
-  padding: 8px 16px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.ilink-app body[data-profile-page] .il-tab:hover {
-  color: var(--text-primary);
-}
-
-.ilink-app body[data-profile-page] .il-tab.active {
-  background: var(--bg-white);
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
-}
-
+/* --------------------------------------------------------------------------
+   Empty states
+   -------------------------------------------------------------------------- */
 .ilink-app body[data-profile-page] .il-empty-state {
   text-align: center;
-  padding: var(--space-12) var(--space-6);
+  padding: 56px 24px;
+  background: var(--pf-border-light);
+  border: 1px dashed var(--pf-border);
+  border-radius: var(--pf-radius);
 }
 
 .ilink-app body[data-profile-page] .il-empty-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto var(--space-4);
-  background: var(--primary-light);
-  border-radius: var(--radius-full);
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  background: var(--pf-card);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary);
+  color: var(--pf-accent-dark);
+  box-shadow: var(--pf-shadow-sm);
 }
 
 .ilink-app body[data-profile-page] .il-empty-title {
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
-  margin: 0 0 var(--space-2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text-secondary);
+  margin: 0 0 8px;
 }
 
 .ilink-app body[data-profile-page] .il-empty-text {
   font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
+  color: var(--pf-text-muted);
+  margin: 0;
 }
 
-.ilink-app body[data-profile-page] .il-btn-primary {
-  background: var(--primary);
-  color: var(--text-white);
-  border: none;
+/* --------------------------------------------------------------------------
+   List items (posts / favorites / teams / honors shared)
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page] .il-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  transition: all 0.3s ease;
 }
 
-.ilink-app body[data-profile-page] .il-btn-primary:hover {
-  background: var(--color-primary-light);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+.ilink-app body[data-profile-page] .il-list-item:hover {
+  border-color: rgba(196, 167, 125, 0.3);
+  box-shadow: var(--pf-shadow);
 }
 
-@media (max-width: 968px) {
-  .ilink-app body[data-profile-page] .il-profile-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .ilink-app body[data-profile-page] .il-profile-sidebar {
-    position: relative !important;
-    top: 0 !important;
-    max-height: none;
-    overflow: visible;
-  }
-
-  .ilink-app body[data-profile-page] .il-profile-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .ilink-app body[data-profile-page] .il-profile-meta {
-    justify-content: center;
-  }
+.ilink-app body[data-profile-page] .il-list-item + .il-list-item {
+  margin-top: 12px;
 }
 
-/* --- Profile honors: list, tags, footer --- */
-.ilink-app body[data-profile-page="honors"] .il-section-header {
-  align-items: flex-start;
-  gap: var(--space-4);
-  margin-bottom: var(--space-4);
-}
-
-.ilink-app body[data-profile-page="honors"] .il-section-header__text {
+.ilink-app body[data-profile-page] .il-list-item__main {
   flex: 1;
   min-width: 0;
 }
 
-.ilink-app body[data-profile-page="honors"] .il-section-subtitle {
-  margin: var(--space-1) 0 0;
-  max-width: none;
+.ilink-app body[data-profile-page] .il-list-item__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.ilink-app body[data-profile-page] .il-list-item__title a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ilink-app body[data-profile-page] .il-list-item__title a:hover {
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page] .il-list-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
-  text-align: left;
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page] .il-list-item__meta strong {
+  color: var(--pf-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ilink-app body[data-profile-page] .il-list-item__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.ilink-app body[data-profile-page] .il-list-item__actions--row {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* --------------------------------------------------------------------------
+   Tags / badges
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page] .il-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: var(--pf-accent-light);
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page] .il-tag--gray {
+  background: var(--pf-border-light);
+  color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page] .il-tag--success {
+  background: var(--pf-success-light);
+  color: var(--pf-success);
+}
+
+.ilink-app body[data-profile-page] .il-tag--warning {
+  background: var(--pf-warning-light);
+  color: var(--pf-warning);
+}
+
+/* --------------------------------------------------------------------------
+   Honors page
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page="honors"] .il-section-header {
+  align-items: flex-start;
 }
 
 .ilink-app body[data-profile-page="honors"] .il-section-header__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 8px;
   flex-shrink: 0;
-}
-
-.ilink-app body[data-profile-page="honors"] .il-btn {
-  border-radius: 8px;
-}
-
-.ilink-app body[data-profile-page="honors"] .il-btn-primary {
-  background: #111827;
-  color: #fff;
-  border: none;
-}
-
-.ilink-app body[data-profile-page="honors"] .il-btn-primary:hover {
-  background: #374151;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.ilink-app body[data-profile-page="honors"] #btnManage.is-active {
-  background: #f3f4f6;
-  color: #111827;
-  border-color: #d1d5db;
-}
-
-.ilink-app body[data-profile-page="honors"] .il-honors-list {
-  margin-bottom: 0;
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honors-batch-bar {
   display: none;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: 8px 12px;
-  margin-bottom: var(--space-3);
-  background: #f9fafb;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: 10px;
   font-size: var(--font-size-sm);
 }
 
@@ -699,10 +953,10 @@
 .ilink-app body[data-profile-page="honors"] .il-honors-batch-bar__select {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 8px;
   margin: 0;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: var(--pf-text-secondary);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honors-batch-bar__checkbox {
@@ -710,54 +964,38 @@
   height: 16px;
   margin: 0;
   cursor: pointer;
-  accent-color: #111827;
+  accent-color: var(--pf-text);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honors-batch-bar__label strong {
-  color: #111827;
+  color: var(--pf-text);
   font-weight: var(--font-weight-semibold);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honors-editor {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   min-height: 72px;
 }
 
-.ilink-app body[data-profile-page="honors"] .il-honors-loading {
-  font-size: var(--font-size-sm);
-  color: var(--text-tertiary);
-}
-
 .ilink-app body[data-profile-page="honors"] .honor-list-card {
-  background: var(--bg-white);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  transition:
-    border-color var(--transition-fast),
-    background-color var(--transition-fast);
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  transition: all 0.3s ease;
 }
 
 .ilink-app body[data-profile-page="honors"] .honor-list-card:hover {
-  transform: none;
-  border-color: var(--border-default);
-  background: #fafafa;
-  box-shadow: none;
-}
-
-.ilink-app body[data-profile-page="honors"] .honors-editor-block {
-  margin-bottom: 0;
+  border-color: rgba(196, 167, 125, 0.3);
+  box-shadow: var(--pf-shadow);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honor-item {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 16px;
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honor-item__check {
@@ -767,7 +1005,7 @@
   margin-top: 3px;
   flex-shrink: 0;
   cursor: pointer;
-  accent-color: #111827;
+  accent-color: var(--pf-text);
 }
 
 .ilink-app body[data-profile-page="honors"] #honorsListSection.honors-manage-mode .il-honor-item__check {
@@ -783,48 +1021,27 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honor-item__title {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: #111827;
-  line-height: 1.45;
-  margin-bottom: 2px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+  line-height: 1.4;
+  margin-bottom: 4px;
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honor-item__meta {
   font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  line-height: 1.4;
+  color: var(--pf-text-muted);
+  line-height: 1.5;
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honor-item__actions {
   flex-shrink: 0;
   margin-left: auto;
-}
-
-/* 成果卡片含证明材料预览时，调整布局为横向 */
-.ilink-app body[data-profile-page="honors"] .il-honor-item--with-proof {
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-.ilink-app body[data-profile-page="honors"] .il-honor-item__proof {
-  flex-shrink: 0;
-  margin-left: 0;
-  margin-top: 4px;
-}
-
-@media (max-width: 576px) {
-  .ilink-app body[data-profile-page="honors"] .il-honor-item--with-proof {
-    flex-direction: column;
-  }
-  .ilink-app body[data-profile-page="honors"] .il-honor-item__proof {
-    margin-left: 0;
-    margin-top: var(--space-2);
-  }
 }
 
 .ilink-app body[data-profile-page="honors"] .honor-chip,
@@ -835,445 +1052,1522 @@
 .ilink-app body[data-profile-page="honors"] .honor-chip--type.honor-chip--t-paper,
 .ilink-app body[data-profile-page="honors"] .honor-chip--type.honor-chip--t-research,
 .ilink-app body[data-profile-page="honors"] .honor-chip--type.honor-chip--t-work,
-.ilink-app body[data-profile-page="honors"] .honor-chip--type.honor-chip--t-other {
-  padding: 2px 10px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  color: #111827;
-  border-radius: 6px;
-}
-
+.ilink-app body[data-profile-page="honors"] .honor-chip--type.honor-chip--t-other,
 .ilink-app body[data-profile-page="honors"] .honor-level-pill,
 .ilink-app body[data-profile-page="honors"] .honor-level-pill.tier-school,
 .ilink-app body[data-profile-page="honors"] .honor-level-pill.tier-provincial,
 .ilink-app body[data-profile-page="honors"] .honor-level-pill.tier-national,
 .ilink-app body[data-profile-page="honors"] .honor-level-pill.tier-international,
 .ilink-app body[data-profile-page="honors"] .honor-level-pill.tier-other,
-.ilink-app body[data-profile-page="honors"] .honor-level-pill.tier-none {
-  padding: 2px 10px;
+.ilink-app body[data-profile-page="honors"] .honor-level-pill.tier-none,
+.ilink-app body[data-profile-page="honors"] .meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
   font-size: var(--font-size-xs);
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  color: #6b7280;
-  border-radius: 6px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.ilink-app body[data-profile-page="honors"] .honor-chip,
+.ilink-app body[data-profile-page="honors"] .honor-chip--type,
+.ilink-app body[data-profile-page="honors"] .meta-chip {
+  background: var(--pf-accent-light);
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page="honors"] .honor-level-pill,
+.ilink-app body[data-profile-page="honors"] .honor-level-pill.tier-none {
+  background: var(--pf-border-light);
+  color: var(--pf-text-secondary);
 }
 
 .ilink-app body[data-profile-page="honors"] .honors-empty {
   text-align: center;
-  padding: var(--space-8) var(--space-4);
-  border: 1px dashed var(--border-light);
-  border-radius: 8px;
-  background: #fafafa;
+  padding: 48px 24px;
+  border: 1px dashed var(--pf-border);
+  border-radius: var(--pf-radius);
+  background: var(--pf-border-light);
 }
 
 .ilink-app body[data-profile-page="honors"] .honors-empty__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin-bottom: var(--space-3);
-  border-radius: var(--radius-full);
-  background: #f3f4f6;
-  color: #9ca3af;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: var(--pf-card);
+  color: var(--pf-accent-dark);
+  box-shadow: var(--pf-shadow-sm);
 }
 
 .ilink-app body[data-profile-page="honors"] .honors-empty__title {
-  margin: 0 0 var(--space-1);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
+  margin: 0 0 6px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text-secondary);
 }
 
 .ilink-app body[data-profile-page="honors"] .honors-empty__text {
   margin: 0;
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-muted);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honors-footer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-5);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--border-light);
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  background: var(--bg-surface);
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--pf-border);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honors-footer .il-btn-primary {
-  min-height: 42px;
-  padding-inline: var(--space-6);
-}
-
-.ilink-app body[data-profile-page="honors"] .il-honors-footer__hint {
-  margin: 0;
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+  min-height: 44px;
+  padding-inline: 24px;
 }
 
 .ilink-app body[data-profile-page="honors"] .il-honors-proof-hint {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 10px;
   font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-}
-
-.ilink-app body[data-profile-page="honors"] #honorModal .il-field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
-
-@media (max-width: 520px) {
-  .ilink-app body[data-profile-page="honors"] #honorModal .il-field-row {
-    grid-template-columns: 1fr;
-  }
+  color: var(--pf-text-muted);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-dropzone__text {
   font-size: var(--font-size-sm);
-  color: var(--text-secondary);
+  color: var(--pf-text-secondary);
   margin: 6px 0 0;
 }
 
 .ilink-app body[data-profile-page="honors"] .il-dropzone__status {
   display: block;
-  margin-top: var(--space-2);
+  margin-top: 8px;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
-  color: #111827;
+  color: var(--pf-text);
 }
 
-@media (max-width: 640px) {
-  .ilink-app body[data-profile-page="honors"] .il-section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .ilink-app body[data-profile-page="honors"] .il-section-header__actions {
-    width: 100%;
-  }
-
-  .ilink-app body[data-profile-page="honors"] .il-section-header__actions .il-btn {
-    flex: 1;
-  }
-
-  .ilink-app body[data-profile-page="honors"] .il-honor-item {
-    flex-wrap: wrap;
-  }
-
-  .ilink-app body[data-profile-page="honors"] .il-honor-item__actions {
-    width: 100%;
-    margin-left: 0;
-    padding-left: 0;
-  }
+/* --------------------------------------------------------------------------
+   Honors modal
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page="honors"] #honorModal .modal-content {
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  box-shadow: var(--pf-shadow-lg);
 }
 
-/* ========================================
-   公开用户主页 & 概览摘要卡片 v8.5
-   ======================================== */
-
-.ilink-app body[data-profile-page="public"] .profile-public-page {
-  max-width: 720px;
-  margin: 0 auto;
+.ilink-app body[data-profile-page="honors"] #honorModal .modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--pf-border);
 }
 
-.ilink-app body[data-profile-page="public"] .profile-public-page__head {
-  margin-bottom: var(--space-6);
+.ilink-app body[data-profile-page="honors"] #honorModal .modal-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
 }
 
-.ilink-app body[data-profile-page="public"] .profile-public-page__title {
-  margin: 0 0 var(--space-2);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--text-primary);
+.ilink-app body[data-profile-page="honors"] #honorModal .modal-body {
+  padding: 24px;
 }
 
-.ilink-app body[data-profile-page="public"] .profile-public-page__sub {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  line-height: 1.55;
-  color: var(--text-secondary);
+.ilink-app body[data-profile-page="honors"] #honorModal .modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--pf-border);
+  gap: 8px;
 }
 
-.ilink-app .profile-summary.profile-summary--inline {
-  padding: var(--space-6);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.ilink-app .profile-summary-rule {
-  margin: var(--space-5) 0;
-  border: 0;
-  border-top: 1px solid var(--border-light);
-  opacity: 1;
-}
-
-.ilink-app .profile-summary-identity {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
-.ilink-app .profile-summary-avatar {
-  position: relative;
-  flex-shrink: 0;
-  width: 80px;
-  height: 80px;
-  min-width: 80px;
-  min-height: 80px;
-  max-width: 80px;
-  max-height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: #111827;
-  border: 2px solid var(--bg-white);
-  box-shadow: var(--shadow-sm);
-}
-
-.ilink-app .profile-summary-avatar__img {
+.ilink-app body[data-profile-page="honors"] #honorModal .il-label {
   display: block;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-}
-
-.ilink-app .profile-summary-avatar__initial {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.ilink-app .profile-summary-avatar--fallback .profile-summary-avatar__initial,
-.ilink-app .profile-summary-avatar--fallback .profile-summary-avatar__img[style*="display: none"] + .profile-summary-avatar__initial {
-  display: flex;
-}
-
-.ilink-app .profile-summary-avatar--fallback .profile-summary-avatar__initial {
-  display: flex;
-}
-
-.ilink-app .profile-summary-identity__title {
-  margin: 0 0 0.25rem;
-  font-size: 1.125rem;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--text-primary);
-}
-
-.ilink-app .profile-summary-identity__meta {
-  margin: 0;
   font-size: var(--font-size-sm);
-  line-height: 1.5;
-  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  color: var(--pf-text-secondary);
+  margin-bottom: 8px;
 }
 
-.ilink-app .profile-summary-identity__meta--muted {
-  color: var(--text-tertiary);
+.ilink-app body[data-profile-page="honors"] #honorModal .il-label-required {
+  color: var(--pf-danger);
 }
 
-.ilink-app .profile-snippet-title {
-  margin: 0 0 var(--space-3);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
+.ilink-app body[data-profile-page="honors"] #honorModal .il-input,
+.ilink-app body[data-profile-page="honors"] #honorModal .il-select,
+.ilink-app body[data-profile-page="honors"] #honorModal textarea.il-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 16px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--pf-text);
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.ilink-app .profile-quick-stats--full {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+.ilink-app body[data-profile-page="honors"] #honorModal .il-input:focus,
+.ilink-app body[data-profile-page="honors"] #honorModal .il-select:focus,
+.ilink-app body[data-profile-page="honors"] #honorModal textarea.il-input:focus {
+  border-color: var(--pf-accent);
+  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
 }
 
-.ilink-app .profile-stat-pill {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.65rem 1rem;
-  min-width: 8rem;
-  background: #f9fafb;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md);
+.ilink-app body[data-profile-page="honors"] #honorModal .il-field {
+  margin-bottom: 16px;
 }
 
-.ilink-app .profile-stat-pill__label {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
-}
-
-.ilink-app .profile-stat-pill__value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.ilink-app .profile-public-basic__grid {
+.ilink-app body[data-profile-page="honors"] #honorModal .il-field-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3) var(--space-5);
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.ilink-app .profile-public-basic__item {
+.ilink-app body[data-profile-page="honors"] #honorModal .il-dropzone {
+  padding: 20px;
+  border: 1px dashed var(--pf-border);
+  border-radius: var(--pf-radius);
+  background: var(--pf-border-light);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ilink-app body[data-profile-page="honors"] #honorModal .il-dropzone:hover {
+  border-color: var(--pf-accent);
+  background: var(--pf-accent-light);
+}
+
+/* --------------------------------------------------------------------------
+   Posts / favorites cards (JS-generated)
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page] .profile-post-list {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
+  gap: 12px;
 }
 
-.ilink-app .profile-public-basic__label {
-  font-size: var(--font-size-xs);
-  color: var(--text-tertiary);
+.ilink-app body[data-profile-page] .profile-post-card {
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  padding: 20px;
+  transition: all 0.3s ease;
 }
 
-.ilink-app .profile-public-basic__value {
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--text-primary);
-  word-break: break-word;
+.ilink-app body[data-profile-page] .profile-post-card:hover {
+  border-color: rgba(196, 167, 125, 0.3);
+  box-shadow: var(--pf-shadow);
 }
 
-.ilink-app .profile-public-bio__text {
-  font-size: var(--font-size-sm);
-  line-height: 1.65;
-  color: var(--text-secondary);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.ilink-app .profile-public-posts__list {
+.ilink-app body[data-profile-page] .profile-post-card__body {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.ilink-app .profile-public-posts__item {
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.ilink-app .profile-public-posts__item:last-child {
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.ilink-app .profile-public-posts__head {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
-  margin-bottom: 0.35rem;
+  gap: 16px;
 }
 
-.ilink-app .profile-public-posts__title {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.ilink-app .profile-public-posts__title:hover {
-  color: #111827;
-  text-decoration: underline;
-}
-
-.ilink-app .profile-public-posts__excerpt {
-  font-size: var(--font-size-sm);
-  line-height: 1.55;
-  color: var(--text-secondary);
-}
-
-.ilink-app .profile-honors-preview-list__item {
-  padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.ilink-app .profile-honors-preview-list__item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.ilink-app .honors-preview-card__layout {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
-.ilink-app .honors-preview-card__main {
+.ilink-app body[data-profile-page] .profile-post-card__main {
   flex: 1;
   min-width: 0;
 }
 
-.ilink-app .honors-preview-card__proof {
+.ilink-app body[data-profile-page] .profile-post-card__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__title-link {
+  color: var(--pf-text);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__title-link:hover {
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: var(--pf-accent-light);
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__meta-key {
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__reads-num,
+.ilink-app body[data-profile-page] .profile-post-card__stat-num {
+  color: var(--pf-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
   flex-shrink: 0;
 }
 
-.ilink-app .honors-preview-proof--image {
-  display: block;
-  width: 88px;
-  height: 88px;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  border: 1px solid var(--border-light);
-  background: #f9fafb;
+.ilink-app body[data-profile-page] .profile-post-card__btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: var(--font-sans);
+  transition: all 0.2s ease;
+  text-decoration: none;
+  text-align: center;
 }
 
-.ilink-app .honors-preview-proof__img {
-  display: block;
-  width: 88px;
-  height: 88px;
-  max-width: 88px;
-  max-height: 88px;
-  object-fit: cover;
-  object-position: center;
+.ilink-app body[data-profile-page] .profile-post-card__btn.btn-primary {
+  background: var(--pf-text);
+  color: #ffffff;
+  border-color: var(--pf-text);
 }
 
-.ilink-app .profile-honors-card__title {
-  margin: 0 0 0.25rem;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-primary);
+.ilink-app body[data-profile-page] .profile-post-card__btn.btn-primary:hover {
+  background: var(--pf-accent-dark);
+  border-color: var(--pf-accent-dark);
 }
 
-.ilink-app .meta-chip {
+.ilink-app body[data-profile-page] .profile-post-card__btn.btn-light {
+  background: var(--pf-card);
+  color: var(--pf-text-secondary);
+  border-color: var(--pf-border);
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__btn.btn-light:hover {
+  background: var(--pf-border-light);
+  border-color: var(--pf-text-secondary);
+  color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__btn.btn-outline-danger {
+  background: var(--pf-card);
+  color: var(--pf-danger);
+  border-color: var(--pf-danger);
+}
+
+.ilink-app body[data-profile-page] .profile-post-card__btn.btn-outline-danger:hover {
+  background: var(--pf-danger);
+  color: #ffffff;
+}
+
+.ilink-app body[data-profile-page] .community-feed-action--fav {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.55rem;
+  justify-content: center;
+  gap: 6px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--pf-border);
+  border-radius: 8px;
+  background: var(--pf-card);
+  color: var(--pf-accent-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ilink-app body[data-profile-page] .community-feed-action--fav:hover {
+  border-color: var(--pf-accent);
+  background: var(--pf-accent-light);
+}
+
+.ilink-app body[data-profile-page] .community-feed-action--fav svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ilink-app body[data-profile-page] .community-feed-action__num {
+  display: none;
+}
+
+.ilink-app body[data-profile-page] .profile-posts-empty,
+.ilink-app body[data-profile-page] .profile-favorites-empty {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--pf-border-light);
+  border: 1px dashed var(--pf-border);
+  border-radius: var(--pf-radius);
+}
+
+/* --------------------------------------------------------------------------
+   Pagination
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page] .profile-posts-pager {
+  margin-top: 24px;
+}
+
+.ilink-app body[data-profile-page] .profile-posts-pager .page-link {
+  color: var(--pf-text-secondary);
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: 8px;
+  font-size: var(--font-size-sm);
+  padding: 8px 14px;
+  transition: all 0.2s ease;
+}
+
+.ilink-app body[data-profile-page] .profile-posts-pager .page-link:hover {
+  background: var(--pf-border-light);
+  color: var(--pf-text);
+  border-color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page] .profile-posts-pager .page-item.disabled .page-link {
+  color: var(--pf-text-muted);
+  background: var(--pf-border-light);
+  border-color: var(--pf-border);
+}
+
+.ilink-app body[data-profile-page] .profile-posts-pager .page-item + .page-item {
+  margin-left: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Password page
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page="password"] .il-section-header {
+  display: block;
+  margin-bottom: 28px;
+}
+
+.ilink-app body[data-profile-page="password"] .il-section-header .il-section-subtitle {
+  margin-top: 4px;
+}
+
+.ilink-app body[data-profile-page="password"] .invalid-feedback {
   font-size: var(--font-size-xs);
-  font-weight: 500;
-  border-radius: 9999px;
-  background: #f3f4f6;
-  color: #4b5563;
+  color: var(--pf-danger);
+  margin-top: 6px;
 }
 
-.ilink-app .meta-chip--muted {
-  background: #f3f4f6;
-  color: #6b7280;
+/* --------------------------------------------------------------------------
+   Article editor page
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .card {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  box-shadow: var(--pf-shadow-sm);
 }
 
-@media (max-width: 576px) {
-  .ilink-app .profile-public-basic__grid {
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .form-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--pf-text-secondary);
+  margin-bottom: 8px;
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .form-control,
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .form-select {
+  min-height: 44px;
+  padding: 10px 16px;
+  font-size: var(--font-size-sm);
+  color: var(--pf-text);
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  box-shadow: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .form-control:focus,
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .form-select:focus {
+  border-color: var(--pf-accent);
+  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-primary {
+  background: var(--pf-text);
+  border-color: var(--pf-text);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-primary:hover {
+  background: var(--pf-accent-dark);
+  border-color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-outline-secondary,
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-outline-primary {
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: var(--font-weight-semibold);
+  border-color: var(--pf-border);
+  color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-outline-secondary:hover,
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-outline-primary:hover {
+  background: var(--pf-border-light);
+  border-color: var(--pf-text-secondary);
+  color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .ql-editor {
+  min-height: 300px;
+  font-size: var(--font-size-base);
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .ql-toolbar {
+  border-color: var(--pf-border);
+  border-top-left-radius: var(--pf-radius);
+  border-top-right-radius: var(--pf-radius);
+  background: var(--pf-border-light);
+}
+
+.ilink-app body[data-profile-page="posts"] .profile-article-edit-body .ql-container {
+  border-color: var(--pf-border);
+  border-bottom-left-radius: var(--pf-radius);
+  border-bottom-right-radius: var(--pf-radius);
+}
+
+/* --------------------------------------------------------------------------
+   Profile overview summary (renderOverview JS)
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  padding: 28px;
+  box-shadow: var(--pf-shadow-sm);
+  margin-bottom: 24px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary-identity {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 3px solid var(--pf-border);
+  background: var(--pf-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary-avatar img,
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary-avatar__initial {
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-bold);
+  color: #ffffff;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary-identity__title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary-identity__meta {
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-quick-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-stat-pill__value {
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-snippet-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+  margin-bottom: 12px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-basic__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-basic__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-basic__label {
+  font-size: var(--font-size-xs);
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-basic__value {
+  font-size: var(--font-size-sm);
+  color: var(--pf-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-bio__text,
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-posts__excerpt,
+.ilink-app body[data-profile-page="overview"] #userInfo .text-muted {
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-secondary);
+  line-height: 1.6;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-summary-rule {
+  border: 0;
+  border-top: 1px solid var(--pf-border);
+  margin: 20px 0;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-posts__item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-posts__item:last-child {
+  border-bottom: none;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-posts__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-posts__title {
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-public-posts__title:hover {
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: var(--pf-accent-light);
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .meta-chip--muted {
+  background: var(--pf-border-light);
+  color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .honor-level-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: var(--pf-border-light);
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-honors-preview-list__item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--pf-border);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-honors-preview-list__item:last-child {
+  border-bottom: none;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-honors-card__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-honors-card__title,
+.ilink-app body[data-profile-page="overview"] #userInfo .honors-preview-card__title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+  margin-bottom: 4px;
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .profile-honors-card__meta,
+.ilink-app body[data-profile-page="overview"] #userInfo .honors-preview-card__meta {
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page="overview"] #userInfo .honors-preview-card__layout {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+/* --------------------------------------------------------------------------
+   Activity list (renderTeamActivityLists JS)
+   -------------------------------------------------------------------------- */
+.ilink-app body[data-profile-page="overview"] .profile-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-activity-list .list-group-item {
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius) !important;
+  padding: 16px 20px;
+  transition: all 0.3s ease;
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-activity-list .list-group-item:hover {
+  border-color: rgba(196, 167, 125, 0.3);
+  box-shadow: var(--pf-shadow);
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-activity-list a {
+  color: var(--pf-text);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+  transition: color 0.2s ease;
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-activity-list a:hover {
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-empty-cta {
+  background: var(--pf-border-light);
+  border: 1px dashed var(--pf-border);
+  border-radius: var(--pf-radius);
+  padding: 48px 24px;
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-empty-cta h4 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-empty-cta p {
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-primary {
+  background: var(--pf-text);
+  border-color: var(--pf-text);
+  border-radius: 10px;
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-primary:hover {
+  background: var(--pf-accent-dark);
+  border-color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-outline-primary {
+  border-color: var(--pf-border);
+  color: var(--pf-text-secondary);
+  border-radius: 10px;
+}
+
+.ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-outline-primary:hover {
+  background: var(--pf-border-light);
+  border-color: var(--pf-text-secondary);
+  color: var(--pf-text);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 968px) {
+  .ilink-app body[data-profile-page] .il-profile-layout {
+    flex-direction: column;
+  }
+
+  .ilink-app body[data-profile-page] .il-profile-sidebar {
+    position: relative !important;
+    top: 0 !important;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    padding: 18px 14px;
+  }
+
+  .ilink-app body[data-profile-page] .il-profile-sidebar-subtitle {
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+  }
+
+  .ilink-app body[data-profile-page] .il-profile-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+    padding-bottom: 4px;
+  }
+
+  .ilink-app body[data-profile-page] .il-profile-nav-item {
+    white-space: nowrap;
+    padding: 9px 14px;
+  }
+
+  .ilink-app body[data-profile-page] .il-profile-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .ilink-app body[data-profile-page] .il-profile-meta {
+    justify-content: center;
+  }
+
+  .ilink-app body[data-profile-page] .il-section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .ilink-app body[data-profile-page] .il-list-item,
+  .ilink-app body[data-profile-page] .profile-post-card__body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ilink-app body[data-profile-page] .il-list-item__actions,
+  .ilink-app body[data-profile-page] .profile-post-card__actions {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+  }
+
+  .ilink-app body[data-profile-page] .profile-post-card__actions {
+    justify-content: flex-start;
+  }
+
+  .ilink-app body[data-profile-page="edit"] .il-skill-form {
     grid-template-columns: 1fr;
   }
 
-  .ilink-app .honors-preview-card__layout {
+  .ilink-app body[data-profile-page="honors"] #honorModal .il-field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ilink-app body[data-profile-page="overview"] #userInfo .profile-public-basic__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  body[data-profile-page] .il-page-wrapper {
+    padding: 16px 12px 32px;
+  }
+
+  .ilink-app body[data-profile-page] .il-section-card,
+  .ilink-app body[data-profile-page] .il-profile-card {
+    padding: 20px;
+    border-radius: var(--pf-radius);
+  }
+
+  .ilink-app body[data-profile-page] .il-profile-avatar {
+    width: 72px;
+    height: 72px;
+  }
+
+  .ilink-app body[data-profile-page] .il-profile-name {
+    font-size: var(--font-size-xl);
+  }
+
+  .ilink-app body[data-profile-page] .il-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ilink-app body[data-profile-page] .il-section-header .il-btn {
+    width: auto;
+  }
+
+  .ilink-app body[data-profile-page] .il-list-item__actions,
+  .ilink-app body[data-profile-page] .profile-post-card__actions {
     flex-direction: column;
   }
+
+  .ilink-app body[data-profile-page] .profile-post-card__actions {
+    align-items: stretch;
+  }
+
+  .ilink-app body[data-profile-page] .profile-post-card__btn {
+    width: 100%;
+  }
+
+  .ilink-app body[data-profile-page="overview"] #userInfo .profile-public-basic__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Team cards & activity panels (profile.html)
+   -------------------------------------------------------------------------- */
+
+/* Global meta-chip used inside team cards */
+.ilink-app body[data-profile-page] .meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  background: var(--pf-accent-light);
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page] .meta-chip--muted {
+  background: var(--pf-border-light);
+  color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page] .meta-chip--primary {
+  background: var(--pf-text);
+  color: #ffffff;
+}
+
+/* Activity toolbar */
+.ilink-app body[data-profile-page] .il-activity-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+}
+
+.ilink-app body[data-profile-page] .il-activity-toolbar__filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ilink-app body[data-profile-page] .il-activity-toolbar__select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 8px 32px 8px 14px;
+  background: var(--pf-card)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9a9a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 10px center;
+  background-size: 12px;
+  border: 1px solid var(--pf-border);
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--pf-text);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  min-width: 120px;
+}
+
+.ilink-app body[data-profile-page] .il-activity-toolbar__select:focus {
+  border-color: var(--pf-accent);
+  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
+}
+
+.ilink-app body[data-profile-page] .il-activity-toolbar__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--pf-text);
+  color: #ffffff;
+  border: 1px solid var(--pf-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ilink-app body[data-profile-page] .il-activity-toolbar__action:hover {
+  background: var(--pf-accent-dark);
+  border-color: var(--pf-accent-dark);
+}
+
+/* Team card */
+.ilink-app body[data-profile-page] .il-team-card {
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-left: 3px solid transparent;
+  border-radius: var(--pf-radius);
+  padding: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.ilink-app body[data-profile-page] .il-team-card:hover {
+  border-color: rgba(196, 167, 125, 0.3);
+  box-shadow: var(--pf-shadow);
+  transform: translateY(-2px);
+}
+
+.ilink-app body[data-profile-page] .il-team-card--open {
+  border-left-color: var(--pf-success);
+}
+
+.ilink-app body[data-profile-page] .il-team-card--teaming {
+  border-left-color: var(--pf-warning);
+}
+
+.ilink-app body[data-profile-page] .il-team-card--closed {
+  border-left-color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page] .il-team-card + .il-team-card {
+  margin-top: 12px;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  color: var(--pf-accent-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+  line-height: 1.4;
+  margin: 0 0 6px;
+  text-decoration: none;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__title a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__title a:hover {
+  color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-muted);
+  margin-top: 4px;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__meta-sep {
+  color: var(--pf-text-muted);
+  opacity: 0.6;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__stat-value {
+  color: var(--pf-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__badge--open {
+  background: var(--pf-success-light);
+  color: var(--pf-success);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__badge--teaming {
+  background: var(--pf-warning-light);
+  color: var(--pf-warning);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__badge--closed {
+  background: var(--pf-border-light);
+  color: var(--pf-text-muted);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__badge--pending {
+  background: var(--pf-warning-light);
+  color: var(--pf-warning);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__badge--approved {
+  background: var(--pf-success-light);
+  color: var(--pf-success);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__badge--rejected {
+  background: var(--pf-danger-light);
+  color: var(--pf-danger);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__arrow {
+  color: var(--pf-text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.ilink-app body[data-profile-page] .il-team-card:hover .il-team-card__arrow {
+  transform: translateX(3px);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__divider {
+  height: 1px;
+  background: var(--pf-border);
+  margin: 16px 0;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--pf-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pf-accent), var(--pf-accent-dark));
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__progress-text {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text-muted);
+  white-space: nowrap;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid transparent;
+  background: var(--pf-card);
+  color: var(--pf-text-secondary);
+  border-color: var(--pf-border);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ilink-app body[data-profile-page] .il-team-card__btn:hover {
+  background: var(--pf-border-light);
+  border-color: var(--pf-text-secondary);
+  color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__btn--primary,
+.ilink-app body[data-profile-page] .il-team-card__btn--secondary {
+  background: var(--pf-text);
+  color: #ffffff;
+  border-color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__btn--primary:hover,
+.ilink-app body[data-profile-page] .il-team-card__btn--secondary:hover {
+  background: var(--pf-accent-dark);
+  border-color: var(--pf-accent-dark);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__btn--danger {
+  background: var(--pf-card);
+  color: var(--pf-danger);
+  border-color: var(--pf-danger);
+}
+
+.ilink-app body[data-profile-page] .il-team-card__btn--danger:hover {
+  background: var(--pf-danger);
+  color: #ffffff;
+}
+
+/* Team sub-panel (inside 竞赛小队) */
+.ilink-app body[data-profile-page] .il-team-sub-panel {
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius-lg);
+  padding: 24px;
+  box-shadow: var(--pf-shadow-sm);
+}
+
+.ilink-app body[data-profile-page] .il-team-sub-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.ilink-app body[data-profile-page] .il-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text-secondary);
+  background: var(--pf-card);
+  border: 1px solid var(--pf-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ilink-app body[data-profile-page] .il-back-btn:hover {
+  background: var(--pf-border-light);
+  color: var(--pf-text);
+  border-color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page] .il-team-sub-panel__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+  margin: 0;
+}
+
+.ilink-app body[data-profile-page] .il-team-sub-panel__stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.ilink-app body[data-profile-page] .il-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
+  color: var(--pf-text-secondary);
+}
+
+.ilink-app body[data-profile-page] .il-stat-pill__value {
+  font-weight: var(--font-weight-bold);
+  color: var(--pf-text);
+}
+
+.ilink-app body[data-profile-page] .il-team-sub-panel__tabs {
+  margin-bottom: 16px;
+}
+
+.ilink-app body[data-profile-page] .sub-tab-content {
+  animation: pf-panel-enter 0.2s ease both;
+}
+
+.ilink-app body[data-profile-page] .kanban-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ilink-app body[data-profile-page] .kanban-mini-card {
+  background: var(--pf-border-light);
+  border: 1px solid var(--pf-border);
+  border-radius: var(--pf-radius);
+  padding: 14px 16px;
+  transition: all 0.25s ease;
+}
+
+.ilink-app body[data-profile-page] .kanban-mini-card:hover {
+  border-color: rgba(196, 167, 125, 0.3);
+  box-shadow: var(--pf-shadow-sm);
+}
+
+.ilink-app body[data-profile-page] .kanban-mini-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.ilink-app body[data-profile-page] .kanban-mini-card__title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--pf-text);
+  line-height: 1.4;
+}
+
+.ilink-app body[data-profile-page] .kanban-mini-card__meta {
+  font-size: var(--font-size-xs);
+  color: var(--pf-text-muted);
+  margin-top: 4px;
+}
+
+.ilink-app body[data-profile-page] .kanban-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--pf-text-muted);
+  background: var(--pf-border-light);
+  border: 1px dashed var(--pf-border);
+  border-radius: var(--pf-radius);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 576px) {
+  .ilink-app body[data-profile-page] .il-activity-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ilink-app body[data-profile-page] .il-activity-toolbar__filters {
+    width: 100%;
+  }
+
+  .ilink-app body[data-profile-page] .il-activity-toolbar__select {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .ilink-app body[data-profile-page] .il-activity-toolbar__action {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ilink-app body[data-profile-page] .il-team-card__header {
+    flex-wrap: wrap;
+  }
+
+  .ilink-app body[data-profile-page] .il-team-card__right {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 8px;
+    justify-content: flex-end;
+  }
+
+  .ilink-app body[data-profile-page] .il-team-card__actions {
+    width: 100%;
+  }
+
+  .ilink-app body[data-profile-page] .il-team-card__btn {
+    flex: 1;
+  }
+
+  .ilink-app body[data-profile-page] .il-team-sub-panel {
+    padding: 16px;
+  }
+
+  .ilink-app body[data-profile-page] .il-team-sub-panel__stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* edit shell overrides — migrated from style.css */
+
+body[data-profile-page="edit"] .il-avatar-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  margin-bottom: 1.25rem !important;
+  flex-wrap: wrap !important;
+}
+body[data-profile-page="edit"] #avatarContainer,
+body[data-profile-page="edit"] .il-avatar-preview,
+body[data-profile-page="edit"] .il-avatar-container {
+  width: 104px !important;
+  height: 104px !important;
+  min-width: 104px !important;
+  min-height: 104px !important;
+  max-width: 104px !important;
+  max-height: 104px !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  border-radius: 50% !important;
+  position: relative !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+}
+body[data-profile-page="edit"] #avatarPreviewImg,
+body[data-profile-page="edit"] .il-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+body[data-profile-page="edit"] .il-avatar-fallback {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+body[data-profile-page="edit"] .il-avatar-fallback.il-avatar-fallback--hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+body[data-profile-page="edit"] #avatarPreviewImg.il-avatar-img--hidden,
+body[data-profile-page="edit"] .il-avatar-img.il-avatar-img--hidden {
+  display: none !important;
+  visibility: hidden !important;
+}
+body[data-profile-page="edit"] .il-avatar-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+}
+
+/* honors shell overrides — migrated from style.css */
+
+body[data-app-page="gallery"] .modal-backdrop,
+.ilink-app body[data-profile-page="honors"] .modal-backdrop {
+  background-color: rgba(17, 24, 39, 0.45);
+}
+.ilink-app body[data-profile-page="honors"] .il-bs-form-modal .modal-dialog {
+  max-width: 520px;
 }

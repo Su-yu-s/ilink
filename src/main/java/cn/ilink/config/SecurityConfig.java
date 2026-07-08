@@ -22,7 +22,8 @@ public class SecurityConfig {
         http
             .authorizeRequests(authorize -> authorize
                 .antMatchers("/", "/index.html", "/404.html", "/favicon.ico", "/favicon.svg",
-                    "/api/login", "/api/register", "/login", "/login.html", "/register", "/register.html").permitAll()
+                    "/api/login", "/api/register", "/login", "/login.html", "/register", "/register.html",
+                    "/forgot-password.html", "/terms.html", "/privacy.html").permitAll()
                 .antMatchers("/actuator/health", "/actuator/info").permitAll()
                 .antMatchers("/css/**", "/js/**", "/lib/**", "/img/**", "/uploads/**").permitAll()
 
@@ -40,6 +41,7 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/api/asset/*").permitAll()
                 .antMatchers("/api/asset/**").authenticated()
                 .antMatchers("/api/user/public/**").permitAll()
+                .antMatchers("/api/user/skills/public/**").permitAll()
 
                 .antMatchers("/index.html").permitAll()
                 .antMatchers("/competitions.html").permitAll()
@@ -49,6 +51,7 @@ public class SecurityConfig {
                 .antMatchers("/team-market.html").permitAll()
                 .antMatchers("/gallery.html").permitAll()
                 .antMatchers("/user-profile.html").permitAll()
+                .antMatchers("/team-workspace.html").permitAll()
 
                 .antMatchers("/api/user/**").authenticated()
                 .antMatchers("/api/upload/**").authenticated()
@@ -60,7 +63,7 @@ public class SecurityConfig {
                 .antMatchers("/asset-detail.html").authenticated()
                 .antMatchers("/community-article.html").authenticated()
                 .antMatchers("/admin.html", "/api/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             )
             .formLogin(form -> form
                 .loginPage("/login")
@@ -93,7 +96,7 @@ public class SecurityConfig {
             })
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringAntMatchers("/ws/**")
+                .ignoringAntMatchers("/ws/**", "/ws-native/**", "/api/upload/**")
             );
 
         return http.build();

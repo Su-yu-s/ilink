@@ -6,9 +6,10 @@ import cn.ilink.entity.CommunityComment;
 import cn.ilink.entity.CommunityPost;
 import cn.ilink.entity.CommunityPostFavorite;
 import cn.ilink.entity.User;
-import cn.ilink.service.CommunityCommentService;
+import cn.ilink.service.impl.CommunityCommentServiceImpl;
 import cn.ilink.service.CommunityPostInteractionService;
-import cn.ilink.service.CommunityPostService;
+import cn.ilink.service.impl.CommunityPostServiceImpl;
+import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.mapper.CommunityPostFavoriteMapper;
 import cn.ilink.util.HtmlSanitizer;
@@ -42,7 +43,7 @@ public class CommunityController {
     private static final int EXCERPT_LEN = 220;
 
     @Autowired
-    private CommunityPostService communityPostService;
+    private CommunityPostServiceImpl communityPostService;
 
     @Autowired
     private CommunityPostInteractionService communityPostInteractionService;
@@ -51,13 +52,16 @@ public class CommunityController {
     private CommunityPostFavoriteMapper communityPostFavoriteMapper;
 
     @Autowired
-    private CommunityCommentService communityCommentService;
+    private CommunityCommentServiceImpl communityCommentService;
 
     @Autowired
     private UserService userService;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @GetMapping("/posts")
     @ResponseBody
@@ -74,7 +78,7 @@ public class CommunityController {
         if (category != null && !category.trim().isEmpty()) {
             String c = category.trim();
             if (!CATEGORIES.contains(c)) {
-                return ResponseEntity.ok(Result.badRequest("无效的分区参数"));
+                return Result.badRequest("无效的分区参数").toResponseEntity();
             }
             wrapper.eq(CommunityPost::getCategory, c);
         }
@@ -105,7 +109,7 @@ public class CommunityController {
             .map(p -> toListItem(p, authorMap.get(p.getAuthorId()), viewer, likedMap, favoritedMap))
             .collect(Collectors.toList());
 
-        return ResponseEntity.ok(Result.ok("获取成功", views).withPagination(safePage, safeSize, (int) total));
+        return Result.ok("获取成功", views).withPagination(safePage, safeSize, (int) total).toResponseEntity();
     }
 
     /**
@@ -120,7 +124,7 @@ public class CommunityController {
     ) {
         User viewer = ControllerUtils.requireUser(session);
         if (viewer == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         LambdaQueryWrapper<CommunityPost> wrapper = new LambdaQueryWrapper<>();
@@ -140,7 +144,7 @@ public class CommunityController {
             .map(p -> toListItem(p, viewer, viewer, likedMap, favoritedMap))
             .collect(Collectors.toList());
 
-        return ResponseEntity.ok(Result.ok("获取成功", views).withPagination(safePage, safeSize, (int) total));
+        return Result.ok("获取成功", views).withPagination(safePage, safeSize, (int) total).toResponseEntity();
     }
 
     /**
@@ -155,7 +159,7 @@ public class CommunityController {
     ) {
         User viewer = ControllerUtils.requireUser(session);
         if (viewer == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         LambdaQueryWrapper<CommunityPostFavorite> favWrapper = new LambdaQueryWrapper<>();
@@ -175,7 +179,7 @@ public class CommunityController {
             .collect(Collectors.toList());
 
         if (postIds.isEmpty()) {
-            return ResponseEntity.ok(Result.ok("获取成功", Collections.emptyList()).withPagination(safePage, safeSize, total));
+            return Result.ok("获取成功", Collections.emptyList()).withPagination(safePage, safeSize, total).toResponseEntity();
         }
 
         List<CommunityPost> posts = communityPostService.list(
@@ -198,7 +202,7 @@ public class CommunityController {
             .map(p -> toListItem(p, authorMap.get(p.getAuthorId()), viewer, likedMap, favoritedMap))
             .collect(Collectors.toList());
 
-        return ResponseEntity.ok(Result.ok("获取成功", views).withPagination(safePage, safeSize, total));
+        return Result.ok("获取成功", views).withPagination(safePage, safeSize, total).toResponseEntity();
     }
 
     /**
@@ -209,17 +213,17 @@ public class CommunityController {
     public ResponseEntity<Result<?>> getPostForEdit(@PathVariable Long id, HttpSession session) {
         User viewer = ControllerUtils.requireUser(session);
         if (viewer == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         CommunityPost post = communityPostService.getById(id);
         if (post == null) {
-            return ResponseEntity.ok(Result.notFound("文章不存在"));
+            return Result.notFound("文章不存在").toResponseEntity();
         }
         if (!ControllerUtils.isAdmin(viewer) && !viewer.getId().equals(post.getAuthorId())) {
-            return ResponseEntity.ok(Result.fail(403, "无权编辑该文章"));
+            return Result.fail(403, "无权编辑该文章").toResponseEntity();
         }
         User author = userService.getById(post.getAuthorId());
-        return ResponseEntity.ok(Result.ok("获取成功", toDetail(post, author, viewer)));
+        return Result.ok("获取成功", toDetail(post, author, viewer)).toResponseEntity();
     }
 
     @PutMapping("/posts/{id}")
@@ -231,14 +235,14 @@ public class CommunityController {
     ) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         CommunityPost existing = communityPostService.getById(id);
         if (existing == null) {
-            return ResponseEntity.ok(Result.notFound("文章不存在"));
+            return Result.notFound("文章不存在").toResponseEntity();
         }
         if (!ControllerUtils.isAdmin(user) && !user.getId().equals(existing.getAuthorId())) {
-            return ResponseEntity.ok(Result.fail(403, "无权修改该文章"));
+            return Result.fail(403, "无权修改该文章").toResponseEntity();
         }
 
         String category = body.get("category") != null ? String.valueOf(body.get("category")).trim() : "";
@@ -247,26 +251,26 @@ public class CommunityController {
         String content = HtmlSanitizer.communityPost(rawContent);
 
         if (!CATEGORIES.contains(category)) {
-            return ResponseEntity.ok(Result.badRequest("请选择有效分区"));
+            return Result.badRequest("请选择有效分区").toResponseEntity();
         }
         if (title.isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("标题不能为空"));
+            return Result.badRequest("标题不能为空").toResponseEntity();
         }
         if (title.length() > TITLE_MAX) {
-            return ResponseEntity.ok(Result.badRequest("标题过长"));
+            return Result.badRequest("标题过长").toResponseEntity();
         }
         if (Jsoup.parse(content).text().trim().isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("正文不能为空"));
+            return Result.badRequest("正文不能为空").toResponseEntity();
         }
         if (content.length() > CONTENT_MAX) {
-            return ResponseEntity.ok(Result.badRequest("正文过长"));
+            return Result.badRequest("正文过长").toResponseEntity();
         }
 
         String attachmentsJson;
         try {
             attachmentsJson = validateAndSerializeAttachments(body.get("attachments"));
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.ok(Result.badRequest(ex.getMessage()));
+            return Result.badRequest(ex.getMessage()).toResponseEntity();
         }
 
         existing.setCategory(category);
@@ -277,9 +281,9 @@ public class CommunityController {
         if (communityPostService.updateById(existing)) {
             CommunityPost updated = communityPostService.getById(id);
             User author = userService.getById(updated.getAuthorId());
-            return ResponseEntity.ok(Result.ok("保存成功", toDetail(updated, author, user)));
+            return Result.ok("保存成功", toDetail(updated, author, user)).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.fail("保存失败"));
+            return Result.fail("保存失败").toResponseEntity();
         }
     }
 
@@ -288,7 +292,7 @@ public class CommunityController {
     public ResponseEntity<Result<?>> createPost(@RequestBody Map<String, Object> body, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         String category = body.get("category") != null ? String.valueOf(body.get("category")).trim() : "";
@@ -297,26 +301,26 @@ public class CommunityController {
         String content = HtmlSanitizer.communityPost(rawContent);
 
         if (!CATEGORIES.contains(category)) {
-            return ResponseEntity.ok(Result.badRequest("请选择有效分区"));
+            return Result.badRequest("请选择有效分区").toResponseEntity();
         }
         if (title.isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("标题不能为空"));
+            return Result.badRequest("标题不能为空").toResponseEntity();
         }
         if (title.length() > TITLE_MAX) {
-            return ResponseEntity.ok(Result.badRequest("标题过长"));
+            return Result.badRequest("标题过长").toResponseEntity();
         }
         if (Jsoup.parse(content).text().trim().isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("正文不能为空"));
+            return Result.badRequest("正文不能为空").toResponseEntity();
         }
         if (content.length() > CONTENT_MAX) {
-            return ResponseEntity.ok(Result.badRequest("正文过长"));
+            return Result.badRequest("正文过长").toResponseEntity();
         }
 
         String attachmentsJson;
         try {
             attachmentsJson = validateAndSerializeAttachments(body.get("attachments"));
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.ok(Result.badRequest(ex.getMessage()));
+            return Result.badRequest(ex.getMessage()).toResponseEntity();
         }
 
         CommunityPost post = new CommunityPost();
@@ -331,9 +335,9 @@ public class CommunityController {
         post.setCreatedAt(new Date());
 
         if (communityPostService.save(post)) {
-            return ResponseEntity.ok(Result.ok("发布成功", toDetail(post, user, user)));
+            return Result.ok("发布成功", toDetail(post, user, user)).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.fail("发布失败"));
+            return Result.fail("发布失败").toResponseEntity();
         }
     }
 
@@ -342,12 +346,12 @@ public class CommunityController {
     public ResponseEntity<Result<?>> listComments(@PathVariable Long postId, HttpSession session) {
         User currentUser = (User) session.getAttribute("user");
         if (currentUser == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         CommunityPost post = communityPostService.getById(postId);
         if (post == null) {
-            return ResponseEntity.ok(Result.notFound("文章不存在"));
+            return Result.notFound("文章不存在").toResponseEntity();
         }
 
         List<CommunityComment> comments = communityCommentService.list(
@@ -362,7 +366,7 @@ public class CommunityController {
             .map(c -> toCommentView(c, authorMap.get(c.getUserId()), currentUser))
             .collect(Collectors.toList());
 
-        return ResponseEntity.ok(Result.ok("获取成功", list));
+        return Result.ok("获取成功", list).toResponseEntity();
     }
 
     @PostMapping("/posts/{postId}/comments")
@@ -374,20 +378,20 @@ public class CommunityController {
     ) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         String content = body.get("content") != null ? String.valueOf(body.get("content")).trim() : "";
         if (content.isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("评论内容不能为空"));
+            return Result.badRequest("评论内容不能为空").toResponseEntity();
         }
         if (content.length() > COMMENT_MAX) {
-            return ResponseEntity.ok(Result.badRequest("评论过长"));
+            return Result.badRequest("评论过长").toResponseEntity();
         }
 
         CommunityPost post = communityPostService.getById(postId);
         if (post == null) {
-            return ResponseEntity.ok(Result.notFound("文章不存在"));
+            return Result.notFound("文章不存在").toResponseEntity();
         }
 
         CommunityComment comment = new CommunityComment();
@@ -397,9 +401,21 @@ public class CommunityController {
         comment.setCreatedAt(new Date());
 
         if (communityCommentService.save(comment)) {
-            return ResponseEntity.ok(Result.ok("评论成功", toCommentView(comment, user, user)));
+            // 通知文章作者（排除作者自己评论）
+            if (!post.getAuthorId().equals(user.getId())) {
+                User author = userService.getById(post.getAuthorId());
+                notificationService.create(
+                    post.getAuthorId(),
+                    user.getId(),
+                    "COMMENT",
+                    "你的文章被评论了",
+                    author != null ? author.getUsername() : "某位用户" + " 评论了你的文章《" + post.getTitle() + "》：" + content,
+                    postId
+                );
+            }
+            return Result.ok("评论成功", toCommentView(comment, user, user)).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.fail("评论失败"));
+            return Result.fail("评论失败").toResponseEntity();
         }
     }
 
@@ -408,22 +424,22 @@ public class CommunityController {
     public ResponseEntity<Result<?>> deleteComment(@PathVariable Long commentId, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         CommunityComment comment = communityCommentService.getById(commentId);
         if (comment == null) {
-            return ResponseEntity.ok(Result.notFound("评论不存在"));
+            return Result.notFound("评论不存在").toResponseEntity();
         }
 
         if (!ControllerUtils.isAdmin(user) && !user.getId().equals(comment.getUserId())) {
-            return ResponseEntity.ok(Result.fail(403, "无权删除该评论"));
+            return Result.fail(403, "无权删除该评论").toResponseEntity();
         }
 
         if (communityCommentService.removeById(commentId)) {
-            return ResponseEntity.ok(Result.ok("已删除", null));
+            return Result.ok("已删除", null).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.fail("删除失败"));
+            return Result.fail("删除失败").toResponseEntity();
         }
     }
 
@@ -432,7 +448,7 @@ public class CommunityController {
     public ResponseEntity<Result<?>> getPost(@PathVariable Long id, HttpSession session) {
         CommunityPost post = communityPostService.getById(id);
         if (post == null) {
-            return ResponseEntity.ok(Result.notFound("文章不存在"));
+            return Result.notFound("文章不存在").toResponseEntity();
         }
 
         communityPostService.update(
@@ -444,7 +460,7 @@ public class CommunityController {
 
         User author = userService.getById(post.getAuthorId());
         User viewer = (User) session.getAttribute("user");
-        return ResponseEntity.ok(Result.ok("获取成功", toDetail(post, author, viewer)));
+        return Result.ok("获取成功", toDetail(post, author, viewer)).toResponseEntity();
     }
 
     @DeleteMapping("/posts/{id}")
@@ -452,19 +468,19 @@ public class CommunityController {
     public ResponseEntity<Result<?>> deletePost(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         CommunityPost post = communityPostService.getById(id);
         if (post == null) {
-            return ResponseEntity.ok(Result.notFound("帖子不存在"));
+            return Result.notFound("帖子不存在").toResponseEntity();
         }
         if (!ControllerUtils.isAdmin(user) && !user.getId().equals(post.getAuthorId())) {
-            return ResponseEntity.ok(Result.fail(403, "无权删除该帖"));
+            return Result.fail(403, "无权删除该帖").toResponseEntity();
         }
         if (communityPostService.removeById(id)) {
-            return ResponseEntity.ok(Result.ok("已删除", null));
+            return Result.ok("已删除", null).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.fail("删除失败"));
+            return Result.fail("删除失败").toResponseEntity();
         }
     }
 
@@ -473,13 +489,13 @@ public class CommunityController {
     public ResponseEntity<Result<?>> toggleLike(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         Map<String, Object> data = communityPostInteractionService.toggleLike(id, user.getId());
         if (data == null) {
-            return ResponseEntity.ok(Result.notFound("文章不存在"));
+            return Result.notFound("文章不存在").toResponseEntity();
         }
-        return ResponseEntity.ok(Result.ok("ok", data));
+        return Result.ok("ok", data).toResponseEntity();
     }
 
     @PostMapping("/posts/{id}/favorite")
@@ -487,13 +503,13 @@ public class CommunityController {
     public ResponseEntity<Result<?>> toggleFavorite(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         Map<String, Object> data = communityPostInteractionService.toggleFavorite(id, user.getId());
         if (data == null) {
-            return ResponseEntity.ok(Result.notFound("文章不存在"));
+            return Result.notFound("文章不存在").toResponseEntity();
         }
-        return ResponseEntity.ok(Result.ok("ok", data));
+        return Result.ok("ok", data).toResponseEntity();
     }
 
     private Map<Long, User> loadAuthors(Set<Long> ids) {

@@ -41,8 +41,14 @@
   padding: 1.5rem;
   background: #ffffff;
   border: 1px solid #e8e8e8;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.profile-public-page__body .profile-summary.profile-summary--inline:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 #userInfo .profile-summary-identity,

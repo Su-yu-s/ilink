@@ -24,50 +24,55 @@ public class RecommendationController {
 
     @GetMapping("/teams")
     @ResponseBody
-    public ResponseEntity<Result<List<RecommendedTeamVO>>> getRecommendedTeams(
+    public ResponseEntity<Result<?>> getRecommendedTeams(
             @RequestParam(defaultValue = "10") int limit,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         List<RecommendedTeamVO> teams = recommendationService.getRecommendedTeams(user.getId(), limit);
-        return ResponseEntity.ok(Result.ok(teams));
+        return Result.ok(teams).toResponseEntity();
     }
 
     @GetMapping("/users")
     @ResponseBody
-    public ResponseEntity<Result<List<RecommendedUserVO>>> getRecommendedUsers(
+    public ResponseEntity<Result<?>> getRecommendedUsers(
             @RequestParam Long teamId,
             @RequestParam(defaultValue = "10") int limit,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         List<RecommendedUserVO> users = recommendationService.getRecommendedUsers(teamId, limit);
-        return ResponseEntity.ok(Result.ok(users));
+        return Result.ok(users).toResponseEntity();
     }
 
     @GetMapping("/match")
     @ResponseBody
-    public ResponseEntity<Result<MatchResult>> calculateMatchScore(
+    public ResponseEntity<Result<?>> calculateMatchScore(
             @RequestParam Long teamId,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         MatchResult result = recommendationService.calculateMatchScore(user.getId(), teamId);
-        return ResponseEntity.ok(Result.ok(result));
+        return Result.ok(result).toResponseEntity();
     }
 
     @PostMapping("/feedback/{logId}")
     @ResponseBody
-    public ResponseEntity<Result<Void>> recordFeedback(
+    public ResponseEntity<Result<?>> recordFeedback(
             @PathVariable Long logId,
-            @RequestParam String action) {
+            @RequestParam String action,
+            HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
         recommendationService.recordFeedback(logId, action);
-        return ResponseEntity.ok(Result.ok("反馈已记录", null));
+        return Result.ok("反馈已记录", null).toResponseEntity();
     }
 }

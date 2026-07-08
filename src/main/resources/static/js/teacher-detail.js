@@ -1,14 +1,5 @@
 ﻿// 导师详情页面JavaScript
 
-function escapeHtml(value) {
-    return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
 // 获取URL参数
 const urlParams = new URLSearchParams(window.location.search);
 const teacherId = urlParams.get('id');

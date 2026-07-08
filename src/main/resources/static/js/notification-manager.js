@@ -68,12 +68,12 @@ class NotificationManager {
         notifications.forEach(notification => {
             const unreadClass = notification.isRead ? '' : 'notification-item--unread';
             const iconSvg = this.getNotificationIcon(notification.type);
-            // C-16: 对 relatedType 做 HTML 转义，防止 XSS
-            const safeRelatedType = this.escapeHtml(notification.relatedType || '');
+            // 使用 notification.type 作为跳转路由依据（relatedType 通常为空）
+            const safeType = this.escapeHtml(notification.type || 'SYSTEM');
             const safeRelatedId = Number(notification.relatedId) || 0;
 
             html += `
-                <div class="notification-item ${unreadClass}" data-id="${notification.id}" data-related-type="${safeRelatedType}" data-related-id="${safeRelatedId}" onclick="handleNotificationClick(${notification.id}, this.dataset.relatedType, this.dataset.relatedId)">
+                <div class="notification-item ${unreadClass}" data-id="${notification.id}" data-notification-type="${safeType}" data-related-id="${safeRelatedId}" onclick="handleNotificationClick(${notification.id}, '${safeType}', ${safeRelatedId})">
                     <div class="notification-item__icon">
                         ${iconSvg}
                     </div>
@@ -93,11 +93,19 @@ class NotificationManager {
     getNotificationIcon(type) {
         const icons = {
             'TEAM_INVITE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+            'TEAM_APPLY': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 14s-3 1.5-5 1.5-5-1.5-5-1.5"/><circle cx="9" cy="9" r="5"/><path d="M16 5l3 4 5-7"/></svg>',
+            'TEAM_APPROVED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 3 18 5 22 0"/></svg>',
+            'TEAM_REJECTED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/><circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/></svg>',
             'TASK_ASSIGNED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
             'TASK_COMPLETED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+            'TASK_SUBMITTED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>',
+            'TEACHER_APPROVED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
             'MILESTONE_UPDATE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
             'RECOMMENDATION': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-            'SYSTEM': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+            'SYSTEM': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+            'LIKE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>',
+            'FAVORITE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+            'COMMENT': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
         };
         return icons[type] || icons['SYSTEM'];
     }
@@ -215,22 +223,50 @@ class NotificationManager {
     }
 }
 
-function handleNotificationClick(id, relatedType, relatedId) {
+// 通知点击处理函数（全局可调用）
+function handleNotificationClick(id, notificationType, relatedId) {
     if (window.notificationManager) {
         window.notificationManager.markAsRead(id);
     }
 
-    if (relatedType && relatedId) {
-        const routes = {
-            'TEAM': `/team-detail.html?id=${relatedId}`,
-            'TASK': `/team-workspace.html?taskId=${relatedId}`,
-            'PROJECT': `/team-detail.html?id=${relatedId}`,
-            'USER': `/profile.html?id=${relatedId}`
-        };
+    if (!notificationType || !relatedId) {
+        return;
+    }
 
-        const route = routes[relatedType];
-        if (route) {
-            window.location.href = route;
-        }
+    var route;
+    // 根据通知类型决定跳转目标
+    switch (notificationType) {
+        case 'TEAM_APPLY':
+        case 'TEAM_APPLY_RESULT':
+        case 'TEAM_INVITE':
+        case 'TEAM_APPROVED':
+        case 'TEAM_REJECTED':
+            // 团队相关：跳转到团队详情页
+            route = '/team-detail.html?id=' + relatedId;
+            break;
+        case 'TASK_ASSIGNED':
+        case 'TASK_SUBMITTED':
+        case 'TASK_COMPLETED':
+            // 任务相关：跳转到团队工作台
+            route = '/team-space.html?id=' + relatedId;
+            break;
+        case 'COMMENT':
+        case 'LIKE':
+        case 'FAVORITE':
+            // 社区互动：跳转到文章详情页
+            route = '/community-article.html?id=' + relatedId;
+            break;
+        case 'TEACHER_APPROVED':
+            // 导师审批：跳转到导师详情页
+            route = '/teacher-detail.html?id=' + relatedId;
+            break;
+        default:
+            // 兜底：跳转到团队详情页
+            route = '/team-detail.html?id=' + relatedId;
+            break;
+    }
+
+    if (route) {
+        window.location.href = route;
     }
 }

@@ -12,7 +12,7 @@
   overflow: hidden;
   background:
     var(--bg-mesh),
-    linear-gradient(165deg, var(--color-gray-50) 0%, var(--color-gray-100) 50%, var(--color-gray-50) 100%);
+    linear-gradient(165deg, #fdf9f3 0%, #faf9f7 50%, #fdf9f3 100%);
 }
 
 .auth-page--login html,

@@ -1,5 +1,5 @@
 <th:block th:fragment="header(currentUser, activeMenu)">
-    <script src="/js/notification-manager.js?v=1.0"></script>
+    <script src="/js/notification-manager.js?v=1.1"></script>
     <header class="il-header" id="ilHeader">
         <div class="il-header__inner">
             <!-- Brand -->
@@ -17,6 +17,10 @@
                 <a th:classappend="${activeMenu == 'competition'} ? ' il-header__link--active'" class="il-header__link" href="/competitions.html">竞赛目录</a>
                 <a th:classappend="${activeMenu == 'gallery'} ? ' il-header__link--active'" class="il-header__link" href="/gallery.html">成果展示</a>
             </nav>
+            <!-- Desktop hamburger menu (visible on home page) -->
+            <button class="il-header__hamburger" id="desktopHamburger" type="button" aria-expanded="false" aria-controls="desktopMenuPanel" aria-label="打开菜单" style="display:none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
             <!-- 移动端遮罩层 -->
             <div class="il-header__overlay" id="ilHeaderOverlay"></div>
 
@@ -136,43 +140,22 @@
         </a>
     </div>
 
+    <div class="il-desktop-menu" id="desktopMenuPanel" aria-hidden="true">
+        <div class="il-desktop-menu__inner">
+            <a href="/index.html" class="il-desktop-menu__link">首页</a>
+            <a href="/team-market.html" class="il-desktop-menu__link">组队大厅</a>
+            <a href="/teacher-wall.html" class="il-desktop-menu__link">导师招贤</a>
+            <a href="/community.html" class="il-desktop-menu__link">交流社区</a>
+            <a href="/competitions.html" class="il-desktop-menu__link">竞赛目录</a>
+            <a href="/gallery.html" class="il-desktop-menu__link">成果展示</a>
+            <hr class="il-desktop-menu__divider">
+            <a href="/register.html" class="il-desktop-menu__link il-desktop-menu__link--cta">加入 iLink</a>
+            <a href="/login.html" class="il-desktop-menu__link">登录</a>
+        </div>
+    </div>
+
     <script th:inline="javascript">
-        // Scroll effect for header
-        const header = document.getElementById('ilHeader');
-        if (header) {
-            window.addEventListener('scroll', function() {
-                if (window.scrollY > 20) {
-                    header.classList.add('scrolled');
-                } else {
-                    header.classList.remove('scrolled');
-                }
-            });
-        }
-
         // Close dropdown on outside click
-        document.addEventListener('click', function(event) {
-            const dropdown = document.getElementById('userDropdown');
-            if (dropdown && !event.target.closest('.il-header__dropdown')) {
-                dropdown.classList.remove('il-header__dropdown--open');
-                const toggle = document.getElementById('userDropdownToggle');
-                if (toggle) toggle.setAttribute('aria-expanded', 'false');
-            }
-
-            const notificationDropdown = document.getElementById('notificationDropdown');
-            const notificationBell = document.getElementById('notificationBell');
-            if (notificationDropdown && !event.target.closest('.notification-bell') && !event.target.closest('.notification-dropdown')) {
-                notificationDropdown.classList.remove('notification-dropdown--open');
-                notificationDropdown.classList.add('notification-dropdown--hidden');
-            }
-
-            const nav = document.getElementById('ilHeaderNav');
-            const menuToggle = event.target.closest('.il-header__menu-toggle');
-            if (nav && !event.target.closest('#ilHeaderNav') && !menuToggle) {
-                nav.classList.remove('il-header__nav--open');
-                const toggleBtn = document.getElementById('menuToggle');
-                if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
-            }
-        });
 
         // User dropdown toggle
         document.addEventListener('DOMContentLoaded', function() {

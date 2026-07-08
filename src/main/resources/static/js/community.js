@@ -1,4 +1,4 @@
-﻿// 交流社区：顶部分类标签、全部分区、博客式列表与分页
+// 交流社区：顶部分类标签、全部分区、博客式列表与分页
 
 const CATEGORY_LABELS = {
     '': '全部',
@@ -196,7 +196,7 @@ function renderComposeAttachments() {
             '">' +
             escapeHtml(item.name) +
             '</span>' +
-            '<button type="button" class="il-remove-attachment" style="background: transparent; border: none; color: #dc2626; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 0.8125rem;" data-idx="' +
+            '<button type="button" class="il-remove-attachment" style="background: transparent; border: none; color: #000000; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 0.8125rem;" data-idx="' +
             idx +
             '">移除</button>';
         li.querySelector('.il-remove-attachment')?.addEventListener('click', function() {
@@ -248,13 +248,6 @@ function getKeyword() {
     return el ? el.value.trim() : '';
 }
 
-function escapeHtml(s) {
-    if (s == null) return '';
-    const div = document.createElement('div');
-    div.textContent = s;
-    return div.innerHTML;
-}
-
 function articlePageUrl(id) {
     return `/community/article/${encodeURIComponent(String(id))}`;
 }
@@ -298,8 +291,8 @@ function iconThumbUpSvg() {
 
 function iconStarSvg() {
     return (
-        '<svg viewBox="0 0 24 24" aria-hidden="true" style="width: 18px; height: 18px;">' +
-        '<path d="M12 3.8l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.2 6.7 19.9l1-5.8L3.5 10l5.9-.9L12 3.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px;">' +
+        '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polygon>' +
         '</svg>'
     );
 }
@@ -415,6 +408,13 @@ async function loadPosts(page) {
         listEl.innerHTML = '';
         posts.forEach(p => {
             const badge = CATEGORY_LABELS[p.category] || p.category;
+            const tagClassMap = {
+                '综合交流': 'il-tag--general',
+                '技术讨论': 'il-tag--tech',
+                '竞赛经验': 'il-tag--competition',
+                '资源分享': 'il-tag--resource'
+            };
+            const tagClass = tagClassMap[badge] || 'il-tag--general';
             const views = p.viewCount != null ? p.viewCount : 0;
             const likes = p.likeCount != null ? p.likeCount : 0;
             const favs = p.favoriteCount != null ? p.favoriteCount : 0;
@@ -427,53 +427,53 @@ async function loadPosts(page) {
 
             function buildCommunityAvatarHtml(avatarUrl, fallbackChar, authorName) {
                 if (avatarUrl) {
-                    return `<div class="il-post-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #374151, #111827); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9375rem; position: relative; overflow: hidden; border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
-                        <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(authorName || '')}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"
+                    return `<div class="il-post-avatar">
+                        <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(authorName || '')}"
                              onerror="this.style.display='none'; this.parentElement.querySelector('.il-post-avatar-fallback').style.display='flex';">
                         <span class="il-post-avatar-fallback" style="display:none;">${escapeHtml(fallbackChar)}</span>
                     </div>`;
                 }
-                return `<div class="il-post-avatar" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #374151, #111827); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9375rem;">
-                    <span class="il-post-avatar-fallback">${escapeHtml(fallbackChar)}</span>
+                return `<div class="il-post-avatar">
+                    <span class="il-post-avatar-fallback" style="display:flex;">${escapeHtml(fallbackChar)}</span>
                 </div>`;
             }
 
             card.innerHTML = `
                 <div class="il-post-header">
                     ${buildCommunityAvatarHtml(authorAvatarUrl, authorAvatar, p.authorDisplay)}
-                    <div class="il-post-author" style="flex: 1;">
-                        <div class="il-post-author-name" style="font-weight: 600; color: #111827; font-size: 0.9375rem; margin-bottom: 2px;">
+                    <div class="il-post-author">
+                        <div class="il-post-author-name">
                             ${escapeHtml(p.authorDisplay || '')}
                         </div>
-                        <div class="il-post-meta" style="display: flex; gap: 12px; color: #9ca3af; font-size: 0.8125rem;">
+                        <div class="il-post-meta">
                             <span>${formatTime(p.createdAt)}</span>
                             <span>阅读 ${views}</span>
                         </div>
                     </div>
                 </div>
-                <h2 class="il-post-title" style="font-size: 1.125rem; font-weight: 600; color: #111827; margin-bottom: 8px;">
+                <h2 class="il-post-title">
                     ${escapeHtml(p.title)}
                 </h2>
-                <p class="il-post-preview" style="color: #6b7280; font-size: 0.9375rem; line-height: 1.6; margin-bottom: 12px;">
+                <p class="il-post-preview">
                     ${escapeHtml(p.excerpt || '')}
                 </p>
-                <div class="il-post-tags" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-                    <span class="il-tag" style="padding: 4px 12px; background: rgba(0, 0, 0, 0.1); color: #111827; font-size: 0.75rem; border-radius: 9999px;">${escapeHtml(badge)}</span>
+                <div class="il-post-tags">
+                    <span class="il-tag ${tagClass}">${escapeHtml(badge)}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid rgba(0, 0, 0, 0.06);">
-                    <div class="il-post-stats" style="display: flex; gap: 20px; color: #9ca3af; font-size: 0.8125rem;">
-                        <div class="il-feed-actions" style="display: flex; gap: 12px;" data-post-id="${p.id}">
-                            <button type="button" class="il-feed-action" data-action="like" aria-label="点赞" style="display: flex; align-items: center; gap: 4px; background: none; border: none; padding: 6px 8px; border-radius: 8px; cursor: pointer; color: #9ca3af;">
+                <div class="il-post-footer">
+                    <div class="il-post-stats">
+                        <div class="il-feed-actions" data-post-id="${p.id}">
+                            <button type="button" class="il-feed-action" data-action="like" aria-label="点赞">
                                 ${iconThumbUpSvg()}
                                 <span class="il-feed-action__num">${likes}</span>
                             </button>
-                            <button type="button" class="il-feed-action" data-action="favorite" aria-label="收藏" style="display: flex; align-items: center; gap: 4px; background: none; border: none; padding: 6px 8px; border-radius: 8px; cursor: pointer; color: #9ca3af;">
+                            <button type="button" class="il-feed-action" data-action="favorite" aria-label="收藏">
                                 ${iconStarSvg()}
                                 <span class="il-feed-action__num">${favs}</span>
                             </button>
                         </div>
                     </div>
-                    <button class="il-btn il-btn-primary" style="padding: 6px 16px; font-size: 0.8125rem;">阅读全文</button>
+                    <button class="il-btn il-btn-primary">阅读全文</button>
                 </div>`;
             card.addEventListener('click', () => goToArticle(p.id));
             const actionsEl = card.querySelector('.il-feed-actions');
@@ -521,7 +521,7 @@ function renderPager(pag, pagerEl, innerEl) {
 
     const prevLi = document.createElement('li');
     prevLi.className = 'page-item' + (page <= 1 ? ' disabled' : '');
-    prevLi.innerHTML = `<a class="page-link" href="#" data-page="${page - 1}">上一页</a>`;
+    prevLi.innerHTML = `<button class="page-link" type="button" data-page="${page - 1}">上一页</button>`;
     innerEl.appendChild(prevLi);
 
     const infoLi = document.createElement('li');
@@ -531,10 +531,10 @@ function renderPager(pag, pagerEl, innerEl) {
 
     const nextLi = document.createElement('li');
     nextLi.className = 'page-item' + (page >= totalPages ? ' disabled' : '');
-    nextLi.innerHTML = `<a class="page-link" href="#" data-page="${page + 1}">下一页</a>`;
+    nextLi.innerHTML = `<button class="page-link" type="button" data-page="${page + 1}">下一页</button>`;
     innerEl.appendChild(nextLi);
 
-    innerEl.querySelectorAll('a.page-link[data-page]').forEach(a => {
+    innerEl.querySelectorAll('button.page-link[data-page]').forEach(a => {
         a.addEventListener('click', function(ev) {
             ev.preventDefault();
             const parent = this.closest('.page-item');
@@ -596,3 +596,4 @@ async function submitPost() {
         showMessage('网络错误，请稍后重试', 'error');
     }
 }
+

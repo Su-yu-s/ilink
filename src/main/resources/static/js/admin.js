@@ -64,15 +64,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     bindAdminSearch('communitySearchInput', 'communitySearchBtn', 'communitySearchResetBtn', applyCommunityPostSearchAndRender);
 });
 
-function escapeHtml(value) {
-    return String(value == null ? '' : value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
 function bindAdminSearch(inputId, searchBtnId, resetBtnId, renderFn) {
     const input = document.getElementById(inputId);
     const searchBtn = document.getElementById(searchBtnId);

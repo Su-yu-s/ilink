@@ -416,7 +416,7 @@ class AvatarUploader {
     showHint(text, type) {
         if (!this.hint) return;
         this.hint.textContent = text;
-        this.hint.style.color = type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#6b7280';
+        this.hint.style.color = type === 'error' ? '#000000' : type === 'success' ? '#333333' : '#6b7280';
     }
 }
 
@@ -432,3 +432,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.avatarUploader = new AvatarUploader();
 });
+

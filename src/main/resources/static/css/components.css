@@ -348,11 +348,10 @@ a.il-link:active {
 
 .il-header__auth-link:hover,
 .il-header__auth-btn:hover {
-    background: #111827 !important;
-    color: #ffffff !important;
-    border-color: #111827 !important;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    background: #f9fafb !important;
+    color: #111827 !important;
+    border-color: var(--border-default) !important;
+    transform: none;
 }
 
 .il-header__auth-link:active,
@@ -777,7 +776,7 @@ a.il-link:active {
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: var(--text-inverse);
     border-radius: var(--radius-full);
-    animation: il-spin 0.6s linear infinite;
+    animation: il-spin 0.8s linear infinite;
 }
 
 @keyframes il-spin {
@@ -1520,7 +1519,7 @@ select.il-input-invalid {
 }
 
 .il-empty__icon {
-    font-size: 56px;
+    font-size: 64px;
     margin-bottom: var(--space-4);
     opacity: 0.4;
     color: var(--text-tertiary);
@@ -1566,7 +1565,7 @@ select.il-input-invalid {
     border: 2px solid var(--border-light);
     border-top-color: var(--color-primary);
     border-radius: 50%;
-    animation: il-spin 0.6s linear infinite;
+    animation: il-spin 0.8s linear infinite;
 }
 
 /* ========================================
@@ -3122,7 +3121,20 @@ a.il-btn:focus-visible {
 .il-empty-state {
     text-align: center;
     padding: 60px 24px;
-    color: #6b7280;
+    color: var(--text-secondary);
+}
+
+.il-empty-state .il-empty__icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    background: var(--primary-light);
+    color: var(--text-tertiary);
+    font-size: 28px;
 }
 
 /* ---- 分页 ---- */
@@ -3135,27 +3147,36 @@ a.il-btn:focus-visible {
 }
 .il-pagination .page-btn {
     padding: 10px 18px;
-    border-radius: 10px;
-    border: 1px solid #d9d9d9;
-    background: #fff;
-    color: #111827;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--border-default) !important;
+    background: var(--bg-white) !important;
+    color: var(--text-primary) !important;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s;
+    transition:
+        background-color var(--transition-fast),
+        border-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform var(--transition-fast);
 }
 .il-pagination .page-btn:hover:not(:disabled) {
-    background: #f3f4f6;
-    border-color: #bfbfbf;
+    background: var(--bg-muted) !important;
+    border-color: var(--border-dark) !important;
+    transform: translateY(-1px);
+}
+.il-pagination .page-btn:active:not(:disabled) {
+    transform: translateY(0);
 }
 .il-pagination .page-btn:disabled {
     opacity: 0.35;
     cursor: not-allowed;
 }
 .il-pagination .page-btn--active {
-    background: #111827;
-    color: #fff;
-    border-color: #111827;
+    background: var(--primary) !important;
+    color: var(--text-white) !important;
+    border-color: var(--primary) !important;
+    box-shadow: var(--shadow-xs);
 }
 .il-pagination .page-info {
     font-size: 0.875rem;
@@ -3210,12 +3231,12 @@ a.il-btn:focus-visible {
    ======================================== */
 .detail-view {
     border: 1px solid var(--border-light);
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     overflow: hidden;
     background: var(--bg-white);
     box-shadow:
-        0 1px 2px rgba(17, 24, 39, 0.06),
-        0 12px 32px rgba(17, 24, 39, 0.06);
+        0 1px 3px rgba(17, 24, 39, 0.06),
+        0 16px 40px rgba(17, 24, 39, 0.08);
 }
 
 .detail-view__header {
@@ -3551,3 +3572,159 @@ body[data-app-page] .page-transition {
     overflow-y: auto;
 }
 }
+
+/* ========================================
+   Double Bezel (Doppelrand) — Universal Card Architecture
+   ======================================== */
+
+.card-bezel {
+  padding: var(--space-2);
+  background: var(--home-bg-warm);
+  border: 1px solid var(--home-border);
+  border-radius: var(--home-radius);
+  transition: all var(--transition-fast-home);
+}
+
+.card-bezel:hover {
+  background: color-mix(in srgb, var(--home-bg-warm) 80%, black);
+  border-color: var(--home-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.card-bezel__core {
+  padding: var(--space-6);
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: calc(var(--home-radius) - 8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all var(--transition-fast);
+}
+
+/* === Pill Button Standardization === */
+.il-btn--pill {
+  border-radius: var(--home-radius-pill);
+  font-weight: 600;
+}
+
+/* === Tag Standardization === */
+.il-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--home-radius-pill);
+  transition: all var(--transition-fast);
+}
+
+.il-tag:hover {
+  filter: brightness(0.95);
+}
+
+/* === Input Standardization === */
+.il-input,
+.il-form-input,
+.ihp-apply-input,
+.ihp-apply-textarea {
+  padding: var(--space-2) var(--space-3);
+  font-size: 14px;
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.il-input:focus,
+.il-form-input:focus,
+.ihp-apply-input:focus,
+.ihp-apply-textarea:focus {
+  outline: none;
+  border-color: var(--home-accent);
+  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.12);
+}
+
+/* === Search Field Standardization === */
+.il-search-field {
+  padding: var(--space-2) var(--space-3);
+  font-size: 14px;
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.il-search-field::placeholder {
+  color: var(--text-muted);
+}
+
+.il-search-field:focus {
+  outline: none;
+  border-color: var(--home-accent);
+  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.12);
+}
+
+/* === Select Standardization === */
+.il-toolbar-select,
+.il-form-select {
+  appearance: none;
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-3);
+  font-size: 14px;
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background-color: var(--bg-white);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.il-toolbar-select:hover,
+.il-form-select:hover {
+  border-color: var(--border-default);
+}
+
+.il-toolbar-select:focus,
+.il-form-select:focus {
+  outline: none;
+  border-color: var(--home-accent);
+  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.12);
+}
+
+/* === Avatar Standardization === */
+.il-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  color: var(--color-white);
+  flex-shrink: 0;
+}
+
+.il-avatar--sm {
+  width: 24px;
+  height: 24px;
+  font-size: 10px;
+}
+
+.il-avatar--md {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+.il-avatar--lg {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+}
+

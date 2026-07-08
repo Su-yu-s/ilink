@@ -2,7 +2,7 @@ package cn.ilink.config;
 
 import cn.ilink.entity.TeacherApplication;
 import cn.ilink.entity.User;
-import cn.ilink.service.TeacherApplicationService;
+import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ public class TeacherDemoDataInitializer implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(TeacherDemoDataInitializer.class);
 
     @Autowired
-    private TeacherApplicationService teacherApplicationService;
+    private TeacherApplicationServiceImpl teacherApplicationService;
 
     @Autowired
     private UserService userService;

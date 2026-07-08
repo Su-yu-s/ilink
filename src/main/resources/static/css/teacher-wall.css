@@ -1,0 +1,1362 @@
+/* ========================================
+   iLink Teacher Wall — 导师招贤 (Editorial)
+   ======================================== */
+
+/* === Hero Section === */
+.hero-section {
+    padding: 32px 24px 24px;
+    background: transparent;
+}
+
+.hero-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.hero-eyebrow {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 12px;
+}
+
+.hero-title {
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 600;
+    line-height: 1.3;
+    color: #111;
+    max-width: 600px;
+    margin-bottom: 12px;
+}
+
+.hero-desc {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #444;
+    margin-top: 16px;
+    max-width: 480px;
+}
+
+/* === Toolbar Section === */
+.toolbar-section {
+    padding: 0 24px 24px;
+    background: transparent;
+}
+
+.toolbar-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.search-panel {
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.03);
+}
+
+.search-input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: #faf9f7;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: border-color 0.3s ease;
+    min-width: 0;
+}
+
+.search-input-wrap:focus-within {
+    border-color: #c4a77d;
+}
+
+.search-input-wrap svg {
+    flex-shrink: 0;
+    color: #888;
+}
+
+.search-input-wrap input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    color: #111;
+    outline: none;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    min-width: 0;
+}
+
+.search-input-wrap input::placeholder {
+    color: #888;
+}
+
+.search-divider {
+    width: 1px;
+    height: 32px;
+    background: rgba(0,0,0,0.06);
+    flex-shrink: 0;
+}
+
+.search-select {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.search-select select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 10px 36px 10px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: #fff;
+    font-size: 14px;
+    color: #444;
+    cursor: pointer;
+    outline: none;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    transition: border-color 0.3s ease;
+    white-space: nowrap;
+}
+
+.search-select select:hover {
+    border-color: #c4a77d;
+}
+
+.search-select::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #888;
+    pointer-events: none;
+}
+
+.search-btn {
+    padding: 10px 24px;
+    border-radius: 999px;
+    border: none;
+    background: #1a1a1a;
+    color: #faf9f7;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    flex-shrink: 0;
+}
+
+.search-btn:hover {
+    background: #c4a77d;
+    transform: translateY(-2px);
+}
+
+.search-apply {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.btn-pill-accent {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1.5px solid #c4a77d;
+    color: #111;
+    background: transparent;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+}
+
+.btn-pill-accent:hover {
+    background: #c4a77d;
+    color: #faf9f7;
+    transform: translateY(-2px);
+}
+
+/* === Content Section === */
+.content-section {
+    padding: 0 24px 80px;
+    background: transparent;
+}
+
+.content-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* === Mentor Grid === */
+#teacherList {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+}
+
+/* === Mentor Card === */
+.mentor-card-shell {
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid rgba(0,0,0,0.06);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+}
+
+.mentor-card-shell:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 24px 48px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.04);
+    border-color: rgba(196, 167, 125, 0.3);
+}
+
+/* Corner Decoration */
+.mentor-corner {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.mentor-card-shell:hover .mentor-corner {
+    opacity: 1;
+}
+
+.mentor-corner svg {
+    width: 100%;
+    height: 100%;
+    stroke: #c4a77d;
+    stroke-width: 1.5;
+    fill: none;
+}
+
+/* Header */
+.mentor-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.mentor-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e8e4df, #f5f3ef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.4s ease;
+}
+
+.mentor-avatar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: border-color 0.4s ease;
+}
+
+.mentor-card-shell:hover .mentor-avatar::after {
+    border-color: #c4a77d;
+}
+
+.mentor-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.mentor-avatar .avatar-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e8e4df, #f5f3ef);
+    border-radius: 50%;
+}
+
+.mentor-info { flex: 1; min-width: 0; padding-top: 4px; }
+
+.mentor-name {
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #111;
+    line-height: 1.3;
+    margin-bottom: 2px;
+}
+
+.mentor-title-row {
+    font-size: 14px;
+    color: #888;
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+}
+
+.mentor-dept {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #faf9f7;
+    border-radius: 999px;
+    font-size: 12px;
+    color: #666;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* Gradient Divider */
+.mentor-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent);
+    margin: 20px 0;
+    position: relative;
+}
+
+.mentor-divider::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, #c4a77d, transparent);
+    transition: width 0.6s ease;
+}
+
+.mentor-card-shell:hover .mentor-divider::after {
+    width: 60%;
+}
+
+/* Bio */
+.mentor-bio {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #444;
+    margin-bottom: 20px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+/* Tags */
+.mentor-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+}
+
+.mentor-tag {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #888;
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    letter-spacing: 0.02em;
+}
+
+.mentor-card-shell:hover .mentor-tag {
+    border-color: rgba(196, 167, 125, 0.4);
+    color: #444;
+}
+
+.mentor-tag:hover {
+    background: rgba(196, 167, 125, 0.08);
+    border-color: #c4a77d;
+    color: #111;
+}
+
+/* Footer */
+.mentor-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+}
+
+.mentor-stats {
+    display: flex;
+    gap: 28px;
+}
+
+.mentor-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mentor-stat-value {
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #111;
+    line-height: 1;
+}
+
+.mentor-stat-label {
+    font-size: 12px;
+    color: #888;
+    letter-spacing: 0.05em;
+}
+
+.mentor-btn {
+    padding: 10px 24px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    border: none;
+    background: #1a1a1a;
+    color: #fff;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    text-decoration: none;
+}
+
+.mentor-btn:hover {
+    background: #c4a77d;
+    color: #fff;
+    transform: translateX(4px);
+    box-shadow: 0 4px 16px rgba(196, 167, 125, 0.3);
+}
+
+.mentor-btn svg {
+    transition: transform 0.3s ease;
+}
+
+.mentor-btn:hover svg {
+    transform: translateX(2px);
+}
+
+/* === Empty State === */
+.empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: #888;
+}
+
+.empty-state svg {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    display: block;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.empty-state span {
+    font-size: 14px;
+    color: #aaa;
+}
+
+/* === Pagination === */
+#pagination {
+    margin: 40px auto 60px;
+    text-align: center;
+}
+
+#pagination ul {
+    display: inline-flex;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#pagination li {
+    margin: 0;
+}
+
+#pagination .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #444;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+#pagination .page-link:hover {
+    border-color: #c4a77d;
+    color: #111;
+}
+
+#pagination .page-item.active .page-link {
+    background: #1a1a1a;
+    color: #faf9f7;
+    border-color: #1a1a1a;
+}
+
+#pagination .page-item.disabled .page-link {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* === Modal Overlay === */
+.teacher-apply-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.teacher-apply-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.teacher-apply-dialog {
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.12);
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.teacher-apply-overlay.show .teacher-apply-dialog {
+    transform: translateY(0) scale(1);
+}
+
+.teacher-apply-dialog__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 28px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+
+.teacher-apply-dialog__title {
+    font-family: "Noto Serif SC", "Songti SC", serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #111;
+    margin: 0;
+}
+
+.teacher-apply-dialog__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: #888;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.teacher-apply-dialog__close:hover {
+    background: #faf9f7;
+    color: #111;
+}
+
+.teacher-apply-dialog__body {
+    padding: 28px;
+}
+
+.teacher-apply-dialog__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 28px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+}
+
+/* === Form Fields === */
+.teacher-apply-field {
+    margin-bottom: 20px;
+}
+
+.teacher-apply-field:last-child {
+    margin-bottom: 0;
+}
+
+.teacher-apply-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #111;
+    margin-bottom: 8px;
+}
+
+.teacher-apply-input,
+.teacher-apply-textarea {
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-family: "Inter", "Noto Sans SC", sans-serif;
+    color: #111;
+    background: #faf9f7;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    resize: vertical;
+    outline: none;
+}
+
+.teacher-apply-input:focus,
+.teacher-apply-textarea:focus {
+    border-color: #c4a77d;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.12);
+}
+
+.teacher-apply-input::placeholder,
+.teacher-apply-textarea::placeholder {
+    color: #888;
+}
+
+/* === Responsive === */
+@media (max-width: 1200px) {
+    #teacherList {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .search-panel {
+        flex-wrap: wrap;
+    }
+    .search-apply {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 8px;
+    }
+    .btn-pill-accent {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    #teacherList {
+        grid-template-columns: 1fr;
+    }
+    .search-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 20px;
+    }
+    .search-divider { display: none; }
+    .search-select select { width: 100%; }
+    .search-btn { width: 100%; }
+    .mentor-footer { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .mentor-stats { gap: 20px; }
+}
+
+/* teacher-wall shell overrides — migrated from style.css */
+
+body[data-app-page="teacher-wall"] .il-teacher-footer .il-btn {
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px !important;
+}
+body[data-app-page="teacher-wall"] .il-teacher-avatar {
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  max-width: 56px !important;
+  min-height: 56px !important;
+  max-height: 56px !important;
+  border-radius: 50% !important;
+  background: var(--bg-gray) !important;
+  border: 1px solid var(--border-light) !important;
+  box-shadow: none !important;
+  color: var(--text-secondary) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+body[data-app-page="teacher-wall"] .il-teacher-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 50% !important;
+}
+body[data-app-page="teacher-wall"] .il-teacher-avatar-fallback {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  color: var(--text-secondary) !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+body[data-app-page="teacher-wall"] .il-teacher-header {
+  gap: 12px !important;
+  margin-bottom: 10px !important;
+}
+#applyModal.teacher-apply-overlay,
+body[data-app-page="teacher-wall"] .teacher-apply-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+  background: rgba(17, 17, 17, 0.52) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2100 !important;
+  visibility: hidden;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+#applyModal.teacher-apply-overlay.show,
+body[data-app-page="teacher-wall"] .teacher-apply-overlay.show {
+  display: flex !important;
+  visibility: visible;
+  pointer-events: auto;
+}
+#applyModal .teacher-apply-dialog,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  z-index: auto !important;
+  width: 100% !important;
+  max-width: 520px !important;
+  max-height: min(90vh, 720px) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
+  overflow: hidden !important;
+  animation: ilink-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  box-sizing: border-box;
+}
+#applyModal .teacher-apply-dialog__header,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog__header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex-shrink: 0 !important;
+  padding: 20px 24px !important;
+  border-bottom: 1px solid var(--border-light) !important;
+}
+#applyModal .teacher-apply-dialog__title,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog__title {
+  margin: 0 !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  color: #111827 !important;
+}
+#applyModal .teacher-apply-dialog__close,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog__close {
+  flex-shrink: 0 !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+}
+#applyModal .teacher-apply-dialog__close:hover,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog__close:hover {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+#applyModal .teacher-apply-dialog__body,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog__body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 24px !important;
+}
+#applyModal .teacher-apply-form,
+body[data-app-page="teacher-wall"] .teacher-apply-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  margin: 0 !important;
+}
+#applyModal .teacher-apply-field,
+body[data-app-page="teacher-wall"] .teacher-apply-field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+#applyModal .teacher-apply-label,
+body[data-app-page="teacher-wall"] .teacher-apply-label {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: #4b5563 !important;
+}
+#applyModal .teacher-apply-input,
+#applyModal .teacher-apply-textarea,
+body[data-app-page="teacher-wall"] .teacher-apply-input,
+body[data-app-page="teacher-wall"] .teacher-apply-textarea {
+  display: block !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: #111827 !important;
+  background: #ffffff !important;
+  box-sizing: border-box !important;
+}
+#applyModal .teacher-apply-textarea,
+body[data-app-page="teacher-wall"] .teacher-apply-textarea {
+  min-height: 88px !important;
+  resize: vertical !important;
+}
+#applyModal .teacher-apply-input:focus,
+#applyModal .teacher-apply-textarea:focus,
+body[data-app-page="teacher-wall"] .teacher-apply-input:focus,
+body[data-app-page="teacher-wall"] .teacher-apply-textarea:focus {
+  outline: none !important;
+  border-color: #6b7280 !important;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08) !important;
+}
+#applyModal .teacher-apply-dialog__footer,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog__footer {
+  display: flex !important;
+  flex-shrink: 0 !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 16px 24px 24px !important;
+  border-top: 1px solid var(--border-light) !important;
+}
+#applyModal .teacher-apply-dialog__footer .il-btn-primary,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog__footer .il-btn-primary {
+  background: #111827 !important;
+  border-color: #111827 !important;
+  color: #ffffff !important;
+}
+#applyModal .teacher-apply-dialog__footer .il-btn-primary:hover,
+body[data-app-page="teacher-wall"] .teacher-apply-dialog__footer .il-btn-primary:hover {
+  background: #374151 !important;
+  border-color: #374151 !important;
+}
+
+/* teacher-detail shell overrides — migrated from style.css */
+
+body[data-app-page="teacher-detail"] .detail-page__column {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+body[data-app-page="teacher-detail"] .teacher-detail-shell {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+body[data-app-page="teacher-detail"] .teacher-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+body[data-app-page="teacher-detail"] .teacher-detail-back:hover {
+  color: #111827;
+  text-decoration: none;
+}
+body[data-app-page="teacher-detail"] .teacher-detail-card {
+  margin: 0;
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(17, 24, 39, 0.06),
+    0 8px 24px rgba(17, 24, 39, 0.08);
+}
+body[data-app-page="teacher-detail"] .teacher-detail-card:hover {
+  transform: none;
+  box-shadow:
+    0 1px 2px rgba(17, 24, 39, 0.06),
+    0 8px 24px rgba(17, 24, 39, 0.08);
+}
+body[data-app-page="teacher-detail"] .teacher-detail__header {
+  padding: 1.5rem 1.75rem;
+  background: var(--bg-white);
+  border-bottom: 1px solid var(--border-light);
+}
+body[data-app-page="teacher-detail"] .teacher-detail__identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot {
+  flex-shrink: 0;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar,
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot > a.publisher-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #6b7280;
+  color: #ffffff;
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 2px 8px rgba(17, 24, 39, 0.1);
+}
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar__fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__title-wrap {
+  min-width: 0;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__body {
+  padding: 0 1.75rem 1.75rem;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__meta {
+  padding-top: 0.25rem;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__apply {
+  margin-top: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-light);
+}
+body[data-app-page="teacher-detail"] .teacher-detail__section-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+body[data-app-page="teacher-detail"] .teacher-detail__apply-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__textarea {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__textarea:focus {
+  outline: none;
+  border-color: #111827;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+body[data-app-page="teacher-detail"] .teacher-detail__textarea:disabled {
+  background: var(--bg-light, #f8f9fa);
+  color: var(--text-tertiary);
+  cursor: not-allowed;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__apply-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__submit {
+  min-width: 7.5rem;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: #111827 !important;
+  border-color: #111827 !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__submit:hover:not(:disabled) {
+  background: #374151 !important;
+  border-color: #374151 !important;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+body[data-app-page="teacher-detail"] .teacher-detail__apply-status {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+@media (max-width: 576px) {
+  body[data-app-page="teacher-detail"] .teacher-detail__header,
+  body[data-app-page="teacher-detail"] .teacher-detail__body {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  body[data-app-page="teacher-detail"] .teacher-detail__apply-actions {
+    justify-content: stretch;
+  }
+
+  body[data-app-page="teacher-detail"] .teacher-detail__submit {
+    width: 100%;
+  }
+}
+
+/* teacher-wall + team-market shared — migrated from style.css */
+
+body[data-app-page]:not([data-app-page="team-market"]):not([data-app-page="teacher-wall"]) .il-team-card,
+body[data-app-page]:not([data-app-page="team-market"]):not([data-app-page="teacher-wall"]) .il-teacher-card,
+body[data-app-page] .il-post-card,
+body[data-app-page] .competition-card {
+  min-height: 188px;
+  padding: 20px !important;
+  margin-bottom: 16px !important;
+}
+body[data-app-page="team-market"] .il-toolbar,
+body[data-app-page="teacher-wall"] .il-toolbar {
+  padding: 10px 14px !important;
+  margin-bottom: 18px !important;
+}
+body[data-app-page="team-market"] .il-toolbar-row,
+body[data-app-page="teacher-wall"] .il-toolbar-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters,
+body[data-app-page="teacher-wall"] .il-toolbar-filters {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-search,
+body[data-app-page="teacher-wall"] .il-toolbar-search {
+  flex: 1 1 200px !important;
+  min-width: 0 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-search .il-search-field,
+body[data-app-page="team-market"] .il-toolbar-search .il-search-field--toolbar,
+body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field,
+body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field--toolbar {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  min-height: 40px !important;
+  border-radius: 10px !important;
+  padding: 0 12px 0 40px !important;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-white) !important;
+}
+body[data-app-page="team-market"] .il-toolbar-search .il-search-field__input,
+body[data-app-page="teacher-wall"] .il-toolbar-search .il-search-field__input {
+  min-height: 38px !important;
+  font-size: 14px !important;
+}
+body[data-app-page="team-market"] .il-toolbar-select,
+body[data-app-page="teacher-wall"] .il-toolbar-select {
+  flex: 0 1 140px !important;
+  min-width: 120px !important;
+  width: auto !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border-light) !important;
+  padding: 0 32px 0 12px !important;
+  font-size: 14px !important;
+  color: var(--text-primary) !important;
+  background: var(--bg-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%23666666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 10px center !important;
+  appearance: none !important;
+  cursor: pointer;
+}
+body[data-app-page="team-market"] .il-toolbar-select:focus,
+body[data-app-page="teacher-wall"] .il-toolbar-select:focus {
+  outline: none !important;
+  border-color: var(--border-default) !important;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08) !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn,
+body[data-app-page="team-market"] .il-toolbar-actions .il-btn,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn,
+body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn-primary,
+body[data-app-page="team-market"] .il-toolbar-actions .il-btn-primary,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-primary,
+body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn-primary {
+  background: #111827 !important;
+  color: var(--text-white) !important;
+  border: 1px solid #111827 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn-primary:hover,
+body[data-app-page="team-market"] .il-toolbar-actions .il-btn-primary:hover,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-primary:hover,
+body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn-primary:hover {
+  background: #374151 !important;
+  border-color: #374151 !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn-secondary,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-secondary {
+  background: var(--bg-white) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-light) !important;
+}
+body[data-app-page="team-market"] .il-toolbar-filters .il-btn-secondary:hover,
+body[data-app-page="teacher-wall"] .il-toolbar-filters .il-btn-secondary:hover {
+  background: var(--color-gray-100) !important;
+  border-color: var(--border-default) !important;
+}
+body[data-app-page="team-market"] .il-toolbar-actions,
+body[data-app-page="teacher-wall"] .il-toolbar-actions {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+}
+body[data-app-page="team-market"] .il-toolbar-actions .il-btn__icon,
+body[data-app-page="teacher-wall"] .il-toolbar-actions .il-btn__icon {
+  flex-shrink: 0;
+  display: block;
+}
+body[data-app-page="team-market"] #teamList,
+body[data-app-page="teacher-wall"] #teacherList {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 20px !important;
+  width: 100%;
+  align-items: stretch;
+}
+body[data-app-page="team-market"] .il-team-card-shell,
+body[data-app-page="teacher-wall"] .il-teacher-card-shell {
+  display: flex !important;
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+body[data-app-page="team-market"] .il-team-card,
+body[data-app-page="teacher-wall"] .il-teacher-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin-bottom: 0 !important;
+  padding: 14px 16px !important;
+  display: flex !important;
+  flex-direction: column;
+  box-sizing: border-box !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: var(--border-light) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+body[data-app-page="team-market"] .il-team-card:hover,
+body[data-app-page="teacher-wall"] .il-teacher-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+body[data-app-page="team-market"] .il-team-card::before,
+body[data-app-page="teacher-wall"] .il-teacher-card::before {
+  display: none !important;
+}
+body[data-app-page="team-market"] .il-team-title,
+body[data-app-page="teacher-wall"] .il-teacher-name {
+  font-size: 16px !important;
+  line-height: 1.35 !important;
+  margin-bottom: 4px !important;
+}
+body[data-app-page="team-market"] .il-team-category,
+body[data-app-page="teacher-wall"] .il-teacher-major,
+body[data-app-page="team-market"] .il-team-status {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+body[data-app-page="team-market"] .il-team-category,
+body[data-app-page="teacher-wall"] .il-teacher-major {
+  display: inline-block;
+  padding: 4px 10px !important;
+  border-radius: var(--radius-full) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  background: var(--color-gray-100) !important;
+  color: var(--color-gray-700) !important;
+  border: 1px solid var(--border-light) !important;
+}
+body[data-app-page="team-market"] .il-skill-tag,
+body[data-app-page="team-market"] .il-skill-tag:nth-child(n),
+body[data-app-page="teacher-wall"] .il-research-tag,
+body[data-app-page="teacher-wall"] .il-research-tag:nth-child(n) {
+  background: var(--color-gray-100) !important;
+  color: var(--color-gray-700) !important;
+  border-color: var(--border-light) !important;
+}
+body[data-app-page="team-market"] .il-team-desc,
+body[data-app-page="teacher-wall"] .il-teacher-bio {
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  margin-bottom: 8px !important;
+}
+body[data-app-page="team-market"] .il-team-meta,
+body[data-app-page="team-market"] .il-team-skills,
+body[data-app-page="teacher-wall"] .il-teacher-research {
+  margin-bottom: 10px !important;
+}
+body[data-app-page="team-market"] .il-team-skills,
+body[data-app-page="teacher-wall"] .il-teacher-research {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px !important;
+}
+body[data-app-page="team-market"] .il-team-footer,
+body[data-app-page="teacher-wall"] .il-teacher-footer {
+  margin-top: auto !important;
+  padding-top: 12px !important;
+  border-top: 1px solid var(--border-light) !important;
+}
+body[data-app-page="team-market"] .il-list-empty,
+body[data-app-page="teacher-wall"] .il-list-empty {
+  grid-column: 1 / -1;
+}
+@media (max-width: 768px) {
+  body[data-app-page="team-market"] #teamList,
+  body[data-app-page="teacher-wall"] #teacherList {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+}

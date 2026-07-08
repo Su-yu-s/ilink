@@ -5,11 +5,15 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:1234}
   thymeleaf:
     cache: false
+  flyway:
+    validate-on-migrate: false
+    repair-on-migrate: true
 
 logging:
   level:
-    cn.ilink: debug
+    cn.ilink: info
     org.springframework.web: info
+    com.baomidou.mybatisplus: warn
 
 # 接口是否向客户端返回异常详情（切勿在生产开启）
 app:

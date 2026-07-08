@@ -11,6 +11,7 @@ import cn.ilink.mapper.CommunityPostMapper;
 import cn.ilink.service.UserService;
 import cn.ilink.util.PasswordPolicy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -42,12 +43,11 @@ public class UserController {
     public ResponseEntity<Result<?>> getPublicProfile(@PathVariable Long userId) {
         User u = userService.getById(userId);
         if (u == null) {
-            return ResponseEntity.ok(Result.fail(404, "用户不存在"));
+            return Result.fail(404, "用户不存在").toResponseEntity();
         }
         PublicUserProfileVO vo = new PublicUserProfileVO();
         vo.setId(u.getId());
         vo.setUsername(u.getUsername());
-        vo.setRealName(u.getRealName());
         vo.setAvatar(u.getAvatar());
         vo.setRole(u.getRole());
         vo.setGrade(u.getGrade());
@@ -58,19 +58,20 @@ public class UserController {
         vo.setCreatedAt(u.getCreatedAt());
         vo.setHonors(u.getHonors());
         vo.setPublishedPosts(loadPublishedPosts(u.getId()));
-        return ResponseEntity.ok(Result.ok(vo));
+        return Result.ok(vo).toResponseEntity();
     }
 
     private List<Map<String, Object>> loadPublishedPosts(Long userId) {
         if (userId == null) {
             return new ArrayList<>();
         }
-        List<CommunityPost> rows = communityPostMapper.selectList(
+        Page<CommunityPost> page = new Page<>(1, 20);
+        Page<CommunityPost> result = communityPostMapper.selectPage(page,
             new LambdaQueryWrapper<CommunityPost>()
                 .eq(CommunityPost::getAuthorId, userId)
                 .orderByDesc(CommunityPost::getCreatedAt)
-                .last("LIMIT 20")
         );
+        List<CommunityPost> rows = result.getRecords();
         List<Map<String, Object>> out = new ArrayList<>();
         for (CommunityPost p : rows) {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -98,9 +99,9 @@ public class UserController {
     public ResponseEntity<Result<?>> getProfile(HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user != null) {
-            return ResponseEntity.ok(Result.ok(user));
+            return Result.ok(user).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
     }
 
@@ -109,7 +110,7 @@ public class UserController {
     public ResponseEntity<Result<?>> updateProfile(@RequestBody ProfileRequest profileRequest, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
 
         boolean success = userService.updateProfile(user.getId(), profileRequest);
@@ -156,22 +157,22 @@ public class UserController {
             }
             session.setAttribute("user", user);
 
-            return ResponseEntity.ok(Result.ok(user));
+            return Result.ok(user).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.fail(500, "更新失败"));
+            return Result.fail(500, "更新失败").toResponseEntity();
         }
     }
 
     @PutMapping("/password")
     @ResponseBody
-    public ResponseEntity<Result<Void>> changePassword(@RequestBody @Valid ChangePasswordRequest req, HttpSession session) {
+    public ResponseEntity<Result<?>> changePassword(@RequestBody @Valid ChangePasswordRequest req, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
-        if (user == null) return ResponseEntity.ok(Result.unauthorized());
+        if (user == null) return Result.unauthorized().toResponseEntity();
         if (!PasswordPolicy.isValid(req.getNewPassword())) {
-            return ResponseEntity.ok(Result.badRequest(PasswordPolicy.message()));
+            return Result.badRequest(PasswordPolicy.message()).toResponseEntity();
         }
         boolean ok = userService.changePassword(user.getId(), req.getOldPassword(), req.getNewPassword());
-        if (!ok) return ResponseEntity.ok(Result.badRequest("原密码错误"));
-        return ResponseEntity.ok(Result.ok("密码修改成功", null));
+        if (!ok) return Result.badRequest("原密码错误").toResponseEntity();
+        return Result.ok("密码修改成功", null).toResponseEntity();
     }
 }

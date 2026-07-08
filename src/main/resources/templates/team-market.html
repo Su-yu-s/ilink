@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -6,69 +6,78 @@
     <title>组队大厅 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link href="/css/team-market.css?v=2.0" rel="stylesheet">
 </head>
 <body data-app-page="team-market" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
-    <!-- 粒子背景画布 -->
-    <canvas id="particleCanvas" class="particle-canvas"></canvas>
-
     <div th:replace="fragments/header :: header(${currentUser}, 'team')"></div>
 
     <div class="il-page-wrapper">
 
-        <div class="il-hero">
-            <p class="il-hero-eyebrow">组队招募 · 竞赛协作</p>
-            <h1 class="il-hero-title">组队大厅</h1>
-            <p class="il-hero-desc">发布组队需求，寻找志同道合的竞赛伙伴</p>
-        </div>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-inner">
+                <div class="hero-eyebrow">组队招募 · 竞赛协作</div>
+                <h1 class="hero-title">独行快，众行远。</h1>
+                <p class="hero-desc">
+                    发布你的组队需求，寻找志同道合的竞赛伙伴。一个人的力量有限，一群人的可能无限。
+                </p>
+            </div>
+        </section>
 
-        <div class="il-toolbar">
-            <div class="il-toolbar-row">
-                <form id="filterForm" class="il-toolbar-filters">
-                    <div class="il-toolbar-search">
-                        <div th:replace="~{fragments/search-field :: field('keyword', '搜索标题、描述或技能', '关键词', 'text', 'il-search-field--toolbar')}"></div>
+        <!-- Search Panel -->
+        <section class="toolbar-section">
+            <div class="toolbar-inner">
+                <div class="search-panel">
+                    <div class="search-input-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="text" id="keyword" placeholder="搜索标题、描述或技能">
                     </div>
-                    <select id="category" class="il-toolbar-select" aria-label="分类">
-                        <option value="">全部分类</option>
-                        <option value="技术开发">技术开发</option>
-                        <option value="创意设计">创意设计</option>
-                        <option value="市场营销">市场营销</option>
-                        <option value="学术研究">学术研究</option>
-                    </select>
-                    <select id="status" class="il-toolbar-select" aria-label="状态">
-                        <option value="">全部状态</option>
-                        <option value="招募中">招募中</option>
-                        <option value="已完成">已完成</option>
-                    </select>
-                    <button type="reset" class="il-btn il-btn-secondary">重置</button>
-                    <button type="submit" class="il-btn il-btn-primary">搜索</button>
-                </form>
-                <div class="il-toolbar-actions">
-                    <a href="/team-publish.html" class="il-btn il-btn-primary">
-                        <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                        <span>发布需求</span>
-                    </a>
+                    <div class="search-divider"></div>
+                    <div class="search-select">
+                        <select id="category" aria-label="分类">
+                            <option value="">全部分类</option>
+                            <option value="技术开发">技术开发</option>
+                            <option value="创意设计">创意设计</option>
+                            <option value="市场营销">市场营销</option>
+                            <option value="学术研究">学术研究</option>
+                        </select>
+                    </div>
+                    <div class="search-select">
+                        <select id="status" aria-label="状态">
+                            <option value="">全部状态</option>
+                            <option value="招募中">招募中</option>
+                            <option value="已完成">已完成</option>
+                        </select>
+                    </div>
+                    <button type="button" class="search-btn" id="searchBtn">搜索</button>
+                    <button type="button" class="search-reset" id="resetBtn">重置</button>
+                    <div class="search-apply">
+                        <a href="/team-publish.html" class="btn-pill-accent">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                            发布需求
+                        </a>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 组队需求列表 -->
-        <div id="teamList">
-            <!-- 动态加载内容 -->
-        </div>
+        <!-- Team List -->
+        <section class="content-section">
+            <div class="content-inner">
+                <div id="teamList"></div>
 
-        <!-- 分页 -->
-        <nav id="pagination" class="mt-4 d-none">
-            <ul class="pagination justify-content-center">
-            </ul>
-        </nav>
+                <!-- Pagination -->
+                <nav id="pagination" class="mt-4 d-none">
+                    <ul class="pagination justify-content-center">
+                    </ul>
+                </nav>
+            </div>
+        </section>
+
     </div>
 
-    <div th:replace="fragments/footer :: footer"></div>
-
-    <script src="/lib/bootstrap.bundle.min.js?v=4.2"></script>
-    <script src="/js/common.js?v=7.4"></script>
-    <script src="/js/team-market.js?v=4.5"></script>
+    <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
+    <script src="/js/common.js?v=7.8"></script>
+    <script src="/js/team-market.js?v=4.6"></script>
 </body>
 </html>

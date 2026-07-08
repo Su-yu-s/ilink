@@ -10,7 +10,6 @@ public class RegisterRequest {
     private String password;
     private String email;
     private String role;
-    private String realName;
     private String gender;
     // 新增一个通用标识符字段
     private String identifier;

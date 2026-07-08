@@ -3,13 +3,17 @@ package cn.ilink.service.impl;
 import cn.ilink.entity.CommunityPost;
 import cn.ilink.entity.CommunityPostFavorite;
 import cn.ilink.entity.CommunityPostLike;
+import cn.ilink.entity.User;
 import cn.ilink.mapper.CommunityPostFavoriteMapper;
 import cn.ilink.mapper.CommunityPostLikeMapper;
 import cn.ilink.service.CommunityPostInteractionService;
-import cn.ilink.service.CommunityPostService;
+import cn.ilink.service.impl.CommunityPostServiceImpl;
+import cn.ilink.service.NotificationService;
+import cn.ilink.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +35,13 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
     private CommunityPostFavoriteMapper communityPostFavoriteMapper;
 
     @Autowired
-    private CommunityPostService communityPostService;
+    private CommunityPostServiceImpl communityPostService;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public boolean hasLiked(Long postId, Long userId) {
@@ -121,12 +131,33 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
             row.setPostId(postId);
             row.setUserId(userId);
             row.setCreatedAt(new Date());
-            communityPostLikeMapper.insert(row);
+            try {
+                communityPostLikeMapper.insert(row);
+            } catch (DuplicateKeyException e) {
+                // 唯一索引兜底：并发重复插入时，视为已点赞
+                post = communityPostService.getById(postId);
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("liked", true);
+                m.put("likeCount", likeCountOf(post));
+                return m;
+            }
             communityPostService.update(
                 new LambdaUpdateWrapper<CommunityPost>()
                     .setSql("like_count = IFNULL(like_count, 0) + 1")
                     .eq(CommunityPost::getId, postId)
             );
+            // 通知文章作者（排除作者自己点赞）
+            if (!post.getAuthorId().equals(userId)) {
+                User author = userService.getById(post.getAuthorId());
+                notificationService.create(
+                    post.getAuthorId(),
+                    userId,
+                    "LIKE",
+                    "你的文章被点赞了",
+                    author != null ? author.getUsername() : "某位用户" + " 点赞了你的文章《" + post.getTitle() + "》",
+                    postId
+                );
+            }
             nowLiked = true;
         }
         post = communityPostService.getById(postId);
@@ -166,12 +197,33 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
             row.setPostId(postId);
             row.setUserId(userId);
             row.setCreatedAt(new Date());
-            communityPostFavoriteMapper.insert(row);
+            try {
+                communityPostFavoriteMapper.insert(row);
+            } catch (DuplicateKeyException e) {
+                // 唯一索引兜底：并发重复插入时，视为已收藏
+                post = communityPostService.getById(postId);
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("favorited", true);
+                m.put("favoriteCount", favoriteCountOf(post));
+                return m;
+            }
             communityPostService.update(
                 new LambdaUpdateWrapper<CommunityPost>()
                     .setSql("favorite_count = IFNULL(favorite_count, 0) + 1")
                     .eq(CommunityPost::getId, postId)
             );
+            // 通知文章作者（排除作者自己收藏）
+            if (!post.getAuthorId().equals(userId)) {
+                User author = userService.getById(post.getAuthorId());
+                notificationService.create(
+                    post.getAuthorId(),
+                    userId,
+                    "FAVORITE",
+                    "你的文章被收藏了",
+                    author != null ? author.getUsername() : "某位用户" + " 收藏了你的文章《" + post.getTitle() + "》",
+                    postId
+                );
+            }
             nowFavorited = true;
         }
         post = communityPostService.getById(postId);

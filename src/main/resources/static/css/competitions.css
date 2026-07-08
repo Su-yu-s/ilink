@@ -1,0 +1,570 @@
+/* ========================================
+   iLink Competitions — 竞赛目录
+   Bento Grid Layout
+   ======================================== */
+
+/* === Hero Section (left-aligned) === */
+body[data-app-page="competitions"] .il-hero {
+  text-align: left !important;
+}
+
+body[data-app-page="competitions"] .il-hero__desc {
+  margin: 0 0 var(--space-3) 0 !important;
+  max-width: none !important;
+}
+
+/* === Toolbar Row === */
+body[data-app-page="competitions"] .il-toolbar-row {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: var(--space-3) !important;
+}
+
+body[data-app-page="competitions"] .competition-toolbar {
+  padding: var(--space-4) var(--space-5) !important;
+  margin-bottom: var(--space-8) !important;
+}
+
+/* === Track Tabs (pill style) === */
+body[data-app-page="competitions"] .competition-track-tabs {
+  display: inline-flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: nowrap !important;
+  gap: var(--space-1) !important;
+  padding: var(--space-1) !important;
+  background: var(--bg-gray) !important;
+  border-radius: var(--home-radius-pill) !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+body[data-app-page="competitions"] .competition-track-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* === Search Field — compact === */
+body[data-app-page="competitions"] .competition-toolbar__search {
+  flex: 0 0 auto !important;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+}
+
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field,
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field--toolbar,
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field--combo {
+  width: 100% !important;
+  min-height: 40px !important;
+  border-radius: var(--home-radius-sm) !important;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-white) !important;
+  padding: 0 8px 0 40px !important;
+  box-shadow: none !important;
+}
+
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__input {
+  min-height: 38px !important;
+  font-size: 14px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__action {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 16px !important;
+  border-radius: var(--home-radius-pill) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  background: var(--primary) !important;
+  border: none !important;
+}
+
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__action:hover {
+  background: var(--primary-dark) !important;
+}
+
+/* === Track Tabs (pill style) === */
+body[data-app-page="competitions"] .competition-track-tabs {
+  display: inline-flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: nowrap !important;
+  gap: var(--space-1) !important;
+  padding: var(--space-1) !important;
+  background: var(--bg-gray) !important;
+  border-radius: var(--home-radius-pill) !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+body[data-app-page="competitions"] .competition-track-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+body[data-app-page="competitions"] .competition-track-tab,
+body[data-app-page="competitions"] .competition-track-tab--active {
+  min-height: auto !important;
+  border-radius: var(--home-radius-pill) !important;
+  padding: var(--space-1) var(--space-4) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: all var(--transition-fast) !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+body[data-app-page="competitions"] .competition-track-tab:hover {
+  color: var(--text-primary) !important;
+  background: transparent !important;
+}
+
+body[data-app-page="competitions"] .competition-track-tab.active,
+body[data-app-page="competitions"] .competition-track-tab--active {
+  background: var(--bg-white) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-xs) !important;
+  font-weight: 600 !important;
+}
+
+/* === Competition Grid === */
+.competition-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .competition-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Override Bootstrap col-md-6 to use CSS Grid instead */
+body[data-app-page="competitions"] .competition-grid > [class*="col-"] {
+  display: contents !important;
+}
+
+/* === Competition Card === */
+.competition-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  background: var(--home-bg-warm);
+  border: 1px solid var(--home-border);
+  border-radius: var(--home-radius);
+  transition: all var(--transition-fast-home);
+}
+
+.competition-card:hover {
+  background: color-mix(in srgb, var(--home-bg-warm) 85%, black);
+  border-color: var(--home-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* === Card Header === */
+.competition-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.competition-card__title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+  /* Prevent vertical text wrapping */
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* === Badges === */
+.competition-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.competition-card__levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.competition-card__level {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--home-radius-pill);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Scope badges */
+.scope--national {
+  background: rgba(196, 167, 125, 0.15);
+  color: var(--home-accent-dark);
+  border: 1px solid rgba(196, 167, 125, 0.3);
+}
+
+.scope--province {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.scope--school {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+}
+
+/* Level badges */
+.level--1a {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.level--1b {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.level--2a {
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.level--2b {
+  background: rgba(99, 102, 241, 0.08);
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.level--3 {
+  background: var(--bg-gray);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-light);
+}
+
+/* === Competition Meta === */
+.competition-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.competition-card__meta .meta-item {
+  display: block;
+}
+
+.competition-card__meta strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* === Competition Tags === */
+.competition-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-gray);
+  border: 1px solid var(--border-light);
+  border-radius: var(--home-radius-pill);
+  transition: all var(--transition-fast);
+}
+
+.meta-chip:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-default);
+}
+
+/* === Card Description === */
+.competition-card__desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* === Card Foot / Link === */
+.competition-card__foot {
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+.competition-card__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--home-accent-dark);
+  background: var(--home-bg-warm);
+  border: 1px solid rgba(196, 167, 125, 0.25);
+  border-radius: var(--home-radius-pill);
+  text-decoration: none;
+  transition: all var(--transition-fast-home);
+}
+
+.competition-card__link:hover {
+  background: color-mix(in srgb, var(--home-bg-warm) 80%, black);
+  border-color: var(--home-accent);
+  color: var(--home-accent);
+  transform: translateX(2px);
+}
+
+.competition-card__link svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--transition-fast);
+}
+
+.competition-card__link:hover svg {
+  transform: translateX(2px);
+}
+
+/* === External Link Button (Bootstrap override) === */
+body[data-app-page="competitions"] .competition-card .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: var(--space-2) !important;
+  padding: var(--space-2) var(--space-4) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--home-accent-dark) !important;
+  background: var(--home-bg-warm) !important;
+  border: 1px solid rgba(196, 167, 125, 0.25) !important;
+  border-radius: var(--home-radius-pill) !important;
+  text-decoration: none !important;
+  transition: all var(--transition-fast-home) !important;
+  cursor: pointer !important;
+  min-height: auto !important;
+  line-height: 1.5 !important;
+}
+
+body[data-app-page="competitions"] .competition-card .btn:hover {
+  background: color-mix(in srgb, var(--home-bg-warm) 80%, black) !important;
+  border-color: var(--home-accent) !important;
+  color: var(--home-accent) !important;
+  transform: translateX(2px) !important;
+}
+
+body[data-app-page="competitions"] .competition-card .btn-outline-primary {
+  --bs-btn-border-color: rgba(196, 167, 125, 0.25) !important;
+  --bs-btn-hover-bg: color-mix(in srgb, var(--home-bg-warm) 80%, black) !important;
+  --bs-btn-hover-color: var(--home-accent) !important;
+  --bs-btn-hover-border-color: var(--home-accent) !important;
+}
+
+/* === Empty State === */
+.competition-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) var(--space-6);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .competition-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body[data-app-page="competitions"] .competition-toolbar__search {
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+  }
+
+  body[data-app-page="competitions"] .competition-toolbar .il-toolbar-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  body[data-app-page="competitions"] .competition-track-tabs {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+}
+
+/* Competitions shell overrides — migrated from style.css */
+
+body[data-app-page="competitions"] .main-content {
+  padding-top: 0 !important;
+}
+body[data-app-page="competitions"] .competition-hub {
+  padding: 26px 24px 72px !important;
+}
+body[data-app-page="competitions"] .competition-track-tabs .btn {
+  min-height: 40px !important;
+  padding: 8px 16px !important;
+  white-space: nowrap;
+}
+body[data-app-page="competitions"] .competition-track-tab[data-track="cs"] {
+  background: var(--tag-blue-soft) !important;
+  color: var(--tag-blue) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+}
+body[data-app-page="competitions"] .competition-track-tab[data-track="ee"] {
+  background: var(--tag-cyan-soft) !important;
+  color: var(--tag-cyan) !important;
+  border-color: rgba(8, 145, 178, 0.2) !important;
+}
+body[data-app-page="competitions"] .competition-track-tab[data-track="innovation"] {
+  background: var(--tag-rose-soft) !important;
+  color: var(--tag-rose) !important;
+  border-color: rgba(225, 29, 72, 0.18) !important;
+}
+body[data-app-page="competitions"] .competition-track-tab[data-track="stem"] {
+  background: var(--tag-violet-soft) !important;
+  color: var(--tag-violet) !important;
+  border-color: rgba(124, 58, 237, 0.18) !important;
+}
+body[data-app-page="competitions"] .competition-track-tab[data-track="robot"] {
+  background: var(--tag-amber-soft) !important;
+  color: var(--tag-amber) !important;
+  border-color: rgba(217, 119, 6, 0.2) !important;
+}
+body[data-app-page="competitions"] .competition-track-tab[data-track="general"] {
+  background: var(--tag-emerald-soft) !important;
+  color: var(--tag-emerald) !important;
+  border-color: rgba(5, 150, 105, 0.18) !important;
+}
+body[data-app-page="competitions"] .competition-track-tab.active {
+  background: var(--primary) !important;
+  color: var(--text-white) !important;
+  border-color: var(--primary) !important;
+}
+body[data-app-page="competitions"] .competition-card__level--scope {
+  background: var(--tag-blue-soft) !important;
+  color: var(--tag-blue) !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+}
+body[data-app-page="competitions"] .competition-card__level--class {
+  background: var(--tag-violet-soft) !important;
+  color: var(--tag-violet) !important;
+  border-color: rgba(124, 58, 237, 0.18) !important;
+}
+body[data-app-page="competitions"] .competition-card .btn-outline-primary {
+  background: var(--info-soft) !important;
+  color: var(--info) !important;
+  border-color: rgba(0, 0, 0, 0.28) !important;
+}
+body[data-app-page="competitions"] .competition-card .btn-outline-primary:hover {
+  background: var(--info) !important;
+  color: var(--text-white) !important;
+  border-color: var(--info) !important;
+}
+body[data-app-page="competitions"] .competition-toolbar.il-toolbar {
+  padding: 10px 14px !important;
+  margin-bottom: 18px !important;
+  overflow: hidden;
+}
+body[data-app-page="competitions"] .competition-toolbar .il-toolbar-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+body[data-app-page="competitions"] .competition-track-tabs {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+body[data-app-page="competitions"] .competition-toolbar__search {
+  flex: 0 1 360px !important;
+  width: auto !important;
+  min-width: 240px !important;
+  max-width: 420px !important;
+}
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field,
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field--toolbar,
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field--combo {
+  width: 100% !important;
+  min-height: 40px !important;
+  border-radius: 12px !important;
+  border: 1px solid #eeeeee !important;
+  background: #f8f8f8 !important;
+  padding: 0 12px 0 40px !important;
+}
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__input {
+  min-height: 38px !important;
+  font-size: 14px !important;
+}
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__action {
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: var(--text-white) !important;
+  background: #111827 !important;
+  border: 1px solid #111827 !important;
+}
+body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__action:hover {
+  background: #374151 !important;
+  border-color: #374151 !important;
+}

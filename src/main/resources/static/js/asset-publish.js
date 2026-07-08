@@ -51,14 +51,6 @@
         return body + '（分类：' + cat + '）';
     }
 
-    function toast(msg, type) {
-        if (global.ILink && global.ILink.showMessage) {
-            global.ILink.showMessage(msg, type === 'error' ? 'error' : type === 'warn' ? 'warning' : 'success');
-            return;
-        }
-        alert(msg);
-    }
-
     function resetForm() {
         var title = $('pubTitle');
         var cat = $('pubCategory');
@@ -122,7 +114,7 @@
     async function submit() {
         var title = ($('pubTitle') || {}).value;
         if (!title || !String(title).trim()) {
-            toast('请填写成果名称', 'warn');
+            showMessage('请填写成果名称', 'warning');
             return;
         }
         var category = ($('pubCategory') || {}).value || '';
@@ -150,18 +142,18 @@
             var r = await fetchFn(url, { method: method, body: fd, credentials: 'same-origin' });
             var j = await r.json();
             if (j.code === 200) {
-                toast(state.mode === 'edit' ? '保存成功' : '发布成功', 'ok');
+                showMessage(state.mode === 'edit' ? '保存成功' : '发布成功', 'success');
                 hideModal();
                 resetForm();
                 if (typeof state.onSuccess === 'function') {
                     state.onSuccess(j.data, state.mode);
                 }
             } else {
-                toast(j.message || '操作失败', 'error');
+                showMessage(j.message || '操作失败', 'error');
             }
         } catch (e) {
             console.error(e);
-            toast('网络异常', 'error');
+            showMessage('网络异常', 'error');
         }
     }
 

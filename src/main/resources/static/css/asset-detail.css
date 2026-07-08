@@ -154,7 +154,7 @@ body[data-app-page="asset-detail"] .desc-box {
   padding: 1.15rem 1.25rem;
   background: #f9fafb;
   border: 1px solid #f0f2f5;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 body[data-app-page="asset-detail"] .desc-text {
@@ -198,7 +198,7 @@ body[data-app-page="asset-detail"] .insight-header i {
   font-size: 1.1rem;
   color: #111827;
   background: #f3f4f6;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 body[data-app-page="asset-detail"] .insight-header h2 {
@@ -227,7 +227,7 @@ body[data-app-page="asset-detail"] .insight-quote {
   color: #4b5563;
   background: #f3f4f6;
   border-left: 3px solid #111827;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 body[data-app-page="asset-detail"] .insight-empty {
@@ -260,7 +260,7 @@ body[data-app-page="asset-detail"] .attachment-area {
   padding: 1.15rem 1.35rem 1.35rem;
   background: #fafafa;
   border: 1px solid #f0f2f5;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
 }
 
 body[data-app-page="asset-detail"] .attachment-title {
@@ -289,7 +289,7 @@ body[data-app-page="asset-detail"] .file-item {
   padding: 0.7rem 1rem;
   background: #ffffff;
   border: 1px solid #f0f2f5;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
 }
 
 body[data-app-page="asset-detail"] .file-info {
@@ -309,7 +309,7 @@ body[data-app-page="asset-detail"] .file-icon {
   font-size: 1.1rem;
   color: #111827;
   background: #f3f4f6;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 body[data-app-page="asset-detail"] .file-details h4 {
@@ -338,7 +338,7 @@ body[data-app-page="asset-detail"] .download-btn {
   background: transparent;
   border: 1px solid #d1d5db;
   border-radius: 9999px;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
 body[data-app-page="asset-detail"] .download-btn:hover {
@@ -377,7 +377,7 @@ body[data-app-page="asset-detail"] .asset-edit-btn {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 body[data-app-page="asset-detail"] .asset-edit-btn:hover {
@@ -400,7 +400,7 @@ body[data-app-page="asset-detail"] .return-btn {
   background: #f3f4f6;
   border: 1px solid #e5e7eb;
   border-radius: 9999px;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 body[data-app-page="asset-detail"] .return-btn:hover {
@@ -444,4 +444,96 @@ body[data-app-page="asset-detail"] .author-info .il-publisher-avatar__img {
   body[data-app-page="asset-detail"] .file-item {
     flex-wrap: wrap;
   }
+}
+
+/* asset-detail shell overrides — migrated from style.css */
+
+body[data-app-page="asset-detail"] .detail-page.main-content > .row {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+body[data-app-page="asset-detail"] .detail-page__column {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+body[data-app-page="asset-detail"] .detail-view.card {
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgba(17, 24, 39, 0.06),
+    0 8px 24px rgba(17, 24, 39, 0.08);
+}
+body[data-app-page="asset-detail"] .detail-view__author--lead {
+  align-self: flex-start;
+  margin: 0 0 1.25rem 0;
+  padding: 0;
+}
+body[data-app-page="asset-detail"] .detail-view__body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+body[data-app-page="asset-detail"] .detail-view__cover-img,
+body[data-app-page="asset-detail"] .asset-preview__img,
+body[data-app-page="asset-detail"] #assetCover {
+  display: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 320px !important;
+  object-fit: cover !important;
+  margin: 0 !important;
+  position: static !important;
+  float: none !important;
+}
+body[data-app-page="asset-detail"] .detail-view__cover-img.detail-view__cover-img--visible,
+body[data-app-page="asset-detail"] .asset-preview__img.detail-view__cover-img--visible,
+body[data-app-page="asset-detail"] #assetCover.detail-view__cover-img--visible {
+  display: block !important;
+}
+body[data-app-page="asset-detail"] .detail-view__cover-placeholder,
+body[data-app-page="asset-detail"] .asset-preview__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 120px;
+  max-height: 320px;
+  padding: 1.5rem;
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  text-align: center;
+  box-sizing: border-box;
+}
+body[data-app-page="asset-detail"] .detail-view__cover-placeholder[hidden],
+body[data-app-page="asset-detail"] .asset-preview__placeholder[hidden] {
+  display: none !important;
+}
+body[data-app-page="asset-detail"] .detail-view__cover-placeholder-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  opacity: 0.55;
+}
+body[data-app-page="asset-detail"] .detail-view__meta {
+  position: relative !important;
+  z-index: 1;
+  width: 100% !important;
+  flex: 1 1 auto;
+}
+body[data-app-page="asset-detail"] #assetAuthor .il-publisher-avatar,
+body[data-app-page="asset-detail"] #assetAuthor .il-avatar-wrap,
+body[data-app-page="asset-detail"] #assetAuthor .il-publisher-avatar__img,
+body[data-app-page="asset-detail"] #assetAuthor .il-avatar-fallback {
+  border-radius: 50% !important;
+}
+body[data-app-page="asset-detail"] #assetAuthor .il-avatar-wrap {
+  overflow: hidden !important;
+}
+body[data-app-page="asset-detail"] #assetAuthor .il-publisher-avatar__img {
+  object-fit: cover !important;
 }

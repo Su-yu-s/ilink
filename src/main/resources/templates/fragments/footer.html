@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<footer class="il-footer" th:fragment="footer">
+<footer class="il-footer" th:fragment="footer(showFooter)" th:if="${showFooter != null and showFooter}">
   <div class="il-footer__inner">
     <div class="il-footer-brand">
       <div class="il-footer-logo">
@@ -26,6 +26,7 @@
   </div>
   <div class="il-footer-bottom">
     <p>&copy; 2026 iLink. All rights reserved.</p>
+    <p class="il-footer-slogan">路漫漫其修远兮，吾将上下而求索。</p>
   </div>
 </footer>
 </body>

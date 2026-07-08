@@ -15,5 +15,9 @@ public class TeamApplication {
     private Long userId;
     private String status; // PENDING, APPROVED, REJECTED
     private String message;
+    /** 审批备注（通过时选填）/ 拒绝理由（必填） */
+    private String reviewerNote;
+    /** 审批时间 */
+    private Date reviewedAt;
     private Date createdAt;
 }

@@ -4,7 +4,7 @@ import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import cn.ilink.entity.Asset;
 import cn.ilink.entity.User;
-import cn.ilink.service.AssetService;
+import cn.ilink.service.impl.AssetServiceImpl;
 import cn.ilink.service.UserService;
 import cn.ilink.util.UserPreviewHelper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -48,7 +48,7 @@ public class AssetController {
     private static final Pattern CATEGORY_IN_DESC = Pattern.compile("（分类：([^）]+)）");
 
     @Autowired
-    private AssetService assetService;
+    private AssetServiceImpl assetService;
 
     @Autowired
     private UserService userService;
@@ -210,9 +210,9 @@ public class AssetController {
             data.put("viewCount", asset.getViewCount());
             data.put("createdAt", asset.getCreatedAt());
             data.put("ownerPreview", UserPreviewHelper.toPreview(owner));
-            return ResponseEntity.ok(Result.ok("获取成功", data));
+            return Result.ok("获取成功", data).toResponseEntity();
         } else {
-            return ResponseEntity.ok(Result.notFound("成果不存在"));
+            return Result.notFound("成果不存在").toResponseEntity();
         }
     }
 
@@ -225,10 +225,10 @@ public class AssetController {
                                                          HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         if (title == null || title.trim().isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("请填写成果名称"));
+            return Result.badRequest("请填写成果名称").toResponseEntity();
         }
 
         try {
@@ -237,7 +237,7 @@ public class AssetController {
             if (file != null) {
                 fileUrl = storeUploadedFile(file);
                 if (fileUrl == null) {
-                    return ResponseEntity.ok(Result.fail(500, "文件上传失败，请稍后重试"));
+                    return Result.fail(500, "文件上传失败，请稍后重试").toResponseEntity();
                 }
             }
 
@@ -249,11 +249,11 @@ public class AssetController {
             asset.setViewCount(0);
 
             if (assetService.save(asset)) {
-                return ResponseEntity.ok(Result.ok("发布成功", asset));
+                return Result.ok("发布成功", asset).toResponseEntity();
             }
-            return ResponseEntity.ok(Result.fail(500, "保存失败"));
+            return Result.fail(500, "保存失败").toResponseEntity();
         } catch (IOException e) {
-            return ResponseEntity.ok(Result.fail(500, "文件上传失败，请稍后重试"));
+            return Result.fail(500, "文件上传失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -267,17 +267,17 @@ public class AssetController {
                                                         HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
-            return ResponseEntity.ok(Result.unauthorized());
+            return Result.unauthorized().toResponseEntity();
         }
         Asset asset = assetService.getById(id);
         if (asset == null) {
-            return ResponseEntity.ok(Result.notFound("成果不存在"));
+            return Result.notFound("成果不存在").toResponseEntity();
         }
         if (asset.getUserId() == null || !asset.getUserId().equals(user.getId())) {
-            return ResponseEntity.ok(Result.fail(403, "无权编辑该成果"));
+            return Result.fail(403, "无权编辑该成果").toResponseEntity();
         }
         if (title == null || title.trim().isEmpty()) {
-            return ResponseEntity.ok(Result.badRequest("请填写成果名称"));
+            return Result.badRequest("请填写成果名称").toResponseEntity();
         }
 
         try {
@@ -286,18 +286,18 @@ public class AssetController {
                 deleteStoredFile(asset.getFileUrl());
                 String fileUrl = storeUploadedFile(file);
                 if (fileUrl == null) {
-                    return ResponseEntity.ok(Result.fail(500, "文件上传失败，请稍后重试"));
+                    return Result.fail(500, "文件上传失败，请稍后重试").toResponseEntity();
                 }
                 asset.setFileUrl(fileUrl);
             }
             asset.setTitle(title.trim());
             asset.setDescription(description != null ? description.trim() : "");
             if (assetService.updateById(asset)) {
-                return ResponseEntity.ok(Result.ok("保存成功", asset));
+                return Result.ok("保存成功", asset).toResponseEntity();
             }
-            return ResponseEntity.ok(Result.fail(500, "保存失败"));
+            return Result.fail(500, "保存失败").toResponseEntity();
         } catch (IOException e) {
-            return ResponseEntity.ok(Result.fail(500, "文件上传失败，请稍后重试"));
+            return Result.fail(500, "文件上传失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -358,11 +358,18 @@ public class AssetController {
             asset.setViewCount(asset.getViewCount() != null ? asset.getViewCount() + 1 : 1);
             assetService.updateById(asset);
 
-            // 读取文件
+            // 读取文件（路径遍历防护）
             String fileUrl = asset.getFileUrl();
             if (fileUrl.startsWith("/uploads/")) {
                 String filename = fileUrl.substring("/uploads/".length());
+                if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+                    return ResponseEntity.badRequest().build();
+                }
                 Path filePath = Paths.get(uploadPath, filename);
+                Path basePath = Paths.get(uploadPath).toAbsolutePath().normalize();
+                if (!filePath.normalize().toAbsolutePath().startsWith(basePath)) {
+                    return ResponseEntity.badRequest().build();
+                }
 
                 if (Files.exists(filePath)) {
                     byte[] bytes = Files.readAllBytes(filePath);

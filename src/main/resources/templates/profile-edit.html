@@ -13,58 +13,19 @@
 
     <div class="il-page-wrapper">
         <div class="il-profile-layout">
-            <aside class="il-profile-sidebar">
-                <h3 class="il-profile-sidebar-title">个人中心</h3>
-                <p class="il-profile-sidebar-subtitle">管理您的账号</p>
-                <nav class="il-profile-nav">
-                    <a href="/profile.html" class="il-profile-nav-item">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"/>
-                        </svg>
-                        概览
-                    </a>
-                    <a href="/profile-edit.html" class="il-profile-nav-item active">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 12a5 5 0 100-10a5 5 0 000 10z"/>
-                            <path d="M4 22a8 8 0 0116 0"/>
-                        </svg>
-                        编辑资料
-                    </a>
-                    <a href="/profile-honors.html" class="il-profile-nav-item">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 3l2.4 7.4H22l-6 4.6 2.3 7L12 17.8 5.7 22 8 14.4 2 10.6h7.6L12 3z"/>
-                        </svg>
-                        个人成果
-                    </a>
-                    <a href="/profile-posts.html" class="il-profile-nav-item">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M7 4h10a2 2 0 012 2v14l-4-2.5L11 18l-4 1.5V6a2 2 0 012-2z"/>
-                            <path d="M9 9h6M9 13h4"/>
-                        </svg>
-                        我的文章
-                    </a>
-                    <a href="/profile-favorites.html" class="il-profile-nav-item">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2.8l2.8 5.7 6.3.9-4.6 4.6 1.1 6.2L12 17.9 6.4 20.1l1.1-6.2L2.9 9.4l6.3-.9L12 2.8z"/>
-                        </svg>
-                        我的收藏
-                    </a>
-                    <a href="/profile-password.html" class="il-profile-nav-item">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M19 11H5a2 2 0 00-2 2v7a2 2 0 002 2h14a2 2 0 002-2v-7a2 2 0 00-2-2z"/>
-                            <path d="M7 11V7a5 5 0 0110 0v4"/>
-                        </svg>
-                        修改密码
-                    </a>
-                </nav>
-            </aside>
+            <div th:replace="~{fragments/profile-sidebar :: sidebar (active='edit')}"></div>
 
             <div class="il-profile-content">
                 <div class="il-section-card">
                     <form id="profileForm" novalidate>
-                        <!-- C-37: 添加 CSRF token -->
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <h2 class="il-section-title">基本信息</h2>
+
+                        <div class="il-section-header" style="margin-bottom: 24px;">
+                            <div>
+                                <h2 class="il-section-title">基本信息</h2>
+                                <p class="il-section-subtitle">完善个人资料，让更多人了解你</p>
+                            </div>
+                        </div>
 
                         <div class="il-avatar-wrapper">
                             <div class="il-avatar-container il-avatar-preview" id="avatarContainer" title="点击更换头像">
@@ -184,10 +145,8 @@
         </div>
     </div>
 
-    <div th:replace="fragments/footer :: footer"></div>
-
     <script src="/lib/bootstrap.bundle.min.js?v=4.3"></script>
-    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/common.js?v=7.8"></script>
     <script src="/js/profile.js?v=4.4"></script>
     <script src="/js/profile-edit.js?v=4.6"></script>
 </body>

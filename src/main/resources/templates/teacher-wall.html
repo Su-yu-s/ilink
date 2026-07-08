@@ -1,72 +1,82 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>导师招贤 - iLink</title>
 
-    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <th:block th:replace="~{fragments/head-assets :: core(bootstrap=true)}"></th:block>
+    <link href="/css/teacher-wall.css?v=2.3" rel="stylesheet">
 </head>
 <body data-app-page="teacher-wall" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
-    <div th:replace="fragments/header :: header(${currentUser}, 'teacher')"></div>
+    <div th:replace="~{fragments/header :: header(${currentUser}, 'teacher')}"></div>
 
     <div class="il-page-wrapper">
-        <!-- 粒子背景画布 -->
-        <canvas id="particleCanvas" class="particle-canvas"></canvas>
 
-        <div class="il-hero">
-            <p class="il-hero-eyebrow">导师招贤 · 竞赛指导</p>
-            <h1 class="il-hero-title">导师招贤</h1>
-            <p class="il-hero-desc">寻找经验丰富的导师，获得专业竞赛指导</p>
-        </div>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-inner">
+                <div class="hero-eyebrow">导师招贤 · 竞赛指导</div>
+                <h1 class="hero-title">仰之弥高，钻之弥坚。</h1>
+                <p class="hero-desc">
+                    循着前辈的足迹向上，每一步都走得更深、更稳，终见星辰。
+                </p>
+            </div>
+        </section>
 
-        <div class="il-toolbar">
-            <div class="il-toolbar-row">
-                <form id="filterForm" class="il-toolbar-filters">
-                    <div class="il-toolbar-search">
-                        <div th:replace="~{fragments/search-field :: field('keyword', '搜索姓名、专业或研究方向', '关键词', 'text', 'il-search-field--toolbar')}"></div>
+        <!-- Search Panel -->
+        <section class="toolbar-section">
+            <div class="toolbar-inner">
+                <div class="search-panel">
+                    <div class="search-input-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="text" id="keyword" th:value="${keyword}" placeholder="搜索姓名、专业或研究方向">
                     </div>
-                    <select id="major" class="il-toolbar-select" aria-label="专业领域">
-                        <option value="">全部专业</option>
-                        <option value="计算机科学">计算机科学</option>
-                        <option value="电子工程">电子工程</option>
-                        <option value="机械工程">机械工程</option>
-                        <option value="生物医学">生物医学</option>
-                    </select>
-                    <select id="title" class="il-toolbar-select" aria-label="职称">
-                        <option value="">全部职称</option>
-                        <option value="教授">教授</option>
-                        <option value="副教授">副教授</option>
-                        <option value="讲师">讲师</option>
-                    </select>
-                    <button type="reset" class="il-btn il-btn-secondary">重置</button>
-                    <button type="submit" class="il-btn il-btn-primary">搜索</button>
-                </form>
-                <div class="il-toolbar-actions">
-                    <button type="button" id="applyBtn" class="il-btn il-btn-primary" onclick="openApplyModal()">
-                        <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                        <span>申请成为导师</span>
-                    </button>
+                    <div class="search-divider"></div>
+                    <div class="search-select">
+                        <select id="major" aria-label="专业领域">
+                            <option value="">全部专业</option>
+                            <option value="计算机科学" th:selected="${major == '计算机科学'}">计算机科学</option>
+                            <option value="电子工程" th:selected="${major == '电子工程'}">电子工程</option>
+                            <option value="机械工程" th:selected="${major == '机械工程'}">机械工程</option>
+                            <option value="生物医学" th:selected="${major == '生物医学'}">生物医学</option>
+                        </select>
+                    </div>
+                    <div class="search-select">
+                        <select id="title" aria-label="职称">
+                            <option value="">全部职称</option>
+                            <option value="教授" th:selected="${title == '教授'}">教授</option>
+                            <option value="副教授" th:selected="${title == '副教授'}">副教授</option>
+                            <option value="讲师" th:selected="${title == '讲师'}">讲师</option>
+                        </select>
+                    </div>
+                    <button type="button" class="search-btn" id="searchBtn">搜索</button>
+                    <div class="search-apply">
+                        <button type="button" class="btn-pill-accent" onclick="openApplyModal()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                            申请成为导师
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- 导师列表 -->
-        <div id="teacherList">
-        </div>
+        <!-- Mentor Grid -->
+        <section class="content-section">
+            <div class="content-inner">
+                <div id="teacherList"></div>
 
-        <!-- 分页 -->
-        <nav id="pagination" class="mt-4 d-none">
-            <ul class="pagination justify-content-center">
-            </ul>
-        </nav>
+                <!-- Pagination -->
+                <nav id="pagination" class="mt-4 d-none">
+                    <ul class="pagination justify-content-center">
+                    </ul>
+                </nav>
+            </div>
+        </section>
+
     </div>
 
-    <div th:replace="fragments/footer :: footer"></div>
-
-    <!-- 申请成为导师模态框（专用 class，避免 components.css .il-modal 全屏 fixed 污染） -->
+    <!-- 申请成为导师模态框 -->
     <div class="teacher-apply-overlay" id="applyModal" aria-hidden="true">
         <div class="teacher-apply-dialog" role="dialog" aria-modal="true" aria-labelledby="applyModalTitle" onclick="event.stopPropagation()">
             <header class="teacher-apply-dialog__header">
@@ -81,31 +91,31 @@
                 <form id="applyForm" class="teacher-apply-form">
                     <div class="teacher-apply-field">
                         <label for="applicationMajor" class="teacher-apply-label">专业领域 *</label>
-                        <input type="text" class="teacher-apply-input" id="applicationMajor" required>
+                        <input type="text" class="teacher-apply-input" id="applicationMajor" required placeholder="如：计算机科学与技术">
                     </div>
                     <div class="teacher-apply-field">
                         <label for="applicationTitle" class="teacher-apply-label">职称 *</label>
-                        <input type="text" class="teacher-apply-input" id="applicationTitle" required>
+                        <input type="text" class="teacher-apply-input" id="applicationTitle" required placeholder="如：教授、副教授、讲师">
                     </div>
                     <div class="teacher-apply-field">
                         <label for="applicationBio" class="teacher-apply-label">个人简介 *</label>
-                        <textarea class="teacher-apply-textarea" id="applicationBio" rows="3" required></textarea>
+                        <textarea class="teacher-apply-textarea" id="applicationBio" rows="3" required placeholder="介绍一下你的教学经验和研究方向…"></textarea>
                     </div>
                     <div class="teacher-apply-field">
                         <label for="applicationResearch" class="teacher-apply-label">研究方向 *</label>
-                        <textarea class="teacher-apply-textarea" id="applicationResearch" rows="2" required></textarea>
+                        <textarea class="teacher-apply-textarea" id="applicationResearch" rows="2" required placeholder="多个方向用逗号分隔"></textarea>
                     </div>
                 </form>
             </div>
             <footer class="teacher-apply-dialog__footer">
-                <button type="button" class="il-btn il-btn-secondary" onclick="closeApplyModal()">取消</button>
-                <button type="button" class="il-btn il-btn-primary" id="submitApply">提交申请</button>
+                <button type="button" class="btn-pill-accent" style="border-color: rgba(0,0,0,0.15); color: #444;" onclick="closeApplyModal()">取消</button>
+                <button type="button" class="btn-pill-accent" id="submitApply">提交申请</button>
             </footer>
         </div>
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/common.js?v=7.8"></script>
     <script src="/js/teacher-wall.js?v=4.5"></script>
 </body>
 </html>

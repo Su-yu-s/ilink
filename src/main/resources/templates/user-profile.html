@@ -6,13 +6,12 @@
     <title>用户主页 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/profile-public.css?v=1.1" rel="stylesheet">
+    <link href="/css/profile-public.css?v=1.2" rel="stylesheet">
 </head>
 <body data-profile-page="public" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
 
     <div class="il-page-wrapper profile-public-page">
-        <canvas id="particleCanvas" class="particle-canvas" aria-hidden="true"></canvas>
 
         <header class="profile-public-page__head">
             <h1 class="profile-public-page__title">用户主页</h1>
@@ -23,8 +22,7 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=7.4"></script>
+    <script src="/js/common.js?v=7.8"></script>
     <script src="/js/profile.js?v=74"></script>
-    <div th:replace="fragments/footer :: footer"></div>
 </body>
 </html>

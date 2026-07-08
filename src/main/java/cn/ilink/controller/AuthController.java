@@ -150,7 +150,7 @@ public class AuthController {
                 registerLastReset.put(registerKey, now);
             }
             if (count.incrementAndGet() > 3) {
-                return ResponseEntity.ok(Result.badRequest("注册过于频繁，请 1 分钟后再试"));
+                return Result.badRequest("注册过于频繁，请 1 分钟后再试").toResponseEntity();
             }
         }
 
@@ -167,47 +167,47 @@ public class AuthController {
                 try {
                     registerRequest.setStudentId(Long.parseLong(id));
                 } catch (NumberFormatException e) {
-                    return ResponseEntity.ok(Result.badRequest("学号/工号格式错误"));
+                    return Result.badRequest("学号/工号格式错误").toResponseEntity();
                 }
             } else {
-                return ResponseEntity.ok(Result.badRequest("手机号或学号/工号格式不正确"));
+                return Result.badRequest("手机号或学号/工号格式不正确").toResponseEntity();
             }
         }
 
         String pwd = registerRequest.getPassword();
         if (!PasswordPolicy.isValid(pwd)) {
-            return ResponseEntity.ok(Result.badRequest(PasswordPolicy.message()));
+            return Result.badRequest(PasswordPolicy.message()).toResponseEntity();
         }
 
         if (registerRequest.getPhoneNumber() != null && !registerRequest.getPhoneNumber().trim().isEmpty()) {
             if (!registerRequest.getPhoneNumber().matches("^1[3-9]\\d{9}$")) {
-                return ResponseEntity.ok(Result.badRequest("手机号格式错误"));
+                return Result.badRequest("手机号格式错误").toResponseEntity();
             }
         }
 
         if (registerRequest.getStudentId() != null) {
             if (!String.valueOf(registerRequest.getStudentId()).matches("^\\d{5,15}$")) {
-                return ResponseEntity.ok(Result.badRequest("学号/工号格式错误"));
+                return Result.badRequest("学号/工号格式错误").toResponseEntity();
             }
         }
 
         if ((registerRequest.getPhoneNumber() == null || registerRequest.getPhoneNumber().trim().isEmpty())
             && registerRequest.getStudentId() == null) {
-            return ResponseEntity.ok(Result.badRequest("手机号或学号/工号必须填写一项"));
+            return Result.badRequest("手机号或学号/工号必须填写一项").toResponseEntity();
         }
 
         // 验证角色/身份：注册时必须选择学生或教师
         String role = registerRequest.getRole();
         if (role == null || (!"STUDENT".equals(role) && !"TEACHER".equals(role))) {
-            return ResponseEntity.ok(Result.badRequest("请选择身份（学生或教师）"));
+            return Result.badRequest("请选择身份（学生或教师）").toResponseEntity();
         }
         registerRequest.setRole(role.toUpperCase());
 
         boolean success = userService.register(registerRequest);
         if (success) {
-            return ResponseEntity.ok(Result.ok("注册成功", null));
+            return Result.ok("注册成功", null).toResponseEntity();
         }
-        return ResponseEntity.ok(Result.badRequest("注册失败，手机号或学号/工号已存在"));
+        return Result.badRequest("注册失败，手机号或学号/工号已存在").toResponseEntity();
     }
 
     @GetMapping("/api/logout")
@@ -222,7 +222,7 @@ public class AuthController {
     public ResponseEntity<Result<?>> logoutPost(HttpSession session) {
         session.invalidate();
         SecurityContextHolder.clearContext();
-        return ResponseEntity.ok(Result.ok("登出成功", null));
+        return Result.ok("登出成功", null).toResponseEntity();
     }
 
     @GetMapping("/")

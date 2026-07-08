@@ -1,14 +1,5 @@
 // 成果详情 · 分享卡片
 
-function escapeHtml(value) {
-    return String(value || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
 function parseAssetDescription(raw) {
     const text = String(raw || '').trim();
     let category = '';
@@ -48,6 +39,76 @@ function fileIconClass(name) {
     if (lower.endsWith('.csv') || lower.endsWith('.xlsx')) return 'fa-file-lines';
     return 'fa-file';
 }
+
+// 分类标签颜色映射
+const CATEGORY_COLORS = {
+    '技术开发': 'tech',
+    '产品设计': 'art',
+    '市场调研': 'management',
+    '创新创业': 'innovation',
+    '技术创新': 'tech',
+    '综合交流': 'management',
+    '资源分享': 'innovation'
+};
+
+function getCategoryColorClass(category) {
+    if (!category || category === '未分类') return '';
+    for (const [key, cls] of Object.entries(CATEGORY_COLORS)) {
+        if (category.includes(key)) return cls;
+    }
+    return 'tech';
+}
+
+// 互动按钮状态管理（localStorage）
+const ActionStore = {
+    getItem(key) {
+        try {
+            const data = JSON.parse(localStorage.getItem('ilink-asset-actions') || '{}');
+            return data[key] || { liked: false, faved: false, likeDelta: 0, favDelta: 0 };
+        } catch (e) {
+            return { liked: false, faved: false, likeDelta: 0, favDelta: 0 };
+        }
+    },
+    toggleItem(key, action) {
+        try {
+            const data = JSON.parse(localStorage.getItem('ilink-asset-actions') || '{}');
+            let entry = data[key] || { liked: false, faved: false, likeDelta: 0, favDelta: 0 };
+            if (action === 'like') {
+                entry.liked = !entry.liked;
+                entry.likeDelta = entry.liked ? 1 : 0;
+            } else {
+                entry.faved = !entry.faved;
+                entry.favDelta = entry.faved ? 1 : 0;
+            }
+            data[key] = entry;
+            localStorage.setItem('ilink-asset-actions', JSON.stringify(data));
+            return entry;
+        } catch (e) {
+            return null;
+        }
+    },
+    doAction(btn, baseCount) {
+        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        if (!id || !action) return;
+        const key = 'asset-' + id;
+        const oldEntry = this.getItem(key);
+        const wasOn = action === 'like' ? oldEntry.liked : oldEntry.faved;
+        const entry = this.toggleItem(key, action);
+        if (!entry) return;
+        const isOn = action === 'like' ? entry.liked : entry.faved;
+        const numEl = btn.querySelector('.detail-action-num');
+        if (numEl) {
+            const count = baseCount + (entry[action === 'like' ? 'likeDelta' : 'favDelta']);
+            numEl.textContent = count;
+        }
+        if (isOn) {
+            btn.classList.add('detail-action--on');
+        } else {
+            btn.classList.remove('detail-action--on');
+        }
+    }
+};
 
 const urlParams = new URLSearchParams(window.location.search);
 const assetId = urlParams.get('id');
@@ -161,13 +222,16 @@ function renderAssetDetail(asset) {
     }
 
     const categoryEl = document.getElementById('assetCategory');
-    if (categoryEl) categoryEl.textContent = category;
+    if (categoryEl) {
+        categoryEl.textContent = category;
+        const colorClass = getCategoryColorClass(category);
+        if (colorClass) {
+            categoryEl.className = 'gallery-tag--' + colorClass;
+        }
+    }
 
     const timeEl = document.getElementById('assetCreateTime');
     if (timeEl) timeEl.textContent = typeof formatTime === 'function' ? formatTime(asset.createdAt) : '-';
-
-    const viewEl = document.getElementById('assetViewCount');
-    if (viewEl) viewEl.textContent = '浏览 ' + (asset.viewCount || 0);
 
     const leadEl = document.getElementById('assetDescLead');
     const extraEl = document.getElementById('assetDescExtra');
@@ -236,5 +300,39 @@ function renderAssetDetail(asset) {
     } else {
         if (attachSection) attachSection.hidden = true;
         if (filesEl) filesEl.innerHTML = '';
+    }
+
+    // 初始化互动按钮（点赞/收藏）状态
+    const likeBtn = document.getElementById('detailLikeBtn');
+    const favBtn = document.getElementById('detailFavBtn');
+    const storageKey = 'asset-' + asset.id;
+    const stored = ActionStore.getItem(storageKey);
+    const likeCount = (asset.likeCount || 0) + stored.likeDelta;
+    const favCount = (asset.favoriteCount || 0) + stored.favDelta;
+
+    if (likeBtn) {
+        likeBtn.setAttribute('data-id', asset.id);
+        const likeNum = document.getElementById('detailLikeNum');
+        if (likeNum) likeNum.textContent = likeCount;
+        if (stored.liked) likeBtn.classList.add('detail-action--on');
+        if (!likeBtn.dataset.bound) {
+            likeBtn.dataset.bound = '1';
+            likeBtn.addEventListener('click', function () {
+                ActionStore.doAction(likeBtn, asset.likeCount || 0);
+            });
+        }
+    }
+
+    if (favBtn) {
+        favBtn.setAttribute('data-id', asset.id);
+        const favNum = document.getElementById('detailFavNum');
+        if (favNum) favNum.textContent = favCount;
+        if (stored.faved) favBtn.classList.add('detail-action--on');
+        if (!favBtn.dataset.bound) {
+            favBtn.dataset.bound = '1';
+            favBtn.addEventListener('click', function () {
+                ActionStore.doAction(favBtn, asset.favoriteCount || 0);
+            });
+        }
     }
 }
