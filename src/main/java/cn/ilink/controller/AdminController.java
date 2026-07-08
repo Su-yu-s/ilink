@@ -18,6 +18,7 @@ import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
+import cn.ilink.vo.AdminDashboardVO;
 import static cn.ilink.common.ControllerUtils.safePage;
 import static cn.ilink.common.ControllerUtils.safeSize;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -86,18 +87,12 @@ public class AdminController {
 
         try {
             // 获取统计数据
-            long userCount = userService.count();
-            long teamCount = teamDemandService.count();
-            long teacherCount = teacherApplicationService.count();
-            long assetCount = assetService.count();
-            long postCount = communityPostService.count();
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("userCount", userCount);
-            data.put("teamCount", teamCount);
-            data.put("teacherCount", teacherCount);
-            data.put("assetCount", assetCount);
-            data.put("postCount", postCount);
+            AdminDashboardVO data = new AdminDashboardVO();
+            data.setUserCount(userService.count());
+            data.setTeamCount(teamDemandService.count());
+            data.setTeacherCount(teacherApplicationService.count());
+            data.setAssetCount(assetService.count());
+            data.setPostCount(communityPostService.count());
 
             return Result.ok("获取成功", data).toResponseEntity();
         } catch (Exception e) {

@@ -21,5 +21,5 @@ public class PendingApplicationVO {
     private String applicantGrade;
     private String applicantSchool;
     private Long applicantUserId;
-    private List<Map<String, Object>> skills;
+    private List<SkillViewVO> skills;
 }
