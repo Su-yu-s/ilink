@@ -831,8 +831,8 @@ function renderGrid() {
             const levelClass = resolveLevelClass(item);
             const scope = resolveScope(item);
             const tags = (item.tags || [])
-                .map(function (t) {
-                    return '<span class="meta-chip meta-chip--muted">' + escapeHtml(t) + '</span>';
+                .map(function (t, index) {
+                    return '<span class="meta-chip contest-tag' + (index === 0 ? ' primary' : '') + '">' + escapeHtml(t) + '</span>';
                 })
                 .join('');
             const url = (item.officialUrl || '').trim();
@@ -840,14 +840,15 @@ function renderGrid() {
                 url ?
                     '<a href="' +
                     escapeHtml(url) +
-                    '" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer">访问官网</a>'
-                :   '<span class="text-muted small">官网请自行检索</span>';
+                    '" class="competition-card__link contest-card__link" target="_blank" rel="noopener noreferrer">访问官网<span aria-hidden="true">→</span></a>'
+                :   '<span class="competition-card__link competition-card__link--disabled">官网请自行检索</span>';
                 var scopeClass = 'scope--default';
                 if (scope === '国赛' || scope === '国际赛' || scope === '国际级') scopeClass = 'scope--national';
                 else if (scope === '省赛' || scope === '省级') scopeClass = 'scope--province';
                 else if (scope === '校赛' || scope === '校级') scopeClass = 'scope--school';
+                var cardVariant = levelClass.includes('一类A') ? ' featured' : '';
                 return (
-                '<article class="competition-card h-100">' +
+                '<article class="contest-card competition-card h-100' + cardVariant + '">' +
                 '<div class="competition-card__header">' +
                 '<h2 class="competition-card__title mb-0">' +
                 escapeHtml(item.name) +
@@ -866,24 +867,28 @@ function renderGrid() {
                 '</span>' +
                 '</div>' +
                 '</div>' +
-                '<div class="competition-card__meta small text-muted mb-2">' +
-                '<span class="meta-item"><strong>主办：</strong>' +
+                '<div class="competition-card__meta">' +
+                '<div class="competition-card__meta-line"><strong>主办：</strong><span>' +
                 escapeHtml(item.organizer || '') +
-                '</span>' +
-                '<span class="meta-item mt-1"><strong>赛季参考：</strong>' +
+                '</span></div>' +
+                '<div class="competition-card__meta-line"><strong>赛季参考：</strong><span>' +
                 escapeHtml(item.season || '') +
-                '</span>' +
+                '</span></div>' +
                 '</div>' +
-                '<div class="competition-card__tags d-flex flex-wrap gap-1 mb-2">' +
+                '<div class="competition-card__tags">' +
                 tags +
                 '</div>' +
-                '<p class="competition-card__desc mb-3">' +
+                '<p class="competition-card__desc">' +
                 escapeHtml(item.desc || '') +
                 '</p>' +
-                '<div class="competition-card__foot mt-auto">' +
+                '<div class="card-divider competition-card__divider"></div>' +
+                '<div class="competition-card__foot">' +
+                '<span class="competition-card__season"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+                escapeHtml(item.season || '以赛事官网为准') +
+                '</span>' +
                 link +
                 '</div>' +
-                '</div></article>'
+                '</article>'
             );
         })
         .join('');

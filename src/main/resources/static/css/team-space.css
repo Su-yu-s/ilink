@@ -8,7 +8,7 @@
     grid-template-columns: 220px 1fr;
     gap: 0;
     min-height: calc(100vh - 140px);
-    margin: 16px 0;
+    margin: 0;
 }
 
 /* ===== 宸︿晶瀵艰埅 ===== */
@@ -202,12 +202,6 @@
     gap: 8px;
 }
 
-.members-count {
-    font-size: 13px;
-    color: var(--text-tertiary);
-    font-weight: normal;
-}
-
 /* ===== 鍒锋柊鎸夐挳 ===== */
 .btn-outline-secondary {
     display: inline-flex;
@@ -289,12 +283,7 @@
     background: rgba(17, 24, 39, 0.04);
 }
 
-/* 鍒楅《閮ㄥ僵鑹叉潯 - 宸茬Щ闄?*/
-/* /* 鍒楅《閮ㄥ僵鑹叉潯 - 宸茬Щ闄?*/
-/* .kanban-col.col-todo { border-top: 3px solid #6b7280; }
-.kanban-col.col-in-progress { border-top: 3px solid #888888; }
-.kanban-col.col-review { border-top: 3px solid #888888; }
-.kanban-col.col-completed { border-top: 3px solid #333333; } */ */
+/* Column status is communicated by the dot and label, without decorative bars. */
 
 .kanban-col-header {
     display: flex;
@@ -1058,6 +1047,387 @@ body[data-app-page="team-space"] .chat-window-panel .chat-send-btn:hover {
     }
 }
 
+/* ========================================================================== 
+   v17 - unified workspace shell
+   Matches the profile and detail-page surface language while keeping the
+   workspace dense enough for real collaboration.
+   ========================================================================== */
+body[data-app-page="team-space"] {
+    --ts-surface: #ffffff;
+    --ts-canvas: #faf9f7;
+    --ts-subtle: #f6f4f1;
+    --ts-border: #e8e2d9;
+    --ts-border-strong: #d8d0c5;
+    --ts-text: #2c2419;
+    --ts-muted: #776b5e;
+    --ts-deep: #111827;
+    --ts-shadow: 0 10px 28px rgba(44, 36, 25, 0.07);
+    background: var(--ts-canvas) !important;
+    color: var(--ts-text) !important;
+}
+
+body[data-app-page="team-space"] .main-content {
+    max-width: 1280px !important;
+    padding: 28px 24px 64px !important;
+}
+
+body[data-app-page="team-space"] .workspace-layout {
+    grid-template-columns: 248px minmax(0, 1fr) !important;
+    gap: 24px !important;
+    margin: 8px 0 32px !important;
+    min-height: calc(100vh - 156px) !important;
+}
+
+body[data-app-page="team-space"] .sidebar {
+    position: sticky !important;
+    top: calc(var(--header-height, 64px) + 20px) !important;
+    align-self: start !important;
+    max-height: calc(100vh - var(--header-height, 64px) - 40px) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: var(--ts-surface) !important;
+    border: 1px solid var(--ts-border) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-header {
+    padding: 22px 18px 16px !important;
+    border-bottom: 1px solid var(--ts-border) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-logo {
+    margin-bottom: 14px !important;
+    color: var(--ts-text) !important;
+    font-size: 16px !important;
+}
+
+body[data-app-page="team-space"] .sidebar-back-btn {
+    min-height: 40px !important;
+    justify-content: flex-start !important;
+    padding: 8px 12px !important;
+    background: var(--ts-surface) !important;
+    border: 1px solid var(--ts-border) !important;
+    border-radius: 8px !important;
+    color: var(--ts-muted) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-back-btn:hover {
+    background: var(--ts-subtle) !important;
+    border-color: var(--ts-border-strong) !important;
+    color: var(--ts-text) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav {
+    padding: 12px !important;
+    gap: 4px !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item {
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    color: var(--ts-muted) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item:hover {
+    background: var(--ts-subtle) !important;
+    color: var(--ts-text) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item.active,
+body[data-app-page="team-space"] .sidebar-nav-item.active:hover {
+    background: var(--ts-deep) !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+body[data-app-page="team-space"] .sidebar-footer {
+    padding: 16px 18px !important;
+    background: var(--ts-subtle) !important;
+    border-top: 1px solid var(--ts-border) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-footer-info {
+    gap: 8px !important;
+}
+
+body[data-app-page="team-space"] .sidebar-footer-row {
+    font-size: 12px !important;
+}
+
+body[data-app-page="team-space"] .sidebar-footer-label {
+    color: var(--ts-muted) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-footer-value {
+    color: var(--ts-text) !important;
+}
+
+body[data-app-page="team-space"] .main-content-area {
+    min-width: 0 !important;
+}
+
+body[data-app-page="team-space"] .workspace-panel.active {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    background: var(--ts-surface) !important;
+    border: 1px solid var(--ts-border) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--ts-shadow) !important;
+}
+
+body[data-app-page="team-space"] .panel-header {
+    min-height: 76px !important;
+    padding: 18px 22px !important;
+    background: var(--ts-surface) !important;
+    border-bottom: 1px solid var(--ts-border) !important;
+}
+
+body[data-app-page="team-space"] .panel-title {
+    color: var(--ts-text) !important;
+    font-size: 20px !important;
+}
+
+body[data-app-page="team-space"] .panel-actions {
+    flex-wrap: wrap !important;
+}
+
+body[data-app-page="team-space"] .btn-outline-secondary,
+body[data-app-page="team-space"] .btn-primary {
+    min-height: 40px !important;
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+body[data-app-page="team-space"] .btn-outline-secondary {
+    background: var(--ts-surface) !important;
+    border: 1px solid var(--ts-border) !important;
+    color: var(--ts-muted) !important;
+}
+
+body[data-app-page="team-space"] .btn-outline-secondary:hover {
+    background: var(--ts-subtle) !important;
+    border-color: var(--ts-border-strong) !important;
+    color: var(--ts-text) !important;
+}
+
+body[data-app-page="team-space"] .btn-primary,
+body[data-app-page="team-space"] .chat-send-btn {
+    background: var(--ts-deep) !important;
+    border-color: var(--ts-deep) !important;
+    color: #ffffff !important;
+}
+
+body[data-app-page="team-space"] .btn-primary:hover,
+body[data-app-page="team-space"] .chat-send-btn:hover {
+    background: #030712 !important;
+    transform: none !important;
+}
+
+body[data-app-page="team-space"] .kanban-board {
+    padding: 20px 22px 24px !important;
+    overflow-x: hidden !important;
+    background: var(--ts-surface) !important;
+}
+
+body[data-app-page="team-space"] .kanban-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+}
+
+body[data-app-page="team-space"] .kanban-col {
+    min-width: 0 !important;
+    min-height: 280px !important;
+    padding: 16px !important;
+    overflow: hidden !important;
+    background: var(--ts-canvas) !important;
+    border: 1px solid var(--ts-border) !important;
+    border-radius: 12px !important;
+}
+
+body[data-app-page="team-space"] .kanban-col-header {
+    margin-bottom: 14px !important;
+    padding-bottom: 12px !important;
+    border-bottom: 1px solid var(--ts-border) !important;
+}
+
+body[data-app-page="team-space"] .kanban-col-label {
+    color: var(--ts-text) !important;
+}
+
+body[data-app-page="team-space"] .kanban-col-count,
+body[data-app-page="team-space"] .task-card-tag,
+body[data-app-page="team-space"] .status-badge {
+    background: var(--ts-surface) !important;
+    border: 1px solid var(--ts-border) !important;
+    color: var(--ts-muted) !important;
+}
+
+body[data-app-page="team-space"] .task-card {
+    padding: 16px !important;
+    background: var(--ts-surface) !important;
+    border: 1px solid var(--ts-border) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 2px rgba(44, 36, 25, 0.04) !important;
+}
+
+body[data-app-page="team-space"] .task-card:hover {
+    background: var(--ts-surface) !important;
+    border-color: var(--ts-border-strong) !important;
+    box-shadow: 0 8px 20px rgba(44, 36, 25, 0.08) !important;
+    transform: none !important;
+}
+
+body[data-app-page="team-space"] .kanban-empty,
+body[data-app-page="team-space"] .panel-loading {
+    color: var(--ts-muted) !important;
+}
+
+body[data-app-page="team-space"] .chat-window-panel,
+body[data-app-page="team-space"] #members-panel {
+    min-height: min(720px, calc(100vh - 156px)) !important;
+}
+
+body[data-app-page="team-space"] .chat-messages-area,
+body[data-app-page="team-space"] .members-list-area {
+    background: var(--ts-canvas) !important;
+}
+
+body[data-app-page="team-space"] .chat-composer {
+    background: var(--ts-surface) !important;
+    border-top: 1px solid var(--ts-border) !important;
+}
+
+body[data-app-page="team-space"] .team-warning {
+    margin: 8px 0 16px !important;
+    border: 1px solid #e8ddcd !important;
+    border-radius: 12px !important;
+    background: #faf6f0 !important;
+    color: var(--ts-text) !important;
+}
+
+@media (max-width: 900px) {
+    body[data-app-page="team-space"] .main-content {
+        padding: 20px 16px 80px !important;
+    }
+
+    body[data-app-page="team-space"] .workspace-layout {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        margin-top: 4px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar {
+        position: static !important;
+        max-height: none !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-header {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-logo {
+        margin: 0 !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-back-btn {
+        width: auto !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        overflow: visible !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav-item {
+        min-width: 0 !important;
+        justify-content: center !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-footer-info {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-footer-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 2px !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-columns {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 576px) {
+    body[data-app-page="team-space"] .main-content {
+        padding: 12px 12px 88px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar,
+    body[data-app-page="team-space"] .workspace-panel.active {
+        border-radius: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-header {
+        padding: 16px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-logo span {
+        max-width: 180px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav {
+        padding: 10px !important;
+        gap: 6px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav-item {
+        padding: 9px 6px !important;
+        font-size: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav-item svg {
+        display: none !important;
+    }
+
+    body[data-app-page="team-space"] .panel-header {
+        min-height: 0 !important;
+        padding: 16px !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .panel-actions {
+        width: 100% !important;
+    }
+
+    body[data-app-page="team-space"] .panel-actions .btn {
+        flex: 1 !important;
+        justify-content: center !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-board {
+        padding: 14px !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-col {
+        min-height: 220px !important;
+        padding: 14px !important;
+    }
+}
+
 /* v12 鍏ㄧ珯榛戠櫧鐏版敹鍙ｏ細鍥㈤槦绌洪棿鐙珛鏍峰紡瑕嗙洊 */
 :root {
     --bg-primary: #ffffff;
@@ -1168,11 +1538,8 @@ body[data-app-page="team-space"] .sidebar-nav-item.active {
 
 body[data-app-page="team-space"] .kanban-columns {
     display: grid !important;
-    grid-auto-flow: column !important;
-    grid-auto-columns: minmax(250px, 1fr) !important;
-    grid-template-columns: repeat(4, minmax(250px, 1fr)) !important;
+    grid-template-columns: repeat(2, minmax(250px, 1fr)) !important;
     gap: 20px !important;
-    min-width: 1040px !important;
 }
 
 body[data-app-page="team-space"] .kanban-board {
@@ -1570,3 +1937,284 @@ body[data-app-page="team-space"] .emoji-item:hover {
     }
 }
 
+/* v14：团队空间间距、看板与聊天头像收口 */
+body[data-app-page="team-space"] .main-content {
+    padding-top: 20px !important;
+    padding-bottom: 48px !important;
+}
+
+body[data-app-page="team-space"] .workspace-layout {
+    margin: 20px 0 56px !important;
+}
+
+body[data-app-page="team-space"] .kanban-board {
+    overflow: visible !important;
+    padding: 16px 0 28px !important;
+}
+
+body[data-app-page="team-space"] .kanban-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px 20px !important;
+    align-items: start !important;
+}
+
+body[data-app-page="team-space"] .kanban-col {
+    min-height: 240px !important;
+    max-height: none !important;
+    padding: 16px !important;
+}
+
+body[data-app-page="team-space"] .chat-msg-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    border-radius: 50% !important;
+}
+
+body[data-app-page="team-space"] .chat-msg-avatar > img,
+body[data-app-page="team-space"] .chat-msg-avatar > span {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+body[data-app-page="team-space"] .chat-msg-avatar > img + span[style*="display:none"],
+body[data-app-page="team-space"] .chat-msg-avatar > img + span[style*="display: none"] {
+    display: none !important;
+}
+
+body[data-app-page="team-space"] .member-card-avatar > img,
+body[data-app-page="team-space"] .member-card-avatar > .avatar-placeholder {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+body[data-app-page="team-space"] .member-card-avatar > img + .avatar-placeholder[style*="display:none"],
+body[data-app-page="team-space"] .member-card-avatar > img + .avatar-placeholder[style*="display: none"] {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    body[data-app-page="team-space"] .main-content {
+        padding-top: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .workspace-layout {
+        margin-top: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-columns {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* v18 cascade seal: these rules intentionally stay last. */
+body[data-app-page="team-space"] .main-content {
+    max-width: 1280px !important;
+    padding: 28px 24px 64px !important;
+}
+
+body[data-app-page="team-space"] .workspace-layout {
+    grid-template-columns: 248px minmax(0, 1fr) !important;
+    gap: 24px !important;
+    margin: 8px 0 32px !important;
+    min-height: calc(100vh - 156px) !important;
+}
+
+body[data-app-page="team-space"] .sidebar {
+    position: sticky !important;
+    top: calc(var(--header-height, 64px) + 20px) !important;
+    align-self: start !important;
+    max-height: calc(100vh - var(--header-height, 64px) - 40px) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    background: var(--ts-surface, #fff) !important;
+    border: 1px solid var(--ts-border, #e8e2d9) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-header {
+    padding: 22px 18px 16px !important;
+    border-bottom: 1px solid var(--ts-border, #e8e2d9) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav {
+    padding: 12px !important;
+    gap: 4px !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item {
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item.active,
+body[data-app-page="team-space"] .sidebar-nav-item.active:hover {
+    background: var(--ts-deep, #111827) !important;
+    color: #fff !important;
+}
+
+body[data-app-page="team-space"] .sidebar-footer {
+    padding: 16px 18px !important;
+    background: var(--ts-subtle, #f6f4f1) !important;
+    border-top: 1px solid var(--ts-border, #e8e2d9) !important;
+}
+
+body[data-app-page="team-space"] .workspace-panel.active {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    background: var(--ts-surface, #fff) !important;
+    border: 1px solid var(--ts-border, #e8e2d9) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--ts-shadow, 0 10px 28px rgba(44, 36, 25, 0.07)) !important;
+}
+
+body[data-app-page="team-space"] .panel-header {
+    min-height: 76px !important;
+    padding: 18px 22px !important;
+    background: var(--ts-surface, #fff) !important;
+    border-bottom: 1px solid var(--ts-border, #e8e2d9) !important;
+}
+
+body[data-app-page="team-space"] .kanban-board {
+    padding: 20px 22px 24px !important;
+    overflow-x: hidden !important;
+    background: var(--ts-surface, #fff) !important;
+}
+
+body[data-app-page="team-space"] .kanban-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+}
+
+body[data-app-page="team-space"] .kanban-col {
+    min-width: 0 !important;
+    min-height: 280px !important;
+    padding: 16px !important;
+    overflow: hidden !important;
+    background: var(--ts-canvas, #faf9f7) !important;
+    border: 1px solid var(--ts-border, #e8e2d9) !important;
+    border-radius: 12px !important;
+}
+
+body[data-app-page="team-space"] .task-card {
+    background: var(--ts-surface, #fff) !important;
+    border: 1px solid var(--ts-border, #e8e2d9) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 1px 2px rgba(44, 36, 25, 0.04) !important;
+}
+
+body[data-app-page="team-space"] .task-card:hover {
+    background: var(--ts-surface, #fff) !important;
+    border-color: var(--ts-border-strong, #d8d0c5) !important;
+    box-shadow: 0 8px 20px rgba(44, 36, 25, 0.08) !important;
+    transform: none !important;
+}
+
+@media (max-width: 900px) {
+    body[data-app-page="team-space"] .main-content {
+        padding: 20px 16px 80px !important;
+    }
+
+    body[data-app-page="team-space"] .workspace-layout {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        margin-top: 4px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar {
+        position: static !important;
+        max-height: none !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-header {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-logo {
+        margin: 0 !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-back-btn {
+        width: auto !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        overflow: visible !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav-item {
+        min-width: 0 !important;
+        justify-content: center !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-footer-info {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-footer-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 2px !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-columns {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 576px) {
+    body[data-app-page="team-space"] .main-content {
+        padding: 12px 12px 88px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar,
+    body[data-app-page="team-space"] .workspace-panel.active {
+        border-radius: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .panel-header {
+        min-height: 0 !important;
+        padding: 16px !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .panel-actions {
+        width: 100% !important;
+    }
+
+    body[data-app-page="team-space"] .panel-actions .btn {
+        flex: 1 !important;
+        justify-content: center !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-board {
+        padding: 14px !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-col {
+        min-height: 220px !important;
+        padding: 14px !important;
+    }
+}

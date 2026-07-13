@@ -39,13 +39,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const inputId = type === 'phone' ? 'phone' : 'studentId';
         if (!value) {
             if (showHint) {
-                showFieldHint('identifierError', type === 'phone' ? '请输入手机号' : '请输入学号/工号', inputId);
+                const identityLabel = window.currentIdentity === 'TEACHER' ? '工号' : '学号';
+                showFieldHint('identifierError', type === 'phone' ? '请输入手机号' : '请输入' + identityLabel, inputId);
             }
             return false;
         }
         if (!isValidIdentifier(value, type)) {
             if (showHint) {
-                showFieldHint('identifierError', type === 'phone' ? '手机号格式不正确' : '学号/工号格式不正确', inputId);
+                const identityLabel = window.currentIdentity === 'TEACHER' ? '工号' : '学号';
+                showFieldHint('identifierError', type === 'phone' ? '手机号格式不正确' : identityLabel + '格式不正确', inputId);
             }
             return false;
         }
@@ -136,7 +138,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
 
                 if (response.ok && result.code === 200) {
-                    showMessage('注册成功，请登录', 'success');
+                    const isTeacher = requestData.role === 'TEACHER';
+                    showMessage(isTeacher ? '教师账号注册成功，导师身份已启用，请登录' : '注册成功，请登录', 'success');
                     setTimeout(() => {
                         window.location.href = '/login.html';
                     }, 800);

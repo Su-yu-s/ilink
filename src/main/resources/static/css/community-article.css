@@ -534,3 +534,120 @@ body[data-app-page="community-article"] .publisher-avatar.community-article-comm
     display: none;
   }
 }
+
+/* v1.3: header action layout introduced by the detail-state refactor. */
+body[data-app-page="community-article"] .community-article-shell {
+  width: min(100%, 880px);
+}
+
+body[data-app-page="community-article"] .community-article-card__header {
+  padding: 28px 30px 22px;
+  border-bottom: 1px solid #e8e2d9;
+  background: linear-gradient(180deg, #fff 0%, #fdfcfb 100%);
+}
+
+body[data-app-page="community-article"] .community-article-card__header-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+body[data-app-page="community-article"] .community-article__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+}
+
+body[data-app-page="community-article"] .community-article__header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn {
+  min-width: 44px;
+  min-height: 40px;
+  justify-content: center;
+  padding: 8px 11px;
+  border: 1px solid #e8e2d9;
+  border-radius: 8px;
+  background: #fff;
+  color: #776b5e;
+  box-shadow: none;
+}
+
+body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn:hover {
+  border-color: #d8d0c5;
+  background: #f7f5f2;
+  color: #2c2419;
+}
+
+body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn--active,
+body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn[aria-pressed="true"] {
+  border-color: #111827;
+  background: #111827;
+  color: #fff;
+}
+
+body[data-app-page="community-article"] .community-article__header-back,
+body[data-app-page="community-article"] .community-article__header-actions .il-btn-danger-outline {
+  min-height: 40px;
+  padding: 8px 13px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+body[data-app-page="community-article"] .community-article__header-back {
+  border: 1px solid #e8e2d9;
+  background: #fff;
+  color: #2c2419;
+}
+
+body[data-app-page="community-article"] .community-article__header-actions .il-btn-danger-outline {
+  border: 1px solid #ead8d4;
+  background: #fff;
+  color: #a15e54;
+}
+
+body[data-app-page="community-article"] .community-article__meta-stats {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #eee9e2;
+}
+
+body[data-app-page="community-article"] .community-article-card__body {
+  padding: 24px 30px 30px;
+}
+
+body[data-app-page="community-article"] .community-article__content {
+  max-width: none;
+  color: #4e4439;
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+@media (max-width: 700px) {
+  body[data-app-page="community-article"] .community-article-card__header,
+  body[data-app-page="community-article"] .community-article-card__body {
+    padding: 20px;
+  }
+
+  body[data-app-page="community-article"] .community-article-card__header-top {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  body[data-app-page="community-article"] .community-article__header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn {
+    flex: 0 0 auto;
+  }
+}

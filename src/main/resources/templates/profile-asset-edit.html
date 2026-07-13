@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑成果 - iLink</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.0/github-markdown.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="/css/md-editor.css?v=1.0" rel="stylesheet">
+    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
+    <link href="/css/profile-redesign.css?v=1.1" rel="stylesheet">
+</head>
+<body data-profile-page="honors" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="il-page-wrapper">
+        <div class="il-profile-layout">
+            <th:block th:replace="~{fragments/profile-sidebar :: sidebar (active='honors')}"/>
+
+            <div class="il-profile-content">
+                <div class="il-section-card">
+                    <div class="il-section-header">
+                        <div>
+                            <h2 class="il-section-title" id="pageTitle">编辑成果</h2>
+                            <p class="il-section-subtitle">修改成果信息，支持 Markdown 格式</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-article-edit-body">
+                        <div class="mb-3">
+                            <label class="form-label">成果名称</label>
+                            <input type="text" class="form-control" id="editTitle" maxlength="120" placeholder="请输入成果名称">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">分类</label>
+                            <select class="form-select" id="editCategory">
+                                <option value="竞赛获奖">竞赛获奖</option>
+                                <option value="技术创新">技术创新</option>
+                                <option value="论文发表">论文发表</option>
+                                <option value="科研项目">科研项目</option>
+                                <option value="作品项目">作品 / 项目</option>
+                                <option value="荣誉称号">荣誉称号</option>
+                                <option value="奖学金">奖学金</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">成果描述（支持 Markdown）</label>
+                            <div class="md-toolbar">
+                                <button type="button" class="md-toolbar-btn" data-action="bold" title="粗体"><b>B</b></button>
+                                <button type="button" class="md-toolbar-btn" data-action="italic" title="斜体"><i>I</i></button>
+                                <button type="button" class="md-toolbar-btn" data-action="strikethrough" title="删除线"><s>S</s></button>
+                                <button type="button" class="md-toolbar-btn" data-action="code" title="行内代码">&lt;/&gt;</button>
+                                <span class="md-toolbar-sep"></span>
+                                <button type="button" class="md-toolbar-btn" data-action="h2" title="二级标题">H2</button>
+                                <button type="button" class="md-toolbar-btn" data-action="h3" title="三级标题">H3</button>
+                                <span class="md-toolbar-sep"></span>
+                                <button type="button" class="md-toolbar-btn" data-action="ul" title="无序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+                                <button type="button" class="md-toolbar-btn" data-action="ol" title="有序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 18h2l-2 3h2"/><path d="M5 12H3l1-2h1"/></svg></button>
+                                <button type="button" class="md-toolbar-btn" data-action="quote" title="引用"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg></button>
+                                <span class="md-toolbar-sep"></span>
+                                <button type="button" class="md-toolbar-btn" data-action="link" title="插入链接"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+                                <button type="button" class="md-toolbar-btn" data-action="image" title="插入图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+                                <button type="button" class="md-toolbar-btn" data-action="hr" title="分隔线">&mdash;</button>
+                            </div>
+                            <div class="md-mode-bar" id="mdModeBarDesc">
+                                <button type="button" class="md-mode-btn active" data-mode="split">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+                                    分栏
+                                </button>
+                                <button type="button" class="md-mode-btn" data-mode="edit">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                    编辑
+                                </button>
+                                <button type="button" class="md-mode-btn" data-mode="preview">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    预览
+                                </button>
+                            </div>
+                            <div class="md-pane-wrap split" id="descPaneWrap">
+                                <div class="md-edit-pane">
+                                    <textarea id="mdDescEditor" placeholder="简要说明成果内容，支持 Markdown 格式"></textarea>
+                                </div>
+                                <div class="md-divider visible"></div>
+                                <div class="md-preview-pane">
+                                    <div class="markdown-body" id="mdDescPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">竞赛心得 <span style="font-size:12px;font-weight:400;color:#9ca3af;">选填</span></label>
+                            <div class="md-toolbar">
+                                <button type="button" class="md-toolbar-btn" data-action="bold" title="粗体"><b>B</b></button>
+                                <button type="button" class="md-toolbar-btn" data-action="italic" title="斜体"><i>I</i></button>
+                                <button type="button" class="md-toolbar-btn" data-action="strikethrough" title="删除线"><s>S</s></button>
+                                <button type="button" class="md-toolbar-btn" data-action="code" title="行内代码">&lt;/&gt;</button>
+                                <span class="md-toolbar-sep"></span>
+                                <button type="button" class="md-toolbar-btn" data-action="h2" title="二级标题">H2</button>
+                                <button type="button" class="md-toolbar-btn" data-action="h3" title="三级标题">H3</button>
+                                <span class="md-toolbar-sep"></span>
+                                <button type="button" class="md-toolbar-btn" data-action="ul" title="无序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+                                <button type="button" class="md-toolbar-btn" data-action="ol" title="有序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 18h2l-2 3h2"/><path d="M5 12H3l1-2h1"/></svg></button>
+                                <button type="button" class="md-toolbar-btn" data-action="quote" title="引用"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg></button>
+                                <span class="md-toolbar-sep"></span>
+                                <button type="button" class="md-toolbar-btn" data-action="link" title="插入链接"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+                                <button type="button" class="md-toolbar-btn" data-action="image" title="插入图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+                                <button type="button" class="md-toolbar-btn" data-action="hr" title="分隔线">&mdash;</button>
+                            </div>
+                            <div class="md-mode-bar" id="mdModeBarInsight">
+                                <button type="button" class="md-mode-btn active" data-mode="split">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+                                    分栏
+                                </button>
+                                <button type="button" class="md-mode-btn" data-mode="edit">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                                    编辑
+                                </button>
+                                <button type="button" class="md-mode-btn" data-mode="preview">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    预览
+                                </button>
+                            </div>
+                            <div class="md-pane-wrap split" id="insightPaneWrap">
+                                <div class="md-edit-pane">
+                                    <textarea id="mdInsightEditor" placeholder="参赛经历、团队协作、复盘总结等，支持 Markdown 格式"></textarea>
+                                </div>
+                                <div class="md-divider visible"></div>
+                                <div class="md-preview-pane">
+                                    <div class="markdown-body" id="mdInsightPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">附件（可选）</label>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                <input type="file" id="editFileInput" class="d-none">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="editFileBtn">选择文件</button>
+                                <span class="small text-muted" id="editFileHint">支持 PDF、ZIP、图片等</span>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-primary" id="editSaveBtn">保存修改</button>
+                            <a href="/profile-honors.html" class="btn btn-outline-secondary">返回列表</a>
+                            <a href="/asset-detail.html" class="btn btn-outline-primary" id="editPreviewLink" target="_blank" rel="noopener">预览详情页</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
+    <script src="/js/common.js?v=8.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js" crossorigin="anonymous"></script>
+    <script src="/js/profile-asset-edit.js?v=1.4"></script>
+</body>
+</html>

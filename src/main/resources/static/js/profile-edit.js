@@ -109,7 +109,7 @@
         const skillData = {
             skillName: skillName,
             skillCategory: skillCategorySelect?.value || '',
-            skillLevel: skillLevelSelect?.value || ''
+            skillLevel: parseInt(skillLevelSelect?.value) || null
         };
 
         try {
@@ -168,14 +168,9 @@
     }
 
     getLevelLabel(level) {
-        const labels = {
-            'beginner': '入门',
-            'elementary': '初级',
-            'intermediate': '中级',
-            'advanced': '高级',
-            'expert': '专家'
-        };
-        return labels[level] || '';
+        const labels = { 1: '入门', 2: '初级', 3: '中级', 4: '高级', 5: '专家' };
+        const stringLabels = { 'beginner': '入门', 'elementary': '初级', 'intermediate': '中级', 'advanced': '高级', 'expert': '专家' };
+        return labels[level] || stringLabels[level] || '';
     }
 
     escapeHtml(text) {

@@ -2,22 +2,36 @@
 
 function parseAssetDescription(raw) {
     const text = String(raw || '').trim();
-    let category = '';
     let body = text;
-    const categoryMatch = text.match(/（分类：([^）]+)）/);
+    // 去掉 markdown 前缀
+    const mdMatch = body.match(/^<!--md:([^>]+)-->/);
+    if (mdMatch) body = body.replace(mdMatch[0], '').trim();
+
+    let category = '';
+    const categoryMatch = body.match(/（分类：([^）]+)）/);
     if (categoryMatch && categoryMatch[1]) {
         category = categoryMatch[1].trim();
-        body = text.replace(categoryMatch[0], '').trim();
+        body = body.replace(categoryMatch[0], '').trim();
     }
-    const parts = body.split(/\n\s*\n/).map(function (p) {
-        return p.trim();
-    }).filter(Boolean);
+
+    let lead = '', insight = '';
+    if (mdMatch) {
+        // 从 base64 直接解码，避免 \n\n 跨字段串扰
+        const mdParts = mdMatch[1].split('|');
+        try { lead = decodeURIComponent(escape(atob(mdParts[0] || ''))) || ''; } catch(_) {}
+        try { insight = decodeURIComponent(escape(atob(mdParts[1] || ''))) || ''; } catch(_) {}
+    } else {
+        // 旧格式兼容
+        const parts = body.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+        lead = parts[0] || '';
+        insight = parts.length > 1 ? parts.slice(1).join('\n\n') : '';
+    }
     return {
         category: category,
-        lead: parts[0] || '',
-        extra: parts.length > 1 ? parts.slice(1).join('\n\n') : '',
+        lead: lead,
+        extra: '',
         full: body,
-        insight: parts.length > 1 ? parts.slice(1).join('\n\n') : ''
+        insight: insight
     };
 }
 
@@ -41,7 +55,7 @@ function fileIconClass(name) {
 }
 
 // 分类标签颜色映射
-const CATEGORY_COLORS = {
+const ASSET_DETAIL_CATEGORY_COLORS = {
     '技术开发': 'tech',
     '产品设计': 'art',
     '市场调研': 'management',
@@ -53,14 +67,14 @@ const CATEGORY_COLORS = {
 
 function getCategoryColorClass(category) {
     if (!category || category === '未分类') return '';
-    for (const [key, cls] of Object.entries(CATEGORY_COLORS)) {
+    for (const [key, cls] of Object.entries(ASSET_DETAIL_CATEGORY_COLORS)) {
         if (category.includes(key)) return cls;
     }
     return 'tech';
 }
 
 // 互动按钮状态管理（localStorage）
-const ActionStore = {
+const ASSET_DETAIL_ACTION_STORE = {
     getItem(key) {
         try {
             const data = JSON.parse(localStorage.getItem('ilink-asset-actions') || '{}');
@@ -110,43 +124,70 @@ const ActionStore = {
     }
 };
 
-const urlParams = new URLSearchParams(window.location.search);
-const assetId = urlParams.get('id');
-let currentAsset = null;
+const assetDetailUrlParams = new URLSearchParams(window.location.search);
+const assetDetailId = assetDetailUrlParams.get('id');
+let currentAssetDetail = null;
 
-document.addEventListener('DOMContentLoaded', async function () {
-    if (!assetId) {
-        showMessage('缺少作品ID参数', 'error');
-        setTimeout(function () {
-            window.location.href = '/gallery.html';
-        }, 1000);
+function setAssetDetailState(state, message) {
+    const stateEl = document.getElementById('assetDetailState');
+    const titleEl = document.getElementById('assetDetailStateTitle');
+    const messageEl = document.getElementById('assetDetailStateMessage');
+    const retryBtn = document.getElementById('assetDetailRetryBtn');
+    const cardEl = document.getElementById('shareCard');
+
+    if (state === 'ready') {
+        if (stateEl) {
+            stateEl.hidden = true;
+            stateEl.setAttribute('aria-busy', 'false');
+            stateEl.classList.remove('asset-detail-state--error');
+        }
+        if (cardEl) cardEl.hidden = false;
         return;
     }
 
-    if (window.AssetPublish) {
-        AssetPublish.bind({
-            onSuccess: async function () {
-                try {
-                    const data = await request('/asset/' + assetId);
-                    currentAsset = data;
-                    renderAssetDetail(data);
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        });
+    if (stateEl) {
+        stateEl.hidden = false;
+        stateEl.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+        stateEl.classList.toggle('asset-detail-state--error', state === 'error');
+    }
+    if (cardEl) cardEl.hidden = true;
+    if (retryBtn) retryBtn.hidden = state !== 'error';
+
+    if (state === 'error') {
+        if (titleEl) titleEl.textContent = '成果加载失败';
+        if (messageEl) messageEl.textContent = message || '暂时无法获取成果详情，请稍后重试。';
+    } else {
+        if (titleEl) titleEl.textContent = '正在加载成果';
+        if (messageEl) messageEl.textContent = '正在获取成果内容与附件信息，请稍候…';
+    }
+}
+
+async function loadAssetDetail() {
+    if (!assetDetailId) {
+        setAssetDetailState('error', '链接中缺少成果 ID，请返回成果展示页重新选择。');
+        return false;
     }
 
+    setAssetDetailState('loading');
     try {
-        const data = await request('/asset/' + assetId);
-        currentAsset = data;
+        const data = await request('/asset/' + assetDetailId, { silent: true });
+        currentAssetDetail = data;
         renderAssetDetail(data);
         await setupOwnerActions(data);
+        setAssetDetailState('ready');
+        return true;
     } catch (error) {
-        console.error('获取作品详情异常:', error);
-        setTimeout(function () {
-            window.location.href = '/gallery.html';
-        }, 1000);
+        console.error('获取成果详情异常:', error);
+        setAssetDetailState('error', error && error.message ? error.message : '暂时无法获取成果详情，请稍后重试。');
+        return false;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async function () {
+    const retryBtn = document.getElementById('assetDetailRetryBtn');
+    if (retryBtn && !retryBtn.dataset.bound) {
+        retryBtn.dataset.bound = '1';
+        retryBtn.addEventListener('click', loadAssetDetail);
     }
 
     const backBtn = document.getElementById('backBtn');
@@ -155,6 +196,16 @@ document.addEventListener('DOMContentLoaded', async function () {
             window.location.href = '/gallery.html';
         });
     }
+
+    if (window.AssetPublish) {
+        AssetPublish.bind({
+            onSuccess: async function () {
+                await loadAssetDetail();
+            }
+        });
+    }
+
+    await loadAssetDetail();
 });
 
 async function setupOwnerActions(asset) {
@@ -162,7 +213,8 @@ async function setupOwnerActions(asset) {
     if (!editBtn) return;
     let meId = null;
     try {
-        const me = await request('/user/profile');
+        // 成果详情是公开页面。未登录时这里只是隐藏编辑入口，不能触发全局登录跳转。
+        const me = await request('/user/profile', { silent: true });
         meId = me && me.id != null ? me.id : null;
     } catch (e) {
         editBtn.hidden = true;
@@ -174,8 +226,8 @@ async function setupOwnerActions(asset) {
         if (!editBtn.dataset.bound) {
             editBtn.dataset.bound = '1';
             editBtn.addEventListener('click', function () {
-                if (window.AssetPublish && currentAsset) {
-                    AssetPublish.openEdit(currentAsset);
+                if (window.AssetPublish && currentAssetDetail) {
+                    AssetPublish.openEdit(currentAssetDetail);
                 }
             });
         }
@@ -236,14 +288,20 @@ function renderAssetDetail(asset) {
     const leadEl = document.getElementById('assetDescLead');
     const extraEl = document.getElementById('assetDescExtra');
     const leadText = parsed.lead || parsed.full || '暂无描述';
-    if (leadEl) leadEl.textContent = leadText;
+    if (leadEl) {
+        leadEl.innerHTML = typeof marked !== 'undefined'
+            ? marked.parse(leadText)
+            : escapeHtml(leadText).replace(/\n/g, '<br>');
+    }
     if (extraEl) {
         if (parsed.extra && parsed.extra !== leadText) {
-            extraEl.textContent = parsed.extra;
+            extraEl.innerHTML = typeof marked !== 'undefined'
+                ? marked.parse(parsed.extra)
+                : escapeHtml(parsed.extra).replace(/\n/g, '<br>');
             extraEl.hidden = false;
         } else {
             extraEl.hidden = true;
-            extraEl.textContent = '';
+            extraEl.innerHTML = '';
         }
     }
 
@@ -251,19 +309,9 @@ function renderAssetDetail(asset) {
     if (insightEl) {
         const insightBody = parsed.insight;
         if (insightBody) {
-            const paragraphs = insightBody.split(/\n+/).filter(Boolean);
-            insightEl.innerHTML = paragraphs
-                .map(function (p, i) {
-                    if (i === 0 && paragraphs.length > 1) {
-                        return (
-                            '<div class="insight-quote"><i class="fas fa-lightbulb" aria-hidden="true"></i> ' +
-                            escapeHtml(p) +
-                            '</div>'
-                        );
-                    }
-                    return '<p>' + escapeHtml(p) + '</p>';
-                })
-                .join('');
+            insightEl.innerHTML = typeof marked !== 'undefined'
+                ? marked.parse(insightBody)
+                : escapeHtml(insightBody).replace(/\n/g, '<br>');
             const op = asset.ownerPreview;
             const signer =
                 op && typeof displayUsername === 'function' ? displayUsername(op) : '发布者';
@@ -306,7 +354,7 @@ function renderAssetDetail(asset) {
     const likeBtn = document.getElementById('detailLikeBtn');
     const favBtn = document.getElementById('detailFavBtn');
     const storageKey = 'asset-' + asset.id;
-    const stored = ActionStore.getItem(storageKey);
+    const stored = ASSET_DETAIL_ACTION_STORE.getItem(storageKey);
     const likeCount = (asset.likeCount || 0) + stored.likeDelta;
     const favCount = (asset.favoriteCount || 0) + stored.favDelta;
 
@@ -318,7 +366,7 @@ function renderAssetDetail(asset) {
         if (!likeBtn.dataset.bound) {
             likeBtn.dataset.bound = '1';
             likeBtn.addEventListener('click', function () {
-                ActionStore.doAction(likeBtn, asset.likeCount || 0);
+                ASSET_DETAIL_ACTION_STORE.doAction(likeBtn, asset.likeCount || 0);
             });
         }
     }
@@ -331,7 +379,7 @@ function renderAssetDetail(asset) {
         if (!favBtn.dataset.bound) {
             favBtn.dataset.bound = '1';
             favBtn.addEventListener('click', function () {
-                ActionStore.doAction(favBtn, asset.favoriteCount || 0);
+                ASSET_DETAIL_ACTION_STORE.doAction(favBtn, asset.favoriteCount || 0);
             });
         }
     }

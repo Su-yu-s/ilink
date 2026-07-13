@@ -6,6 +6,7 @@ import cn.ilink.service.HomeStatsService;
 import cn.ilink.service.UserService;
 import cn.ilink.service.impl.AssetServiceImpl;
 import cn.ilink.service.impl.CommunityPostServiceImpl;
+import cn.ilink.service.impl.ProjectApplicationServiceImpl;
 import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
@@ -47,6 +48,9 @@ class AdminControllerWebTest {
     private TeacherApplicationServiceImpl teacherApplicationService;
 
     @MockBean
+    private ProjectApplicationServiceImpl projectApplicationService;
+
+    @MockBean
     private AssetServiceImpl assetService;
 
     @MockBean
@@ -75,6 +79,9 @@ class AdminControllerWebTest {
 
     @MockBean
     private cn.ilink.mapper.CommunityCommentMapper communityCommentMapper;
+
+    @MockBean
+    private cn.ilink.service.NotificationService notificationService;
 
     @Test
     void dashboardReturns403WhenNoUserInSession() throws Exception {

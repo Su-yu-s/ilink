@@ -1,11 +1,12 @@
 package cn.ilink.config;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -18,8 +19,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 需要完整 Spring 上下文（含数据库），仅在 CI 环境或本地 MySQL 可用时运行。
  * 本地开发无 MySQL 时自动跳过，不影响日常编译。
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@WebMvcTest(controllers = SecurityProbeController.class)
 @AutoConfigureMockMvc
+@Import(SecurityConfig.class)
+@ActiveProfiles("test")
 class SecurityConfigTest {
 
     @Autowired

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在进入团队空间 - iLink</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=false)"></th:block>
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var id = params.get('id') || params.get('teamId');
+            window.location.replace(id ? '/team-space.html?id=' + encodeURIComponent(id) : '/profile.html#teams');
+        })();
+    </script>
+</head>
+<body data-app-page="team-workspace" class="ilink-page-bg">
+    <main class="il-page-wrapper">
+        <section class="il-empty-state" style="max-width: 560px; margin: 120px auto;">
+            <h1>正在进入团队空间</h1>
+            <p>旧任务看板入口已合并到新的团队空间。</p>
+            <a class="il-btn il-btn-primary" href="/profile.html#teams">返回我的小队</a>
+        </section>
+    </main>
+</body>
+</html>

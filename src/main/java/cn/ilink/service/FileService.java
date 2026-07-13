@@ -26,12 +26,12 @@ public class FileService {
     private static final long MB = 1024L * 1024L;
 
     private static final Map<String, UploadRule> RULES = Map.of(
-        "avatars", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp"), 5 * MB,
-            "\u5934\u50cf", "jpg\u3001png\u3001gif\u3001webp", "5MB"),
-        "certificates", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".pdf"), 20 * MB,
-            "\u8bc1\u4e66", "jpg\u3001png\u3001pdf", "20MB"),
-        "images", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp"), 10 * MB,
-            "\u56fe\u7247", "jpg\u3001png\u3001gif\u3001webp", "10MB")
+        "avatars", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp"), 1 * MB,
+            "\u5934\u50cf", "jpg\u3001png\u3001gif\u3001webp", "1MB"),
+        "certificates", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".pdf"), 2 * MB,
+            "\u8bc1\u4e66", "jpg\u3001png\u3001pdf", "2MB"),
+        "images", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp"), 512 * 1024,
+            "\u56fe\u7247", "jpg\u3001png\u3001gif\u3001webp", "500KB")
     );
 
     @Value("${file.upload-dir:/data/uploads/}")

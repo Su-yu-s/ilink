@@ -2,14 +2,10 @@ package cn.ilink.controller;
 
 import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
-import cn.ilink.entity.TeamApplication;
-import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.User;
 import cn.ilink.service.ChatService;
-import cn.ilink.service.impl.TeamApplicationServiceImpl;
-import cn.ilink.service.impl.TeamDemandServiceImpl;
+import cn.ilink.service.TeamAccessService;
 import cn.ilink.vo.ChatMessageVO;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -31,10 +27,7 @@ public class ChatController {
     private ChatService chatService;
 
     @Autowired
-    private TeamApplicationServiceImpl teamApplicationService;
-
-    @Autowired
-    private TeamDemandServiceImpl teamDemandService;
+    private TeamAccessService teamAccessService;
 
     @GetMapping("/{teamId}/messages")
     @ResponseBody
@@ -46,7 +39,7 @@ public class ChatController {
             return Result.unauthorized().toResponseEntity();
         }
 
-        if (!isTeamMember(teamId, user.getId())) {
+        if (!teamAccessService.isTeamParticipant(teamId, user.getId())) {
             return Result.fail(403, "你不是该团队成员，无权查看消息").toResponseEntity();
         }
 
@@ -64,7 +57,7 @@ public class ChatController {
             return Result.unauthorized().toResponseEntity();
         }
 
-        if (!isTeamMember(teamId, user.getId())) {
+        if (!teamAccessService.isTeamParticipant(teamId, user.getId())) {
             return Result.fail(403, "你不是该团队成员，无权发送消息").toResponseEntity();
         }
 
@@ -77,29 +70,6 @@ public class ChatController {
 
         ChatMessageVO message = chatService.sendMessage(teamId, user.getId(), content.trim(), type);
         return Result.ok("发送成功", message).toResponseEntity();
-    }
-
-    /**
-     * 检查用户是否为团队成员（已通过申请的成员或团队创建者）
-     */
-    private boolean isTeamMember(Long teamId, Long userId) {
-        // 检查是否为团队创建者
-        long creatorCount = teamDemandService.count(
-                new LambdaQueryWrapper<TeamDemand>()
-                        .eq(TeamDemand::getId, teamId)
-                        .eq(TeamDemand::getCreatorId, userId)
-        );
-        if (creatorCount > 0) {
-            return true;
-        }
-        // 检查是否已通过申请的成员
-        long memberCount = teamApplicationService.count(
-                new LambdaQueryWrapper<TeamApplication>()
-                        .eq(TeamApplication::getTeamId, teamId)
-                        .eq(TeamApplication::getUserId, userId)
-                        .eq(TeamApplication::getStatus, "APPROVED")
-        );
-        return memberCount > 0;
     }
 
     @MessageMapping("/chat/{teamId}")
@@ -116,6 +86,12 @@ public class ChatController {
         }
         if (user == null) {
             throw new IllegalStateException("未登录，无法发送消息");
+        }
+
+        // The inbound channel interceptor enforces this too; keep the controller
+        // check so an alternate STOMP transport cannot bypass team membership.
+        if (!teamAccessService.isTeamParticipant(teamId, user.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Not a member of this team");
         }
 
         String content = (String) payload.get("content");

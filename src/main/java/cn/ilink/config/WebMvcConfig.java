@@ -29,7 +29,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
         locations.add(toFileLocation("/data/uploads"));
 
         registry.addResourceHandler("/uploads/**")
-            .addResourceLocations(locations.toArray(new String[0]));
+            .addResourceLocations(locations.toArray(new String[0]))
+            .setCacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic());
 
         // 静态资源长期缓存。CSS/JS 等资源通过 ?v=xxx 控制版本，
         // 文件内容变化时同步更新版本号，避免跨页面跳转时重复下载导致闪屏。

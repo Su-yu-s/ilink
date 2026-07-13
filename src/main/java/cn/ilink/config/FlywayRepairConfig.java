@@ -36,6 +36,7 @@ public class FlywayRepairConfig {
                 .locations(locations)
                 .baselineOnMigrate(baselineOnMigrate)
                 .baselineVersion(baselineVersion)
+                .outOfOrder(true)
                 .load();
         try {
             log.info("[Flyway] 先执行 repair 清理可能的失败记录");

@@ -8,6 +8,37 @@ body[data-app-page="competitions"] .il-hero {
   text-align: left ;
 }
 
+body[data-app-page="competitions"] .il-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #faf6f0;
+  border: 1px solid #f5efe6;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a08055;
+  margin-bottom: 16px;
+}
+
+body[data-app-page="competitions"] .il-hero__eyebrow svg {
+  width: 14px;
+  height: 14px;
+  stroke: #a08055;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body[data-app-page="competitions"] .il-hero__title {
+  font-family: 'SimSun', '宋体', serif;
+}
+
 body[data-app-page="competitions"] .il-hero__desc {
   margin: 0 0 var(--space-3) 0 ;
   max-width: none ;
@@ -26,22 +57,18 @@ body[data-app-page="competitions"] .competition-toolbar {
   margin-bottom: var(--space-8) ;
 }
 
-/* === Track Tabs (pill style) === */
+/* === Track Tabs === */
 body[data-app-page="competitions"] .competition-track-tabs {
   display: inline-flex ;
-  flex: 1 1 auto ;
+  flex: 0 0 auto ;
   flex-wrap: nowrap ;
   gap: var(--space-1) ;
-  padding: var(--space-1) ;
-  background: var(--bg-gray) ;
-  border-radius: var(--home-radius-pill) ;
+  padding: 0 ;
+  border-radius: 0 ;
   min-width: 0 ;
-  max-width: 100% ;
   justify-content: flex-start ;
   align-items: center ;
-  overflow-x: auto ;
-  scrollbar-width: none ;
-  -ms-overflow-style: none ;
+  background: transparent !important ;
 }
 
 body[data-app-page="competitions"] .competition-track-tabs::-webkit-scrollbar {
@@ -50,10 +77,13 @@ body[data-app-page="competitions"] .competition-track-tabs::-webkit-scrollbar {
 
 /* === Search Field — compact === */
 body[data-app-page="competitions"] .competition-toolbar__search {
-  flex: 0 0 auto ;
-  width: 220px ;
-  min-width: 220px ;
-  max-width: 220px ;
+  flex: 1 1 auto ;
+  min-width: 200px ;
+  display: flex ;
+  background: #ffffff ;
+  border-radius: var(--home-radius-sm) ;
+  padding: 0 8px ;
+  box-shadow: inset 0 0 0 1px var(--border-light) ;
 }
 
 body[data-app-page="competitions"] .competition-toolbar__search .il-search-field,
@@ -61,10 +91,9 @@ body[data-app-page="competitions"] .competition-toolbar__search .il-search-field
 body[data-app-page="competitions"] .competition-toolbar__search .il-search-field--combo {
   width: 100% ;
   min-height: 40px ;
-  border-radius: var(--home-radius-sm) ;
-  border: 1px solid var(--border-light) ;
-  background: var(--bg-white) ;
-  padding: 0 8px 0 40px ;
+  border: none ;
+  background: transparent ;
+  padding: 0 8px 0 52px ;
   box-shadow: none ;
 }
 
@@ -89,28 +118,6 @@ body[data-app-page="competitions"] .competition-toolbar__search .il-search-field
 
 body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__action:hover {
   background: var(--primary-dark) ;
-}
-
-/* === Track Tabs (pill style) === */
-body[data-app-page="competitions"] .competition-track-tabs {
-  display: inline-flex ;
-  flex: 1 1 auto ;
-  flex-wrap: nowrap ;
-  gap: var(--space-1) ;
-  padding: var(--space-1) ;
-  background: var(--bg-gray) ;
-  border-radius: var(--home-radius-pill) ;
-  min-width: 0 ;
-  max-width: 100% ;
-  justify-content: flex-start ;
-  align-items: center ;
-  overflow-x: auto ;
-  scrollbar-width: none ;
-  -ms-overflow-style: none ;
-}
-
-body[data-app-page="competitions"] .competition-track-tabs::-webkit-scrollbar {
-  display: none;
 }
 
 body[data-app-page="competitions"] .competition-track-tab,
@@ -147,7 +154,7 @@ body[data-app-page="competitions"] .competition-track-tab--active {
 /* === Competition Grid === */
 .competition-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(2, minmax(360px, 1fr));
   gap: var(--space-6);
 }
 
@@ -522,49 +529,4 @@ body[data-app-page="competitions"] .competition-toolbar .il-toolbar-row {
   flex-wrap: nowrap ;
   align-items: center ;
   gap: 12px ;
-}
-body[data-app-page="competitions"] .competition-track-tabs {
-  display: flex ;
-  flex: 1 1 auto ;
-  flex-wrap: wrap ;
-  justify-content: flex-start ;
-  align-items: center ;
-  gap: 8px ;
-  min-width: 0 ;
-  margin: 0 ;
-}
-body[data-app-page="competitions"] .competition-toolbar__search {
-  flex: 0 1 360px ;
-  width: auto ;
-  min-width: 240px ;
-  max-width: 420px ;
-}
-body[data-app-page="competitions"] .competition-toolbar__search .il-search-field,
-body[data-app-page="competitions"] .competition-toolbar__search .il-search-field--toolbar,
-body[data-app-page="competitions"] .competition-toolbar__search .il-search-field--combo {
-  width: 100% ;
-  min-height: 40px ;
-  border-radius: 12px ;
-  border: 1px solid #eeeeee ;
-  background: #f8f8f8 ;
-  padding: 0 12px 0 40px ;
-}
-body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__input {
-  min-height: 38px ;
-  font-size: 14px ;
-}
-body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__action {
-  min-height: 32px ;
-  height: 32px ;
-  padding: 0 12px ;
-  border-radius: 8px ;
-  font-size: 14px ;
-  font-weight: 500 ;
-  color: var(--text-white) ;
-  background: #111827 ;
-  border: 1px solid #111827 ;
-}
-body[data-app-page="competitions"] .competition-toolbar__search .il-search-field__action:hover {
-  background: #374151 ;
-  border-color: #374151 ;
 }

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iLink — 同声相应，同气相求</title>
+    <meta name="description" content="频率相近的人，终会在某个路口相遇。iLink 帮高校学生找队友、对接导师、追踪竞赛信息并展示成果。">
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+</head>
+<body data-app-page="home" class="ilink-page-bg home-page" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+
+    <!-- Scroll Progress -->
+    <div class="home-scroll-progress" id="homeScrollProgress" aria-hidden="true"></div>
+
+    <!-- Custom Cursor -->
+    <div class="home-cursor" id="homeCursor" aria-hidden="true"></div>
+
+    <!-- Corner Labels -->
+    <div class="home-corner home-corner--tl" aria-hidden="true">iLink / 2026</div>
+    <div class="home-corner home-corner--tr" aria-hidden="true">Scroll ↓</div>
+
+    <div th:replace="fragments/header :: header(${currentUser}, 'home')"></div>
+
+    <main class="home-shell" id="mainContent">
+
+        <!-- ═══════════════════════════════════════════════════
+             HERO — Editorial Split: massive type left, ambient right
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-hero" aria-labelledby="homeHeroTitle">
+            <canvas class="home-particle-canvas" id="homeParticleCanvas" aria-hidden="true"></canvas>
+            <div class="home-noise" aria-hidden="true"></div>
+
+            <div class="home-hero__grid">
+                <!-- Left: Typography -->
+                <div class="home-hero__text">
+                    <p class="home-eyebrow home-reveal">同声相应</p>
+                    <h1 class="home-hero__title" id="homeHeroTitle">
+                        <span class="home-split-line">频率相近的人，终会在某个路口相遇。</span>
+                    </h1>
+                    <p class="home-hero__lead home-reveal">
+                           你在这里找队友，队友也在这里找你。<br>
+                        从组队到答辩，从笔记到奖杯，一路同行。
+                    </p>
+                    <div class="home-hero__actions home-reveal">
+                        <th:block th:if="${currentUser != null}">
+                            <a class="home-btn-cta home-magnetic" href="/team-market.html">
+                                <span>寻找队友</span>
+                                <span class="home-btn-cta__icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 13L13 1M13 1H3M13 1v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            </a>
+                            <a class="home-btn-ghost home-magnetic" href="/community.html">随心逛逛</a>
+                        </th:block>
+                        <th:block th:unless="${currentUser != null}">
+                            <a class="home-btn-cta home-magnetic" href="/register.html">
+                                <span>加入 iLink</span>
+                                <span class="home-btn-cta__icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 13L13 1M13 1H3M13 1v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                            </a>
+                            <a class="home-btn-ghost home-magnetic" href="#homeStory">往下看看</a>
+                        </th:block>
+                    </div>
+                </div>
+
+                <!-- Right: Ambient Visual -->
+                <div class="home-hero__visual home-reveal">
+                    <div class="home-hero__orb home-hero__orb--1" aria-hidden="true"></div>
+                    <div class="home-hero__orb home-hero__orb--2" aria-hidden="true"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             STORY — Centered editorial with macro whitespace
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-story" id="homeStory" aria-labelledby="homeStoryTitle">
+            <div class="home-story__inner">
+                <p class="home-eyebrow home-reveal">从想法到上场</p>
+                <h2 class="home-story__title home-reveal" id="homeStoryTitle">
+                    同舟共济扬帆起，乘风破浪万里航。
+                </h2>
+                <p class="home-story__copy home-reveal">
+                    iLink 不把功能摊成表格。它把竞赛前后那些零散的动作串起来：找人、问导师、查赛题、开工、沉淀成果。
+                </p>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             STATS — 聚沙成塔
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-stats" aria-labelledby="homeStatsTitle">
+            <div class="home-stats__grid">
+                <div class="home-stats__item home-reveal">
+                    <span class="home-stats__num" th:text="${userCount != null ? userCount : 0}">0</span>
+                    <span class="home-stats__label">聚沙成塔</span>
+                    <span class="home-stats__desc">覆盖全校各专业同学</span>
+                </div>
+                <div class="home-stats__item home-reveal">
+                    <span class="home-stats__num" th:text="${teamCount != null ? teamCount : 0}">0</span>
+                    <span class="home-stats__label">同舟共济</span>
+                    <span class="home-stats__desc">竞赛、项目、课设全覆盖</span>
+                </div>
+                <div class="home-stats__item home-reveal">
+                    <span class="home-stats__num" th:text="${teacherCount != null ? teacherCount : 0}">0</span>
+                    <span class="home-stats__label">高山景行</span>
+                    <span class="home-stats__desc">一线教师在线指导</span>
+                </div>
+                <div class="home-stats__item home-reveal">
+                    <span class="home-stats__num" th:text="${assetCount != null ? assetCount : 0}">0</span>
+                    <span class="home-stats__label">春华秋实</span>
+                    <span class="home-stats__desc">获奖作品、项目沉淀</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             FEATURES — Asymmetrical Bento Grid
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-features" aria-labelledby="homeFeatureTitle">
+            <div class="home-features__header">
+                <p class="home-eyebrow home-reveal">SERVICES</p>
+                <h2 class="home-section-title home-reveal" id="homeFeatureTitle">工欲善其事，必先利其器。</h2>
+            </div>
+
+            <div class="home-bento">
+                <!-- Row 1 — Wide card -->
+                <article class="home-bento__row home-reveal">
+                    <div class="home-bento__item home-bento__item--featured">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80" loading="lazy" alt="学生团队围坐讨论"
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">01</span>
+                                        <p class="home-bento__eyebrow">组队大厅</p>
+                                        <h3>嘤其鸣矣，求其友声。</h3>
+                                        <p>发出一条需求，等待频率相近的回应——当同频的声音相遇，队伍便有了心跳。</p>
+                                        <a class="home-bento__link" href="/team-market.html">去找队友 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Row 2 — Two small cards side by side -->
+                <article class="home-bento__row home-reveal">
+                    <div class="home-bento__item">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">02</span>
+                                        <p class="home-bento__eyebrow">导师招募</p>
+                                        <h3>仰之弥高，钻之弥坚。</h3>
+                                        <p>循着前辈的足迹向上，每一步都走得更深、更稳，终见星辰。</p>
+                                        <a class="home-bento__link" href="/teacher-wall.html">寻师问道 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="home-bento__item">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">03</span>
+                                        <p class="home-bento__eyebrow">交流社区</p>
+                                        <h3>旧学商量加邃密，新知培养转深沉。</h3>
+                                        <p>把想法抛进人群，让旧学问在碰撞里生长，在讨论中愈发精深。</p>
+                                        <a class="home-bento__link" href="/community.html">切磋交流 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Row 3 — Tall card -->
+                <article class="home-bento__row home-reveal">
+                    <div class="home-bento__item home-bento__item--tall">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">04</span>
+                                        <p class="home-bento__eyebrow">竞赛目录</p>
+                                        <h3>欲穷大地三千界，须上高峰八百盘。</h3>
+                                        <p>赛题、规则、时间线，一张地图铺展眼前，让每一步攀登都心中有数。</p>
+                                        <a class="home-bento__link" href="/competitions.html">查看竞赛目录 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Row 4 — Two small cards -->
+                <article class="home-bento__row home-reveal">
+                    <div class="home-bento__item">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">05</span>
+                                        <p class="home-bento__eyebrow">竞赛笔记</p>
+                                        <h3>千淘万漉虽辛苦，吹尽狂沙始到金。</h3>
+                                        <p>记录每一次试错与顿悟，千淘万漉之后，笔记里藏着闪光的金子。</p>
+                                        <a class="home-bento__link" href="/gallery.html">沉淀收获 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="home-bento__item">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core">
+                                    <div class="home-bento__media">
+                                        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    </div>
+                                    <div class="home-bento__body">
+                                        <span class="home-bento__num">06</span>
+                                        <p class="home-bento__eyebrow">团队空间</p>
+                                        <h3>乘众人之智，则无不任也。</h3>
+                                        <p>汇聚每个人的灵光，众智成城，拼成团队最坚硬的铠甲。</p>
+                                        <a class="home-bento__link" href="/profile.html#teams">携手同行 <span>→</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             LIVE FEED — Editorial Split: PLATFORM FEATURES
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-live" aria-labelledby="homeLiveTitle">
+            <div class="home-live__grid">
+                <div class="home-live__text home-reveal">
+                    <p class="home-eyebrow">PLATFORM FEATURES</p>
+                    <h2 class="home-section-title" id="homeLiveTitle">凤凰鸣矣，于彼高冈。</h2>
+                    <p class="home-live__desc">梧桐生矣，于彼朝阳。栽下梧桐树，引得凤凰来。</p>
+                </div>
+                <div class="home-live-feed" aria-live="polite">
+                    <div class="home-feed-item is-active home-reveal">
+                        <span class="home-feed-item__time">01</span>
+                        <strong class="home-feed-item__name">志同道合 · 同声相应</strong>
+                        <p>各怀其技，各尽其才，同频之人，不期而遇。不是发帖碰运气，是算法替你拨弦，引凤来仪。</p>
+                    </div>
+                    <div class="home-feed-item home-reveal">
+                        <span class="home-feed-item__time">02</span>
+                        <strong class="home-feed-item__name">良师在侧 · 疑义相析</strong>
+                        <p>高校导师在线，专业疑难有处问。不是远水难解，是迷津有渡，暗室有灯。</p>
+                    </div>
+                    <div class="home-feed-item home-reveal">
+                        <span class="home-feed-item__time">03</span>
+                        <strong class="home-feed-item__name">全链贯通 · 一站备赛</strong>
+                        <p>从组队到答辩，从笔记到奖杯，步步有凭。不是东市买鞍，是一处启程，全程抵达。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             MAGAZINE — Asymmetrical grid with hover depth
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-magazine" aria-labelledby="homeMagazineTitle">
+            <div class="home-magazine__header">
+                <div class="home-magazine__label-row">
+                    <p class="home-eyebrow home-reveal">竞赛目录</p>
+                    <a class="home-text-link home-reveal" href="/competitions.html">查看全部赛道 <span>→</span></a>
+                </div>
+                <h2 class="home-section-title home-reveal" id="homeMagazineTitle">欲穷大地三千界，须上高峰八百盘。</h2>
+                <p class="home-magazine__sub home-reveal">每一条赛道背后，都有一群人不顾一切向前冲。</p>
+            </div>
+
+            <div class="home-magazine-grid">
+                <!-- Row 1 — Featured wide tile -->
+                <div class="home-mag-row home-reveal">
+                    <a class="home-mag-tile home-mag-tile--featured" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">计算机软件</span>
+                                        <strong>逻辑织经纬，代码写春秋。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Row 2 — Three tiles -->
+                <div class="home-mag-row home-reveal">
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">电子信息</span>
+                                        <strong>硅基藏日月，电路贯虹霓。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">机器人 / 智能车</span>
+                                        <strong>钢铁生灵性，轮辙写纵横。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">创新创业</span>
+                                        <strong>磨璞方成玉，炼沙始作金。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Row 3 — Two tiles -->
+                <div class="home-mag-row home-reveal">
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">数理建模</span>
+                                        <strong>推演穷数理，建模近天心。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    <a class="home-mag-tile" href="/competitions.html">
+                        <div class="home-bezel">
+                            <div class="home-bezel__shell">
+                                <div class="home-bezel__core home-mag-tile__inner">
+                                    <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80
+                                    <div class="home-mag-tile__overlay">
+                                        <span class="home-mag-tile__tag">综合 / 语言</span>
+                                        <strong>辞锋凝玉露，文气贯长虹。</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════
+             CTA — 奋楫笃行
+             ═══════════════════════════════════════════════════ -->
+        <section class="home-cta" aria-labelledby="homeCtaTitle">
+            <div class="home-cta__orbits" aria-hidden="true">
+                <div class="home-hero__orb home-hero__orb--1"></div>
+                <div class="home-hero__orb home-hero__orb--2"></div>
+            </div>
+            <div class="home-cta__inner home-reveal">
+                <p class="home-eyebrow">奋楫笃行</p>
+                <h2 id="homeCtaTitle">大鹏一日同风起，扶摇直上九万里。</h2>
+                <p>写下你想去的方向，系统会帮你找到同路人。</p>
+                <form class="home-cta-form" action="/team-market.html">
+                    <label class="home-cta-form__label sr-only" for="homeIntent">想参加的竞赛方向</label>
+                    <input id="homeIntent" name="keyword" type="text" placeholder="我想参加数学建模 / 挑战杯 / Web 项目...">
+                    <button class="home-btn-cta home-magnetic" type="submit">
+                        <span>开始找人</span>
+                        <span class="home-btn-cta__icon"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 13L13 1M13 1H3M13 1v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <div th:replace="fragments/footer :: footer(showFooter=true)"></div>
+
+    <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
+    <script src="/js/common.js?v=7.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script src="/js/home.js?v=2.7"></script>
+</body>
+</html>

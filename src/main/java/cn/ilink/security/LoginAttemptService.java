@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,16 +23,11 @@ public class LoginAttemptService {
         .maximumSize(10_000)
         .build();
 
-    // C-07: 使用 ConcurrentHashMap 保证并发安全，替代 asMap().computeIfAbsent() 的竞态
-    private final ConcurrentHashMap<String, AtomicInteger> lockMap = new ConcurrentHashMap<>();
-
     /** 注册限流：同一 IP 每分钟最多 3 次 */
     private final Cache<String, AtomicInteger> registerAttempts = Caffeine.newBuilder()
         .expireAfterWrite(1, TimeUnit.MINUTES)
         .maximumSize(10_000)
         .build();
-
-    private final ConcurrentHashMap<String, AtomicInteger> registerLockMap = new ConcurrentHashMap<>();
 
     // ===== 登录限流 =====
 
@@ -41,24 +35,15 @@ public class LoginAttemptService {
         if (key == null || key.isBlank()) {
             return;
         }
-        AtomicInteger count = lockMap.computeIfAbsent(key, k -> new AtomicInteger(0));
+        AtomicInteger count = attempts.asMap().computeIfAbsent(key, k -> new AtomicInteger(0));
         synchronized (count) {
-            int current = count.incrementAndGet();
-            if (current >= MAX_ATTEMPTS) {
-                attempts.asMap().put(key, count);
-            }
+            count.incrementAndGet();
         }
     }
 
     public void loginSucceeded(String key) {
         if (key != null && !key.isBlank()) {
             attempts.invalidate(key);
-            AtomicInteger removed = lockMap.remove(key);
-            if (removed != null) {
-                synchronized (removed) {
-                    removed.set(0);
-                }
-            }
         }
     }
 
@@ -84,13 +69,12 @@ public class LoginAttemptService {
             return true; // 无法识别IP时放行
         }
         String key = "register:" + clientIp;
-        AtomicInteger count = registerLockMap.computeIfAbsent(key, k -> new AtomicInteger(0));
+        AtomicInteger count = registerAttempts.asMap().computeIfAbsent(key, k -> new AtomicInteger(0));
         synchronized (count) {
             if (count.get() >= REGISTER_MAX_PER_MINUTE) {
                 return false;
             }
             count.incrementAndGet();
-            registerAttempts.asMap().put(key, count);
             return true;
         }
     }

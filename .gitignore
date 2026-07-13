@@ -1,0 +1,25 @@
+# === IDE 配置 ===
+.idea/
+.zcode/
+.claude/
+
+# === Playwright 浏览器 ===
+.pw-browsers/
+
+# === Maven 构建输出 ===
+target/
+
+# === 临时/生成的文档 ===
+AUDIT_REPORT.md
+e2e_test.py
+test_screenshots/
+
+# === 上传文件 ===
+uploads/
+
+# === 系统文件 ===
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+*.stackdump

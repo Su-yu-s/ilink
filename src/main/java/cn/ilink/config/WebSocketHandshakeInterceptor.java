@@ -11,7 +11,8 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import javax.servlet.http.HttpSession;
-import java.util.List;
+import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.Map;
 
 /**
@@ -21,11 +22,6 @@ import java.util.Map;
 public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
 
     private static final Logger log = LoggerFactory.getLogger(WebSocketHandshakeInterceptor.class);
-
-    /** 允许的 Origin，支持同源及本地开发 */
-    private static final List<String> ALLOWED_ORIGIN_SUFFIXES = List.of(
-        "localhost", "127.0.0.1"
-    );
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
@@ -37,7 +33,7 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
                 if (user != null && user.getId() != null) {
                     // Origin 校验：阻止跨域 WebSocket 连接（防 CSRF）
                     String origin = servletRequest.getServletRequest().getHeader("Origin");
-                    if (origin != null && !origin.isBlank() && !isOriginAllowed(origin)) {
+                    if (origin != null && !origin.isBlank() && !isOriginAllowed(origin, request)) {
                         log.warn("WebSocket 拒绝非法 Origin: {}", origin);
                         return false;
                     }
@@ -53,14 +49,34 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
     /**
      * 检查 Origin 是否合法：允许同源（Origin 与 Host 一致）及本地开发地址。
      */
-    private boolean isOriginAllowed(String origin) {
-        // 允许本地开发地址
-        for (String suffix : ALLOWED_ORIGIN_SUFFIXES) {
-            if (origin.contains(suffix)) {
-                return true;
+    private boolean isOriginAllowed(String origin, ServerHttpRequest request) {
+        try {
+            URI originUri = URI.create(origin);
+            String originHost = originUri.getHost();
+            InetSocketAddress requestHost = request.getHeaders().getHost();
+            if (originHost == null || requestHost == null
+                || !originHost.equalsIgnoreCase(requestHost.getHostString())) {
+                return false;
             }
+
+            String requestScheme = request.getURI().getScheme();
+            if (requestScheme != null && originUri.getScheme() != null
+                && !requestScheme.equalsIgnoreCase(originUri.getScheme())) {
+                return false;
+            }
+
+            return effectivePort(originUri.getScheme(), originUri.getPort())
+                == effectivePort(requestScheme, requestHost.getPort());
+        } catch (IllegalArgumentException ex) {
+            return false;
         }
-        return false;
+    }
+
+    private int effectivePort(String scheme, int port) {
+        if (port >= 0) {
+            return port;
+        }
+        return "https".equalsIgnoreCase(scheme) ? 443 : 80;
     }
 
     @Override

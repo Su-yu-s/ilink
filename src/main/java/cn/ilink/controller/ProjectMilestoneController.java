@@ -3,13 +3,10 @@ package cn.ilink.controller;
 import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import cn.ilink.dto.ProjectMilestoneDTO;
-import cn.ilink.entity.ProjectMilestone;
-import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.User;
 import cn.ilink.service.ProjectMilestoneService;
-import cn.ilink.service.impl.TeamApplicationServiceImpl;
+import cn.ilink.service.TeamAccessService;
 import cn.ilink.vo.ProjectMilestoneVO;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -27,20 +24,34 @@ public class ProjectMilestoneController {
     private ProjectMilestoneService projectMilestoneService;
 
     @Autowired
-    private TeamApplicationServiceImpl teamApplicationService;
+    private TeamAccessService teamAccessService;
 
     @GetMapping("/team/{teamId}/milestones")
     @ResponseBody
-    public ResponseEntity<Result<?>> getMilestonesByTeam(@PathVariable Long teamId) {
+    public ResponseEntity<Result<?>> getMilestonesByTeam(@PathVariable Long teamId, HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
+        if (!isTeamMember(teamId, user)) {
+            return Result.forbidden().toResponseEntity();
+        }
         List<ProjectMilestoneVO> milestones = projectMilestoneService.getByTeam(teamId);
         return Result.ok("获取成功", milestones).toResponseEntity();
     }
 
     @GetMapping("/milestones/{id}")
     @ResponseBody
-    public ResponseEntity<Result<?>> getMilestoneById(@PathVariable Long id) {
+    public ResponseEntity<Result<?>> getMilestoneById(@PathVariable Long id, HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
         ProjectMilestoneVO milestone = projectMilestoneService.getById(id);
         if (milestone != null) {
+            if (!isTeamMember(milestone.getTeamId(), user)) {
+                return Result.forbidden().toResponseEntity();
+            }
             return Result.ok("获取成功", milestone).toResponseEntity();
         } else {
             return Result.notFound("里程碑不存在").toResponseEntity();
@@ -166,11 +177,6 @@ public class ProjectMilestoneController {
 
     /** C-04: 校验用户是否为指定团队的成员 */
     private boolean isTeamMember(Long teamId, User user) {
-        if (teamId == null) return false;
-        LambdaQueryWrapper<TeamApplication> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(TeamApplication::getTeamId, teamId)
-               .eq(TeamApplication::getUserId, user.getId())
-               .eq(TeamApplication::getStatus, "APPROVED");
-        return teamApplicationService.count(wrapper) > 0;
+        return user != null && teamAccessService.isTeamParticipant(teamId, user.getId());
     }
 }

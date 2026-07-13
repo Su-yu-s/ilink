@@ -74,6 +74,10 @@
         img.style.display = 'none';
     }
 
+    // 内联 onerror 属性不在 IIFE 作用域内；显式暴露一个带命名空间的处理器，
+    // 避免依赖 profile.js 的同名全局函数。
+    window.ilinkHonorProofImageOnError = honorProofImageOnError;
+
     /** 证明材料预览（图片缩略图 / PDF 图标 / 通用链接） */
     function honorProofAsideHtml(proofUrl) {
         var u = String(proofUrl || '').trim();
@@ -84,7 +88,7 @@
             var imgSrc = escapeHtml(honorProofSafeUrl(u));
             return '<div class="honors-preview-card__proof il-honor-item__proof">' +
                 '<a class="honors-preview-proof honors-preview-proof--image" href="' + safe + '" target="_blank" rel="noopener" title="查看证明材料">' +
-                '<img class="honors-preview-proof__img" src="' + imgSrc + '" data-raw-src="' + safe + '" alt="证明材料缩略图" loading="lazy" onerror="honorProofImageOnError(this)">' +
+                '<img class="honors-preview-proof__img" src="' + imgSrc + '" data-raw-src="' + safe + '" alt="证明材料缩略图" loading="lazy" onerror="ilinkHonorProofImageOnError(this)">' +
                 '</a></div>';
         }
         if (kind === 'pdf') {
@@ -275,14 +279,19 @@
                 return r.json();
             })
             .then(function(result) {
-                if(Number(result.code) === 200 && result.data) {
+                var resultCode = Number(result && result.code);
+                if(resultCode === 200 && result.data) {
                     var serverList = parseList(result.data.honors).map(norm);
                     var draft = loadDraft();
                     honors = (draft && draft.length > 0) ? draft.map(norm) : serverList;
                     updateNavbar(result.data);
-                } else if(Number(result.code) === 401) {
+                } else if(resultCode === 401) {
                     showMessage('请先登录', 'warning');
                     setTimeout(function() { window.location.href = '/login.html'; }, 1500);
+                    return;
+                } else {
+                    renderLoadError((result && result.message) || '暂时无法加载个人成果，请稍后重试。');
+                    showMessage((result && result.message) || '加载个人成果失败', 'error');
                     return;
                 }
                 render();
@@ -294,8 +303,25 @@
                     return;
                 }
                 var draft = loadDraft();
-                if(draft && draft.length > 0) { honors = draft.map(norm); render(); showMessage('已加载本地缓存', 'warning'); }
+                if(draft && draft.length > 0) {
+                    honors = draft.map(norm);
+                    render();
+                    showMessage('已加载本地缓存', 'warning');
+                    return;
+                }
+                renderLoadError('暂时无法加载个人成果，请检查网络后重试。');
+                showMessage('加载个人成果失败，请稍后重试', 'error');
             });
+    }
+
+    function renderLoadError(message) {
+        var container = $('honorsEditor');
+        if(!container) return;
+        container.innerHTML = '<div class="honors-empty" role="alert">' +
+            '<div class="honors-empty__icon" aria-hidden="true">!</div>' +
+            '<p class="honors-empty__title">个人成果暂时无法显示</p>' +
+            '<p class="honors-empty__text">' + escapeHtml(message || '请稍后重试。') + '</p>' +
+            '</div>';
     }
 
     function bindEvents() {

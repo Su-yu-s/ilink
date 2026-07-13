@@ -6,6 +6,7 @@ import cn.ilink.entity.CommunityPost;
 import cn.ilink.entity.CommunityPostFavorite;
 import cn.ilink.entity.CommunityPostLike;
 import cn.ilink.entity.Notification;
+import cn.ilink.entity.ProjectApplication;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.ChatMessageMapper;
 import cn.ilink.mapper.CommunityCommentMapper;
@@ -14,10 +15,12 @@ import cn.ilink.mapper.CommunityPostLikeMapper;
 import cn.ilink.mapper.NotificationMapper;
 import cn.ilink.service.impl.AssetServiceImpl;
 import cn.ilink.service.impl.CommunityPostServiceImpl;
+import cn.ilink.service.impl.ProjectApplicationServiceImpl;
 import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
+import cn.ilink.service.NotificationService;
 import cn.ilink.vo.AdminDashboardVO;
 import static cn.ilink.common.ControllerUtils.safePage;
 import static cn.ilink.common.ControllerUtils.safeSize;
@@ -29,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
@@ -47,6 +52,7 @@ public class AdminController {
     private final UserService userService;
     private final TeamDemandServiceImpl teamDemandService;
     private final TeacherApplicationServiceImpl teacherApplicationService;
+    private final ProjectApplicationServiceImpl projectApplicationService;
     private final AssetServiceImpl assetService;
     private final CommunityPostServiceImpl communityPostService;
     private final TeamApplicationServiceImpl teamApplicationService;
@@ -55,10 +61,12 @@ public class AdminController {
     private final NotificationMapper notificationMapper;
     private final ChatMessageMapper chatMessageMapper;
     private final CommunityCommentMapper communityCommentMapper;
+    private final NotificationService notificationService;
 
     public AdminController(UserService userService,
                            TeamDemandServiceImpl teamDemandService,
                            TeacherApplicationServiceImpl teacherApplicationService,
+                           ProjectApplicationServiceImpl projectApplicationService,
                            AssetServiceImpl assetService,
                            CommunityPostServiceImpl communityPostService,
                            TeamApplicationServiceImpl teamApplicationService,
@@ -66,10 +74,12 @@ public class AdminController {
                            CommunityPostFavoriteMapper communityPostFavoriteMapper,
                            NotificationMapper notificationMapper,
                            ChatMessageMapper chatMessageMapper,
-                           CommunityCommentMapper communityCommentMapper) {
+                           CommunityCommentMapper communityCommentMapper,
+                           NotificationService notificationService) {
         this.userService = userService;
         this.teamDemandService = teamDemandService;
         this.teacherApplicationService = teacherApplicationService;
+        this.projectApplicationService = projectApplicationService;
         this.assetService = assetService;
         this.communityPostService = communityPostService;
         this.teamApplicationService = teamApplicationService;
@@ -78,6 +88,7 @@ public class AdminController {
         this.notificationMapper = notificationMapper;
         this.chatMessageMapper = chatMessageMapper;
         this.communityCommentMapper = communityCommentMapper;
+        this.notificationService = notificationService;
     }
 
     @GetMapping("/dashboard")
@@ -441,6 +452,8 @@ public class AdminController {
 
     @PutMapping("/teacher/{id}/approve")
     @ResponseBody
+    @Transactional
+    @CacheEvict(value = "teacherDetail", key = "#id")
     public ResponseEntity<Result<?>> approveTeacher(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
@@ -450,9 +463,25 @@ public class AdminController {
         try {
             cn.ilink.entity.TeacherApplication teacher = teacherApplicationService.getById(id);
             if (teacher != null) {
+                if ("APPROVED".equals(teacher.getStatus())) {
+                    return Result.badRequest("该导师申请已通过").toResponseEntity();
+                }
                 teacher.setStatus("APPROVED");
                 boolean success = teacherApplicationService.updateById(teacher);
                 if (success) {
+                    User teacherUser = userService.getById(teacher.getUserId());
+                    if (teacherUser != null && !"ADMIN".equals(teacherUser.getRole()) && !"TEACHER".equals(teacherUser.getRole())) {
+                        teacherUser.setRole("TEACHER");
+                        userService.updateById(teacherUser);
+                    }
+                    notificationService.create(
+                        teacher.getUserId(),
+                        user.getId(),
+                        "TEACHER_APPROVED",
+                        "导师认证已通过",
+                        "您的导师认证申请已审核通过，现在可以接收学生合作申请。",
+                        teacher.getId()
+                    );
                     return Result.ok("审批通过", null).toResponseEntity();
                 } else {
                     return Result.fail(500, "审批失败").toResponseEntity();
@@ -468,6 +497,8 @@ public class AdminController {
 
     @DeleteMapping("/teacher/{id}")
     @ResponseBody
+    @Transactional
+    @CacheEvict(value = "teacherDetail", key = "#id")
     public ResponseEntity<Result<?>> deleteTeacher(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
@@ -475,8 +506,28 @@ public class AdminController {
         }
 
         try {
+            cn.ilink.entity.TeacherApplication teacher = teacherApplicationService.getById(id);
+            if (teacher == null) {
+                return Result.notFound("导师申请不存在").toResponseEntity();
+            }
+            projectApplicationService.remove(
+                new LambdaQueryWrapper<ProjectApplication>().eq(ProjectApplication::getTeacherId, id)
+            );
             boolean success = teacherApplicationService.removeById(id);
             if (success) {
+                User teacherUser = userService.getById(teacher.getUserId());
+                if (teacherUser != null && "TEACHER".equals(teacherUser.getRole())) {
+                    teacherUser.setRole("STUDENT");
+                    userService.updateById(teacherUser);
+                }
+                notificationService.create(
+                    teacher.getUserId(),
+                    user.getId(),
+                    "TEACHER_REJECTED",
+                    "导师认证未通过",
+                    "您的导师认证申请未通过或已被撤销，如有疑问请联系管理员。",
+                    null
+                );
                 return Result.ok("删除成功", null).toResponseEntity();
             } else {
                 return Result.notFound("导师申请不存在").toResponseEntity();

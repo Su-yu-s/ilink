@@ -29,7 +29,7 @@ public class NotificationController {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
         if (!user.getId().equals(userId)) {
-            return Result.error("无权限访问").toResponseEntity();
+            return Result.forbidden().toResponseEntity();
         }
         List<NotificationVO> list = notificationService.getByUser(userId, limit);
         return Result.ok(list).toResponseEntity();
@@ -42,7 +42,7 @@ public class NotificationController {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
         if (!user.getId().equals(userId)) {
-            return Result.error("无权限访问").toResponseEntity();
+            return Result.forbidden().toResponseEntity();
         }
         int count = notificationService.getUnreadCount(userId);
         Map<String, Object> data = new HashMap<>();
@@ -70,7 +70,7 @@ public class NotificationController {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
         if (!user.getId().equals(userId)) {
-            return Result.error("无权限访问").toResponseEntity();
+            return Result.forbidden().toResponseEntity();
         }
         notificationService.markAllAsRead(userId);
         return Result.ok("全部已读", null).toResponseEntity();

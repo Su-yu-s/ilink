@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    
+<!--
+  用法: th:replace="~{fragments/search-field :: field('keyword', '搜索…', '关键词', 'text', '')}"
+  参数: inputId, placeholder, ariaLabel(可空), inputType(默认 search), modifiers(额外 class，可空)
+-->
+<th:block th:fragment="field(inputId, placeholder, ariaLabel, inputType, modifiers)">
+    <div class="il-search-field" th:classappend="${modifiers}">
+        <svg class="il-search-field__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.75"/>
+            <path d="M20 20l-4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <input
+            th:id="${inputId}"
+            th:type="${inputType != null && !#strings.isEmpty(inputType) ? inputType : 'search'}"
+            class="il-search-field__input"
+            th:placeholder="${placeholder}"
+            th:attr="aria-label=${ariaLabel != null && !#strings.isEmpty(ariaLabel) ? ariaLabel : placeholder}"
+            autocomplete="off"
+        />
+    </div>
+</th:block>
+
+<!-- 带内置搜索按钮（竞赛目录等） -->
+<th:block th:fragment="combo(inputId, placeholder, buttonId, buttonLabel, ariaLabel)">
+    <div class="il-search-field il-search-field--combo il-search-field--toolbar">
+        <svg class="il-search-field__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.75"/>
+            <path d="M20 20l-4-4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <input
+            th:id="${inputId}"
+            type="search"
+            class="il-search-field__input"
+            th:placeholder="${placeholder}"
+            th:attr="aria-label=${ariaLabel != null && !#strings.isEmpty(ariaLabel) ? ariaLabel : placeholder}"
+            autocomplete="off"
+        />
+        <button type="button" class="il-search-field__action" th:id="${buttonId}" th:text="${buttonLabel}">搜索</button>
+    </div>
+</th:block>
+</body>
+</html>

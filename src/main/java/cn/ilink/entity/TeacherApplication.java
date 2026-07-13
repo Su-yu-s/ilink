@@ -14,6 +14,7 @@ public class TeacherApplication {
     private Long userId;
     private String introduction;
     private String researchDirection;
+    private String professionalTitle;
     private String projects;
     private String status;
     private Date createdAt;

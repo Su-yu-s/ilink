@@ -1,0 +1,462 @@
+/* iLink teacher detail - scoped, responsive detail shell */
+body[data-app-page="teacher-detail"] {
+    --td-surface: #ffffff;
+    --td-canvas: #faf9f7;
+    --td-subtle: #f7f5f2;
+    --td-border: #e8e2d9;
+    --td-border-strong: #d8d0c5;
+    --td-text: #2c2419;
+    --td-muted: #776b5e;
+    --td-deep: #111827;
+    background: var(--td-canvas);
+    color: var(--td-text);
+}
+
+body[data-app-page="teacher-detail"] .particle-canvas {
+    display: none;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail-main {
+    max-width: 1040px;
+    min-height: calc(100vh - var(--header-height, 64px));
+    margin: 0 auto;
+    padding: 34px 24px 72px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail-shell {
+    width: 100%;
+    max-width: 920px;
+    margin: 0 auto;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail-back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    margin-bottom: 14px;
+    color: var(--td-muted);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail-back:hover {
+    color: var(--td-text);
+}
+
+body[data-app-page="teacher-detail"] .detail-load-state {
+    padding: 48px 40px;
+    background: var(--td-surface);
+    border: 1px solid var(--td-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(44, 36, 25, 0.07);
+}
+
+body[data-app-page="teacher-detail"] .detail-load-state__indicator {
+    width: 36px;
+    height: 4px;
+    margin-bottom: 22px;
+    border-radius: 999px;
+    background: var(--td-deep);
+}
+
+body[data-app-page="teacher-detail"] .detail-load-state__eyebrow,
+body[data-app-page="teacher-detail"] .detail-view__eyebrow {
+    margin: 0 0 8px;
+    color: var(--td-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+body[data-app-page="teacher-detail"] .detail-load-state__title,
+body[data-app-page="teacher-detail"] .detail-view__title {
+    margin: 0;
+    color: var(--td-deep);
+    font-size: clamp(26px, 4vw, 36px);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+}
+
+body[data-app-page="teacher-detail"] .detail-load-state__message {
+    margin: 12px 0 0;
+    color: var(--td-muted);
+    line-height: 1.7;
+}
+
+body[data-app-page="teacher-detail"] .detail-load-state__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail-card {
+    overflow: hidden;
+    background: var(--td-surface);
+    border: 1px solid var(--td-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(44, 36, 25, 0.07);
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__header {
+    padding: 30px 34px;
+    border-bottom: 1px solid var(--td-border);
+    background: linear-gradient(180deg, #fff 0%, #fdfcfb 100%);
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__identity {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar,
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot > a {
+    display: flex;
+    width: 72px;
+    height: 72px;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--td-border);
+    border-radius: 50%;
+    background: var(--td-subtle);
+    color: var(--td-text);
+    text-decoration: none;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot img,
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar__fallback {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__title-wrap {
+    min-width: 0;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__body {
+    padding: 0 34px 34px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__meta {
+    margin: 0;
+}
+
+body[data-app-page="teacher-detail"] .detail-view__row {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--td-border);
+}
+
+body[data-app-page="teacher-detail"] .detail-view__row dt {
+    margin: 0;
+    color: var(--td-muted);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+body[data-app-page="teacher-detail"] .detail-view__row dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--td-text);
+    font-size: 16px;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+}
+
+body[data-app-page="teacher-detail"] .detail-view__text {
+    white-space: pre-wrap;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__apply {
+    margin-top: 26px;
+    padding: 24px;
+    background: var(--td-subtle);
+    border: 1px solid var(--td-border);
+    border-radius: 12px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__section-label {
+    margin: 0;
+    color: var(--td-deep);
+    font-size: 22px;
+    line-height: 1.35;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__apply-hint {
+    margin: 8px 0 16px;
+    color: var(--td-muted);
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__textarea {
+    display: block;
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    padding: 13px 14px;
+    border: 1px solid var(--td-border-strong);
+    border-radius: 10px;
+    background: var(--td-surface);
+    color: var(--td-text);
+    font: inherit;
+    line-height: 1.65;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__textarea:focus {
+    outline: none;
+    border-color: #9b8a75;
+    box-shadow: 0 0 0 3px rgba(155, 138, 117, 0.12);
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__textarea:disabled {
+    resize: none;
+    background: #efede9;
+    color: #94887a;
+    cursor: not-allowed;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__apply-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 14px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__submit {
+    min-height: 42px;
+    padding: 9px 20px;
+    border: 1px solid var(--td-deep);
+    border-radius: 8px;
+    background: var(--td-deep);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__submit:hover:not(:disabled) {
+    background: #030712;
+    border-color: #030712;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__apply-status {
+    min-height: 24px;
+    margin: 12px 0 0;
+    color: var(--td-muted);
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-heading .teacher-detail__apply-hint {
+    margin-bottom: 0;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-count {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 9px;
+    color: #fff;
+    background: var(--td-deep);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-card {
+    display: grid;
+    gap: 14px;
+    padding: 16px;
+    background: var(--td-surface);
+    border: 1px solid var(--td-border);
+    border-radius: 10px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user > a,
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user .publisher-avatar,
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user .il-publisher-avatar,
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user .il-avatar-wrap,
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user img,
+body[data-app-page="teacher-detail"] .teacher-detail__pending-fallback {
+    width: 46px !important;
+    height: 46px !important;
+    flex: 0 0 46px !important;
+    border-radius: 50% !important;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user img {
+    display: block;
+    object-fit: cover !important;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e9e5df;
+    color: var(--td-deep);
+    font-weight: 700;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user h3 {
+    margin: 0 0 3px;
+    color: var(--td-text);
+    font-size: 16px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-user time {
+    color: var(--td-muted);
+    font-size: 12px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-message,
+body[data-app-page="teacher-detail"] .teacher-detail__pending-empty {
+    margin: 0;
+    color: var(--td-muted);
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__pending-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__decision {
+    min-width: 78px;
+    min-height: 38px;
+    padding: 8px 14px;
+    border: 1px solid var(--td-border-strong);
+    border-radius: 8px;
+    background: var(--td-surface);
+    color: var(--td-text);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__decision--approve {
+    color: #fff;
+    background: var(--td-deep);
+    border-color: var(--td-deep);
+}
+
+body[data-app-page="teacher-detail"] .teacher-detail__decision:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
+@media (max-width: 640px) {
+    body[data-app-page="teacher-detail"] .teacher-detail-main {
+        padding: 18px 12px 88px;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail-card,
+    body[data-app-page="teacher-detail"] .detail-load-state {
+        border-radius: 12px;
+    }
+
+    body[data-app-page="teacher-detail"] .detail-load-state,
+    body[data-app-page="teacher-detail"] .teacher-detail__header {
+        padding: 24px 20px;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail__identity {
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot,
+    body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar,
+    body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot > a {
+        width: 56px;
+        height: 56px;
+        flex-basis: 56px;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail__body {
+        padding: 0 20px 24px;
+    }
+
+    body[data-app-page="teacher-detail"] .detail-view__row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        padding: 16px 0;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail__apply {
+        margin-top: 20px;
+        padding: 18px;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail__apply-actions,
+    body[data-app-page="teacher-detail"] .teacher-detail__submit {
+        width: 100%;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail__submit {
+        justify-content: center;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail__pending-heading {
+        align-items: center;
+    }
+
+    body[data-app-page="teacher-detail"] .teacher-detail__pending-actions,
+    body[data-app-page="teacher-detail"] .teacher-detail__decision {
+        width: 100%;
+    }
+}

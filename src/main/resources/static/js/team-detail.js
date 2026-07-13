@@ -1,14 +1,91 @@
 const urlParams = new URLSearchParams(window.location.search);
-const teamId = urlParams.get('id');
-const teamIdNum = teamId ? parseInt(teamId, 10) : null;
+const teamId = (urlParams.get('id') || '').trim();
+const teamIdNum = /^\d+$/.test(teamId) && Number(teamId) > 0 ? Number(teamId) : null;
 let currentTeamData = null;
 /** 当前登录用户是否为本队队长，由 checkCreatorAccess 设定 */
 let teamDetailCurrentUserId = null;
 let isCurrentUserCreator = false;
 
+async function teamApiRequest(path, options) {
+    const requestOptions = { ...(options || {}) };
+    const headers = { ...(requestOptions.headers || {}) };
+    if (requestOptions.body && !(requestOptions.body instanceof FormData) && !headers['Content-Type']) {
+        headers['Content-Type'] = 'application/json';
+    }
+    requestOptions.headers = headers;
+
+    const url = path.startsWith('/api/') ? path : '/api' + path;
+    const response = await apiFetch(url, requestOptions);
+    let payload;
+    try {
+        payload = await response.json();
+    } catch (error) {
+        throw new Error('服务器返回了无法解析的数据，请稍后重试');
+    }
+
+    if (!response.ok || !payload || (payload.code !== 200 && payload.code !== 0)) {
+        const requestError = new Error((payload && payload.message) || `请求失败（${response.status}）`);
+        requestError.status = response.status;
+        requestError.code = payload && payload.code;
+        throw requestError;
+    }
+    return payload.data;
+}
+
+function setTeamDetailState(type, message) {
+    const state = document.getElementById('teamDetailState');
+    const content = document.getElementById('teamDetailContent');
+    const title = document.getElementById('teamDetailStateTitle');
+    const messageEl = document.getElementById('teamDetailStateMessage');
+    const retry = document.getElementById('teamDetailRetryBtn');
+    const indicator = state && state.querySelector('.detail-load-state__indicator');
+    const success = type === 'success';
+    const loading = type === 'loading';
+
+    if (state) {
+        state.hidden = success;
+        state.classList.toggle('detail-load-state--error', type === 'error');
+        state.setAttribute('aria-busy', loading ? 'true' : 'false');
+    }
+    if (content) content.hidden = !success;
+    if (indicator) indicator.hidden = !loading;
+    if (retry) retry.hidden = loading || success;
+    if (title) title.textContent = loading ? '正在加载组队信息' : '组队信息暂时无法显示';
+    if (messageEl) {
+        messageEl.textContent = message || (loading ? '正在连接团队服务，请稍候…' : '请检查网络后重新加载。');
+    }
+}
+
+async function loadTeamDetail() {
+    setTeamDetailState('loading');
+    try {
+        const team = await teamApiRequest(`/team/${teamIdNum}`);
+        if (!team || typeof team !== 'object') {
+            throw new Error('组队数据为空，请稍后重试');
+        }
+        renderTeamDetail(team);
+        setTeamDetailState('success');
+        await Promise.allSettled([
+            checkApplicationStatus(teamIdNum),
+            checkCreatorAccess(team)
+        ]);
+    } catch (error) {
+        console.error('获取团队详情失败:', error);
+        setTeamDetailState('error', error && error.message ? error.message : '网络异常，请稍后重试。');
+    }
+}
+
 function teamStatusLabel(status) {
-    const map = { OPEN: '招募中', TEAMING: '组队中', CLOSED: '已结束' };
+    const map = { OPEN: '招募中', TEAMING: '已组队', CLOSED: '已结束' };
     return map[status] || status || '未知';
+}
+
+function renderTeamStatus(status) {
+    const node = document.getElementById('teamStatus');
+    if (!node) return;
+    const normalized = String(status || '').toUpperCase();
+    node.textContent = teamStatusLabel(normalized);
+    node.className = 'team-detail-status ' + (normalized === 'OPEN' ? 'is-open' : 'is-neutral');
 }
 
 function normalizeDateInput(value) {
@@ -47,28 +124,19 @@ function formatCompactDate(dateStr) {
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
-    if (!teamIdNum) {
-        showMessage('缺少团队ID参数', 'error');
-        setTimeout(() => window.location.href = '/team-market.html', 1000);
-        return;
-    }
-    try {
-        const team = await request(`/team/${teamIdNum}`);
-        renderTeamDetail(team);
-        await checkApplicationStatus(teamIdNum);
-        await checkCreatorAccess(team);
-    } catch (error) {
-        console.error('获取团队详情失败:', error);
-        setTimeout(() => window.location.href = '/team-market.html', 1000);
-    }
-    document.getElementById('backBtn')?.addEventListener('click', function() {
-        window.location.href = '/team-market.html';
-    });
+    document.getElementById('teamDetailRetryBtn')?.addEventListener('click', loadTeamDetail);
     bindApplyButton();
     bindApplyModal();
     bindApproveModalActions();
     bindEditMode();
     bindTeamStatusActions();
+    bindWorkspaceButton();
+
+    if (!teamIdNum) {
+        setTeamDetailState('error', '链接中缺少有效的团队 ID，请返回组队大厅重新选择。');
+        return;
+    }
+    await loadTeamDetail();
 });
 
 async function checkCreatorAccess(teamData) {
@@ -78,21 +146,32 @@ async function checkCreatorAccess(teamData) {
         if (result.code !== 200 || !result.data || !teamData.creatorId) return;
         teamDetailCurrentUserId = Number(result.data.id);
         isCurrentUserCreator = teamDetailCurrentUserId === Number(teamData.creatorId);
-        if (!isCurrentUserCreator) return;
 
-        // 队长：隐藏"申请加入"按钮
-        document.getElementById('applyBtn')?.classList.add('d-none');
+        // 判断是否为队员
+        const members = Array.isArray(teamData.members) ? teamData.members : [];
+        const isMember = members.some(m => Number(m.userId || m.id) === teamDetailCurrentUserId);
 
-        // 队长：显示管理按钮（根据状态控制）
-        document.getElementById('editTeamBtn')?.classList.toggle('d-none', teamData.status !== 'OPEN');
-        document.getElementById('workspaceBtn')?.classList.toggle('d-none', teamData.status !== 'TEAMING');
-        document.getElementById('markTeamingBtn')?.classList.toggle('d-none', teamData.status !== 'OPEN');
-        document.getElementById('closeTeamBtn')?.classList.toggle('d-none', !(teamData.status === 'OPEN' || teamData.status === 'TEAMING'));
+        if (isCurrentUserCreator) {
+            // 队长：隐藏"申请加入"，显示管理按钮（根据状态控制）
+            document.getElementById('applyBtn')?.classList.add('d-none');
+            document.getElementById('editTeamBtn')?.classList.toggle('d-none', teamData.status !== 'OPEN');
+            document.getElementById('workspaceBtn')?.classList.toggle('d-none', teamData.status !== 'TEAMING');
+            document.getElementById('markTeamingBtn')?.classList.toggle('d-none', teamData.status !== 'OPEN');
+            document.getElementById('closeTeamBtn')?.classList.toggle('d-none', !(teamData.status === 'OPEN' || teamData.status === 'TEAMING'));
 
-        // 队长且队伍 OPEN 时加载待审批列表
-        if (teamData.status === 'OPEN') {
-            loadPendingApplications();
+            // 队长且队伍 OPEN 时加载待审批列表
+            if (teamData.status === 'OPEN') {
+                loadPendingApplications();
+            }
+        } else if (isMember) {
+            // 队员：只显示"返回组队大厅"，隐藏其他所有按钮
+            document.getElementById('applyBtn')?.classList.add('d-none');
+            document.getElementById('editTeamBtn')?.classList.add('d-none');
+            document.getElementById('workspaceBtn')?.classList.add('d-none');
+            document.getElementById('markTeamingBtn')?.classList.add('d-none');
+            document.getElementById('closeTeamBtn')?.classList.add('d-none');
         }
+        // 路人（非队长非队员）：保留默认显示（"申请加入" + "返回组队大厅"）
     } catch (e) {
         console.warn('检查创建者权限失败', e);
     }
@@ -103,7 +182,7 @@ async function checkCreatorAccess(teamData) {
 // ============================================================
 async function loadPendingApplications() {
     try {
-        const data = await request('/team/my/pending-applications');
+        const data = await teamApiRequest('/team/my/pending-applications');
         const apps = Array.isArray(data) ? data : [];
         // 只显示本队伍的待审批
         const teamApps = apps.filter(function(a) { return Number(a.teamId) === teamIdNum; });
@@ -214,7 +293,7 @@ function bindApplyModal() {
         btn.disabled = true;
         btn.textContent = '提交中...';
         try {
-            await request('/team/join', {
+            await teamApiRequest('/team/join', {
                 method: 'POST',
                 body: JSON.stringify({
                     teamId: teamIdNum,
@@ -290,7 +369,7 @@ function bindApproveModalActions() {
         btn.disabled = true;
         btn.textContent = '处理中...';
         try {
-            await request('/team/application/' + currentApproveAppId + '/approve', {
+            await teamApiRequest('/team/application/' + currentApproveAppId + '/approve', {
                 method: 'PUT',
                 body: JSON.stringify({
                     action: action,
@@ -475,7 +554,7 @@ async function saveTeamEdit() {
     }
     const memberValue = document.getElementById('editMemberCount').value;
     try {
-        await request(`/team/${teamIdNum}`, {
+        await teamApiRequest(`/team/${teamIdNum}`, {
             method: 'PUT',
             body: JSON.stringify({
                 title,
@@ -502,14 +581,29 @@ function bindTeamStatusActions() {
     });
 }
 
+function bindWorkspaceButton() {
+    const workspaceBtn = document.getElementById('workspaceBtn');
+    if (!workspaceBtn || workspaceBtn.dataset.bound === '1') return;
+    workspaceBtn.dataset.bound = '1';
+    workspaceBtn.addEventListener('click', function () {
+        if (!teamIdNum) return;
+        window.location.assign('/team-space.html?id=' + encodeURIComponent(String(teamIdNum)));
+    });
+}
+
 async function updateTeamStatus(status, confirmText) {
     if (!confirm(confirmText)) return;
-    await request(`/team/${teamIdNum}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status })
-    });
-    showMessage('状态已更新', 'success');
-    setTimeout(() => location.reload(), 600);
+    try {
+        await teamApiRequest(`/team/${teamIdNum}/status`, {
+            method: 'PUT',
+            body: JSON.stringify({ status })
+        });
+        showMessage('状态已更新', 'success');
+        await loadTeamDetail();
+    } catch (error) {
+        console.error('更新团队状态失败:', error);
+        showMessage(error.message || '状态更新失败', 'error');
+    }
 }
 
 function renderTeamDetail(team) {
@@ -517,7 +611,7 @@ function renderTeamDetail(team) {
     document.getElementById('teamTitle').textContent = team.title || '未命名团队';
     renderPublisher(team);
     document.getElementById('teamCategory').textContent = categoryLabel(team.competitionId);
-    document.getElementById('teamStatus').textContent = teamStatusLabel(team.status);
+    renderTeamStatus(team.status);
     document.getElementById('teamMemberCount').textContent = team.requiredMemberCount ? `${team.requiredMemberCount}人` : '待定';
     document.getElementById('teamDeadline').textContent = team.deadline ? normalizeDateInput(team.deadline) : '长期有效';
     document.getElementById('teamSkills').textContent = team.requiredSkills || '无';
@@ -577,7 +671,7 @@ function renderTeamMembers(members) {
 async function checkApplicationStatus(teamId) {
     if (currentTeamData && currentTeamData.status !== 'OPEN') return;
     try {
-        const data = await request(`/team/application-status?teamId=${teamId}`);
+        const data = await teamApiRequest(`/team/application-status?teamId=${encodeURIComponent(teamId)}`);
         const status = data && data.status;
         const applyBtn = document.getElementById('applyBtn');
         if (!applyBtn) return;

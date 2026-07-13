@@ -107,6 +107,7 @@ public class NotificationServiceImpl implements NotificationService {
         boolean inserted = notificationMapper.insert(n) > 0;
         if (inserted) {
             // 写入后实时推送通知和未读数
+            CacheEvictUtils.evictUnreadCount(dto.getUserId());
             NotificationVO vo = convertToVO(Collections.singletonList(n)).get(0);
             notificationPushService.sendNotification(dto.getUserId(), vo);
             int unreadCount = getUnreadCount(dto.getUserId());
@@ -173,18 +174,24 @@ public class NotificationServiceImpl implements NotificationService {
         notificationMapper.insert(n);
 
         // 写入后立即推送通知和未读数变更
+        CacheEvictUtils.evictUnreadCount(userId);
         NotificationVO vo = convertToVO(Collections.singletonList(n)).get(0);
         notificationPushService.sendNotification(userId, vo);
-        notificationPushService.sendUnreadCount(userId, vo.getIsRead() ? 0 : 1);
+        notificationPushService.sendUnreadCount(userId, getUnreadCount(userId));
     }
 
     @Override
     public void markAsRead(Long notificationId, Long userId) {
-        notificationMapper.update(null,
+        int updated = notificationMapper.update(null,
             new LambdaUpdateWrapper<Notification>()
                 .eq(Notification::getId, notificationId)
                 .eq(Notification::getUserId, userId)
+                .eq(Notification::getIsRead, false)
                 .set(Notification::getIsRead, true));
+        if (updated > 0) {
+            CacheEvictUtils.evictUnreadCount(userId);
+            notificationPushService.sendUnreadCount(userId, getUnreadCount(userId));
+        }
     }
 
     private List<NotificationVO> convertToVO(List<Notification> notifications) {

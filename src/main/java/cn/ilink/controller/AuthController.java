@@ -188,11 +188,20 @@ public class AuthController {
         }
         registerRequest.setRole(role.toUpperCase());
 
-        boolean success = userService.register(registerRequest);
-        if (success) {
-            return Result.ok("注册成功", null).toResponseEntity();
+        try {
+            boolean success = userService.register(registerRequest);
+            if (success) {
+                boolean teacher = "TEACHER".equals(registerRequest.getRole());
+                return Result.ok(
+                    teacher ? "教师账号注册成功，导师身份已启用" : "注册成功",
+                    null
+                ).withExtra("role", registerRequest.getRole()).toResponseEntity();
+            }
+            return Result.badRequest("注册失败，手机号或学号/工号已存在").toResponseEntity();
+        } catch (Exception e) {
+            log.error("注册事务失败", e);
+            return Result.fail(500, "注册失败，请稍后重试").toResponseEntity();
         }
-        return Result.badRequest("注册失败，手机号或学号/工号已存在").toResponseEntity();
     }
 
     @GetMapping("/api/logout")

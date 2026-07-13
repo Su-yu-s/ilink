@@ -399,33 +399,75 @@
   accent-color: var(--primary);
 }
 
-/* === 注册页紧凑布局：缩短卡片高度，仅作用于 .auth-page--register === */
-/* 通过收紧纵向间距 + 略缩 logo 实现，不改动登录页，也不影响移动端 48px 触摸高度 */
-.auth-page--register .brand-logo {
+/* === 紧凑布局：缩短卡片高度 === */
+/* 登录页 + 注册页共用：收紧纵向间距，保持可读性 */
+
+/* ── 登录页紧凑 ── */
+.auth-page--login .brand-logo {
   margin-bottom: var(--space-4);        /* 24 → 16 */
 }
 
-.auth-page--register .brand-logo__icon {
-  width: 48px;                          /* 56 → 48 */
-  height: 48px;
-  border-radius: 14px;
+.auth-page--login .brand-logo__icon {
+  width: 44px;                          /* 56 → 44 */
+  height: 44px;
+  border-radius: 13px;
   font-size: var(--font-size-xl);
 }
 
+.auth-page--login .auth-card__header {
+  margin-bottom: var(--space-4);        /* 32 → 16 */
+}
+
+.auth-page--login .auth-card .form-group {
+  margin-bottom: var(--space-3);        /* 16 → 12 */
+}
+
+.auth-page--login .auth-card .input-wrapper input,
+.auth-page--login .auth-card #identifier,
+.auth-page--login .auth-card #password {
+  padding-top: 11px;                    /* 14 → 11 */
+  padding-bottom: 11px;
+}
+
+.auth-page--login .auth-card .form-options {
+  margin-bottom: var(--space-4);        /* 24 → 16 */
+}
+
+.auth-page--login .auth-card .btn-submit {
+  padding-top: 11px;                    /* 14 → 11 */
+  padding-bottom: 11px;
+}
+
+.auth-page--login .auth-card__footer {
+  margin-top: var(--space-3);           /* 20 → 12 */
+}
+
+/* ── 注册页紧凑 ── */
+.auth-page--register .brand-logo {
+  margin-bottom: var(--space-3);        /* 24 → 12 */
+}
+
+.auth-page--register .brand-logo__icon {
+  width: 44px;                          /* 56 → 44 */
+  height: 44px;
+  border-radius: 13px;
+  font-size: var(--font-size-lg);
+}
+
 .auth-page--register .auth-card__header {
-  margin-bottom: var(--space-5);        /* 32 → 20 */
+  margin-bottom: var(--space-3);        /* 32 → 12 */
 }
 
 .auth-page--register .auth-card .form-group {
-  margin-bottom: var(--space-3);        /* 16 → 12 */
+  margin-bottom: var(--space-2);        /* 16 → 8 */
 }
 
 .auth-page--register .identifier-toggle {
-  margin-bottom: var(--space-2);        /* 12 → 8 */
+  margin-bottom: var(--space-1);        /* 12 → 4 */
 }
 
 .auth-page--register .agreement-wrapper {
-  margin-bottom: var(--space-3);        /* 16 → 12 */
+  margin-bottom: var(--space-2);        /* 16 → 8 */
 }
 
 .auth-page--register .auth-card .input-wrapper input,
@@ -433,12 +475,17 @@
 .auth-page--register .auth-card #studentId,
 .auth-page--register .auth-card #password,
 .auth-page--register .auth-card #confirmPassword {
-  padding-top: 12px;                    /* 14 → 12 */
-  padding-bottom: 12px;
+  padding-top: 10px;                    /* 14 → 10 */
+  padding-bottom: 10px;
+}
+
+.auth-page--register .auth-card .btn-submit {
+  padding-top: 11px;
+  padding-bottom: 11px;
 }
 
 .auth-page--register .auth-card__footer {
-  margin-top: var(--space-4);           /* 20 → 16 */
+  margin-top: var(--space-2);           /* 20 → 8 */
 }
 
 @media (max-width: 480px) {

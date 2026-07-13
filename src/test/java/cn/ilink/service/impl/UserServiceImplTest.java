@@ -3,6 +3,7 @@ package cn.ilink.service.impl;
 import cn.ilink.dto.LoginRequest;
 import cn.ilink.dto.RegisterRequest;
 import cn.ilink.entity.User;
+import cn.ilink.entity.TeacherApplication;
 import cn.ilink.mapper.UserMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class UserServiceImplTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private TeacherApplicationServiceImpl teacherApplicationService;
 
     @InjectMocks
     private UserServiceImpl userService;
@@ -108,6 +112,27 @@ class UserServiceImplTest {
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userMapper).insert(captor.capture());
         assertEquals("STUDENT", captor.getValue().getRole());
+    }
+
+    @Test
+    void teacherRegistrationCreatesApprovedMentorProfile() {
+        validRegister.setRole("TEACHER");
+        when(userMapper.findByPhoneNumber(anyString())).thenReturn(null);
+        when(userMapper.findByUsername(anyString())).thenReturn(null);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded_pwd");
+        when(userMapper.insert(any(User.class))).thenAnswer(invocation -> {
+            invocation.getArgument(0, User.class).setId(42L);
+            return 1;
+        });
+        when(teacherApplicationService.save(any(TeacherApplication.class))).thenReturn(true);
+
+        boolean result = userService.register(validRegister);
+
+        assertTrue(result);
+        ArgumentCaptor<TeacherApplication> captor = ArgumentCaptor.forClass(TeacherApplication.class);
+        verify(teacherApplicationService).save(captor.capture());
+        assertEquals(42L, captor.getValue().getUserId());
+        assertEquals("APPROVED", captor.getValue().getStatus());
     }
 
     // ===== 登录测试 =====

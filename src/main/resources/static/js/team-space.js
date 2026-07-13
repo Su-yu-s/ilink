@@ -36,9 +36,21 @@
         var response = await apiFetch('/api' + path, options || {});
         var result = await response.json();
         if (!response.ok || !result || Number(result.code) !== 200) {
-            throw new Error(result && result.message ? result.message : '请求失败，请稍后重试');
+            var error = new Error(result && result.message ? result.message : '请求失败，请稍后重试');
+            error.status = response.status;
+            error.code = result && result.code;
+            throw error;
         }
         return result.data;
+    }
+
+    function isLoginExpired(error) {
+        return Number(error && error.status) === 401 || Number(error && error.code) === 401;
+    }
+
+    function renderLoginExpired() {
+        var redirect = encodeURIComponent(window.location.pathname + window.location.search);
+        return '<div class="panel-loading team-space-login-expired">登录状态已失效，请<a href="/login.html?redirect=' + escapeHtml(redirect) + '">重新登录</a></div>';
     }
 
     function formatDate(value) {
@@ -116,7 +128,7 @@
     function teamStatusLabel(status) {
         var map = {
             OPEN: '招募中',
-            TEAMING: '组队中',
+            TEAMING: '已组队',
             CLOSED: '已结束'
         };
         return map[String(status || '').toUpperCase()] || status || '-';
@@ -171,14 +183,27 @@
         setText('chatTitle', name);
 
         var warning = byId('teamWarning');
-        if (warning) warning.style.display = teamInfo.status === 'OPEN' ? 'flex' : 'none';
+        if (warning) warning.style.display = 'none';
 
-        var createBtn = byId('createTaskBtn');
-        if (createBtn) {
-            var canCreate = teamInfo.isLeader !== false && teamInfo.status !== 'CLOSED';
-            createBtn.style.display = canCreate ? 'inline-flex' : 'none';
-        }
+        // 按钮初始隐藏（HTML 模板已设 style="display:none"），确认队长后再显示
         renderOverview(teamInfo);
+    }
+
+    /** 仅在确认当前用户为队长时才显示创建任务按钮 */
+    function updateCreateTaskBtn() {
+        var createBtn = byId('createTaskBtn');
+        if (!createBtn) return;
+        // 队伍已关闭则不显示
+        if (teamInfo && teamInfo.status === 'CLOSED') return;
+        // 从成员列表查找当前用户，仅队长才显示
+        for (var i = 0; i < members.length; i++) {
+            if (Number(members[i].userId) === Number(currentUserId)) {
+                if (members[i].isLeader === true || members[i].role === '队长') {
+                    createBtn.style.setProperty('display', 'inline-flex', 'important');
+                }
+                return;
+            }
+        }
     }
 
     async function loadOverview() {
@@ -197,25 +222,55 @@
         data = data || {};
         var memberCount = data.memberCount != null ? data.memberCount : (Array.isArray(members) ? members.length : 0);
         var requiredCount = data.requiredMemberCount || data.requiredMemberNum || '-';
-        setText('footerMemberCount', memberCount + '/' + requiredCount);
-        setText('footerStatus', teamStatusLabel(data.status));
-        setText('footerDeadline', data.deadline ? formatDate(data.deadline) : '长期有效');
+        setText('smcStatus', teamStatusLabel(data.status));
+        setText('smcDeadlineText', data.deadline ? formatDate(data.deadline) : '长期有效');
+
+        // 头像堆叠 — 只有 img 加载失败才显示文字 fallback
+        var avatarsEl = document.getElementById('smcAvatars');
+        if (avatarsEl) {
+            var avatarsHtml = '';
+            var displayMembers = Array.isArray(members) ? members : [];
+            displayMembers.forEach(function (m, i) {
+                if (i >= 4) return;
+                var name = m.realName || m.username || '';
+                var initials = name ? name.charAt(0).toUpperCase() : '?';
+                var av = m.avatar || '';
+                var z = 4 - i;
+                var ml = i === 0 ? 0 : -8;
+                if (av) {
+                    // 有头像：img 显示，fb 默认隐藏，onerror 时隐藏 img、显示 fb
+                    avatarsHtml += '<img class="smc-avatar" src="' + escapeHtml(avatarUrl(av)) + '" alt="' + escapeHtml(name) + '" style="z-index:' + z + ';margin-left:' + ml + 'px;display:block;" onerror="var fb=this.nextElementSibling;this.style.display=\'none\';if(fb){fb.style.display=\'inline-flex\';fb.style.zIndex=' + z + ';fb.style.marginLeft=\'' + ml + 'px\';}">';
+                    avatarsHtml += '<span class="smc-avatar smc-avatar-fb" style="z-index:' + z + ';margin-left:' + ml + 'px;display:none;">' + initials + '</span>';
+                } else {
+                    // 无头像：直接显示文字
+                    avatarsHtml += '<span class="smc-avatar smc-avatar-fb" style="z-index:' + z + ';margin-left:' + ml + 'px;display:inline-flex;">' + initials + '</span>';
+                }
+            });
+            var extra = members.length - 4;
+            if (extra > 0) {
+                avatarsHtml += '<span class="smc-avatar smc-avatar-extra">+' + extra + '</span>';
+            }
+            avatarsEl.innerHTML = avatarsHtml;
+        }
     }
 
     async function loadMembers() {
         try {
             var data = await api('/team-space/' + teamId + '/members', { silent: true });
             members = Array.isArray(data) ? data : [];
-            var countEl = byId('membersCount');
-            if (countEl) countEl.textContent = '(' + members.length + ')';
             renderMembersList();
             fillAssigneeSelect();
             if (teamInfo) renderOverview(teamInfo);
+            updateCreateTaskBtn();
             return true;
         } catch (error) {
-            console.warn('加载成员列表失败', error);
+            console.error('加载成员列表失败:', error);
             var area = byId('membersListArea');
-            if (area) area.innerHTML = renderEmptyState('成员列表暂时无法加载，请稍后刷新');
+            if (area) {
+                area.innerHTML = isLoginExpired(error)
+                    ? renderLoginExpired()
+                    : '<div class="panel-loading">成员列表加载失败，请检查网络连接后刷新</div>';
+            }
             return false;
         }
     }
@@ -246,7 +301,10 @@
             var userId = member.userId || member.id || '';
             var avatar = avatarUrl(member.avatar);
             var initials = escapeHtml(name).slice(0, 2).toUpperCase();
-            var meta = [member.major, member.grade, member.school].filter(Boolean).map(safeText).join(' / ');
+            var meta = [member.major, member.grade, member.school]
+                .filter(Boolean)
+                .map(function (value) { return escapeHtml(String(value)); })
+                .join(' / ');
             var role = member.isLeader || member.role === 'LEADER' ? '队长' : (member.role || '队员');
             var skills = Array.isArray(member.skills) ? member.skills.slice(0, 4) : [];
             var skillHtml = skills.length ? '<div class="member-card-skills">' + skills.map(function (skill) {
@@ -436,6 +494,7 @@
         message = message || {};
         var sent = Number(message.senderId) === Number(currentUserId);
         var name = message.senderName || (sent ? currentUserName : '队友');
+        if (!name) name = sent ? '我' : '队友';
         var initials = escapeHtml(name).slice(0, 2).toUpperCase();
         var avatar = avatarUrl(sent ? currentUserAvatar : message.senderAvatar);
         var avatarHtml = avatar
@@ -686,6 +745,18 @@
         openCreateModal: function () {
             if (teamInfo && teamInfo.status === 'CLOSED') {
                 notify('项目已结束，不能创建新任务', 'warning');
+                return;
+            }
+            // 非队长不能创建任务
+            var me = null;
+            for (var i = 0; i < members.length; i++) {
+                if (Number(members[i].userId) === Number(currentUserId)) {
+                    me = members[i];
+                    break;
+                }
+            }
+            if (!me || !(me.isLeader === true || me.role === '队长')) {
+                notify('只有队长才能创建任务', 'warning');
                 return;
             }
             resetCreateTaskForm();

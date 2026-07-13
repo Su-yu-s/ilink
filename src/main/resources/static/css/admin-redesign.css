@@ -1,0 +1,395 @@
+/* iLink administration console — quiet, dense and data-first. */
+
+html.ilink-app body[data-app-page="admin"] .admin-shell {
+  width: min(100% - 48px, 1360px) !important;
+  margin: 0 auto !important;
+  padding: 36px 0 64px !important;
+}
+
+body[data-app-page="admin"] .admin-page-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin: 0 0 24px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body[data-app-page="admin"] .admin-page-header h1,
+body[data-app-page="admin"] .admin-page-header .neon-text {
+  margin: 0 !important;
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 28px !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.04em !important;
+  text-shadow: none !important;
+}
+
+body[data-app-page="admin"] .admin-page-header .page-subtitle {
+  margin: 8px 0 0 !important;
+  color: var(--ui-text-secondary) !important;
+  font-size: 14px !important;
+}
+
+body[data-app-page="admin"] .admin-stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin: 0 0 24px !important;
+}
+
+body[data-app-page="admin"] .stat-tile {
+  display: flex !important;
+  min-width: 0;
+  min-height: 104px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+body[data-app-page="admin"] .stat-tile::before,
+body[data-app-page="admin"] .stat-tile::after {
+  content: none !important;
+}
+
+body[data-app-page="admin"] .stat-tile .label {
+  color: var(--ui-text-muted) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+body[data-app-page="admin"] .stat-tile .value {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 26px !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+body[data-app-page="admin"] .admin-workspace {
+  display: grid !important;
+  grid-template-columns: 208px minmax(0, 1fr) !important;
+  gap: 20px !important;
+  align-items: start;
+}
+
+body[data-app-page="admin"] .admin-sidebar {
+  position: sticky !important;
+  top: 94px !important;
+  padding: 14px !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+body[data-app-page="admin"] .admin-sidebar-title {
+  margin: 2px 6px 12px !important;
+  color: var(--ui-text-muted) !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+body[data-app-page="admin"] .admin-tabs {
+  display: grid !important;
+  gap: 3px !important;
+}
+
+body[data-app-page="admin"] .admin-tabs .nav-item {
+  width: 100%;
+}
+
+body[data-app-page="admin"] .admin-tabs .nav-link {
+  display: flex !important;
+  width: 100% !important;
+  min-height: 40px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 10px !important;
+  color: var(--ui-text-secondary) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+body[data-app-page="admin"] .admin-tabs .nav-link:hover,
+body[data-app-page="admin"] .admin-tabs .nav-link.active {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-selected) !important;
+  font-weight: 600 !important;
+}
+
+body[data-app-page="admin"] .admin-content-panel {
+  min-width: 0;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body[data-app-page="admin"] .admin-table-card {
+  overflow: hidden;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+body[data-app-page="admin"] .admin-table-card > .card-header {
+  padding: 18px 20px !important;
+  background: transparent !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+}
+
+body[data-app-page="admin"] .admin-table-card > .card-header h5 {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 16px !important;
+  font-weight: 650 !important;
+}
+
+body[data-app-page="admin"] .admin-table-card > .card-body {
+  padding: 18px 20px 20px !important;
+}
+
+body[data-app-page="admin"] .admin-table-card > .card-body > .row:first-child {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+body[data-app-page="admin"] .il-search-field--admin {
+  min-height: 42px !important;
+  background: var(--ui-canvas) !important;
+}
+
+body[data-app-page="admin"] .admin-table-card .btn-sm {
+  min-height: 42px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+}
+
+body[data-app-page="admin"] .table-responsive {
+  border: 1px solid var(--ui-border);
+  border-radius: 9px;
+}
+
+body[data-app-page="admin"] .admin-table {
+  width: 100%;
+  margin: 0 !important;
+  color: var(--ui-text) !important;
+  border-collapse: collapse !important;
+}
+
+body[data-app-page="admin"] .admin-table thead th {
+  padding: 11px 14px !important;
+  color: var(--ui-text-muted) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-color: var(--ui-border) !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+
+body[data-app-page="admin"] .admin-table tbody tr,
+body[data-app-page="admin"] .admin-table.table-striped > tbody > tr:nth-of-type(odd) > * {
+  background: var(--ui-surface) !important;
+}
+
+body[data-app-page="admin"] .admin-table tbody tr:hover > * {
+  background: var(--ui-canvas) !important;
+}
+
+body[data-app-page="admin"] .admin-table td {
+  padding: 13px 14px !important;
+  color: var(--ui-text-secondary) !important;
+  background: transparent !important;
+  border-color: var(--ui-border) !important;
+  font-size: 13px !important;
+  vertical-align: middle;
+}
+
+body[data-app-page="admin"] .admin-table td:first-child {
+  color: var(--ui-text) !important;
+  font-weight: 600;
+}
+
+body[data-app-page="admin"] .admin-table .btn {
+  min-height: 32px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+}
+
+body[data-app-page="admin"] .status-badge {
+  display: inline-flex !important;
+  min-height: 24px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px !important;
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+body[data-app-page="admin"] .status-badge::before {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  background: var(--ui-text-muted);
+  border-radius: 50%;
+  content: "";
+}
+
+body[data-app-page="admin"] .status-badge.approved {
+  color: var(--ui-success) !important;
+  background: var(--ui-success-soft) !important;
+  border-color: #bbf7d0 !important;
+}
+
+body[data-app-page="admin"] .status-badge.approved::before {
+  background: var(--ui-success);
+}
+
+body[data-app-page="admin"] .status-badge.closed {
+  color: var(--ui-danger) !important;
+  background: var(--ui-danger-soft) !important;
+  border-color: #fecaca !important;
+}
+
+body[data-app-page="admin"] .status-badge.closed::before {
+  background: var(--ui-danger);
+}
+
+body[data-app-page="admin"] .status-badge.teaming,
+body[data-app-page="admin"] .status-badge.pending {
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-color: var(--ui-border) !important;
+}
+
+body[data-app-page="admin"] .admin-user-pager,
+body[data-app-page="admin"] .admin-user-pager .pagination {
+  margin: 0 !important;
+}
+
+body[data-app-page="admin"] .modal-content {
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: var(--ui-shadow-float) !important;
+}
+
+body[data-app-page="admin"] .modal-header,
+body[data-app-page="admin"] .modal-footer {
+  padding: 16px 20px !important;
+  border-color: var(--ui-border) !important;
+}
+
+body[data-app-page="admin"] .modal-body {
+  padding: 20px !important;
+}
+
+@media (max-width: 1040px) {
+  body[data-app-page="admin"] .admin-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 880px) {
+  html.ilink-app body[data-app-page="admin"] .admin-shell {
+    width: min(100% - 32px, 1360px) !important;
+  }
+
+  body[data-app-page="admin"] .admin-workspace {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  body[data-app-page="admin"] .admin-sidebar {
+    position: static !important;
+  }
+
+  body[data-app-page="admin"] .admin-tabs {
+    display: flex !important;
+    overflow-x: auto;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-item {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  body[data-app-page="admin"] .admin-tabs .nav-link {
+    width: auto !important;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 640px) {
+  html.ilink-app body[data-app-page="admin"] .admin-shell {
+    width: min(100% - 24px, 1360px) !important;
+    padding-top: 24px !important;
+  }
+
+  body[data-app-page="admin"] .admin-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  body[data-app-page="admin"] .admin-table-card > .card-header,
+  body[data-app-page="admin"] .admin-table-card > .card-body {
+    padding: 16px !important;
+  }
+
+  body[data-app-page="admin"] .admin-table thead {
+    display: none;
+  }
+
+  body[data-app-page="admin"] .admin-table,
+  body[data-app-page="admin"] .admin-table tbody,
+  body[data-app-page="admin"] .admin-table tr,
+  body[data-app-page="admin"] .admin-table td {
+    display: block;
+    width: 100%;
+  }
+
+  body[data-app-page="admin"] .admin-table tr {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--ui-border);
+  }
+
+  body[data-app-page="admin"] .admin-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  body[data-app-page="admin"] .admin-table td {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 10px;
+    padding: 6px 12px !important;
+    border: 0 !important;
+  }
+
+  body[data-app-page="admin"] .admin-table td::before {
+    color: var(--ui-text-muted);
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 600;
+  }
+}

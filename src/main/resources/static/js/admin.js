@@ -56,20 +56,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         saveBtn.addEventListener('click', saveUserEditFromModal);
     }
 
-    bindAdminSearch('userSearchInput', 'userSearchBtn', 'userSearchResetBtn', function() {
+    bindAdminSearch('userSearchInput', 'userSearchBtn', function() {
         AdminState.userPage = 1;
         applyUserSearchAndRender();
     });
-    bindAdminSearch('teamSearchInput', 'teamSearchBtn', 'teamSearchResetBtn', applyTeamSearchAndRender);
-    bindAdminSearch('teacherSearchInput', 'teacherSearchBtn', 'teacherSearchResetBtn', applyTeacherSearchAndRender);
-    bindAdminSearch('assetSearchInput', 'assetSearchBtn', 'assetSearchResetBtn', applyAssetSearchAndRender);
-    bindAdminSearch('communitySearchInput', 'communitySearchBtn', 'communitySearchResetBtn', applyCommunityPostSearchAndRender);
+    bindAdminSearch('teamSearchInput', 'teamSearchBtn', applyTeamSearchAndRender);
+    bindAdminSearch('teacherSearchInput', 'teacherSearchBtn', applyTeacherSearchAndRender);
+    bindAdminSearch('assetSearchInput', 'assetSearchBtn', applyAssetSearchAndRender);
+    bindAdminSearch('communitySearchInput', 'communitySearchBtn', applyCommunityPostSearchAndRender);
 });
 
-function bindAdminSearch(inputId, searchBtnId, resetBtnId, renderFn) {
+function bindAdminSearch(inputId, searchBtnId, renderFn) {
     const input = document.getElementById(inputId);
     const searchBtn = document.getElementById(searchBtnId);
-    const resetBtn = document.getElementById(resetBtnId);
     if (input) {
         input.addEventListener('input', renderFn);
         input.addEventListener('keydown', function(e) {
@@ -81,12 +80,6 @@ function bindAdminSearch(inputId, searchBtnId, resetBtnId, renderFn) {
     }
     if (searchBtn) {
         searchBtn.addEventListener('click', renderFn);
-    }
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            if (input) input.value = '';
-            renderFn();
-        });
     }
 }
 
@@ -123,8 +116,9 @@ function getUserLabelById(userId) {
 function getStatusDisplayName(status, type) {
     const value = String(status || '').trim().toUpperCase();
     if (type === 'team') {
-        if (value === 'OPEN') return '开放';
-        if (value === 'CLOSED') return '关闭';
+        if (value === 'OPEN') return '招募中';
+        if (value === 'TEAMING') return '已组队';
+        if (value === 'CLOSED') return '已结束';
     }
     if (type === 'teacher') {
         if (value === 'PENDING') return '待审核';
@@ -139,7 +133,8 @@ function renderStatusBadge(status, type) {
     const label = getStatusDisplayName(status, type);
     let cls = 'pending';
     if (value === 'OPEN' || value === 'APPROVED') cls = 'approved';
-    if (value === 'CLOSED' || value === 'REJECTED') cls = 'closed';
+    if (value === 'TEAMING' || value === 'CLOSED') cls = 'teaming';
+    if (value === 'REJECTED') cls = 'closed';
     return `<span class="status-badge ${cls}">${escapeHtml(label)}</span>`;
 }
 

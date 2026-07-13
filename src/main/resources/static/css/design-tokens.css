@@ -5,25 +5,25 @@
 
 :root {
   /* === Monochrome brand === */
-  --primary: #111827;
-  --primary-dark: #030712;
-  --primary-light: #F3F4F6;
-  --accent: #4B5563;
-  --secondary: #6B7280;
+  --primary: #282A2F;
+  --primary-dark: #181A1E;
+  --primary-light: #ECEDEF;
+  --accent: #73757A;
+  --secondary: #73757A;
 
   /* === Aliases (v7 layout CSS) === */
   --brand: var(--primary);
   --brand-deep: var(--primary-dark);
   --brand-soft: var(--primary-light);
-  --brand-border: rgba(17, 24, 39, 0.12);
-  --brand-ring: rgba(17, 24, 39, 0.08);
-  --brand-glow: rgba(0, 0, 0, 0.12);
+  --brand-border: rgba(40, 42, 47, 0.12);
+  --brand-ring: rgba(40, 42, 47, 0.10);
+  --brand-glow: rgba(40, 42, 47, 0.08);
   --accent-violet: var(--accent);
-  --success: #10B981;
-  --warning: #F59E0B;
-  --error: #EF4444;
+  --success: #16A34A;
+  --warning: #DC2626;
+  --error: #DC2626;
   --danger: var(--error);
-  --info: #374151;
+  --info: #52555C;
 
   /* === Accent link (muted gray) === */
   --color-link: var(--color-gray-600);
@@ -31,53 +31,53 @@
   --color-link-active: var(--color-black);
   --color-link-soft: rgba(0, 0, 0, 0.06);
 
-  /* === Toast / inline feedback：白底轻提示，小面积语义色强调 === */
-  --toast-surface: rgba(255, 255, 255, 0.96);
+  /* === Toast / inline feedback：暖白底，小面积低饱和语义色 === */
+  --toast-surface: rgba(252, 252, 253, 0.98);
   --toast-success-bg: var(--toast-surface);
-  --toast-success-border: rgba(0, 181, 120, 0.22);
-  --toast-success-icon-bg: rgba(0, 181, 120, 0.12);
-  --toast-success-icon: #00B578;
-  --toast-success-text: #1A1A1A;
+  --toast-success-border: #bbf7d0;
+  --toast-success-icon-bg: #f0fdf4;
+  --toast-success-icon: #16A34A;
+  --toast-success-text: #282A2F;
 
   --toast-error-bg: var(--toast-surface);
-  --toast-error-border: rgba(255, 49, 65, 0.2);
-  --toast-error-icon-bg: rgba(255, 49, 65, 0.1);
-  --toast-error-icon: #FF3141;
-  --toast-error-text: #1A1A1A;
+  --toast-error-border: #fecaca;
+  --toast-error-icon-bg: #fef2f2;
+  --toast-error-icon: #DC2626;
+  --toast-error-text: #282A2F;
 
   --toast-warning-bg: var(--toast-surface);
-  --toast-warning-border: rgba(255, 143, 31, 0.24);
-  --toast-warning-icon-bg: rgba(255, 143, 31, 0.12);
-  --toast-warning-icon: #FF8F1F;
-  --toast-warning-text: #1A1A1A;
+  --toast-warning-border: #fecaca;
+  --toast-warning-icon-bg: #fef2f2;
+  --toast-warning-icon: #DC2626;
+  --toast-warning-text: #282A2F;
 
   --toast-info-bg: var(--toast-surface);
-  --toast-info-border: rgba(45, 111, 247, 0.2);
-  --toast-info-icon-bg: rgba(45, 111, 247, 0.1);
-  --toast-info-icon: #2D6FF7;
-  --toast-info-text: #1A1A1A;
+  --toast-info-border: #e5e5e7;
+  --toast-info-icon-bg: #f1f1f2;
+  --toast-info-icon: #52555C;
+  --toast-info-text: #282A2F;
 
   /* === Compatibility Color Tokens === */
-  --color-black: #111827;
-  --color-dark: #111827;
-  --color-gray-700: #4A5568;
-  --color-gray-600: #666666;
-  --color-gray-500: #7A7F87;
-  --color-gray-400: #999999;
-  --color-gray-300: #D9D9D9;
-  --color-gray-200: #E8E8E8;
-  --color-gray-100: #F0F2F5;
-  --color-gray-50: #F9FAFB;
-  --color-white: #ffffff;
+  --color-black: #282A2F;
+  --color-dark: #282A2F;
+  --color-gray-700: #52555C;
+  --color-gray-600: #63666D;
+  --color-gray-500: #73757A;
+  --color-gray-400: #A1A3A8;
+  --color-gray-300: #D7D8DB;
+  --color-gray-200: #E5E5E7;
+  --color-gray-100: #F1F1F2;
+  --color-gray-50: #F7F7F8;
+  --color-white: #FCFCFD;
   --color-primary: var(--primary);
-  --color-primary-light: #374151;
+  --color-primary-light: #52555C;
   --color-primary-dark: var(--primary-dark);
   --color-success: var(--success);
-  --color-success-light: #D1FAE5;
+  --color-success-light: #F0FDF4;
   --color-warning: var(--warning);
-  --color-warning-light: #FEF3C7;
+  --color-warning-light: #FEF2F2;
   --color-danger: var(--error);
-  --color-danger-light: #FEE2E2;
+  --color-danger-light: #FEF2F2;
   --color-info: var(--info);
   --color-info-light: #F3F4F6;
 
@@ -91,12 +91,12 @@
   --text-link-hover: var(--color-link-hover);
 
   /* === Background Colors === */
-  --bg-body: #faf9f7;
-  --bg-light: #faf9f7;
+  --bg-body: #F7F7F8;
+  --bg-light: #F7F7F8;
   --bg-gray: var(--color-gray-100);
   --bg-white: var(--color-white);
   --bg-surface: var(--color-white);
-  --bg-surface-hover: var(--color-gray-50);
+  --bg-surface-hover: var(--color-gray-100);
   --bg-muted: var(--color-gray-100);
 
   /* === Border Colors === */
@@ -105,24 +105,24 @@
   --border-dark: var(--color-gray-400);
 
   /* === Shadows - Subtle Depth === */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.12);
-  --shadow-2xl: 0 24px 48px rgba(0, 0, 0, 0.16);
+  --shadow-xs: 0 1px 2px rgba(40, 42, 47, 0.04);
+  --shadow-sm: 0 1px 2px rgba(40, 42, 47, 0.06);
+  --shadow-md: 0 4px 12px rgba(40, 42, 47, 0.08);
+  --shadow-lg: 0 12px 24px rgba(40, 42, 47, 0.10);
+  --shadow-xl: 0 20px 40px rgba(40, 42, 47, 0.12);
+  --shadow-2xl: 0 28px 56px rgba(40, 42, 47, 0.14);
 
   /* === Soft Surface Tokens, kept for existing glass classes === */
   --glass-blur: 16px;
   --glass-saturate: 1.2;
-  --glass-bg: rgba(255, 255, 255, 0.78);
-  --glass-bg-light: rgba(255, 255, 255, 0.62);
-  --glass-bg-strong: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(17, 24, 39, 0.08);
-  --glass-border-strong: rgba(17, 24, 39, 0.14);
-  --glass-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
-  --glass-highlight: rgba(255, 255, 255, 0.8);
-  --glass-highlight-soft: rgba(255, 255, 255, 0.4);
+  --glass-bg: rgba(252, 252, 253, 0.98);
+  --glass-bg-light: rgba(252, 252, 253, 0.94);
+  --glass-bg-strong: rgba(252, 252, 253, 1);
+  --glass-border: rgba(40, 42, 47, 0.08);
+  --glass-border-strong: rgba(40, 42, 47, 0.12);
+  --glass-shadow: 0 4px 12px rgba(40, 42, 47, 0.08);
+  --glass-highlight: rgba(252, 252, 253, 1);
+  --glass-highlight-soft: rgba(252, 252, 253, 0.7);
 
   /* === Border Radius === */
   --radius-xs: 4px;
@@ -149,16 +149,17 @@
   --space-24: 96px;
 
   /* === Page atmosphere (neutral gray) === */
-  --bg-grid: linear-gradient(rgba(17, 24, 39, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 24, 39, 0.03) 1px, transparent 1px);
-  --bg-mesh: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(17, 24, 39, 0.04), transparent 70%);
+  --bg-grid: none;
+  --bg-mesh: none;
 
   /* === Typography === */
-  --font-display: "SimSun", "宋体", "Noto Serif SC", "Source Han Serif SC", "Times New Roman", serif;
-  --font-family: "SimSun", "宋体", "Noto Serif SC", "Source Han Serif SC", "Times New Roman", serif;
-  --font-family-en: "Times New Roman", "SimSun", serif;
+  /* display: 默认微软雅黑，古诗词标题页面单独指定宋体 */
+  --font-display: "Microsoft YaHei", "微软雅黑", "PingFang SC", sans-serif;
+  --font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --font-family-en: "Times New Roman", serif;
   --font-family-code: "SF Mono", "Monaco", "Inconsolata", "Fira Code", Consolas, monospace;
   --font-sans: var(--font-family);
+  --font-serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
   --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
   --font-size-tiny: 10px;
   --font-size-xs: 12px;
@@ -203,15 +204,15 @@
   --container-narrow: 960px;
 
   /* === Home-level tokens (warm editorial accent) === */
-  --home-accent: #c4a77d;
-  --home-accent-dark: #a8895e;
-  --home-bg-warm: #f5f3ef;
-  --home-text-secondary: #444444;
-  --home-text-muted: #888888;
-  --home-border: rgba(0, 0, 0, 0.06);
-  --home-border-strong: rgba(0, 0, 0, 0.1);
-  --home-radius: 20px;
-  --home-radius-sm: 12px;
+  --home-accent: #52555C;
+  --home-accent-dark: #282A2F;
+  --home-bg-warm: #F7F7F8;
+  --home-text-secondary: #52555C;
+  --home-text-muted: #73757A;
+  --home-border: rgba(40, 42, 47, 0.08);
+  --home-border-strong: rgba(40, 42, 47, 0.14);
+  --home-radius: 16px;
+  --home-radius-sm: 8px;
   --home-radius-pill: 100px;
   --transition-home: 700ms cubic-bezier(0.32, 0.72, 0, 1);
   --transition-fast-home: 350ms cubic-bezier(0.32, 0.72, 0, 1);

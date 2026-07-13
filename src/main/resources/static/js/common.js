@@ -1,5 +1,5 @@
-// iLink JavaScript - Enhanced Interactions
-// Includes particle system, scroll animations, micro-interactions
+// iLink JavaScript - Core Utilities
+// ========================================
 
 // API基础URL
 const API_BASE_URL = '/api';
@@ -25,43 +25,86 @@ function getCsrfToken() {
 async function apiFetch(url, options = {}) {
     const method = (options.method || 'GET').toUpperCase();
     const headers = { ...options.headers };
+    const configuredTimeout = Number(options.timeoutMs);
+    const timeoutMs = Number.isFinite(configuredTimeout)
+        ? Math.max(0, configuredTimeout)
+        : 15000;
+    const fetchOptions = { ...options };
+    delete fetchOptions.timeoutMs;
     if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
         const token = getCsrfToken();
         if (token) {
             headers['X-XSRF-TOKEN'] = token;
         }
     }
-    return fetch(url, {
-        credentials: 'same-origin',
-        ...options,
-        headers
-    });
-}
 
-// 统一请求处理
-async function request(url, options = {}) {
-    const { silent = false, ...requestOptions } = options;
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            ...requestOptions.headers
-        },
-        credentials: 'same-origin',
-        ...requestOptions
-    };
+    const controller = !fetchOptions.signal && timeoutMs > 0 && typeof AbortController !== 'undefined'
+        ? new AbortController()
+        : null;
+    let timeoutId = null;
+    if (controller) {
+        timeoutId = window.setTimeout(function () {
+            controller.abort();
+        }, timeoutMs);
+    }
 
     try {
-        const response = await apiFetch(API_BASE_URL + url, config);
+        return await fetch(url, {
+            credentials: 'same-origin',
+            ...fetchOptions,
+            signal: controller ? controller.signal : fetchOptions.signal,
+            headers
+        });
+    } catch (error) {
+        if (controller && controller.signal.aborted) {
+            const timeoutError = new Error('请求超时，请稍后重试');
+            timeoutError.name = 'TimeoutError';
+            throw timeoutError;
+        }
+        throw error;
+    } finally {
+        if (timeoutId !== null) window.clearTimeout(timeoutId);
+    }
+}
 
+/**
+ * 统一的业务 API 请求封装。
+ *
+ * 页面脚本传入的 url 以 /api 为基准，成功时直接返回响应中的 data；
+ * 失败时抛出 Error，并在非 silent 模式下给出统一提示。
+ */
+async function request(url, options = {}) {
+    const requestOptions = options || {};
+    const silent = requestOptions.silent === true;
+    const headers = { ...(requestOptions.headers || {}) };
+    const config = { ...requestOptions, headers };
+    delete config.silent;
+
+    const hasContentType = Object.keys(headers).some(function (name) {
+        return name.toLowerCase() === 'content-type';
+    });
+    const isFormData = typeof FormData !== 'undefined' && config.body instanceof FormData;
+    if (!hasContentType && !isFormData) {
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const path = String(url == null ? '' : url);
+    const requestUrl = path === API_BASE_URL || path.startsWith(API_BASE_URL + '/')
+        ? path
+        : API_BASE_URL + (path.startsWith('/') ? path : '/' + path);
+
+    try {
+        const response = await apiFetch(requestUrl, config);
         const contentType = response.headers.get('content-type') || '';
         let data;
+
         if (contentType.includes('application/json')) {
             data = await response.json();
         } else {
             const raw = await response.text();
             try {
-                data = JSON.parse(raw);
-            } catch {
+                data = raw ? JSON.parse(raw) : null;
+            } catch (parseError) {
                 let userMessage = '登录已过期，请重新登录';
                 let messageType = 'warning';
                 let shouldRedirectLogin = true;
@@ -78,25 +121,28 @@ async function request(url, options = {}) {
                     messageType = 'error';
                     shouldRedirectLogin = false;
                 }
-                const err = new Error(userMessage);
-                err._ilinkHandled = true;
+
+                const error = new Error(userMessage);
+                error._ilinkHandled = true;
                 if (!silent) {
                     showMessage(userMessage, messageType);
                     if (shouldRedirectLogin) {
-                        setTimeout(() => {
-                            window.location.href = '/login.html';
+                        setTimeout(function () {
+                            window.location.assign('/login.html');
                         }, 1200);
                     }
                 }
-                throw err;
+                throw error;
             }
         }
 
-        if (data.code !== 200) {
-            let userMessage = data.message || '请求失败';
+        const code = data && Number(data.code);
+        if (code !== 200) {
+            let userMessage = (data && data.message) || '请求失败';
             let messageType = 'error';
             let shouldRedirectLogin = false;
-            switch (data.code) {
+
+            switch (code || response.status) {
                 case 401:
                     userMessage = '请先登录';
                     messageType = 'warning';
@@ -112,20 +158,23 @@ async function request(url, options = {}) {
                     userMessage = '服务器暂时无法处理，请稍后重试';
                     break;
                 default:
-                    userMessage = data.message || '请求失败';
+                    break;
             }
+
             if (!silent) {
                 showMessage(userMessage, messageType);
                 if (shouldRedirectLogin) {
-                    setTimeout(() => {
-                        window.location.href = '/login.html';
+                    setTimeout(function () {
+                        window.location.assign('/login.html');
                     }, 1500);
                 }
             }
-            const err = new Error(userMessage);
-            err._ilinkHandled = true;
-            err.response = data;
-            throw err;
+
+            const error = new Error(userMessage);
+            error._ilinkHandled = true;
+            error.response = data;
+            error.status = response.status;
+            throw error;
         }
 
         return data.data;
@@ -133,35 +182,19 @@ async function request(url, options = {}) {
         if (error && error._ilinkHandled) {
             throw error;
         }
-        if (!silent && error.name === 'TypeError' && error.message.includes('fetch')) {
+        if (!silent && error && error.name === 'TypeError' && String(error.message).includes('fetch')) {
             showMessage('网络连接失败，请检查网络设置', 'error');
-        } else if (!silent && error.message !== '请求失败') {
-            showMessage(error.message || '请求失败', 'error');
+        } else if (!silent) {
+            showMessage((error && error.message) || '请求失败', 'error');
         }
         throw error;
     }
 }
 
-// 获取当前用户信息
+// 获取当前用户信息；未登录或接口异常时返回 null，便于页面安全降级。
 async function getCurrentUser() {
     try {
-        const response = await apiFetch('/api/user/profile');
-        const contentType = response.headers.get('content-type') || '';
-        let result;
-        if (contentType.includes('application/json')) {
-            result = await response.json();
-        } else {
-            const raw = await response.text();
-            try {
-                result = JSON.parse(raw);
-            } catch {
-                return null;
-            }
-        }
-        if (Number(result.code) === 200) {
-            return result.data;
-        }
-        return null;
+        return await request('/user/profile', { silent: true });
     } catch (error) {
         console.error('获取用户信息失败:', error);
         return null;
@@ -171,17 +204,11 @@ async function getCurrentUser() {
 // 用户登出
 async function logout() {
     try {
-        const csrfToken = getCsrfToken();
-        await apiFetch('/api/logout', {
-            method: 'POST',
-            headers: { 'X-XSRF-TOKEN': csrfToken },
-            credentials: 'same-origin'
-        });
+        await apiFetch('/api/logout', { method: 'POST' });
     } catch (error) {
         console.error('登出请求异常:', error);
     } finally {
-        // 无论成功失败都跳转到登录页
-        window.location.href = '/login.html';
+        window.location.assign('/login.html');
     }
 }
 
@@ -202,117 +229,165 @@ function formatTime(timestamp) {
     return formatter.format(date);
 }
 
-// 切换移动端菜单
+// 兼容旧页面与当前统一页头的菜单契约。
 function toggleMobileMenu() {
-    const menu = document.getElementById('navMenu');
-    if (menu) {
-        menu.classList.toggle('show');
+    const legacyMenu = document.getElementById('navMenu');
+    if (legacyMenu) {
+        legacyMenu.classList.toggle('show');
+        return;
+    }
+
+    const menu = document.getElementById('ilHeaderNav');
+    const button = document.getElementById('menuToggle');
+    if (!menu) return;
+    const open = menu.classList.toggle('il-header__nav--open');
+    document.body.classList.toggle('nav-open', open);
+    if (button) {
+        button.setAttribute('aria-expanded', String(open));
+        button.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
     }
 }
 
-// 切换用户菜单
 function toggleUserMenu() {
-    const menu = document.getElementById('userDropdown');
-    const wrap = document.querySelector('.user-menu');
-    const btn = document.getElementById('accountMenuBtn');
-    if (menu && wrap) {
-        menu.classList.toggle('show');
-        const open = menu.classList.contains('show');
-        wrap.classList.toggle('is-open', open);
-        if (btn) {
-            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        }
+    const dropdown = document.getElementById('userDropdown');
+    if (!dropdown) return;
+
+    const legacyWrap = document.querySelector('.user-menu');
+    const legacyButton = document.getElementById('accountMenuBtn');
+    if (legacyWrap) {
+        dropdown.classList.toggle('show');
+        const open = dropdown.classList.contains('show');
+        legacyWrap.classList.toggle('is-open', open);
+        if (legacyButton) legacyButton.setAttribute('aria-expanded', String(open));
+        return;
     }
+
+    const button = document.getElementById('userDropdownToggle');
+    const open = dropdown.classList.toggle('il-header__dropdown--open');
+    if (button) button.setAttribute('aria-expanded', String(open));
 }
 
-/** 右上角展示：优先「用户名」，否则「姓名」 */
+/** 右上角展示：优先用户名，否则姓名。 */
 function computeNavbarDisplayName(user) {
     if (!user) return '用户';
-    const rn = (user.realName || '').trim();
-    const un = (user.username || '').trim();
-    return un || rn || '用户';
+    const realName = String(user.realName || '').trim();
+    const username = String(user.username || '').trim();
+    return username || realName || '用户';
 }
 
 function computeNavbarInitials(displayName) {
-    const s = String(displayName || '用户').trim();
-    if (!s) return '用';
-    return s.slice(0, 2).toUpperCase();
+    const value = String(displayName || '用户').trim();
+    return value ? value.slice(0, 2).toUpperCase() : '用';
 }
 
 function accountTriggerTitleAttr(user) {
     if (!user) return '';
-    const dn = computeNavbarDisplayName(user);
-    const un = (user.username || '').trim();
-    if (un && dn !== un) {
-        return `${dn}（账号 ${un}）`;
-    }
-    return dn;
+    const displayName = computeNavbarDisplayName(user);
+    const username = String(user.username || '').trim();
+    return username && displayName !== username
+        ? displayName + '（账号 ' + username + '）'
+        : displayName;
 }
 
 function buildAccountAvatarInnerHtml(user) {
     const displayName = computeNavbarDisplayName(user);
     const initials = escapeHtml(computeNavbarInitials(displayName));
-    const av = (user && user.avatar ? String(user.avatar) : '').trim();
-    if (av) {
-        return `<span class="account-trigger__avatar-wrap"><img class="account-trigger__avatar account-trigger__avatar--photo" src="${escapeHtml(av)}" alt="" referrerpolicy="no-referrer"></span>`;
+    const avatar = user && user.avatar ? String(user.avatar).trim() : '';
+    if (avatar) {
+        return '<span class="account-trigger__avatar-wrap"><img class="account-trigger__avatar account-trigger__avatar--photo" src="' + escapeHtml(avatar) + '" alt="" referrerpolicy="no-referrer"></span>';
     }
-    return `<span class="account-trigger__avatar-wrap"><span class="account-trigger__avatar" aria-hidden="true">${initials}</span></span>`;
+    return '<span class="account-trigger__avatar-wrap"><span class="account-trigger__avatar" aria-hidden="true">' + initials + '</span></span>';
+}
+
+function applyUnifiedHeaderUser(user) {
+    const userLink = document.querySelector('.il-header__user-link');
+    if (!userLink || !user) return;
+
+    const displayName = computeNavbarDisplayName(user);
+    const nameElement = userLink.querySelector('.il-header__username');
+    if (nameElement) nameElement.textContent = displayName;
+    userLink.setAttribute('title', accountTriggerTitleAttr(user));
+
+    const container = userLink.querySelector('.il-header__avatar-container');
+    if (!container) return;
+    while (container.firstChild) container.removeChild(container.firstChild);
+
+    const fallback = document.createElement('span');
+    fallback.className = 'il-header__avatar-fallback';
+    fallback.textContent = computeNavbarInitials(displayName).slice(0, 1);
+
+    const avatar = user.avatar ? String(user.avatar).trim() : '';
+    if (!avatar) {
+        container.appendChild(fallback);
+        return;
+    }
+
+    const image = document.createElement('img');
+    image.className = 'il-header__avatar';
+    image.src = avatar;
+    image.alt = displayName;
+    image.referrerPolicy = 'no-referrer';
+    fallback.classList.add('il-header__avatar-fallback--hidden');
+    fallback.setAttribute('aria-hidden', 'true');
+    image.addEventListener('load', function () {
+        fallback.classList.add('il-header__avatar-fallback--hidden');
+        fallback.setAttribute('aria-hidden', 'true');
+    });
+    image.addEventListener('error', function () {
+        image.style.display = 'none';
+        fallback.classList.remove('il-header__avatar-fallback--hidden');
+        fallback.removeAttribute('aria-hidden');
+    });
+    container.appendChild(image);
+    container.appendChild(fallback);
 }
 
 function applyAccountMenuFromUser(user) {
-    const btn = document.getElementById('accountMenuBtn');
-    if (!btn || !user) return;
-    const nameEl = btn.querySelector('.account-trigger__name');
-    const wrap = btn.querySelector('.account-trigger__avatar-wrap');
-    const displayName = computeNavbarDisplayName(user);
-    if (nameEl) nameEl.textContent = displayName;
-    if (wrap) wrap.outerHTML = buildAccountAvatarInnerHtml(user);
-    btn.setAttribute('title', accountTriggerTitleAttr(user));
+    if (!user) return;
+
+    const button = document.getElementById('accountMenuBtn');
+    if (button) {
+        const nameElement = button.querySelector('.account-trigger__name');
+        const avatarWrap = button.querySelector('.account-trigger__avatar-wrap');
+        const displayName = computeNavbarDisplayName(user);
+        if (nameElement) nameElement.textContent = displayName;
+        if (avatarWrap) avatarWrap.outerHTML = buildAccountAvatarInnerHtml(user);
+        button.setAttribute('title', accountTriggerTitleAttr(user));
+    }
+
+    applyUnifiedHeaderUser(user);
 }
 
-// 关闭所有下拉菜单
 function closeAllDropdowns() {
-    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    document.querySelectorAll('.dropdown-menu.show').forEach(function (menu) {
         menu.classList.remove('show');
     });
-    document.querySelectorAll('.user-menu.is-open').forEach((el) => {
-        el.classList.remove('is-open');
+    document.querySelectorAll('.user-menu.is-open').forEach(function (menu) {
+        menu.classList.remove('is-open');
     });
-    const btn = document.getElementById('accountMenuBtn');
-    if (btn) {
-        btn.setAttribute('aria-expanded', 'false');
-    }
+
+    const legacyButton = document.getElementById('accountMenuBtn');
+    if (legacyButton) legacyButton.setAttribute('aria-expanded', 'false');
+
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) dropdown.classList.remove('il-header__dropdown--open');
+    const dropdownButton = document.getElementById('userDropdownToggle');
+    if (dropdownButton) dropdownButton.setAttribute('aria-expanded', 'false');
 }
 
-// Toast 类型处理
+// Toast 类型处理 — compact
 function normalizeToastType(type) {
-    switch (type) {
-        case 'success': return 'success';
-        case 'error':
-        case 'danger': return 'error';
-        case 'warning': return 'warning';
-        case 'info':
-        default: return 'info';
-    }
+    return type === 'danger' ? 'error' : (type || 'info');
 }
 
 function getToastDurationMs(type, override) {
-    if (typeof override === 'number' && override > 0) {
-        return override;
-    }
+    if (typeof override === 'number' && override > 0) return override;
     const t = normalizeToastType(type);
-    if (t === 'error') return 5200;
-    if (t === 'warning') return 4200;
-    if (t === 'success') return 3600;
-    return 3800;
+    if (t === 'error') return 4800;
+    if (t === 'warning') return 4000;
+    if (t === 'success') return 2800;
+    return 3200;
 }
-
-const ILINK_TOAST_LABELS = {
-    success: '成功',
-    error: '出错了',
-    warning: '请注意',
-    info: '提示'
-};
 
 let _lastToastKey = '';
 let _lastToastAt = 0;
@@ -351,11 +426,17 @@ function dismissIlinkToast(toast) {
     }, 280);
 }
 
+function removeIlinkToast(toast) {
+    if (!toast) return;
+    if (toast._ilinkTimer) {
+        clearTimeout(toast._ilinkTimer);
+        toast._ilinkTimer = null;
+    }
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+}
+
 /**
  * 表单字段内联提示（登录/注册等），不打断用户输入
- * @param {string} hintId - 如 identifierError
- * @param {string|null} message - 为空则清除
- * @param {string} [inputId] - 关联输入框 id
  */
 function showFieldHint(hintId, message, inputId) {
     const hint = document.getElementById(hintId);
@@ -388,7 +469,8 @@ function clearFieldHint(hintId, inputId) {
 /**
  * 全局轻提示（右上角 Toast，勿用于字段级 blur 校验）
  */
-function showMessage(message, type = 'info', durationMs) {
+function showMessage(message, type, durationMs) {
+    if (type === undefined) type = 'info';
     const text = String(message != null ? message : '').trim() || ' ';
     const variant = normalizeToastType(type);
     const dedupeKey = variant + ':' + text;
@@ -400,17 +482,18 @@ function showMessage(message, type = 'info', durationMs) {
     _lastToastAt = now;
 
     const host = ensureToastHost();
-    const maxStack = 4;
+
+    // “处理中”类信息被后续结果替换，避免连续操作遮挡页面内容。
+    Array.from(host.children).forEach(function (item) {
+        if (item.classList.contains('ilink-toast--info')) removeIlinkToast(item);
+    });
+
+    const maxStack = 3;
     while (host.children.length >= maxStack) {
-        const first = host.firstChild;
-        if (first && first._ilinkTimer) {
-            clearTimeout(first._ilinkTimer);
-            first._ilinkTimer = null;
-        }
-        if (first) {
-            host.removeChild(first);
-        }
+        removeIlinkToast(host.firstChild);
     }
+
+    const labels = { success: '操作完成', error: '操作失败', warning: '请注意', info: '提示' };
 
     const toast = document.createElement('div');
     toast.className = 'ilink-toast ilink-toast--' + variant;
@@ -425,7 +508,7 @@ function showMessage(message, type = 'info', durationMs) {
 
     const labelEl = document.createElement('span');
     labelEl.className = 'ilink-toast__label';
-    labelEl.textContent = ILINK_TOAST_LABELS[variant] || ILINK_TOAST_LABELS.info;
+    labelEl.textContent = labels[variant] || labels.info;
 
     const textEl = document.createElement('p');
     textEl.className = 'ilink-toast__text';
@@ -477,7 +560,6 @@ function getTypeClass(type) {
         case 'success': return 'success';
         case 'error': return 'danger';
         case 'warning': return 'warning';
-        case 'info':
         default: return 'info';
     }
 }
@@ -487,102 +569,90 @@ function publicProfilePageUrl(userId) {
     return '/user-profile.html?id=' + encodeURIComponent(String(userId));
 }
 
-/** 卡片/详情展示名：preferRealName 时 realName → username，否则 username → realName */
+/** 卡片/详情展示名：preferRealName 时 realName → username，否则 username → realName。 */
 function displayUserName(preview, opts) {
     if (!preview) return '';
     const preferRealName = !!(opts && opts.preferRealName);
-    const rn = (preview.realName && String(preview.realName).trim()) || '';
-    const un = (preview.username && String(preview.username).trim()) || '';
-    return preferRealName ? (rn || un) : (un || rn);
+    const realName = preview.realName ? String(preview.realName).trim() : '';
+    const username = preview.username ? String(preview.username).trim() : '';
+    return preferRealName ? (realName || username) : (username || realName);
 }
 
-/** Gallery / 成果详情：仅 username，绝不读 realName */
+/** 成果页面只展示 username，避免同一用户在列表和详情显示不同名称。 */
 function displayUsername(preview) {
     if (!preview) return '匿名';
-    const un = (preview.username && String(preview.username).trim()) || '';
-    if (un) return un;
+    const username = preview.username ? String(preview.username).trim() : '';
+    if (username) return username;
     if (preview.id != null) return '用户' + preview.id;
     return '匿名';
 }
 
-/** Gallery 无头像首字：仅来自 username */
 function galleryAvatarInitial(preview) {
-    const un = preview && preview.username && String(preview.username).trim();
-    return un ? un.charAt(0).toUpperCase() : '';
+    const username = preview && preview.username ? String(preview.username).trim() : '';
+    return username ? username.charAt(0).toUpperCase() : '';
 }
 
-/** Gallery / 成果详情头像：有 URL 仅 img，无 URL 仅 fallback */
 function galleryPublisherAvatarHtml(preview, extraClass) {
     if (!preview || preview.id == null) return '';
-    const display = displayUsername(preview);
+    const displayName = displayUsername(preview);
     const initials = galleryAvatarInitial(preview);
-    const nameEscaped = escapeHtml(display);
+    const nameEscaped = escapeHtml(displayName);
     const href = escapeHtml(publicProfilePageUrl(preview.id));
-    const av = preview.avatar && String(preview.avatar).trim();
-    const cls = 'il-publisher-avatar' + (extraClass ? ' ' + extraClass : '');
-    const wrapStyle =
-        'width:40px;height:40px;min-width:40px;min-height:40px;max-width:40px;max-height:40px;border-radius:50%;overflow:hidden;display:block;flex-shrink:0;';
-    const imgStyle = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;';
-    if (av) {
-        const avEsc = escapeHtml(av);
-        return (
-            '<a href="' + href + '" class="' + cls + '" style="display:inline-flex;flex-shrink:0;border-radius:50%;overflow:hidden;" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
+    const avatar = preview.avatar ? String(preview.avatar).trim() : '';
+    const className = 'il-publisher-avatar' + (extraClass ? ' ' + extraClass : '');
+    const wrapStyle = 'width:40px;height:40px;min-width:40px;min-height:40px;max-width:40px;max-height:40px;border-radius:50%;overflow:hidden;display:block;flex-shrink:0;';
+    const imageStyle = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;';
+
+    if (avatar) {
+        return '<a href="' + href + '" class="' + className + '" style="display:inline-flex;flex-shrink:0;border-radius:50%;overflow:hidden;" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
             '<div class="il-avatar-wrap" style="' + wrapStyle + '">' +
-            '<img class="il-publisher-avatar__img" style="' + imgStyle + '" src="' + avEsc + '" alt="" referrerpolicy="no-referrer" loading="lazy" width="40" height="40" onerror="this.onerror=null;this.style.display=\'none\';">' +
-            '</div></a>'
-        );
+            '<img class="il-publisher-avatar__img" style="' + imageStyle + '" src="' + escapeHtml(avatar) + '" alt="" referrerpolicy="no-referrer" loading="lazy" width="40" height="40" onerror="this.onerror=null;var fallback=this.nextElementSibling;this.remove();if(fallback){fallback.classList.remove(\'il-avatar-fallback--hidden\');fallback.removeAttribute(\'aria-hidden\');}">' +
+            '<span class="il-avatar-fallback il-avatar-fallback--hidden" aria-hidden="true" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;">' + escapeHtml(initials || '?') + '</span>' +
+            '</div></a>';
     }
-    return (
-        '<a href="' + href + '" class="' + cls + '" style="display:inline-flex;flex-shrink:0;border-radius:50%;overflow:hidden;" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
+
+    return '<a href="' + href + '" class="' + className + '" style="display:inline-flex;flex-shrink:0;border-radius:50%;overflow:hidden;" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
         '<div class="il-avatar-wrap" style="' + wrapStyle + '">' +
         '<span class="il-avatar-fallback" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;">' + escapeHtml(initials || '?') + '</span>' +
-        '</div></a>'
-    );
+        '</div></a>';
 }
 
-/** 有 img 时隐藏同 wrap 内 fallback，避免叠在头像上 */
 function hideGalleryPublisherAvatarFallbacks(root) {
     const scope = root && root.querySelectorAll ? root : document;
-    scope.querySelectorAll('.gallery-card .il-publisher-avatar img, .detail-view__author .il-publisher-avatar img').forEach(function (img) {
-        if (!img.getAttribute('src') || img.style.display === 'none') return;
-        const wrap = img.closest('.il-avatar-wrap');
+    scope.querySelectorAll('.il-publisher-avatar img.il-publisher-avatar__img').forEach(function (image) {
+        if (!image.getAttribute('src') || image.style.display === 'none') return;
+        const wrap = image.closest('.il-avatar-wrap');
         if (!wrap) return;
-        wrap.querySelectorAll('.il-avatar-fallback').forEach(function (fb) {
-            fb.classList.add('il-avatar-fallback--hidden');
-            fb.setAttribute('aria-hidden', 'true');
-            fb.textContent = '';
+        wrap.querySelectorAll('.il-avatar-fallback').forEach(function (fallback) {
+            fallback.classList.add('il-avatar-fallback--hidden');
+            fallback.setAttribute('aria-hidden', 'true');
         });
     });
 }
 
-/** 无头像时的首字母，来自 displayUserName，不用「用户」占位 */
 function avatarInitial(preview, opts) {
-    const name = displayUserName(preview, opts);
-    const s = String(name || '').trim();
-    return s ? s.charAt(0).toUpperCase() : '';
+    const displayName = displayUserName(preview, opts);
+    return displayName ? displayName.charAt(0).toUpperCase() : '';
 }
 
 function publisherAvatarHtml(preview, extraClass, opts) {
     if (!preview || preview.id == null) return '';
     const preferRealName = !!(opts && opts.preferRealName);
-    const display = displayUserName(preview, { preferRealName: preferRealName });
+    const displayName = displayUserName(preview, { preferRealName: preferRealName });
     const initials = avatarInitial(preview, { preferRealName: preferRealName });
-    const nameEscaped = escapeHtml(display || '用户');
+    const nameEscaped = escapeHtml(displayName || '用户');
     const href = escapeHtml(publicProfilePageUrl(preview.id));
-    const av = preview.avatar && String(preview.avatar).trim();
-    const cls = 'publisher-avatar' + (extraClass ? ' ' + extraClass : '');
-    if (av) {
-        const avEsc = escapeHtml(av);
-        return (
-            '<a href="' + href + '" class="' + cls + '" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
-            '<img class="publisher-avatar__img" src="' + avEsc + '" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';var s=this.nextElementSibling;if(s)s.classList.remove(\'d-none\');">' +
-            '<span class="publisher-avatar__fallback d-none" aria-hidden="true">' + escapeHtml(initials || '?') + '</span></a>'
-        );
+    const avatar = preview.avatar ? String(preview.avatar).trim() : '';
+    const className = 'publisher-avatar' + (extraClass ? ' ' + extraClass : '');
+
+    if (avatar) {
+        return '<a href="' + href + '" class="' + className + '" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
+            '<img class="publisher-avatar__img" src="' + escapeHtml(avatar) + '" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';var s=this.nextElementSibling;if(s)s.classList.remove(\'d-none\');">' +
+            '<span class="publisher-avatar__fallback d-none" aria-hidden="true">' + escapeHtml(initials || '?') + '</span></a>';
     }
-    return (
-        '<a href="' + href + '" class="' + cls + '" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
-        '<span class="publisher-avatar__fallback" aria-hidden="true">' + escapeHtml(initials || '?') + '</span></a>'
-    );
+
+    return '<a href="' + href + '" class="' + className + '" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
+        '<span class="publisher-avatar__fallback" aria-hidden="true">' + escapeHtml(initials || '?') + '</span></a>';
 }
 
 function publisherAvatarFromAuthorFields(authorId, authorAvatar, authorDisplay) {
@@ -595,331 +665,11 @@ function publisherAvatarFromAuthorFields(authorId, authorAvatar, authorDisplay) 
     });
 }
 
-// ========================================
-// Scroll Animations - Intersection Observer
-// ========================================
-class ScrollAnimator {
-    constructor() {
-        this.init();
-    }
-
-    init() {
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            this.showAllElements();
-            return;
-        }
-
-        const options = {
-            root: null,
-            rootMargin: '0px 0px -30px 0px',
-            threshold: 0.1
-        };
-
-        this.observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('animate-in');
-                    this.observer.unobserve(entry.target);
-                }
-            });
-        }, options);
-
-        this.observeElements();
-    }
-
-    observeElements() {
-        // Staggered 序列：同容器内按 DOM 顺序依次 delay
-        const containers = document.querySelectorAll('[data-stagger]');
-        containers.forEach(container => {
-            const items = container.querySelectorAll('.scroll-animate');
-            items.forEach((el, index) => {
-                el.style.transitionDelay = `${index * 0.06}s`;
-                this.observer.observe(el);
-            });
-        });
-
-        // 非 staggered 的独立元素
-        document.querySelectorAll('.scroll-animate').forEach(el => {
-            if (el.closest('[data-stagger]')) return; // 已处理
-            if (el.dataset.animateDelay) {
-                el.style.transitionDelay = el.dataset.animateDelay + 's';
-            }
-            this.observer.observe(el);
-        });
-    }
-
-    showAllElements() {
-        document.querySelectorAll('.scroll-animate').forEach(el => el.classList.add('animate-in'));
-    }
-}
-
-// ========================================
-// Number Counter Animation
-// ========================================
-class NumberCounter {
-    constructor(element, target, duration = 2000) {
-        this.element = element;
-        this.target = target;
-        this.duration = duration;
-        this.hasRun = false;
-    }
-
-    start() {
-        if (this.hasRun) return;
-        this.hasRun = true;
-        
-        const startTime = performance.now();
-        const startValue = 0;
-        
-        const animate = (currentTime) => {
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / this.duration, 1);
-            const easeProgress = this.easeOutCubic(progress);
-            const currentValue = Math.floor(startValue + (this.target - startValue) * easeProgress);
-            
-            this.element.textContent = currentValue.toLocaleString();
-            
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            }
-        };
-        
-        requestAnimationFrame(animate);
-    }
-
-    easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-    }
-}
-
-function initCounters() {
-    const counters = document.querySelectorAll('[data-counter]');
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const el = entry.target;
-                const target = parseInt(el.dataset.counter, 10);
-                const duration = parseInt(el.dataset.duration || '2000', 10);
-                new NumberCounter(el, target, duration).start();
-                observer.unobserve(el);
-            }
-        });
-    }, { threshold: 0.5 });
-
-    counters.forEach(counter => observer.observe(counter));
-}
-
-// ========================================
-// Magnetic Button Effect
-// ========================================
-class MagneticButton {
-    constructor(element) {
-        this.element = element;
-        this.strength = 0.3;
-        this.boundary = 100;
-        this.init();
-    }
-
-    init() {
-        this.element.addEventListener('mousemove', (e) => this.onMouseMove(e));
-        this.element.addEventListener('mouseleave', () => this.onMouseLeave());
-    }
-
-    onMouseMove(e) {
-        const rect = this.element.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const deltaX = e.clientX - centerX;
-        const deltaY = e.clientY - centerY;
-        
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        
-        if (distance < this.boundary) {
-            const moveX = deltaX * this.strength;
-            const moveY = deltaY * this.strength;
-            this.element.style.transform = `translate(${moveX}px, ${moveY}px)`;
-        }
-    }
-
-    onMouseLeave() {
-        this.element.style.transform = 'translate(0, 0)';
-    }
-}
-
-function initMagneticButtons() {
-    const buttons = document.querySelectorAll('.magnetic-btn');
-    buttons.forEach(btn => new MagneticButton(btn));
-}
-
-// ========================================
 // Lightweight navigation helper
-// ========================================
 function navigateTo(href) {
     if (!href) return;
-    closeAllDropdowns();
     window.location.assign(href);
 }
-
-// ========================================
-// Tilt Effect for Cards
-// ========================================
-class TiltCard {
-    constructor(element) {
-        this.element = element;
-        this.glare = element.querySelector('.tilt-glare');
-        this.maxTilt = 10;
-        this.init();
-    }
-
-    init() {
-        this.element.addEventListener('mousemove', (e) => this.onMouseMove(e));
-        this.element.addEventListener('mouseleave', () => this.onMouseLeave());
-    }
-
-    onMouseMove(e) {
-        const rect = this.element.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        const rotateX = (y - centerY) / centerY * this.maxTilt;
-        const rotateY = (centerX - x) / centerX * this.maxTilt;
-        
-        this.element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
-        
-        if (this.glare) {
-            this.glare.style.opacity = '1';
-            this.glare.style.transform = `translate(${x - centerX}px, ${y - centerY}px) translate(-50%, -50%)`;
-        }
-    }
-
-    onMouseLeave() {
-        this.element.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
-        if (this.glare) {
-            this.glare.style.opacity = '0';
-        }
-    }
-}
-
-function initTiltCards() {
-    const cards = document.querySelectorAll('.tilt-card');
-    cards.forEach(card => new TiltCard(card));
-}
-
-// ========================================
-// Ripple Effect
-// ========================================
-function createRipple(event, element) {
-    const circle = document.createElement('span');
-    const diameter = Math.max(element.clientWidth, element.clientHeight);
-    const radius = diameter / 2;
-
-    const rect = element.getBoundingClientRect();
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${event.clientX - rect.left - radius}px`;
-    circle.style.top = `${event.clientY - rect.top - radius}px`;
-    circle.classList.add('ripple-effect');
-
-    const ripple = element.querySelector('.ripple-effect');
-    if (ripple) ripple.remove();
-
-    element.appendChild(circle);
-}
-
-function initRippleButtons() {
-    const buttons = document.querySelectorAll('.ripple-btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('click', (e) => createRipple(e, btn));
-    });
-}
-
-// ========================================
-// Smooth Scroll for Anchor Links
-// ========================================
-function initSmoothScroll() {
-    const links = document.querySelectorAll('a[href^="#"]');
-    
-    links.forEach(link => {
-        link.addEventListener('click', (e) => {
-            const href = link.getAttribute('href');
-            if (href === '#') return;
-            
-            const target = document.querySelector(href);
-            if (target) {
-                e.preventDefault();
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-}
-
-// ========================================
-// Initialize All Interactions
-// ========================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Particle system — only if canvas exists (loaded from ui-particles.js)
-    if (document.getElementById('particleCanvas') && typeof ParticleSystem !== 'undefined') {
-        new ParticleSystem('particleCanvas', window.ILINK_PARTICLE_OPTIONS);
-    }
-    
-    // Scroll animations
-    new ScrollAnimator();
-    
-    // Number counters
-    initCounters();
-    
-    // Magnetic buttons
-    initMagneticButtons();
-    // 页面跳转保持原生行为：只标记入场状态，不增加预取或进度条。
-    document.body.classList.add('page-entered');
-    
-    // Tilt cards
-    initTiltCards();
-    
-    // Ripple buttons
-    initRippleButtons();
-    
-    // Smooth scroll
-    initSmoothScroll();
-    
-    // Navbar progressive scroll effect（0→1 进度驱动 CSS 变量）
-    const header = document.getElementById('ilHeader');
-    if (header) {
-        let headerTicking = false;
-        const SCROLL_RANGE = 60; // 0～60px 映射到 0～1 进度
-        const updateHeader = () => {
-            const progress = Math.min(window.scrollY / SCROLL_RANGE, 1);
-            header.style.setProperty('--header-scroll', progress.toFixed(3));
-            header.classList.toggle('il-header--scrolled', window.scrollY > 10);
-            headerTicking = false;
-        };
-        window.addEventListener('scroll', () => {
-            if (!headerTicking) {
-                window.requestAnimationFrame(updateHeader);
-                headerTicking = true;
-            }
-        }, { passive: true });
-        updateHeader(); // 初始化状态
-    }
-
-    // Close dropdowns on outside click
-    document.addEventListener('click', function(event) {
-        const isUserMenu = event.target.closest('.user-menu');
-        if (!isUserMenu) {
-            closeAllDropdowns();
-        }
-        const navMenu = document.getElementById('navMenu');
-        const menuToggle = event.target.closest('.menu-toggle');
-        if (navMenu && !event.target.closest('#navMenu') && !menuToggle) {
-            navMenu.classList.remove('show');
-        }
-    });
-});
 
 /**
  * 组队状态标签映射
@@ -940,22 +690,68 @@ var CATEGORY_LABELS = {
     resource: '资源分享'
 };
 
+// ========================================
+// Initialize All Interactions
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Particle system — only if canvas exists (loaded from ui-particles.js)
+    if (document.getElementById('particleCanvas') && typeof ParticleSystem !== 'undefined') {
+        new ParticleSystem('particleCanvas', window.ILINK_PARTICLE_OPTIONS);
+    }
+
+    // Navbar progressive scroll effect（0→1 进度驱动 CSS 变量）
+    const header = document.getElementById('ilHeader');
+    if (header) {
+        let headerTicking = false;
+        const SCROLL_RANGE = 60;
+        const updateHeader = () => {
+            const progress = Math.min(window.scrollY / SCROLL_RANGE, 1);
+            header.style.setProperty('--header-scroll', progress.toFixed(3));
+            header.classList.toggle('il-header--scrolled', window.scrollY > 10);
+            headerTicking = false;
+        };
+        window.addEventListener('scroll', () => {
+            if (!headerTicking) {
+                window.requestAnimationFrame(updateHeader);
+                headerTicking = true;
+            }
+        }, { passive: true });
+        updateHeader();
+    }
+});
+
 // Expose public API via namespace
-window.ILink = {
+const ilinkPublicApi = {
     apiFetch: apiFetch,
     request: request,
     getCurrentUser: getCurrentUser,
     logout: logout,
-    navigate: navigateTo,
     showMessage: showMessage,
     showFieldHint: showFieldHint,
     clearFieldHint: clearFieldHint,
     formatTime: formatTime,
+    getTypeClass: getTypeClass,
+    toggleMobileMenu: toggleMobileMenu,
+    toggleUserMenu: toggleUserMenu,
+    closeAllDropdowns: closeAllDropdowns,
+    computeNavbarDisplayName: computeNavbarDisplayName,
+    computeNavbarInitials: computeNavbarInitials,
+    accountTriggerTitleAttr: accountTriggerTitleAttr,
+    buildAccountAvatarInnerHtml: buildAccountAvatarInnerHtml,
+    applyAccountMenuFromUser: applyAccountMenuFromUser,
+    publicProfilePageUrl: publicProfilePageUrl,
+    displayUserName: displayUserName,
+    displayUsername: displayUsername,
+    galleryAvatarInitial: galleryAvatarInitial,
+    galleryPublisherAvatarHtml: galleryPublisherAvatarHtml,
+    hideGalleryPublisherAvatarFallbacks: hideGalleryPublisherAvatarFallbacks,
+    avatarInitial: avatarInitial,
+    publisherAvatarHtml: publisherAvatarHtml,
+    publisherAvatarFromAuthorFields: publisherAvatarFromAuthorFields,
     teamStatusLabel: teamStatusLabel,
     CATEGORY_LABELS: CATEGORY_LABELS,
-    ScrollAnimator: ScrollAnimator,
-    NumberCounter: NumberCounter
+    navigate: navigateTo
 };
 
-window.ScrollAnimator = ScrollAnimator;
-window.NumberCounter = NumberCounter;
+window.ILink = Object.assign(window.ILink || {}, ilinkPublicApi);
+Object.assign(window, ilinkPublicApi);

@@ -306,7 +306,7 @@ public class TeamSpaceController {
 
     private String statusLabel(String status) {
         if ("OPEN".equals(status)) return "招募中";
-        if ("TEAMING".equals(status)) return "组队中";
+        if ("TEAMING".equals(status)) return "已组队";
         if ("CLOSED".equals(status)) return "已结束";
         return status != null ? status : "";
     }

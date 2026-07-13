@@ -2,7 +2,7 @@
  * 成果发布/编辑弹窗 v1.0 — 与详情分享页字段对齐
  */
 .il-asset-publish-modal .modal-dialog {
-  max-width: 560px;
+  max-width: 640px;
 }
 
 .il-asset-publish-modal__intro {
@@ -39,6 +39,25 @@
   font-size: 13px;
 }
 
-.il-asset-publish-modal .il-bs-form-modal__textarea {
-  min-height: 88px;
+.il-asset-publish-modal .md-edit-pane textarea {
+  display: block;
+  width: 100% !important;
+  min-height: 200px;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none;
+  resize: none;
+  padding: 14px 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ui-text, #1f2937);
+  background: transparent !important;
+}
+
+.il-asset-publish-modal .md-preview-pane .markdown-body {
+  font-size: 15px;
+  line-height: 1.75;
+  background: transparent !important;
 }

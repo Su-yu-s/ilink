@@ -55,7 +55,7 @@ body[data-app-page="home"] .home-bento__body h3,
 body[data-app-page="home"] .home-cta__inner h2,
 body[data-app-page="home"] .home-mag-tile__overlay strong,
 body[data-app-page="home"] .home-eyebrow {
-  font-family: "SimSun", "宋体", "Noto Serif SC", "Source Han Serif SC", "Times New Roman", serif !important;
+  font-family: "SimSun", "宋体", "Times New Roman", serif !important;
 }
 
 body[data-app-page="home"] .home-btn-cta,
@@ -68,7 +68,7 @@ body[data-app-page="home"] .home-stats__label,
 body[data-app-page="home"] .home-stats__desc,
 body[data-app-page="home"] .home-cta__inner p,
 body[data-app-page="home"] .home-live__desc {
-  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  font-family: "Microsoft YaHei", "微软雅黑", sans-serif !important;
 }
 
 /* 强制覆盖全局样式 */
@@ -235,6 +235,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
   letter-spacing: -0.03em;
   color: var(--home-text);
   margin: 0;
+  white-space: nowrap;
 }
 
 /* ═══════════════════════════════════════════
@@ -487,7 +488,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 }
 
 .home-story__inner {
-  max-width: 720px;
+  max-width: 780px;
   margin: 0 auto;
 }
 
@@ -498,6 +499,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
   letter-spacing: -0.03em;
   color: var(--home-text);
   margin: 0 0 28px;
+  white-space: nowrap;
 }
 
 .home-story__copy {
@@ -920,7 +922,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 }
 
 .home-cta__inner {
-  max-width: 640px;
+  max-width: 780px;
   margin: 0 auto;
 }
 
@@ -931,6 +933,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
   letter-spacing: -0.03em;
   color: var(--home-text);
   margin: 0 0 16px;
+  white-space: nowrap;
 }
 
 .home-cta__inner p {
@@ -1514,6 +1517,7 @@ body[data-app-page="home"] .il-footer-bottom {
 
 body[data-app-page="home"] .il-footer-bottom p {
   color: var(--home-text-muted) !important;
+  font-size: 15px;
 }
 
 /* ═══════════════════════════════════════════
