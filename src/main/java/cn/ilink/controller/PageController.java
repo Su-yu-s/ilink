@@ -62,6 +62,7 @@ public class PageController {
         "profile-favorites",
         "profile-password",
         "profile-article-edit",
+        "profile-asset-edit",
         "user-profile",
         "team-market",
         "team-detail",

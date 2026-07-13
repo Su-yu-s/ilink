@@ -1,6 +1,6 @@
 // 个人中心 · 我的文章列表
 
-const CATEGORY_LABELS = {
+const PROFILE_POST_CATEGORY_LABELS = {
     general: '综合交流',
     tech: '技术讨论',
     competition: '竞赛经验',
@@ -71,7 +71,7 @@ async function loadMyPosts(page) {
         wrap.className = 'profile-post-list';
 
         posts.forEach(p => {
-            const badge = CATEGORY_LABELS[p.category] || p.category;
+            const badge = PROFILE_POST_CATEGORY_LABELS[p.category] || p.category;
             const views = p.viewCount != null ? p.viewCount : 0;
             const likes = p.likeCount != null ? p.likeCount : 0;
             const favs = p.favoriteCount != null ? p.favoriteCount : 0;

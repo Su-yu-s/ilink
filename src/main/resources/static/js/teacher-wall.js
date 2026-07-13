@@ -33,6 +33,7 @@ function initApplyModal() {
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
     initApplyModal();
+    initTeacherProfileShortcut();
 
     // 绑定搜索按钮
     var searchBtn = document.getElementById('searchBtn');
@@ -77,6 +78,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // 加载导师列表
     loadTeacherList();
 });
+
+async function initTeacherProfileShortcut() {
+    var link = document.getElementById('teacherMyProfileLink');
+    if (!link) return;
+    try {
+        var response = await apiFetch('/api/teacher/me', { credentials: 'same-origin' });
+        var result = await response.json();
+        if (response.ok && result && result.code === 200 && result.data && result.data.id) {
+            link.href = '/teacher-detail.html?id=' + encodeURIComponent(String(result.data.id));
+            return;
+        }
+    } catch (error) {
+        console.warn('Unable to load current teacher profile:', error);
+    }
+    link.href = '/profile.html';
+}
 
 // 加载导师列表
 async function loadTeacherList() {
@@ -213,6 +230,8 @@ function renderTeacherList(teachers) {
         var shell = document.createElement('div');
         shell.className = 'mentor-card-shell';
         shell.setAttribute('data-teacher-id', teacher.id);
+        shell.setAttribute('role', 'link');
+        shell.setAttribute('tabindex', '0');
 
         // 基本信息
         var introduction = teacher.introduction || '暂无简介';
@@ -226,19 +245,9 @@ function renderTeacherList(teachers) {
             avatarUrl = prev.avatar || null;
         }
 
-        // 解析职称和专业
-        var dept = '其他';
-        var titleText = '';
-        if (teacher.projects) {
-            var projectsStr = String(teacher.projects);
-            var titleMatch = projectsStr.match(/（(.+?)）/);
-            if (titleMatch) {
-                titleText = titleMatch[1];
-                dept = projectsStr.replace(/（.+?）/, '').trim() || dept;
-            } else {
-                dept = projectsStr || dept;
-            }
-        }
+        // 专业领域与职称由导师档案明确提供；旧数据仍由后端兼容转换。
+        var dept = teacher.expertise || teacher.department || '未设置专业领域';
+        var titleText = teacher.professionalTitle || '';
 
         // 解析研究方向标签
         var tags = [];
@@ -264,7 +273,8 @@ function renderTeacherList(teachers) {
         var titleRowHtml = titleText ? '<div class="mentor-title-row">' + escapeHtml(titleText) + '</div>' : '';
 
         // 详情链接
-        var detailUrl = '/teacher-detail.html?id=' + teacher.id;
+        var detailUrl = '/teacher-detail.html?id=' + encodeURIComponent(String(teacher.id));
+        shell.setAttribute('aria-label', '查看导师详情：' + name);
 
         // 研究方向标签
         var tagsHtml = tags.length > 0
@@ -311,6 +321,12 @@ function renderTeacherList(teachers) {
             if (e.target.closest('.mentor-btn') || e.target.closest('a')) return;
             window.location.href = detailUrl;
         });
+        shell.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            if (e.target.closest('a, button, input, select, textarea')) return;
+            e.preventDefault();
+            window.location.href = detailUrl;
+        });
 
         container.appendChild(shell);
     });
@@ -320,10 +336,11 @@ function renderTeacherList(teachers) {
 async function submitTeacherApplication() {
     var introduction = document.getElementById('applicationBio');
     var researchDirection = document.getElementById('applicationResearch');
-    var projects = document.getElementById('applicationMajor');
+    var expertise = document.getElementById('applicationMajor');
     var applicationTitle = document.getElementById('applicationTitle');
+    var projects = document.getElementById('applicationProjects');
 
-    if (!introduction || !researchDirection || !applicationTitle) {
+    if (!introduction || !researchDirection || !applicationTitle || !expertise) {
         showMessage('请填写完整信息', 'error');
         return;
     }
@@ -331,23 +348,14 @@ async function submitTeacherApplication() {
     var applicationData = {
         introduction: introduction.value,
         researchDirection: researchDirection.value,
-        projects: (function() {
-            var majorVal = projects ? projects.value : '';
-            var titleVal = applicationTitle ? applicationTitle.value : '';
-            if (titleVal) {
-                return (majorVal || '') + '（' + titleVal + '）'.trim();
-            }
-            return majorVal || '';
-        })()
+        professionalTitle: applicationTitle.value,
+        expertise: expertise.value,
+        projects: projects ? projects.value : ''
     };
 
-    if (!applicationData.introduction || !applicationData.researchDirection) {
+    if (!applicationData.introduction || !applicationData.researchDirection
+        || !applicationData.professionalTitle || !applicationData.expertise) {
         showMessage('请填写必填字段', 'error');
-        return;
-    }
-
-    if (!applicationData.projects) {
-        showMessage('请填写专业领域与职称', 'error');
         return;
     }
 
@@ -366,6 +374,7 @@ async function submitTeacherApplication() {
             closeApplyModal();
             if (introduction) introduction.value = '';
             if (researchDirection) researchDirection.value = '';
+            if (expertise) expertise.value = '';
             if (projects) projects.value = '';
             if (applicationTitle) applicationTitle.value = '';
             loadTeacherList();

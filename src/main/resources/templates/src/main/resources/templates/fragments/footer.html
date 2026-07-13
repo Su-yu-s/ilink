@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer class="il-footer" th:fragment="footer(showFooter)" th:if="${showFooter != null and showFooter}">
+  <div class="il-footer__inner">
+    <div class="il-footer-brand">
+      <div class="il-footer-logo">
+        <div class="il-footer-logo-mark">iL</div>
+        <span class="il-footer-title">iLink</span>
+      </div>
+      <p class="il-footer-desc">高校竞赛协作平台 — 找人 · 找项目 · 找导师</p>
+    </div>
+    <div class="il-footer-links">
+      <div class="il-footer-section">
+        <h4 class="il-footer-section-title">平台</h4>
+        <a href="/team-market.html" class="il-footer-link">组队大厅</a>
+        <a href="/teacher-wall.html" class="il-footer-link">导师招贤</a>
+        <a href="/community.html" class="il-footer-link">交流社区</a>
+      </div>
+      <div class="il-footer-section">
+        <h4 class="il-footer-section-title">资源</h4>
+        <a href="/competitions.html" class="il-footer-link">竞赛目录</a>
+        <a href="/gallery.html" class="il-footer-link">成果展示</a>
+      </div>
+    </div>
+  </div>
+  <div class="il-footer-bottom">
+    <p>&copy; 2026 iLink. All rights reserved.</p>
+    <p class="il-footer-slogan">路漫漫其修远兮，吾将上下而求索。</p>
+  </div>
+</footer>
+</body>
+</html>

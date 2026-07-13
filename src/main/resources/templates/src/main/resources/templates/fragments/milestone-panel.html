@@ -1,0 +1,310 @@
+<div th:fragment="milestone-panel" class="milestone-panel">
+    <style>
+        .milestone-panel {
+            margin-bottom: 24px;
+        }
+
+        .milestone-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .milestone-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-title);
+        }
+
+        .milestone-title h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .milestone-count {
+            min-width: 28px;
+            padding: 2px 8px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-muted);
+            color: var(--text-body);
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .milestone-add-btn,
+        .milestone-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-surface);
+            color: var(--text-title);
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .milestone-add-btn {
+            padding: 8px 16px;
+        }
+
+        .milestone-add-btn:hover,
+        .milestone-action-btn:hover {
+            background: var(--bg-muted);
+            border-color: var(--border-focus);
+            transform: translateY(-1px);
+        }
+
+        .milestone-timeline {
+            position: relative;
+            display: grid;
+            gap: 16px;
+            padding-left: 28px;
+        }
+
+        .milestone-timeline::before {
+            content: "";
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--border-default);
+        }
+
+        .milestone-card {
+            position: relative;
+            padding: 16px 0 18px;
+            border-bottom: 1px solid var(--border-light);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .milestone-card:hover {
+            transform: translateX(4px);
+        }
+
+        .milestone-card::before {
+            content: "";
+            position: absolute;
+            left: -25px;
+            top: 20px;
+            width: 10px;
+            height: 10px;
+            border: 2px solid var(--border-focus);
+            background: var(--bg-surface);
+        }
+
+        .milestone-card.completed::before {
+            background: var(--primary);
+        }
+
+        .milestone-card-header,
+        .milestone-progress-header,
+        .milestone-card-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .milestone-card-title {
+            margin: 0;
+            color: var(--text-title);
+            font-size: 16px;
+            font-weight: var(--font-weight-bold);
+        }
+
+        .milestone-card-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-muted);
+            color: var(--text-body);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .milestone-card-description,
+        .milestone-card-dates,
+        .milestone-card-creator,
+        .milestone-progress-label,
+        .milestone-empty {
+            color: var(--text-muted);
+        }
+
+        .milestone-card-description {
+            margin: 10px 0 12px;
+            line-height: 1.6;
+        }
+
+        .milestone-card-dates {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .milestone-progress {
+            margin-top: 10px;
+        }
+
+        .milestone-progress-value {
+            color: var(--text-title);
+            font-weight: var(--font-weight-bold);
+        }
+
+        .milestone-progress-bar {
+            height: 6px;
+            margin-top: 6px;
+            background: var(--bg-muted);
+            overflow: hidden;
+        }
+
+        .milestone-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .milestone-card-actions {
+            justify-content: flex-start;
+            margin-top: 12px;
+        }
+
+        .milestone-action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .milestone-empty {
+            padding: 40px 16px;
+            text-align: center;
+            border: 1px dashed var(--border-default);
+            background: var(--bg-surface);
+        }
+
+        .milestone-empty-icon {
+            margin-bottom: 10px;
+            color: var(--text-title);
+        }
+
+        .milestone-modal-input,
+        .milestone-modal-textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-surface);
+            color: var(--text-title);
+            font: inherit;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .milestone-modal-input:focus,
+        .milestone-modal-textarea:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            background: var(--bg-muted);
+        }
+
+        .milestone-modal-textarea {
+            min-height: 88px;
+            resize: vertical;
+        }
+    </style>
+
+    <div class="milestone-header">
+        <div class="milestone-title">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3>项目里程碑</h3>
+            <span class="milestone-count" id="milestoneCount">0</span>
+        </div>
+        <button class="milestone-add-btn" type="button" onclick="milestoneManager.openCreateModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            添加里程碑
+        </button>
+    </div>
+
+    <div class="milestone-timeline" id="milestoneTimeline">
+        <div class="milestone-empty" id="milestoneEmpty">
+            <div class="milestone-empty-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 8V12L15 15M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <p class="milestone-empty-text">暂无里程碑，点击上方按钮添加</p>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createMilestoneModal" tabindex="-1" aria-labelledby="milestoneModalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="milestoneModalTitle">创建里程碑</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editMilestoneId">
+                    <div class="mb-3">
+                        <label class="form-label" for="milestoneName">里程碑名称 <span class="text-danger">*</span></label>
+                        <input type="text" class="milestone-modal-input" id="milestoneName" placeholder="请输入里程碑名称" maxlength="200">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="milestoneDescription">里程碑描述</label>
+                        <textarea class="milestone-modal-textarea" id="milestoneDescription" placeholder="请输入里程碑详细描述" maxlength="500"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="milestoneDueDate">计划完成日期</label>
+                        <input type="date" class="milestone-modal-input" id="milestoneDueDate">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="milestoneProgress">初始进度 (%)</label>
+                        <input type="number" class="milestone-modal-input" id="milestoneProgress" placeholder="0" min="0" max="100" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveMilestoneBtn" onclick="milestoneManager.saveMilestone()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="progressMilestoneModal" tabindex="-1" aria-labelledby="progressMilestoneTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">更新进度</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="progressMilestoneId">
+                    <p class="mb-3" id="progressMilestoneTitle"></p>
+                    <div class="mb-3">
+                        <label class="form-label" for="progressSlider">当前进度 (%)</label>
+                        <input type="range" class="form-range" id="progressSlider" min="0" max="100" value="0" oninput="milestoneManager.updateProgressLabel()">
+                    </div>
+                    <div class="text-center">
+                        <span class="fs-4 fw-bold text-primary" id="progressValue">0%</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="milestoneManager.saveProgress()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

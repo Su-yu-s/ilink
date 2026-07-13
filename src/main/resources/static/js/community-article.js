@@ -1,6 +1,6 @@
 ﻿// 社区文章详情页：正文、阅读量、评论
 
-const CATEGORY_LABELS = {
+const COMMUNITY_ARTICLE_CATEGORY_LABELS = {
     general: '综合交流',
     tech: '技术讨论',
     competition: '竞赛经验',
@@ -9,15 +9,44 @@ const CATEGORY_LABELS = {
 
 function resolvePostId() {
     const m = window.location.pathname.match(/\/community\/article\/(\d+)\/?$/);
-    if (m) {
-        return m[1];
-    }
-    return new URLSearchParams(window.location.search).get('id');
+    const raw = m ? m[1] : (new URLSearchParams(window.location.search).get('id') || '').trim();
+    return /^\d+$/.test(raw) && Number(raw) > 0 ? raw : null;
 }
 
 const postId = resolvePostId();
 let currentUser = null;
 let articleData = null;
+
+function setArticleLoadState(type, message) {
+    const state = document.getElementById('articleLoadState');
+    const content = document.getElementById('articleContent');
+    const comments = document.getElementById('articleComments');
+    const title = document.getElementById('articleLoadStateTitle');
+    const messageEl = document.getElementById('articleLoadStateMessage');
+    const retry = document.getElementById('articleRetryBtn');
+    const indicator = state && state.querySelector('.community-article-state__indicator');
+    const success = type === 'success';
+    const loading = type === 'loading';
+
+    if (state) {
+        state.hidden = success;
+        state.classList.toggle('community-article-state--error', type === 'error');
+        state.setAttribute('aria-busy', loading ? 'true' : 'false');
+    }
+    if (content) content.hidden = !success;
+    if (comments) comments.hidden = !success;
+    if (indicator) indicator.hidden = !loading;
+    if (retry) retry.hidden = loading || success;
+    if (title) title.textContent = loading ? '正在加载文章' : '文章暂时无法显示';
+    if (messageEl) {
+        messageEl.textContent = message || (loading ? '正在获取正文与作者信息，请稍候…' : '请检查网络后重新加载。');
+    }
+}
+
+async function retryArticleLoad() {
+    const loaded = await loadArticle();
+    if (loaded) await loadComments();
+}
 
 function communityAvatarHtml(authorId, authorAvatar, authorDisplay, extraClass) {
     if (authorId == null) return '';
@@ -49,26 +78,25 @@ function fixCommunityAvatars(root) {
         wrap.querySelectorAll('.il-avatar-fallback').forEach(function (fb) {
             fb.classList.add('il-avatar-fallback--hidden');
             fb.setAttribute('aria-hidden', 'true');
-            fb.textContent = '';
         });
     });
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
     currentUser = await loadCurrentUser();
-    if (!postId) {
-        showMessage('缺少文章 ID', 'error');
-        setTimeout(() => { window.location.href = '/community.html'; }, 1500);
-        return;
-    }
-
+    document.getElementById('articleRetryBtn')?.addEventListener('click', retryArticleLoad);
     document.getElementById('submitCommentBtn')?.addEventListener('click', submitComment);
     document.getElementById('deleteArticleBtn')?.addEventListener('click', deleteArticle);
     document.getElementById('articleLikeBtn')?.addEventListener('click', toggleArticleLike);
     document.getElementById('articleFavBtn')?.addEventListener('click', toggleArticleFavorite);
 
-    await loadArticle();
-    await loadComments();
+    if (!postId) {
+        const breadcrumbTitle = document.getElementById('breadcrumbTitle');
+        if (breadcrumbTitle) breadcrumbTitle.textContent = '无效链接';
+        setArticleLoadState('error', '链接中缺少有效的文章 ID，请返回交流社区重新选择。');
+        return;
+    }
+    await retryArticleLoad();
 });
 
 async function loadCurrentUser() {
@@ -184,23 +212,25 @@ function renderArticleBody(el, content) {
 }
 
 async function loadArticle() {
+    setArticleLoadState('loading');
     try {
         const response = await apiFetch(`/api/community/posts/${encodeURIComponent(postId)}`);
-        const result = await response.json();
-        if (result.code === 401) {
-            showMessage('请先登录', 'warning');
-            setTimeout(() => { window.location.href = '/login'; }, 1200);
-            return;
+        let result;
+        try {
+            result = await response.json();
+        } catch (error) {
+            throw new Error('服务器返回了无法解析的数据，请稍后重试');
         }
-        if (result.code !== 200) {
-            showMessage(result.message || '加载失败', 'error');
-            setTimeout(() => { window.location.href = '/community.html'; }, 1500);
-            return;
+        if (!response.ok || !result || (result.code !== 200 && result.code !== 0)) {
+            throw new Error((result && result.message) || `文章请求失败（${response.status}）`);
+        }
+        if (!result.data || typeof result.data !== 'object') {
+            throw new Error('文章数据为空，请稍后重试');
         }
         articleData = result.data;
         document.title = `${articleData.title || '文章'} - iLink`;
 
-        const catLabel = CATEGORY_LABELS[articleData.category] || articleData.category || '文章';
+        const catLabel = COMMUNITY_ARTICLE_CATEGORY_LABELS[articleData.category] || articleData.category || '文章';
         const breadcrumbCategory = document.getElementById('breadcrumbCategory');
         const breadcrumbTitle = document.getElementById('breadcrumbTitle');
         if (breadcrumbCategory) breadcrumbCategory.textContent = catLabel;
@@ -272,9 +302,14 @@ async function loadArticle() {
         )) {
             delBtn.classList.remove('d-none');
         }
+        setArticleLoadState('success');
+        return true;
     } catch (e) {
         console.error(e);
-        showMessage('网络错误', 'error');
+        const breadcrumbTitle = document.getElementById('breadcrumbTitle');
+        if (breadcrumbTitle) breadcrumbTitle.textContent = '加载失败';
+        setArticleLoadState('error', e && e.message ? e.message : '网络异常，请稍后重试。');
+        return false;
     }
 }
 
@@ -287,7 +322,8 @@ async function loadComments() {
         const response = await apiFetch(`/api/community/posts/${encodeURIComponent(postId)}/comments`);
         const result = await response.json();
         if (result.code !== 200) {
-            listEl.innerHTML = `<p class="community-article-comment-list__empty">${escapeHtml(result.message || '评论加载失败')}</p>`;
+            listEl.innerHTML = `<div class="community-article-comment-list__empty"><p>${escapeHtml(result.message || '评论加载失败')}</p><button type="button" class="il-btn community-article-comment-list__retry">重新加载评论</button></div>`;
+            listEl.querySelector('.community-article-comment-list__retry')?.addEventListener('click', loadComments);
             return;
         }
         const comments = result.data || [];
@@ -347,7 +383,8 @@ async function loadComments() {
         });
     } catch (e) {
         console.error(e);
-        listEl.innerHTML = '<p class="community-article-comment-list__empty">评论加载异常</p>';
+        listEl.innerHTML = '<div class="community-article-comment-list__empty"><p>评论加载异常</p><button type="button" class="il-btn community-article-comment-list__retry">重新加载评论</button></div>';
+        listEl.querySelector('.community-article-comment-list__retry')?.addEventListener('click', loadComments);
     }
 }
 

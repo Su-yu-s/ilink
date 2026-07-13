@@ -24,18 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 绑定重置按钮
-    var resetBtn = document.getElementById('resetBtn');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            document.getElementById('keyword').value = '';
-            document.getElementById('category').value = '';
-            document.getElementById('status').value = '';
-            currentPage = 1;
-            loadTeamList();
-        });
-    }
-
     // 回车搜索
     var keywordInput = document.getElementById('keyword');
     if (keywordInput) {
@@ -188,8 +176,11 @@ function renderTeamList(teams) {
     }
 
     teams.forEach(team => {
-        const cardShell = document.createElement('div');
+        const detailUrl = '/team-detail.html?id=' + encodeURIComponent(String(team.id));
+        const cardShell = document.createElement('a');
         cardShell.className = 'il-team-card-shell';
+        cardShell.href = detailUrl;
+        cardShell.setAttribute('aria-label', '查看组队详情：' + (team.title || '未命名需求'));
 
         const rawStatus = team.status || '';
         const normalizedStatus = rawStatus.toUpperCase();
@@ -198,6 +189,7 @@ function renderTeamList(teams) {
             : (normalizedStatus === 'TEAMING' || ['已组队', '组队中'].includes(rawStatus) ? '已组队'
             : (normalizedStatus === 'CLOSED' || ['已结束', '已完成'].includes(rawStatus) ? '已完成' : '未知')));
         const isRecruiting = normalizedStatus === 'OPEN' || ['招募中', '招募'].includes(rawStatus);
+        const isTeaming = normalizedStatus === 'TEAMING' || ['已组队', '组队中'].includes(rawStatus);
 
         // 发布者信息
         let authorName = '发布者';
@@ -215,13 +207,13 @@ function renderTeamList(teams) {
 
         function buildAvatarHtml(avatarUrl, fallbackChar) {
             if (avatarUrl) {
-                return '<div class="il-author-avatar">' +
+                return '<div class="author-avatar il-author-avatar">' +
                     '<img src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(authorName) + '"' +
-                    ' onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.il-author-avatar-fallback\').style.display=\'flex\';">' +
-                    '<span class="il-author-avatar-fallback" style="display:none;">' + escapeHtml(fallbackChar) + '</span>' +
+                    ' onerror="this.style.display=\'none\'; var fallback=this.parentElement.querySelector(\'.il-author-avatar-fallback\'); if(fallback){fallback.classList.remove(\'avatar-fallback--hidden\'); fallback.removeAttribute(\'aria-hidden\'); fallback.style.display=\'flex\';}">' +
+                    '<span class="il-author-avatar-fallback avatar-fallback--hidden" aria-hidden="true">' + escapeHtml(fallbackChar) + '</span>' +
                     '</div>';
             }
-            return '<div class="il-author-avatar"><span class="il-author-avatar-fallback">' + escapeHtml(fallbackChar) + '</span></div>';
+            return '<div class="author-avatar il-author-avatar"><span class="il-author-avatar-fallback">' + escapeHtml(fallbackChar) + '</span></div>';
         }
 
         // 技能标签
@@ -229,9 +221,9 @@ function renderTeamList(teams) {
         if (team.requiredSkills) {
             const skills = String(team.requiredSkills).split(/[,，;；\s]+/).filter(s => s.trim());
             if (skills.length > 0) {
-                skillsHtml = '<div class="il-team-skills">' +
+                skillsHtml = '<div class="skill-tags il-team-skills">' +
                     skills.slice(0, 5).map(function(skill) {
-                        return '<span class="il-skill-tag">' + escapeHtml(skill.trim()) + '</span>';
+                        return '<span class="skill-tag il-skill-tag">' + escapeHtml(skill.trim()) + '</span>';
                     }).join('') + '</div>';
             }
         }
@@ -252,42 +244,40 @@ function renderTeamList(teams) {
         const postedDate = team.createdAt ? formatTime(team.createdAt) : '';
         const desc = team.description ? (team.description.length > 120 ? team.description.substring(0, 120) + '...' : team.description) : '暂无描述';
 
-        const statusClass = isRecruiting ? 'il-status-recruiting' : 'il-status-closed';
+        const statusClass = isRecruiting ? 'il-status-recruiting' : (isTeaming ? 'il-status-teamed' : 'il-status-closed');
+        const statusAlias = isRecruiting ? 'status-recruiting' : (isTeaming ? 'status-teaming' : 'status-closed');
 
-        cardShell.innerHTML = '<div class="il-team-card">' +
-            '<div class="il-team-card-header">' +
-                '<h3 class="il-team-title">' + escapeHtml(team.title || '未命名需求') + '</h3>' +
-                '<span class="il-team-category ' + catClass + '">' + escapeHtml(category) + '</span>' +
+        cardShell.innerHTML = '<article class="team-card il-team-card">' +
+            '<div class="card-header il-team-card-header">' +
+                '<h3 class="card-title il-team-title">' + escapeHtml(team.title || '未命名需求') + '</h3>' +
+                '<span class="category-tag il-team-category ' + catClass + '">' + escapeHtml(category) + '</span>' +
             '</div>' +
-            '<div class="il-team-meta">' +
-                '<span class="il-team-meta-item">' +
+            '<div class="card-meta il-team-meta">' +
+                '<span class="meta-item il-team-meta-item">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>' +
                     '<span>' + memberCount + '</span>' +
                 '</span>' +
-                '<span class="il-team-meta-item">' +
+                '<span class="meta-dot"></span>' +
+                '<span class="meta-item il-team-meta-item">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
                     '<span>' + deadline + '</span>' +
                 '</span>' +
-                (postedDate ? '<span class="il-team-meta-item">' +
+                (postedDate ? '<span class="meta-dot"></span><span class="meta-item il-team-meta-item">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
                     '<span>' + postedDate + '</span>' +
                 '</span>' : '') +
             '</div>' +
             (skillsHtml ? skillsHtml : '') +
-            '<p class="il-team-desc">' + escapeHtml(desc) + '</p>' +
-            '<div class="il-team-footer">' +
-                '<div class="il-team-author">' +
+            '<p class="card-desc il-team-desc">' + escapeHtml(desc) + '</p>' +
+            '<div class="card-divider"></div>' +
+            '<div class="card-footer il-team-footer">' +
+                '<div class="author-info il-team-author">' +
                     buildAvatarHtml(authorAvatarUrl, authorAvatar) +
                     '<span class="il-author-name">' + escapeHtml(authorName) + '</span>' +
                 '</div>' +
-                '<span class="il-team-status ' + statusClass + '">' + escapeHtml(statusLabel) + '</span>' +
+                '<span class="status-badge il-team-status ' + statusClass + ' ' + statusAlias + '">' + escapeHtml(statusLabel) + '</span>' +
             '</div>' +
-        '</div>';
-
-        // 点击跳转
-        cardShell.querySelector('.il-team-card').addEventListener('click', function() {
-            window.ILink && window.ILink.navigate ? window.ILink.navigate('/team-detail.html?id=' + team.id) : (window.location.href = '/team-detail.html?id=' + team.id);
-        });
+        '</article>';
 
         teamListContainer.appendChild(cardShell);
     });

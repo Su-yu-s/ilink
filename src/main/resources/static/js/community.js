@@ -82,6 +82,7 @@ function openComposeModal() {
 
     const modalEl = document.getElementById('composeModal');
     if (modalEl) {
+        modalEl.setAttribute('aria-hidden', 'false');
         modalEl.classList.add('show');
     }
 }
@@ -90,6 +91,7 @@ function closeComposeModal() {
     const modalEl = document.getElementById('composeModal');
     if (modalEl) {
         modalEl.classList.remove('show');
+        modalEl.setAttribute('aria-hidden', 'true');
     }
 }
 
@@ -218,7 +220,7 @@ function fillComposeCategorySelect() {
         const opt = document.createElement('option');
         opt.value = key;
         opt.textContent = COMM_FEED_CATEGORY_LABELS[key];
-
+        sel.appendChild(opt);
     });
 }
 
@@ -296,6 +298,24 @@ function iconStarSvg() {
         '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></polygon>' +
         '</svg>'
     );
+}
+
+function iconCommentSvg() {
+    return (
+        '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>' +
+        '</svg>'
+    );
+}
+
+function iconBadgeSvg(type) {
+    if (type === 'hot') {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4 0 7-2.8 7-6.8 0-2.7-1.5-5.1-4.4-7.4.1 2.2-.8 3.5-2 4.1.1-3.6-1.4-6.4-4-8.4.1 4-1.6 5.8-2.7 7.5A7.4 7.4 0 0 0 5 15.2C5 19.2 8 22 12 22Z" fill="currentColor"></path></svg>';
+    }
+    if (type === 'pin') {
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 4 6 6-3.5 1.2-3.9 3.9.4 4.4-2 2-3.3-6.5L1.2 11.7l2-2 4.4.4 3.9-3.9L14 4Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path></svg>';
+    }
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.7 6.6 7.1.6-5.4 4.7 1.6 7-6-3.7-6 3.7 1.6-7-5.4-4.7 7.1-.6L12 2Z" fill="currentColor"></path></svg>';
 }
 
 function applyFeedInteractionUi(actionsEl, post) {
@@ -419,64 +439,101 @@ async function loadPosts(page) {
             const views = p.viewCount != null ? p.viewCount : 0;
             const likes = p.likeCount != null ? p.likeCount : 0;
             const favs = p.favoriteCount != null ? p.favoriteCount : 0;
+            const comments = p.commentCount != null ? p.commentCount : (p.comments != null ? p.comments : 0);
             const card = document.createElement('article');
-            card.className = 'il-post-card';
-            card.style.cursor = 'pointer';
+            card.className = 'article-card il-post-card';
+            card.setAttribute('role', 'link');
+            card.setAttribute('tabindex', '0');
+            card.setAttribute('aria-label', '阅读全文：' + (p.title || '未命名文章'));
+            const detailUrl = articlePageUrl(p.id);
 
             const authorAvatar = (p.authorDisplay || '用户').charAt(0).toUpperCase();
             const authorAvatarUrl = p.authorAvatar || null;
+            const badgeItems = [];
+            if (p.pinned || p.top || p.isTop) {
+                badgeItems.push({ cls: 'badge-pin', label: '置顶', type: 'pin' });
+            }
+            if (p.featured || p.isFeatured || p.recommended || p.official) {
+                badgeItems.push({ cls: 'badge-featured', label: '精选', type: 'featured' });
+                card.classList.add('featured');
+            }
+            if (p.hot || p.isHot) {
+                badgeItems.push({ cls: 'badge-hot', label: '热门', type: 'hot' });
+            }
+            const badgesHtml = badgeItems.map(function(item) {
+                return '<span class="article-badge ' + item.cls + '">' + iconBadgeSvg(item.type) + escapeHtml(item.label) + '</span>';
+            }).join('');
 
             function buildCommunityAvatarHtml(avatarUrl, fallbackChar, authorName) {
                 if (avatarUrl) {
-                    return `<div class="il-post-avatar">
+                    return `<div class="author-avatar il-post-avatar">
                         <img src="${escapeHtml(avatarUrl)}" alt="${escapeHtml(authorName || '')}"
-                             onerror="this.style.display='none'; this.parentElement.querySelector('.il-post-avatar-fallback').style.display='flex';">
-                        <span class="il-post-avatar-fallback" style="display:none;">${escapeHtml(fallbackChar)}</span>
+                             onerror="this.style.display='none'; var fallback=this.parentElement.querySelector('.il-post-avatar-fallback'); if(fallback){fallback.classList.remove('avatar-fallback--hidden'); fallback.removeAttribute('aria-hidden'); fallback.style.display='flex';}">
+                        <span class="il-post-avatar-fallback avatar-fallback--hidden" aria-hidden="true">${escapeHtml(fallbackChar)}</span>
                     </div>`;
                 }
-                return `<div class="il-post-avatar">
+                return `<div class="author-avatar il-post-avatar">
                     <span class="il-post-avatar-fallback" style="display:flex;">${escapeHtml(fallbackChar)}</span>
                 </div>`;
             }
 
             card.innerHTML = `
-                <div class="il-post-header">
+                <div class="card-header il-post-header">
                     ${buildCommunityAvatarHtml(authorAvatarUrl, authorAvatar, p.authorDisplay)}
-                    <div class="il-post-author">
-                        <div class="il-post-author-name">
+                    <div class="author-info il-post-author">
+                        <div class="author-name il-post-author-name">
                             ${escapeHtml(p.authorDisplay || '')}
+                            ${badgesHtml}
                         </div>
-                        <div class="il-post-meta">
-                            <span>${formatTime(p.createdAt)}</span>
-                            <span>阅读 ${views}</span>
+                        <div class="author-meta il-post-meta">
+                            <span class="meta-item">${formatTime(p.createdAt)}</span>
+                            <span class="meta-item">阅读 ${views}</span>
+                            <span class="meta-item">评论 ${comments}</span>
                         </div>
                     </div>
                 </div>
-                <h2 class="il-post-title">
+                <h2 class="card-title il-post-title">
                     ${escapeHtml(p.title)}
                 </h2>
-                <p class="il-post-preview">
+                <p class="card-excerpt il-post-preview">
                     ${escapeHtml(p.excerpt || '')}
                 </p>
-                <div class="il-post-tags">
-                    <span class="il-tag ${tagClass}">${escapeHtml(badge)}</span>
+                <div class="card-tags il-post-tags">
+                    <span class="card-tag primary il-tag ${tagClass}">${escapeHtml(badge)}</span>
                 </div>
-                <div class="il-post-footer">
-                    <div class="il-post-stats">
+                <div class="card-divider"></div>
+                <div class="card-footer il-post-footer">
+                    <div class="card-actions il-post-stats">
                         <div class="il-feed-actions" data-post-id="${p.id}">
-                            <button type="button" class="il-feed-action" data-action="like" aria-label="点赞">
+                            <button type="button" class="action-btn il-feed-action" data-action="like" aria-label="点赞">
                                 ${iconThumbUpSvg()}
+                                <span class="action-label">点赞</span>
                                 <span class="il-feed-action__num">${likes}</span>
                             </button>
-                            <button type="button" class="il-feed-action" data-action="favorite" aria-label="收藏">
+                            <button type="button" class="action-btn il-feed-action" data-action="favorite" aria-label="收藏">
                                 ${iconStarSvg()}
+                                <span class="action-label">收藏</span>
                                 <span class="il-feed-action__num">${favs}</span>
+                            </button>
+                            <button type="button" class="action-btn il-feed-action" aria-label="评论">
+                                ${iconCommentSvg()}
+                                <span class="action-label">评论</span>
+                                <span class="il-feed-action__num">${comments}</span>
                             </button>
                         </div>
                     </div>
-                    <button class="il-btn il-btn-primary">阅读全文</button>
+                    <a href="${detailUrl}" class="read-more-btn il-btn il-btn-primary">阅读全文 <span aria-hidden="true">→</span></a>
                 </div>`;
-            card.addEventListener('click', () => goToArticle(p.id));
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('a')) return;
+                goToArticle(p.id);
+            });
+            card.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                if (event.target.closest('a, button, input, select, textarea')) return;
+                event.preventDefault();
+                goToArticle(p.id);
+            });
             const actionsEl = card.querySelector('.il-feed-actions');
             if (actionsEl) {
                 applyFeedInteractionUi(actionsEl, p);

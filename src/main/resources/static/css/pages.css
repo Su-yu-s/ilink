@@ -19,7 +19,7 @@
 /* === Hero Section === */
 .il-hero {
   text-align: left;
-  margin-bottom: var(--space-12);
+  margin-bottom: 48px;
 }
 
 .il-hero__eyebrow {

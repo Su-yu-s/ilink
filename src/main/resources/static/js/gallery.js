@@ -5,16 +5,18 @@
 
   const PAGE_SIZE = 12;
 
-  const COVERS = {
-    '竞赛获奖': 'https://images.unsplash.com/photo-1546422904-90eab23c3d7e?w=600&h=400&fit=crop',
-    '论文发表': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&h=400&fit=crop',
-    '科研项目': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop',
-    '作品项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop',
-    '作品 / 项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop',
-    '荣誉称号': 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&h=400&fit=crop',
-    '奖学金': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=600&h=400&fit=crop',
-    default: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop'
-  };
+	  const COVERS = {
+	    '竞赛获奖': 'https://images.unsplash.com/photo-1546422904-90eab23c3d7e?w=400&h=280&fit=crop&auto=format',
+	    '论文发表': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=280&fit=crop&auto=format',
+	    '科研项目': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=280&fit=crop&auto=format',
+	    '作品项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=280&fit=crop&auto=format',
+	    '作品 / 项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=280&fit=crop&auto=format',
+	    '技术创新': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=280&fit=crop&auto=format',
+	    '荣誉称号': 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=400&h=280&fit=crop&auto=format',
+	    '奖学金': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=280&fit=crop&auto=format',
+	    '其他': 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400&h=280&fit=crop&auto=format',
+	    default: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=280&fit=crop&auto=format'
+	  };
 
   const TAG_CLASS = {
     '竞赛获奖': 'gallery-tag--competition', '论文发表': 'gallery-tag--paper',
@@ -54,10 +56,26 @@
 
   function authorHtml(asset) {
     var o = asset.ownerPreview;
-    if (!o || o.id == null) return '';
-    var name = typeof displayUsername === 'function' ? displayUsername(o) : '匿名用户';
-    var av = typeof galleryPublisherAvatarHtml === 'function' ? galleryPublisherAvatarHtml(o, 'gc-avatar') : '';
-    return '<div class="gc-author">' + av + '<span class="gc-author-name">' + escapeHtml(name) + '</span></div>';
+    var name = '';
+    var avatar = '';
+    var href = '';
+    if (o && o.id != null) {
+      name = (o.username || o.realName || o.nickname || '').trim();
+      avatar = (o.avatar || o.avatarUrl || o.profileImage || '').trim();
+      href = typeof publicProfilePageUrl === 'function'
+        ? publicProfilePageUrl(o.id)
+        : '/user-profile.html?id=' + encodeURIComponent(o.id);
+    }
+    name = name || (asset.authorName || asset.publisherName || asset.username || '发布者');
+    var letter = name.trim().charAt(0).toUpperCase() || '发';
+    var fallback = '<span class="result-card__avatar-fallback" ' + (avatar ? 'style="display:none;"' : '') + '>' + escapeHtml(letter) + '</span>';
+    var avatarHtml = avatar
+      ? '<img class="result-card__avatar-img" src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">'
+      : '';
+    var avatarWrap = href
+      ? '<a href="' + escapeHtml(href) + '" class="result-card__avatar-link" onclick="event.stopPropagation();" aria-label="查看个人主页">' + avatarHtml + fallback + '</a>'
+      : '<span class="result-card__avatar-link">' + avatarHtml + fallback + '</span>';
+    return '<div class="gc-author result-card__author">' + avatarWrap + '<span class="gc-author-name result-card__author-name">' + escapeHtml(name) + '</span></div>';
   }
 
   // ── App ──
@@ -70,7 +88,6 @@
       var k = this.$('keyword'); if (k) k.addEventListener('keyup', function (e) { if (e.key === 'Enter') app.load(1); });
       var c = this.$('category'); if (c) c.addEventListener('change', function () { app.load(1); });
       var s = this.$('sort'); if (s) s.addEventListener('change', function () { app.load(1); });
-      var r = this.$('resetBtn'); if (r) r.addEventListener('click', function () { app.load(1); });
       var sb = this.$('searchBtn'); if (sb) sb.addEventListener('click', function () { app.load(1); });
       if (window.AssetPublish) AssetPublish.bind({ onSuccess: function () { app.load(1); } });
       this.load(1);
@@ -102,16 +119,26 @@
       }
       c.innerHTML = '<div class="gc-grid">' + rows.map(function (a) {
         var raw = a.description || '';
+        // 去掉 markdown 注释前缀
+        var mdMatch = raw.match(/^<!--md:([A-Za-z0-9+/=]+(?:\|[A-Za-z0-9+/=]*)?)-->/);
+        if (mdMatch) {
+          try {
+            raw = decodeURIComponent(escape(atob(mdMatch[1])));
+          } catch (_) {
+            raw = raw.replace(/^<!--md:[^>]+-->/, '');
+          }
+        }
         var desc = raw.replace(/（分类：[^）]*）/g, '').trim();
+        // 去掉 HTML 标签，只保留纯文本
+        desc = desc.replace(/<[^>]+>/g, '').trim();
         var catM = raw.match(/（分类：([^）]+)）/);
         var cat = a.category || (catM ? catM[1] : '');
         var s = storedActions('asset-' + (a.id || ''));
         var likes = (a.likeCount || 0) + (s.likeDelta || 0);
         var favs = (a.favoriteCount || 0) + (s.favDelta || 0);
         var cover = COVERS[cat] || COVERS.default;
-        return '<div class="gc-card" role="link" tabindex="0" onclick="location.href=\'/asset-detail.html?id=' + (a.id || '') + '\'">'
-          + '<div class="gc-cover"><img src="' + cover + '" alt="封面"><div class="gc-cover-overlay"></div>'
-          + '<span class="gc-cover-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span></div>'
+        return '<article class="result-card gc-card with-cover" role="link" tabindex="0" onclick="location.href=\'/asset-detail.html?id=' + (a.id || '') + '\'">'
+          + '<div class="gc-cover"><img src="' + cover + '" alt="封面" loading="lazy" decoding="async"><div class="gc-cover-overlay"></div></div>'
           + '<div class="gc-content">' + authorHtml(a)
           + '<div class="gc-meta-row">' + (cat ? '<span class="gallery-tag ' + catTag(cat) + '">' + escapeHtml(cat) + '</span>' : '') + '<span class="gc-date">' + fmtDate(a.createdAt) + '</span></div>'
           + '<div class="gc-body"><h3 class="gc-title">' + escapeHtml(a.title || '未命名成果') + '</h3>' + (desc ? '<p class="gc-desc">' + escapeHtml(desc) + '</p>' : '') + '</div>'
@@ -123,7 +150,7 @@
           + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.8l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.2 6.7 19.9l1-5.8L3.5 10l5.9-.9L12 3.8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
           + '<span class="gc-action-num">' + favs + '</span></button></div>'
           + '<span class="gc-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>'
-          + '</div></div>';
+          + '</div></article>';
       }).join('') + '</div>';
       if (typeof hideGalleryPublisherAvatarFallbacks === 'function') hideGalleryPublisherAvatarFallbacks(c);
       app.paginate(pg);

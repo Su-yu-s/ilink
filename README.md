@@ -1,303 +1,319 @@
-# iLink — University Competition Team Building & Achievement Showcase Platform
+# iLink — 高校竞赛组队与成果展示平台
 
-> An intelligent team building and collaboration platform based on Spring Boot + Thymeleaf
+> 基于 Spring Boot + Thymeleaf 的智能组队协作平台，打造 **"找队友 — 找项目 — 找导师"** 完整生态。
 
-## Overview
+## 设计风格
 
-iLink is an all-in-one competition service platform for university students and faculty, creating a complete ecosystem of **"Find Teammates — Find Projects — Find Mentors"**.
-
-### Design Style
-
-macOS liquid glass effect + black/white/gray minimalist aesthetic
-- Glass-morphism cards: `backdrop-filter: blur(20px) saturate(1.8)`
-- Unified palette: Primary `#111827`, Gray `#6b7280`
-- Smooth animations: `cubic-bezier(0.4, 0, 0.2, 1)`
-- Particle background effect complementing card glassmorphism
+暖白金系 · 黑灰白极简美学 — 柔和、克制、专业：
+- 主色调 `#282A2F`，灰阶 `#52555C` ~ `#F7F7F8`
+- 毛玻璃卡片 `backdrop-filter: blur(16px)`，柔和阴影与微光泽
+- 流畅过渡动画 `cubic-bezier(0.2, 0.8, 0.2, 1)`
+- 粒子背景点缀，字体 Microsoft YaHei / PingFang SC
 
 ---
 
-## Feature Modules
+## 功能模块
 
-### 1. User System (Authentication, Registration, Profile)
+### 1. 用户系统（认证、注册、资料）
 
-Multi-factor login support (phone number / student ID / username) with progressive rate limiting. Registration enforces identity selection (Student / Teacher / Admin), password strength policy, and duplicate detection.
+多因素登录（手机号 / 学号 / 用户名），渐进式限流防护。注册强制身份选择（学生 / 教师 / 管理员），密码强度校验，重复检测。支持邮箱验证找回密码。
 
-**Entity:** `User` — id, username, studentId, phoneNumber, password, email, role (STUDENT/TEACHER/ADMIN), avatar, realName, gender, grade, major, school, college, bio, honors, createdAt
-<img width="1209" height="945" alt="image" src="https://github.com/user-attachments/assets/1d5b1d97-4c6d-4cb3-bb2e-e9ae5070b2fc" /><img width="998" height="1135" alt="image" src="https://github.com/user-attachments/assets/32a6ac55-f7cf-4706-a002-ce75d991ead7" />
+**实体:** `User` — id, username, studentId, phoneNumber, password, email, role (STUDENT/TEACHER/ADMIN), avatar, realName, gender, grade, major, school, college, bio, honors, createdAt
 
+<img width="1209" height="945" alt="登录页面" src="https://github.com/user-attachments/assets/1d5b1d97-4c6d-4cb3-bb2e-e9ae5070b2fc" />
+<img width="998" height="1135" alt="注册页面" src="https://github.com/user-attachments/assets/32a6ac55-f7cf-4706-a002-ce75d991ead7" />
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/login` | POST | Multi-mode login with fail-lock protection |
-| `/api/register` | POST | Registration (rate-limited: 3/min) |
-| `/api/logout` | GET/POST | Logout |
-| `/api/user/profile` | GET | Get current user profile |
-| `/api/user/profile` | POST | Update profile (name, avatar, grade, major, school, bio, honors) |
-| `/api/user/password` | PUT | Change password |
-| `/api/user/public/{userId}` | GET | Public user overview (with latest 20 posts) |
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/login` | POST | 多模式登录（失败锁定） |
+| `/api/register` | POST | 注册（限流 3次/分钟） |
+| `/api/logout` | GET/POST | 登出 |
+| `/api/user/profile` | GET | 获取当前用户资料 |
+| `/api/user/profile` | POST | 更新资料（姓名、头像、年级、专业、学校、简介、荣誉） |
+| `/api/user/password` | PUT | 修改密码 |
+| `/api/user/public/{userId}` | GET | 公开用户概览（含最新 20 条帖子） |
+| `/api/forgot-password` | POST | 发送密码重置邮件 |
+| `/api/reset-password` | POST | 重置密码 |
 
-**Pages:** `index.html`, `login.html`, `register.html`, `profile.html`, `profile-edit.html`, `profile-password.html`, `profile-honors.html`, `profile-posts.html`, `profile-favorites.html`, `profile-article-edit.html`, `user-profile.html`
-
----
-
-### 2. Smart Recommendation Engine
-
-Skill-tag-based intelligent matching algorithm. Recommends the most suitable teams to users, and the best-fit members to team leaders. Records recommendation feedback for continuous model optimization.
-<img width="1950" height="800" alt="image" src="https://github.com/user-attachments/assets/35e6b5c6-7cb2-41b5-b8e4-bc274972c4c3" />
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/recommendations/teams` | GET | Recommend teams to a user (skill-based matching) |
-| `/api/recommendations/users` | GET | Recommend members to a team (skill-based matching) |
-| `/api/recommendations/match` | GET | Calculate match score between user and team |
-| `/api/recommendations/feedback/{logId}` | POST | Record recommendation feedback for model tuning |
+**页面:** `login.html`, `register.html`, `forgot-password.html`, `profile.html`, `profile-edit.html`, `profile-password.html`, `profile-honors.html`, `profile-posts.html`, `profile-favorites.html`, `profile-article-edit.html`, `profile-asset-edit.html`, `user-profile.html`
 
 ---
 
-### 3. Team Building (Recruitment & Matching)
+### 2. 组队市场（招募 & 匹配）
 
-Full lifecycle management for team recruitment: publish demands → browse marketplace → apply → approve/reject → form team. Supports keyword search, category filtering, and status tracking.
-<img width="1942" height="810" alt="QQ_1782284692365" src="https://github.com/user-attachments/assets/edc84ad6-f0c3-40aa-b062-2206191b2b18" />
-**Status flow:** `OPEN` (recruiting) → `TEAMING` (forming) → `CLOSED` (ended)
+全生命周期组队管理：发布需求 → 浏览市场 → 申请加入 → 审核批准 → 成团。支持关键词搜索、分类筛选、状态追踪。
 
-**Entities:**
+<img width="1942" height="810" alt="组队市场" src="https://github.com/user-attachments/assets/edc84ad6-f0c3-40aa-b062-2206191b2b18" />
+
+**状态流转:** `OPEN`（招募中） → `TEAMING`（组队中） → `CLOSED`（已结束）
+
+**实体:**
 - `TeamDemand` — id, title, description, competitionId, requiredSkills, requiredMemberCount, deadline, status, creatorId
 - `TeamApplication` — id, teamId, userId, status (PENDING/APPROVED/REJECTED), message
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/team/list` | GET | Team list (paginated, search, filter by category/status) |
-| `/api/team/{id}` | GET | Team detail (creator info, members, application count) |
-| `/api/team` | POST | Publish recruitment demand |
-| `/api/team/{id}` | PUT | Edit demand (creator only, OPEN status only) |
-| `/api/team/{id}` | DELETE | Delete demand (creator only, no applications) |
-| `/api/team/{id}/status` | PUT | Update status (OPEN→TEAMING, or →CLOSED) |
-| `/api/team/join` | POST | Apply to join team |
-| `/api/team/application-status` | GET | Check user's application status |
-| `/api/team/application/{id}/approve` | PUT | Approve/reject application (auto-close when full) |
-| `/api/team/my/published` | GET | My published demands |
-| `/api/team/my/applications` | GET | My submitted applications |
-| `/api/team/my/pending-applications` | GET | Pending applications (creator view) |
-| `/api/team/{id}/members` | GET | Team member list |
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/team/list` | GET | 团队列表（分页、搜索、分类/状态筛选） |
+| `/api/team/{id}` | GET | 团队详情（创建者信息、成员、申请数） |
+| `/api/team` | POST | 发布招募需求 |
+| `/api/team/{id}` | PUT | 编辑需求（仅创建者，OPEN 状态） |
+| `/api/team/{id}` | DELETE | 删除需求（仅创建者，无申请时） |
+| `/api/team/{id}/status` | PUT | 更新状态（OPEN→TEAMING / →CLOSED） |
+| `/api/team/join` | POST | 申请加入团队 |
+| `/api/team/application-status` | GET | 查询用户申请状态 |
+| `/api/team/application/{id}/approve` | PUT | 批准/拒绝申请（满员自动关闭） |
+| `/api/team/my/published` | GET | 我发布的需求 |
+| `/api/team/my/applications` | GET | 我提交的申请 |
+| `/api/team/my/pending-applications` | GET | 待审批申请（创建者视角） |
+| `/api/team/{id}/members` | GET | 团队成员列表 |
 
 ---
 
-### 4. Team Workspace & Task Collaboration
+### 3. 团队工作区 & 任务协作
 
-Four-column Kanban board (**To Do → In Progress → Review → Done**) with full drag-and-drop support. Task assignment, submission, review workflow built-in. Supports nested comments and file attachments.
+四列看板（**待办 → 进行中 → 审核 → 已完成**），支持拖拽。任务分配、提交、审核工作流。支持嵌套评论与文件附件。
 
-**Entities:**
+<img width="1302" height="792" alt="团队工作区" src="https://github.com/user-attachments/assets/e966c064-1321-4072-b44e-67f00c929893" />
+
+**实体:**
 - `TeamTask` — id, teamId, taskTitle, taskDescription, taskType (DEVELOPMENT/DESIGN/TESTING/DOCUMENTATION/OTHER), priority (LOW/MEDIUM/HIGH/URGENT), status (PENDING/IN_PROGRESS/REVIEW/COMPLETED/CANCELLED), estimatedHours, actualHours, deadline, assignedTo, createdBy
 - `TaskParticipant` — taskId, userId, role (OWNER/LEAD/MEMBER/REVIEWER), contributionHours, contributionRate
 - `TaskSubmission` — taskId, submitterId, content, attachments
-- `TaskComment` — taskId, parentId (supports threaded replies), userId, content, commentType, attachments, likeCount
-<img width="1302" height="792" alt="image" src="https://github.com/user-attachments/assets/e966c064-1321-4072-b44e-67f00c929893" />
+- `TaskComment` — taskId, parentId（支持嵌套回复）, userId, content, commentType, attachments, likeCount
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/tasks?teamId=` | GET | Get team tasks (filtered by role) |
-| `GET /api/tasks/{taskId}` | GET | Get task detail |
-| `POST /api/team/{teamId}/tasks` | POST | Create task (team lead only) |
-| `PUT /api/tasks/{taskId}` | PUT | Update task |
-| `PUT /api/tasks/{taskId}/status` | PUT | Update task status |
-| `DELETE /api/tasks/{taskId}` | DELETE | Delete task (team lead only) |
-| `PUT /api/tasks/{taskId}/assign` | PUT | Assign task to member |
-| `GET /api/tasks/{taskId}/participants` | GET | Get task participants |
-| `POST /api/tasks/{taskId}/participants` | POST | Add participant |
-| `DELETE /api/tasks/{taskId}/participants/{userId}` | DELETE | Remove participant |
-| `GET /api/tasks/{taskId}/comments` | GET | Get task comments (threaded) |
-| `POST /api/tasks/{taskId}/comments` | POST | Add comment (supports parentId for replies) |
-| `PUT /api/tasks/{taskId}/review` | PUT | Review submission (approve→COMPLETED / reject→IN_PROGRESS) |
-| `GET /api/tasks/{taskId}/submissions` | GET | Get submissions (role-filtered) |
-| `POST /api/tasks/{taskId}/submit` | POST | Submit task (auto-switches to REVIEW status) |
-
----
-
-### 5. Project Milestones
-
-Track team project progress with named milestones, completion rates, deliverables, and status tracking.
-
-**Entity:** `ProjectMilestone` — id, teamId, milestoneName, milestoneDescription, dueDate, completedDate, completionRate, deliverables, status (PENDING/IN_PROGRESS/COMPLETED/DELAYED)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/team/{teamId}/milestones` | GET | Get team milestones |
-| `GET /api/milestones/{id}` | GET | Get single milestone |
-| `POST /api/team/{teamId}/milestones` | POST | Create milestone (team members only) |
-| `PUT /api/milestones/{id}` | PUT | Update milestone |
-| `PUT /api/milestones/{id}/progress` | PUT | Update progress percentage |
-| `DELETE /api/milestones/{id}` | DELETE | Delete milestone |
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `GET /api/tasks?teamId=` | GET | 获取团队任务（按角色筛选） |
+| `GET /api/tasks/{taskId}` | GET | 获取任务详情 |
+| `POST /api/team/{teamId}/tasks` | POST | 创建任务（仅队长） |
+| `PUT /api/tasks/{taskId}` | PUT | 更新任务 |
+| `PUT /api/tasks/{taskId}/status` | PUT | 更新任务状态 |
+| `DELETE /api/tasks/{taskId}` | DELETE | 删除任务（仅队长） |
+| `PUT /api/tasks/{taskId}/assign` | PUT | 分配任务给成员 |
+| `GET /api/tasks/{taskId}/participants` | GET | 获取任务参与者 |
+| `POST /api/tasks/{taskId}/participants` | POST | 添加参与者 |
+| `DELETE /api/tasks/{taskId}/participants/{userId}` | DELETE | 移除参与者 |
+| `GET /api/tasks/{taskId}/comments` | GET | 获取任务评论（嵌套结构） |
+| `POST /api/tasks/{taskId}/comments` | POST | 添加评论（支持 parentId 回复） |
+| `PUT /api/tasks/{taskId}/review` | PUT | 审核提交（通过→COMPLETED / 驳回→IN_PROGRESS） |
+| `GET /api/tasks/{taskId}/submissions` | GET | 获取提交记录（按角色筛选） |
+| `POST /api/tasks/{taskId}/submit` | POST | 提交任务（自动切换至 REVIEW 状态） |
 
 ---
 
-### 6. Real-time Team Chat (WebSocket)
+### 4. 项目里程碑
 
-STOMP over WebSocket real-time messaging for team collaboration. Messages persist to database for history retrieval. Authentication enforced on WebSocket connection and subscription.
+追踪团队项目进度：命名里程碑、完成率、交付物、状态跟踪。
 
-| Endpoint / Topic | Method | Description |
-|------------------|--------|-------------|
-| `GET /api/team/{teamId}/messages` | GET | Get chat history (REST fallback) |
-| `POST /api/team/{teamId}/messages` | POST | Send message (REST fallback) |
-| `/ws` | WebSocket | SockJS STOMP endpoint |
-| `/app/chat/{teamId}` | STOMP SEND | Send message → broadcast |
-| `/topic/team/{teamId}` | STOMP SUBSCRIBE | Receive team messages |
+**实体:** `ProjectMilestone` — id, teamId, milestoneName, milestoneDescription, dueDate, completedDate, completionRate, deliverables, status (PENDING/IN_PROGRESS/COMPLETED/DELAYED)
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `GET /api/team/{teamId}/milestones` | GET | 获取团队里程碑 |
+| `GET /api/milestones/{id}` | GET | 获取单个里程碑 |
+| `POST /api/team/{teamId}/milestones` | POST | 创建里程碑（团队成员） |
+| `PUT /api/milestones/{id}` | PUT | 更新里程碑 |
+| `PUT /api/milestones/{id}/progress` | PUT | 更新完成进度 |
+| `DELETE /api/milestones/{id}` | DELETE | 删除里程碑 |
 
 ---
 
-### 7. Community Forum
+### 5. 团队实时聊天（WebSocket）
 
-Full-featured discussion forum with four categories (**General / Tech / Competition / Resource**). Rich-text post editor with HTML sanitization (Jsoup + custom sanitizer). Like, favorite, and nested comment interactions.
-<img width="1905" height="903" alt="image" src="https://github.com/user-attachments/assets/ab7ff117-1a5f-48cf-9614-6e22d13083d7" />
+STOMP over WebSocket 实时消息。消息持久化到数据库，支持历史检索。WebSocket 连接与订阅均强制鉴权。
 
-**Entities:**
+| 端点/主题 | 方法 | 说明 |
+|-----------|------|------|
+| `GET /api/team/{teamId}/messages` | GET | 获取聊天历史（REST 降级） |
+| `POST /api/team/{teamId}/messages` | POST | 发送消息（REST 降级） |
+| `/ws` | WebSocket | SockJS STOMP 端点 |
+| `/app/chat/{teamId}` | STOMP SEND | 发送消息 → 广播 |
+| `/topic/team/{teamId}` | STOMP SUBSCRIBE | 接收团队消息 |
+
+---
+
+### 6. 交流社区
+
+全功能论坛，四大分类（**综合 / 技术 / 竞赛 / 资源**）。富文本编辑器 + HTML 净化（Jsoup + 自定义白名单）。点赞、收藏、嵌套评论。
+
+<img width="1905" height="903" alt="交流社区" src="https://github.com/user-attachments/assets/ab7ff117-1a5f-48cf-9614-6e22d13083d7" />
+
+**实体:**
 - `CommunityPost` — id, authorId, category, title, content, attachments (JSON), viewCount, likeCount, favoriteCount
 - `CommunityComment` — id, postId, userId, content
 - `CommunityPostLike` — postId, userId
 - `CommunityPostFavorite` — postId, userId
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/community/posts` | GET | Post list (paginated, search, category filter) — public |
-| `/api/community/posts/{id}` | GET | Post detail (auto-increments view count) |
-| `/api/community/posts` | POST | Create post (HTML sanitized) |
-| `/api/community/posts/{id}` | PUT | Edit post (author or admin only) |
-| `/api/community/posts/{id}` | DELETE | Delete post (author or admin only) |
-| `/api/community/posts/{id}/like` | POST | Toggle like |
-| `/api/community/posts/{id}/favorite` | POST | Toggle favorite |
-| `/api/community/posts/{postId}/comments` | GET | Get comment list |
-| `/api/community/posts/{postId}/comments` | POST | Add comment |
-| `/api/community/comments/{commentId}` | DELETE | Delete comment |
-| `/api/community/my-posts` | GET | My posts |
-| `/api/community/my-favorites` | GET | My favorites |
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/community/posts` | GET | 帖子列表（分页、搜索、分类筛选）— 公开 |
+| `/api/community/posts/{id}` | GET | 帖子详情（自动增加浏览量） |
+| `/api/community/posts` | POST | 发帖（HTML 净化） |
+| `/api/community/posts/{id}` | PUT | 编辑帖子（作者或管理员） |
+| `/api/community/posts/{id}` | DELETE | 删除帖子（作者或管理员） |
+| `/api/community/posts/{id}/like` | POST | 切换点赞 |
+| `/api/community/posts/{id}/favorite` | POST | 切换收藏 |
+| `/api/community/posts/{postId}/comments` | GET | 获取评论列表 |
+| `/api/community/posts/{postId}/comments` | POST | 添加评论 |
+| `/api/community/comments/{commentId}` | DELETE | 删除评论 |
+| `/api/community/my-posts` | GET | 我的帖子 |
+| `/api/community/my-favorites` | GET | 我的收藏 |
 
 ---
 
-### 8. Achievement Gallery and List of Competitions
+### 7. 成果展示 & 竞赛列表
 
-Digital showcase for project outcomes, research results, and competition awards. Supports file upload with MIME-type verification. Public gallery with search and sorting (latest / most popular). Cached for performance.
-<img width="1818" height="1032" alt="image" src="https://github.com/user-attachments/assets/c17a581c-06a3-45e4-99e7-490a0437e976" />
+项目成果、研究成果、竞赛奖项数字化展示。支持文件上传（MIME 校验），公开画廊可搜索、排序（最新 / 最热），Caffeine 缓存。
 
-**Entity:** `Asset` — id, title, description, fileUrl, userId, viewCount, createdAt
+<img width="1818" height="1032" alt="成果展示" src="https://github.com/user-attachments/assets/c17a581c-06a3-45e4-99e7-490a0437e976" />
+<img width="1864" height="1122" alt="竞赛列表" src="https://github.com/user-attachments/assets/7bef811a-101b-49a0-9b33-cdc12e77a6c7" />
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/asset/list` | GET | Asset list (paginated, search, category filter, sort) |
-| `/api/asset/{id}` | GET | Asset detail (with publisher info, 30-min cache) |
-| `/api/asset/upload` | POST | Upload achievement (title + description + optional file) |
-| `/api/asset/{id}` | PUT | Edit achievement (replaces old file if new one uploaded) |
-| `/api/asset/download/{id}` | GET | Download achievement file (increments download count) |
+**实体:** `Asset` — id, title, description, fileUrl, userId, viewCount, downloadCount, createdAt
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/asset/list` | GET | 成果列表（分页、搜索、分类筛选、排序） |
+| `/api/asset/{id}` | GET | 成果详情（含发布者信息，30分钟缓存） |
+| `/api/asset/upload` | POST | 上传成果（标题 + 描述 + 可选文件） |
+| `/api/asset/{id}` | PUT | 编辑成果（替换旧文件） |
+| `/api/asset/download/{id}` | GET | 下载成果文件（增加下载计数） |
 
 ---
-List of Competitions
-<img width="1864" height="1122" alt="image" src="https://github.com/user-attachments/assets/7bef811a-101b-49a0-9b33-cdc12e77a6c7" />
 
-### 9. Mentor Matching
+### 8. 导师匹配
 
-Two-way mentor-student matching system. Teachers apply to become mentors with research directions and projects. Students browse mentor profiles and apply to join projects. Mentor approves or rejects applications.
-<img width="1857" height="776" alt="image" src="https://github.com/user-attachments/assets/f743a79d-7832-4feb-80ab-0598c09e424b" />
+双向师生匹配系统。教师申请成为导师（研究方向、项目），学生浏览导师资料并申请加入项目，导师审批。
 
-**Entities:**
-- `TeacherApplication` — id, userId, introduction, researchDirection, projects, status (PENDING/APPROVED)
+<img width="1857" height="776" alt="导师匹配" src="https://github.com/user-attachments/assets/f743a79d-7832-4feb-80ab-0598c09e424b" />
+
+**实体:**
+- `TeacherApplication` — id, userId, introduction, researchDirection, professionalTitle, projects, status (PENDING/APPROVED)
 - `ProjectApplication` — id, teacherId, userId, status (PENDING/APPROVED/REJECTED), message
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/teacher/list` | GET | Mentor list (APPROVED only, paginated, search, filter) |
-| `/api/teacher/{id}` | GET | Mentor detail (with linked user info, cached) |
-| `/api/teacher/apply` | POST | Apply to become a mentor (one per user) |
-| `/api/teacher/project-apply` | POST | Student applies to join mentor's project |
-| `/api/teacher/project-application-status` | GET | Check student's application status |
-| `/api/teacher/my/project-applications` | GET | Mentor's pending project applications |
-| `/api/teacher/project-application/{id}/approve` | PUT | Mentor approves/rejects application |
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/teacher/list` | GET | 导师列表（仅 APPROVED，分页、搜索、筛选） |
+| `/api/teacher/{id}` | GET | 导师详情（含关联用户信息，缓存） |
+| `/api/teacher/apply` | POST | 申请成为导师（每人限一次） |
+| `/api/teacher/project-apply` | POST | 学生申请加入导师项目 |
+| `/api/teacher/project-application-status` | GET | 查询学生申请状态 |
+| `/api/teacher/my/project-applications` | GET | 导师的待处理项目申请 |
+| `/api/teacher/project-application/{id}/approve` | PUT | 导师审批项目申请 |
 
 ---
 
-### 10. User Skills Tags
+### 9. 用户技能标签
 
-Fine-grained skill management for better matching. Each skill includes level, category, certification, experience years, and portfolio link.
+细粒度技能管理，提升匹配精度。每条技能包含等级、分类、认证、经验年限与作品集链接。
 
-**Entity:** `UserSkill` — id, userId, skillName, skillLevel, skillCategory, certification, yearsExperience, portfolioUrl, verified
+**实体:** `UserSkill` — id, userId, skillName, skillLevel, skillCategory, certification, yearsExperience, portfolioUrl
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/user/skills` | GET | Get current user's skills |
-| `POST /api/user/skills` | POST | Add skill (duplicate prevention) |
-| `DELETE /api/user/skills/{skillId}` | DELETE | Delete skill (ownership check) |
-
----
-
-### 11. Notification Center
-
-Real-time notification system with type categorization. Supports unread count badge, batch mark-as-read, and role-based delivery.
-
-**Entity:** `Notification` — id, userId, type (TEAM_INVITE/TASK_ASSIGNED/TASK_COMPLETED/MILESTONE_UPDATE/RECOMMENDATION/SYSTEM), title, content, isRead, relatedId, relatedType
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `GET /api/notifications` | GET | Get notification list (ownership verified) |
-| `GET /api/notifications/unread-count` | GET | Get unread count |
-| `PUT /api/notifications/{id}/read` | PUT | Mark single as read |
-| `PUT /api/notifications/read-all` | PUT | Mark all as read |
-| `POST /api/notifications` | POST | Create notification |
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `GET /api/user/skills` | GET | 获取当前用户技能列表 |
+| `POST /api/user/skills` | POST | 添加技能（防重复） |
+| `DELETE /api/user/skills/{skillId}` | DELETE | 删除技能（所有权校验） |
 
 ---
 
-### 12. Admin Panel
+### 10. 通知中心
 
-Comprehensive administration dashboard. Full CRUD for users, teams, mentors, assets, and community posts. Role management with self-demotion protection. Cascade cleanup on user deletion.
+实时通知系统，按类型归类。支持未读角标、批量已读、按角色投递。
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/admin/dashboard` | GET | Dashboard statistics |
-| `/api/admin/users` | GET | User list |
-| `/api/admin/teams` | GET | Team list |
-| `/api/admin/teachers` | GET | Mentor list |
-| `/api/admin/assets` | GET | Asset list |
-| `/api/admin/community-posts` | GET | Post list |
-| `/api/admin/user/{id}` | PUT | Edit user |
-| `/api/admin/user/{id}/role` | PUT | Change user role (anti-self-demotion) |
-| `/api/admin/user/{id}` | DELETE | Delete user (cascade cleanup) |
-| `/api/admin/team/{id}` | DELETE | Delete team |
-| `/api/admin/teacher/{id}/approve` | PUT | Approve mentor application |
-| `/api/admin/teacher/{id}` | DELETE | Delete mentor |
-| `/api/admin/asset/{id}` | DELETE | Delete asset |
-| `/api/admin/community-post/{id}` | DELETE | Delete post |
+**实体:** `Notification` — id, userId, senderId, type (TEAM_INVITE/TASK_ASSIGNED/TASK_COMPLETED/MILESTONE_UPDATE/RECOMMENDATION/SYSTEM), title, content, isRead, relatedId, relatedType
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `GET /api/notifications` | GET | 获取通知列表（所有权校验） |
+| `GET /api/notifications/unread-count` | GET | 获取未读数 |
+| `PUT /api/notifications/{id}/read` | PUT | 标记单条已读 |
+| `PUT /api/notifications/read-all` | PUT | 全部标记已读 |
+| `POST /api/notifications` | POST | 创建通知 |
 
 ---
 
-## Tech Stack
+### 11. 管理后台
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Backend | Spring Boot | 2.7.0 |
-| Security | Spring Security + BCrypt + CSRF | - |
-| Database | MySQL | 5.7+ |
-| ORM | MyBatis-Plus | 3.5.x |
-| Real-time | WebSocket + STOMP (SockJS) | - |
-| Frontend | HTML5 + CSS3 + JavaScript | ES6+ |
-| UI Framework | Bootstrap | 5.x |
-| Template Engine | Thymeleaf | 3.0.x |
-| Cache | Caffeine | 3.x |
-| Migration | Flyway | 7.x |
-| HTML Sanitizer | Jsoup + custom sanitizer | - |
+综合管理仪表盘。用户、团队、导师、成果、社区帖子的完整 CRUD。角色管理含自降级保护。删除用户时级联清理关联数据。
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/admin/dashboard` | GET | 仪表盘统计 |
+| `/api/admin/users` | GET | 用户列表 |
+| `/api/admin/teams` | GET | 团队列表 |
+| `/api/admin/teachers` | GET | 导师列表 |
+| `/api/admin/assets` | GET | 成果列表 |
+| `/api/admin/community-posts` | GET | 帖子列表 |
+| `/api/admin/user/{id}` | PUT | 编辑用户 |
+| `/api/admin/user/{id}/role` | PUT | 修改角色（防自降级） |
+| `/api/admin/user/{id}` | DELETE | 删除用户（级联清理） |
+| `/api/admin/team/{id}` | DELETE | 删除团队 |
+| `/api/admin/teacher/{id}/approve` | PUT | 审批导师申请 |
+| `/api/admin/teacher/{id}` | DELETE | 删除导师 |
+| `/api/admin/asset/{id}` | DELETE | 删除成果 |
+| `/api/admin/community-post/{id}` | DELETE | 删除帖子 |
 
 ---
 
-## Quick Start
+### 12. 文件与附件上传
 
-### Prerequisites
+统一文件管理，头像、成果附件、富文本图片上传。MIME 白名单校验，SHA-256 去重存储。
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/file/upload` | POST | 通用文件上传 |
+| `/api/file/{filename}` | GET | 文件下载/预览 |
+| `/api/attachment/upload` | POST | 富文本编辑器附件上传 |
+
+---
+
+### 13. 安全与基础设施
+
+- **登录限流** — `LoginAttemptService` 渐进式锁定（5分钟内 5 次失败 → 锁定 15 分钟）
+- **密码策略** — 最少 8 位，含大小写字母与数字
+- **HTML 净化** — Jsoup 自定义白名单，防范 XSS
+- **统一响应** — `Result<T>` 包装器（code + message + data）
+- **全局异常处理** — `@ControllerAdvice` 拦截校验异常、认证异常、运行时异常
+- **CSRF 防护** — Spring Security 内置，AJAX 自动携带 Token
+- **CORS 配置** — 跨域策略可配置
+
+---
+
+## 技术栈
+
+| 层级 | 技术 | 版本 |
+|------|------|------|
+| 后端框架 | Spring Boot | 2.7.18 |
+| 安全框架 | Spring Security + BCrypt + CSRF | 5.7.11 |
+| 数据库 | MySQL | 8.0+ |
+| ORM | MyBatis-Plus | 3.5.5 |
+| 实时通信 | WebSocket + STOMP (SockJS) | - |
+| 前端 | HTML5 + CSS3 + JavaScript (ES6+) | - |
+| UI 框架 | Bootstrap 5 + GSAP 动画 | 5.x / 3.x |
+| 模板引擎 | Thymeleaf | 3.0.15 |
+| 缓存 | Caffeine | 2.9.3 |
+| 数据库迁移 | Flyway | 7.11.0 |
+| API 文档 | SpringDoc OpenAPI | 1.7.0 |
+| HTML 净化 | Jsoup | 1.17.2 |
+| 测试 | JUnit 5 + Mockito + H2 | - |
+
+---
+
+## 快速开始
+
+### 环境要求
 
 - JDK 17+
-- MySQL 5.7+
+- MySQL 8.0+
 - Maven 3.9+
 
-### Database Setup
+### 数据库设置
 
 ```sql
 CREATE DATABASE ilink DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Update database configuration in `src/main/resources/application-dev.yml`:
+编辑 `src/main/resources/application-dev.yml` 配置数据库连接：
 
 ```yaml
 spring:
@@ -307,75 +323,131 @@ spring:
     password: your_password
 ```
 
-### Build & Run
+Flyway 会在启动时自动执行数据库迁移脚本（`src/main/resources/db/migration/`）。
+
+### 构建 & 运行
 
 ```bash
+# 编译
 mvn clean compile -DskipTests
+
+# 运行
 mvn spring-boot:run
 
-# Or package and run
+# 或打包运行
 mvn clean package -DskipTests
-java -jar target/ilink-*.jar
+java -jar target/iLink-1.0.jar
 ```
 
-Visit **http://localhost:8090**
+访问 **http://localhost:8090**
+
+### 测试
+
+```bash
+# 运行全部测试（使用 H2 内存数据库）
+mvn test
+```
 
 ---
 
-## Project Structure
+## 项目结构
 
 ```
 src/
 ├── main/
 │   ├── java/cn/ilink/
-│   │   ├── config/          # Configuration (Security, WebSocket, Cache, MVC, MyBatis)
-│   │   ├── controller/      # REST controllers + page controllers
-│   │   ├── service/         # Service layer interfaces
-│   │   │   └── impl/        # Service implementations
-│   │   ├── mapper/          # MyBatis Mapper interfaces
-│   │   ├── entity/          # Entity classes
-│   │   ├── dto/             # Data Transfer Objects
-│   │   ├── vo/              # View Objects
-│   │   ├── exception/       # Exception handling
-│   │   └── util/            # Utility classes
+│   │   ├── config/              # 配置类（Security, WebSocket, Cache, MVC, MyBatis-Plus, Flyway）
+│   │   ├── controller/          # REST 控制器 + 页面路由（19 个文件）
+│   │   ├── service/             # 业务接口（13 个接口）
+│   │   │   └── impl/            # 业务实现（16 个实现类）
+│   │   ├── mapper/              # MyBatis-Plus Mapper 接口（19 个）
+│   │   ├── entity/              # 实体类（20 个）
+│   │   ├── dto/                 # 请求体 DTO（18 个）
+│   │   ├── vo/                  # 响应体 VO（16 个）
+│   │   ├── common/              # 通用组件（Result 统一响应、ControllerUtils 控制器工具）
+│   │   ├── exception/           # 全局异常处理（GlobalExceptionHandler）
+│   │   ├── security/            # 安全组件（LoginAttemptService 登录限流）
+│   │   └── util/                # 工具类（HtmlSanitizer、PasswordPolicy、CacheEvictUtils、UserPreviewHelper）
 │   └── resources/
-│       ├── static/          # Static assets (CSS, JS, lib)
-│       ├── templates/       # Thymeleaf templates
-│       │   └── fragments/   # Shared fragments
-│       └── db/migration/    # Flyway migration scripts
-└── test/                    # Test code
+│       ├── static/
+│       │   ├── css/             # 样式（31 个文件）
+│       │   ├── js/              # 脚本（34 个文件）
+│       │   ├── lib/             # 第三方库（Bootstrap 5, GSAP）
+│       │   └── images/          # 图片资源
+│       ├── templates/           # Thymeleaf 模板（29 个页面 + 7 个片段）
+│       │   └── fragments/       # 共享片段（header、footer、sidebar 等）
+│       ├── db/migration/        # Flyway 数据库迁移脚本（16 个 SQL）
+│       └── application*.yml     # 多环境配置（dev / test / prod）
+└── test/
+    └── java/cn/ilink/           # 测试代码（17 个测试类，JUnit 5 + Mockito + H2）
+        ├── config/              # 安全与 WebSocket 测试
+        ├── controller/          # 控制器集成测试
+        ├── service/             # 服务层单元测试
+        └── mapper/              # Mapper 测试
 ```
 
 ---
 
-## Design System
+## 设计系统
 
-### CSS Variables
+### CSS 设计令牌（design-tokens.css v7.4）
 
 ```css
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-blur: 20px;
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --color-black: #111827;
-  --color-primary: #2563eb;
-  --color-gray: #6b7280;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --z-base: 0;
-  --z-raised: 10;
-  --z-dropdown: 100;
-  --z-sticky: 200;
-  --z-overlay: 300;
-  --z-modal: 400;
-  --z-popover: 500;
-  --z-toast: 600;
+  /* 品牌主色 — 暖灰黑 */
+  --primary: #282A2F;
+  --primary-dark: #181A1E;
+  --primary-light: #ECEDEF;
+  --accent: #73757A;
+
+  /* 灰阶 */
+  --color-gray-700: #52555C;
+  --color-gray-600: #63666D;
+  --color-gray-500: #73757A;
+  --color-gray-400: #A1A3A8;
+  --color-gray-300: #D7D8DB;
+  --color-gray-200: #E5E5E7;
+  --color-gray-100: #F1F1F2;
+  --color-gray-50: #F7F7F8;
+  --color-white: #FCFCFD;
+
+  /* 语义色 */
+  --success: #16A34A;
+  --warning: #DC2626;
+  --error: #DC2626;
+
+  /* 毛玻璃效果 */
+  --glass-blur: 16px;
+  --glass-bg: rgba(252, 252, 253, 0.98);
+  --glass-border: rgba(40, 42, 47, 0.08);
+  --glass-shadow: 0 4px 12px rgba(40, 42, 47, 0.08);
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(40, 42, 47, 0.06);
+  --shadow-md: 0 4px 12px rgba(40, 42, 47, 0.08);
+  --shadow-lg: 0 12px 24px rgba(40, 42, 47, 0.10);
+
+  /* 字体 */
+  --font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", sans-serif;
+  --font-serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
+
+  /* 过渡 */
+  --transition-fast: 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-normal: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-slow: 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 ```
 
 ---
 
-## License
+## 许可证
 
 Apache License 2.0

@@ -1,0 +1,1313 @@
+/*
+ * Team Space — 简白看板
+ * 加载顺序：team-space.css（基础） → team-space-redesign.css（本文件，压倒性覆盖）
+ */
+
+/* ============================================================
+   配色令牌
+   ============================================================ */
+html.ilink-app body[data-app-page="team-space"] {
+    --kb-bg: #fafafa;
+    --kb-surface: #ffffff;
+    --kb-subtle: #f5f5f5;
+    --kb-selected: #e8e8e8;
+    --kb-border: #e5e5e5;
+    --kb-border-strong: #d4d4d4;
+    --kb-text: #171717;
+    --kb-text-secondary: #525252;
+    --kb-text-muted: #a3a3a3;
+    --kb-warn-bg: #fef9e7;
+    --kb-warn-text: #92400e;
+    --kb-warn-border: #fcd34d;
+
+    --dot-gray: #a3a3a3;
+    --dot-blue: #3b82f6;
+    --dot-orange: #f97316;
+    --dot-green: #22c55e;
+
+    --badge-todo-bg: #f5f5f5;
+    --badge-todo-text: #525252;
+    --badge-progress-bg: #eff6ff;
+    --badge-progress-text: #1d4ed8;
+    --badge-review-bg: #fff7ed;
+    --badge-review-text: #c2410c;
+    --badge-done-bg: #f0fdf4;
+    --badge-done-text: #15803d;
+
+    --pri-high-bg: #fef2f2;
+    --pri-high-text: #dc2626;
+    --pri-mid-bg: #fefce8;
+    --pri-mid-text: #ca8a04;
+    --pri-low-bg: #f0fdf4;
+    --pri-low-text: #16a34a;
+
+    --header-height: 72px;
+
+    background: var(--kb-bg) !important;
+    color: var(--kb-text) !important;
+    font-family: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif !important;
+}
+
+/* 关闭粒子画布 */
+body[data-app-page="team-space"] .particle-canvas,
+body[data-app-page="team-space"] #particleCanvas {
+    display: none !important;
+}
+
+/* ============================================================
+   外层容器
+   ============================================================ */
+body[data-app-page="team-space"] .main-content {
+    width: 100% !important;
+    max-width: 1440px !important;
+    padding: 24px 28px 56px !important;
+    margin: 0 auto !important;
+}
+
+/* ============================================================
+   工作区网格：侧栏 240px + 主区域 flex 1
+   ============================================================ */
+body[data-app-page="team-space"] .workspace-layout {
+    display: grid !important;
+    grid-template-columns: 240px minmax(0, 1fr) !important;
+    gap: 0 !important;
+    align-items: stretch !important;
+    min-height: calc(100vh - var(--header-height) - 120px) !important;
+    margin: 0 !important;
+}
+
+/* ============================================================
+   左侧边栏 — 白底，右分隔线
+   ============================================================ */
+body[data-app-page="team-space"] .sidebar {
+    position: relative !important;
+    top: auto !important;
+    align-self: stretch !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 240px !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: var(--kb-surface) !important;
+    border: none !important;
+    border-right: 1px solid var(--kb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* ---- 侧栏头部 ---- */
+body[data-app-page="team-space"] .sidebar-header {
+    padding: 20px 20px 16px !important;
+    background: var(--kb-surface) !important;
+    border-bottom: 1px solid var(--kb-border) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-logo {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: 0 0 16px !important;
+    color: var(--kb-text) !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+}
+
+body[data-app-page="team-space"] .sidebar-logo svg {
+    width: 36px !important;
+    height: 36px !important;
+    padding: 7px !important;
+    color: var(--kb-text) !important;
+    background: var(--kb-subtle) !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+}
+
+body[data-app-page="team-space"] .sidebar-logo span {
+    overflow: visible !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* 返回按钮 */
+body[data-app-page="team-space"] .sidebar-back-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    width: 100% !important;
+    min-height: 36px !important;
+    padding: 0 12px !important;
+    color: var(--kb-text-muted) !important;
+    background: var(--kb-surface) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: color 0.15s, border-color 0.15s !important;
+    font-family: inherit !important;
+}
+
+body[data-app-page="team-space"] .sidebar-back-btn:hover {
+    color: var(--kb-text) !important;
+    border-color: var(--kb-text) !important;
+    background: var(--kb-surface) !important;
+}
+
+/* ---- 导航项 ---- */
+body[data-app-page="team-space"] .sidebar-nav {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px !important;
+    gap: 2px !important;
+    background: var(--kb-surface) !important;
+    overflow-y: auto !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 40px !important;
+    gap: 9px !important;
+    padding: 0 12px !important;
+    color: var(--kb-text-secondary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: background-color 0.12s, color 0.12s !important;
+    font-family: inherit !important;
+    text-align: left !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item svg {
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+    opacity: 0.7 !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item:hover {
+    color: var(--kb-text) !important;
+    background: var(--kb-subtle) !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item:hover svg {
+    opacity: 1 !important;
+}
+
+/* 选中态：黑底白字 */
+body[data-app-page="team-space"] .sidebar-nav-item.active,
+body[data-app-page="team-space"] .sidebar-nav-item.active:hover {
+    color: var(--kb-surface) !important;
+    background: var(--kb-text) !important;
+    font-weight: 600 !important;
+}
+
+body[data-app-page="team-space"] .sidebar-nav-item.active svg {
+	    opacity: 1 !important;
+	    color: var(--kb-text-secondary) !important;
+	}
+
+/* ---- 成员信息卡片（嵌在导航中）---- */
+body[data-app-page="team-space"] .sidebar-members-card {
+    margin: 16px 2px 0 !important;
+    padding: 14px !important;
+    background: var(--kb-subtle) !important;
+    border-radius: 8px !important;
+}
+
+.smc-avatars {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 10px !important;
+}
+
+.smc-avatar {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 2px solid var(--kb-surface) !important;
+    flex-shrink: 0 !important;
+    box-sizing: content-box !important;
+    display: none !important; /* 默认隐藏，onerror fallback 通过内联 display:inline-flex 显示 */
+}
+
+.smc-avatar-fb {
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: var(--kb-selected) !important;
+    color: var(--kb-text-secondary) !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    /* display 内联控制，不在这里写 */
+}
+
+.smc-avatar[src] {
+    display: block !important;
+}
+
+.smc-avatar-extra {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    background: var(--kb-selected) !important;
+    color: var(--kb-text-muted) !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    margin-left: -8px !important;
+    border-radius: 50% !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .smc-info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+}
+html.ilink-app body[data-app-page="team-space"] .smc-status {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 1px 6px !important;
+    color: #16a34a !important;
+    background: #f0fdf4 !important;
+    border-radius: 4px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.6 !important;
+    width: fit-content !important;
+}
+html.ilink-app body[data-app-page="team-space"] .smc-deadline {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+    color: #a3a3a3 !important;
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+}
+html.ilink-app body[data-app-page="team-space"] .smc-deadline svg {
+    flex-shrink: 0 !important;
+    opacity: 0.6 !important;
+}
+html.ilink-app body[data-app-page="team-space"] .sidebar-footer {
+    display: none !important;
+}
+
+/* ---- 旧 footer 隐藏 ---- */
+body[data-app-page="team-space"] .sidebar-footer {
+    display: none !important;
+}
+
+/* ============================================================
+   主内容区
+   ============================================================ */
+body[data-app-page="team-space"] .main-content-area {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0 0 0 32px !important;
+}
+
+body[data-app-page="team-space"] .workspace-panel {
+    display: none !important;
+    flex-direction: column !important;
+}
+
+body[data-app-page="team-space"] .workspace-panel.active {
+    display: flex !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   顶部标题栏
+   ============================================================ */
+body[data-app-page="team-space"] .panel-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    min-height: 0 !important;
+    padding: 0 0 24px !important;
+    background: transparent !important;
+    border-bottom: none !important;
+    flex-shrink: 0 !important;
+}
+
+body[data-app-page="team-space"] .panel-title {
+    color: var(--kb-text) !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em !important;
+    margin: 0 !important;
+}
+
+body[data-app-page="team-space"] .panel-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+/* 创建任务按钮 */
+body[data-app-page="team-space"] .panel-actions .btn,
+body[data-app-page="team-space"] .panel-actions .btn-primary {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 36px !important;
+    gap: 6px !important;
+    padding: 0 16px !important;
+    color: var(--kb-surface) !important;
+    background: var(--kb-text) !important;
+    border: 1px solid var(--kb-text) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: transform 0.15s, box-shadow 0.15s !important;
+    font-family: inherit !important;
+}
+
+body[data-app-page="team-space"] .panel-actions .btn:hover,
+body[data-app-page="team-space"] .panel-actions .btn-primary:hover {
+    background: #0a0a0a !important;
+    border-color: #0a0a0a !important;
+    color: var(--kb-surface) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+}
+
+body[data-app-page="team-space"] .panel-actions .btn-outline-secondary {
+    color: var(--kb-text-secondary) !important;
+    background: var(--kb-surface) !important;
+    border: 1px solid var(--kb-border) !important;
+}
+
+body[data-app-page="team-space"] .panel-actions .btn-outline-secondary:hover {
+    color: var(--kb-text) !important;
+    background: var(--kb-subtle) !important;
+    border-color: var(--kb-border-strong) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   看板区域
+   ============================================================ */
+body[data-app-page="team-space"] .kanban-board {
+    flex: 1 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .kanban-columns,
+.kanban-columns {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    align-items: stretch !important;
+}
+
+/* ---- 看板列 ---- */
+body[data-app-page="team-space"] .kanban-col {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+body[data-app-page="team-space"] .kanban-col.col-completed {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* 拖拽悬停态 */
+body[data-app-page="team-space"] .kanban-col.drag-over {
+    background: transparent !important;
+    border: none !important;
+}
+
+body[data-app-page="team-space"] .kanban-col.drag-over .kanban-col-list {
+    background: var(--kb-subtle) !important;
+    border-radius: 8px !important;
+    box-shadow: inset 0 0 0 2px var(--kb-text) !important;
+}
+
+/* ---- 列标题 ---- */
+body[data-app-page="team-space"] .kanban-col-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 0 !important;
+    padding: 0 0 12px !important;
+    background: transparent !important;
+    border-bottom: 1px solid var(--kb-border) !important;
+    flex-shrink: 0 !important;
+}
+
+body[data-app-page="team-space"] .kanban-col-label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: var(--kb-text) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+/* 列标题状态圆点 */
+body[data-app-page="team-space"] .col-dot,
+body[data-app-page="team-space"] .col-dot-gray,
+body[data-app-page="team-space"] .col-dot-blue,
+body[data-app-page="team-space"] .col-dot-orange,
+body[data-app-page="team-space"] .col-dot-green {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+}
+
+body[data-app-page="team-space"] .col-dot-gray { background: var(--dot-gray) !important; }
+body[data-app-page="team-space"] .col-dot-blue { background: var(--dot-blue) !important; }
+body[data-app-page="team-space"] .col-dot-orange { background: var(--dot-orange) !important; }
+body[data-app-page="team-space"] .col-dot-green { background: var(--dot-green) !important; }
+/* 旧的统一灰 dots 也要能区分颜色 */
+body[data-app-page="team-space"] .col-dot { background: var(--dot-gray) !important; }
+
+/* 计数胶囊 */
+body[data-app-page="team-space"] .kanban-col-count {
+    min-width: 22px !important;
+    padding: 2px 8px !important;
+    color: var(--kb-text-secondary) !important;
+    background: var(--kb-subtle) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+}
+
+/* ---- 列内容区 ---- */
+body[data-app-page="team-space"] .kanban-col-list {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 12px 0 0 !important;
+    overflow-y: auto !important;
+}
+
+/* 滚动条 */
+body[data-app-page="team-space"] .kanban-col-list::-webkit-scrollbar,
+body[data-app-page="team-space"] .chat-messages-area::-webkit-scrollbar,
+body[data-app-page="team-space"] .members-list-area::-webkit-scrollbar {
+    width: 4px !important;
+    height: 4px !important;
+}
+
+body[data-app-page="team-space"] .kanban-col-list::-webkit-scrollbar-thumb,
+body[data-app-page="team-space"] .chat-messages-area::-webkit-scrollbar-thumb,
+body[data-app-page="team-space"] .members-list-area::-webkit-scrollbar-thumb {
+    background: var(--kb-border) !important;
+    border-radius: 999px !important;
+}
+
+body[data-app-page="team-space"] .kanban-col-list::-webkit-scrollbar-track,
+body[data-app-page="team-space"] .chat-messages-area::-webkit-scrollbar-track,
+body[data-app-page="team-space"] .members-list-area::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+/* ============================================================
+   任务卡片
+   ============================================================ */
+body[data-app-page="team-space"] .task-card {
+    position: relative !important;
+    padding: 14px !important;
+    background: var(--kb-surface) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s !important;
+    flex-shrink: 0 !important;
+}
+
+/* hover 效果 */
+body[data-app-page="team-space"] .task-card:hover {
+    background: var(--kb-surface) !important;
+    border-color: var(--kb-border-strong) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* 已完成卡片降低视觉权重 */
+body[data-app-page="team-space"] .col-completed .task-card,
+body[data-app-page="team-space"] .kanban-col.col-completed .task-card {
+    opacity: 0.7 !important;
+}
+
+body[data-app-page="team-space"] .col-completed .task-card-title,
+body[data-app-page="team-space"] .kanban-col.col-completed .task-card-title {
+    text-decoration: line-through !important;
+}
+
+/* 拖拽状态 */
+body[data-app-page="team-space"] .task-card.dragging {
+    opacity: 0.45 !important;
+    transform: rotate(1deg) !important;
+}
+
+/* ---- 卡片头部 ---- */
+body[data-app-page="team-space"] .task-card-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+}
+
+/* 标题 */
+body[data-app-page="team-space"] .task-card-title {
+    margin: 0 !important;
+    color: var(--kb-text) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    word-break: break-word !important;
+}
+
+/* ---- 状态徽章 ---- */
+body[data-app-page="team-space"] .task-status-badge,
+body[data-app-page="team-space"] .task-status-badge--todo,
+body[data-app-page="team-space"] .task-status-badge--progress,
+body[data-app-page="team-space"] .task-status-badge--review,
+body[data-app-page="team-space"] .badge-ilink {
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    padding: 3px 9px !important;
+    border-radius: 999px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.5 !important;
+    white-space: nowrap !important;
+}
+
+body[data-app-page="team-space"] .task-status-badge--todo {
+    color: var(--badge-todo-text) !important;
+    background: var(--badge-todo-bg) !important;
+    border: 1px solid var(--kb-border) !important;
+}
+
+body[data-app-page="team-space"] .task-status-badge--progress {
+    color: var(--badge-progress-text) !important;
+    background: var(--badge-progress-bg) !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+body[data-app-page="team-space"] .task-status-badge--review {
+    color: var(--badge-review-text) !important;
+    background: var(--badge-review-bg) !important;
+    border: 1px solid #fed7aa !important;
+}
+
+body[data-app-page="team-space"] .task-status-badge--done,
+body[data-app-page="team-space"] .badge-ilink--dark {
+    color: var(--badge-done-text) !important;
+    background: var(--badge-done-bg) !important;
+    border: 1px solid #bbf7d0 !important;
+}
+
+/* 通用状态徽章（无具体状态类时） */
+body[data-app-page="team-space"] .task-status-badge {
+    color: var(--badge-todo-text) !important;
+    background: var(--badge-todo-bg) !important;
+    border: 1px solid var(--kb-border) !important;
+}
+
+/* ---- 描述 ---- */
+body[data-app-page="team-space"] .task-card-desc {
+    margin: 10px 0 12px !important;
+    color: var(--kb-text-secondary) !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: visible !important;
+}
+
+/* ---- 标签 ---- */
+body[data-app-page="team-space"] .task-card-tags {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-bottom: 12px !important;
+}
+
+body[data-app-page="team-space"] .task-card-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 20px !important;
+    padding: 0 8px !important;
+    color: var(--kb-text-secondary) !important;
+    background: var(--kb-subtle) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 999px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+}
+
+/* 优先级标签：按 data-priority 着色 */
+body[data-app-page="team-space"] .task-priority-tag[data-priority="3"],
+body[data-app-page="team-space"] .task-priority-tag[data-priority="4"] {
+    color: var(--pri-high-text) !important;
+    background: var(--pri-high-bg) !important;
+    border-color: #fecaca !important;
+}
+
+body[data-app-page="team-space"] .task-priority-tag[data-priority="2"] {
+    color: var(--pri-mid-text) !important;
+    background: var(--pri-mid-bg) !important;
+    border-color: #fde68a !important;
+}
+
+body[data-app-page="team-space"] .task-priority-tag[data-priority="1"] {
+    color: var(--pri-low-text) !important;
+    background: var(--pri-low-bg) !important;
+    border-color: #bbf7d0 !important;
+}
+
+/* 优先级标签色彩 */
+body[data-app-page="team-space"] .task-card-tag:has-text("优先级 高"),
+body[data-app-page="team-space"] .task-card-tag[data-priority="high"] {
+    color: var(--pri-high-text) !important;
+    background: var(--pri-high-bg) !important;
+}
+
+/* 使用属性选择器无法匹配动态文本，改用 JS 端方案 — 保留基础样式即可 */
+
+/* ---- 卡片底部 ---- */
+body[data-app-page="team-space"] .task-card-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    color: var(--kb-text-muted) !important;
+    font-size: 12px !important;
+}
+
+body[data-app-page="team-space"] .task-card-overdue {
+    color: #dc2626 !important;
+    font-weight: 600 !important;
+}
+
+/* 负责人头像 */
+body[data-app-page="team-space"] .task-card-assignee {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    color: var(--kb-text-secondary) !important;
+    font-size: 12px !important;
+}
+
+body[data-app-page="team-space"] .task-card-assignee img,
+body[data-app-page="team-space"] .task-card-assignee > span:first-child {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    flex-shrink: 0 !important;
+}
+
+body[data-app-page="team-space"] .task-card-assignee > span:first-child {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--kb-subtle) !important;
+    color: var(--kb-text-secondary) !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+}
+
+/* ============================================================
+   空状态
+   ============================================================ */
+body[data-app-page="team-space"] .kanban-empty {
+    min-height: 120px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 32px 16px !important;
+    color: var(--kb-text-secondary) !important;
+    background: transparent !important;
+    border: 2px dashed var(--kb-border) !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    text-align: center !important;
+    transition: border-color 0.15s, background 0.15s !important;
+}
+
+body[data-app-page="team-space"] .kanban-empty:hover {
+    border-color: var(--kb-border-strong) !important;
+    background: var(--kb-subtle) !important;
+}
+
+body[data-app-page="team-space"] .kanban-empty-icon {
+    width: 40px !important;
+    height: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 8px !important;
+    color: var(--kb-text-muted) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body[data-app-page="team-space"] .kanban-empty p {
+    margin: 4px 0 0 !important;
+    font-size: 12px !important;
+    color: var(--kb-text-muted) !important;
+}
+
+/* ============================================================
+   加载态
+   ============================================================ */
+body[data-app-page="team-space"] .panel-loading {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 40px !important;
+    color: var(--kb-text-muted) !important;
+    font-size: 13px !important;
+}
+
+/* ============================================================
+   团队警告条
+   ============================================================ */
+html.ilink-app body[data-app-page="team-space"] .team-warning,
+body[data-app-page="team-space"] .team-warning {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+}
+
+body[data-app-page="team-space"] .team-warning-icon {
+    color: var(--kb-warn-text) !important;
+    flex-shrink: 0 !important;
+    font-size: 18px !important;
+}
+
+body[data-app-page="team-space"] .team-warning strong {
+    color: var(--kb-warn-text) !important;
+    font-size: 14px !important;
+}
+
+body[data-app-page="team-space"] .team-warning p {
+    margin-top: 2px !important;
+    color: var(--kb-warn-text) !important;
+    opacity: 0.8 !important;
+    font-size: 13px !important;
+}
+
+/* ============================================================
+   连接按钮 & 辅助控件
+   ============================================================ */
+body[data-app-page="team-space"] .btn-outline-secondary {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    min-height: 36px !important;
+    padding: 0 12px !important;
+    color: var(--kb-text-secondary) !important;
+    background: var(--kb-surface) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: border-color 0.15s, color 0.15s !important;
+    font-family: inherit !important;
+}
+
+body[data-app-page="team-space"] .btn-outline-secondary:hover {
+    color: var(--kb-text) !important;
+    border-color: var(--kb-border-strong) !important;
+    background: var(--kb-surface) !important;
+}
+
+/* ============================================================
+   聊天面板 — 保持简白
+   ============================================================ */
+body[data-app-page="team-space"] .chat-window-panel.active {
+    height: auto !important;
+    min-height: 560px !important;
+    max-width: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body[data-app-page="team-space"] .chat-window-panel .panel-header {
+    min-height: 0 !important;
+    padding: 0 0 20px !important;
+    border-bottom: 1px solid var(--kb-border) !important;
+}
+
+body[data-app-page="team-space"] .chat-messages-area {
+    flex: 1 !important;
+    padding: 20px 0 !important;
+    background: transparent !important;
+    gap: 14px !important;
+}
+
+body[data-app-page="team-space"] .chat-msg {
+    gap: 10px !important;
+    margin: 0 !important;
+    max-width: min(76%, 680px) !important;
+}
+
+body[data-app-page="team-space"] .chat-msg-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    color: var(--kb-text-secondary) !important;
+    background: var(--kb-subtle) !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+}
+
+body[data-app-page="team-space"] .chat-msg-avatar span,
+body[data-app-page="team-space"] .chat-msg-avatar > img {
+    border-radius: 50% !important;
+}
+
+body[data-app-page="team-space"] .chat-msg-bubble {
+    padding: 10px 14px !important;
+    color: var(--kb-text) !important;
+    background: var(--kb-surface) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+}
+
+body[data-app-page="team-space"] .chat-msg.sent .chat-msg-bubble {
+    color: var(--kb-surface) !important;
+    background: var(--kb-text) !important;
+    border-color: var(--kb-text) !important;
+}
+
+body[data-app-page="team-space"] .chat-msg-name,
+body[data-app-page="team-space"] .chat-msg-time {
+    color: var(--kb-text-muted) !important;
+    font-size: 12px !important;
+}
+
+body[data-app-page="team-space"] .chat-composer {
+    padding: 16px 0 0 !important;
+    background: transparent !important;
+    border-top: 1px solid var(--kb-border) !important;
+}
+
+body[data-app-page="team-space"] .chat-input-bar textarea {
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+    color: var(--kb-text) !important;
+    background: var(--kb-subtle) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    font-family: inherit !important;
+    resize: none !important;
+}
+
+body[data-app-page="team-space"] .chat-input-bar textarea:focus {
+    background: var(--kb-surface) !important;
+    border-color: var(--kb-text) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(23,23,23,0.08) !important;
+}
+
+body[data-app-page="team-space"] .chat-send-btn,
+body[data-app-page="team-space"] .chat-window-panel .chat-send-btn {
+    min-width: 72px !important;
+    height: 44px !important;
+    padding: 0 16px !important;
+    color: var(--kb-surface) !important;
+    background: var(--kb-text) !important;
+    border: 1px solid var(--kb-text) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    font-family: inherit !important;
+}
+
+body[data-app-page="team-space"] .chat-send-btn:hover,
+body[data-app-page="team-space"] .chat-window-panel .chat-send-btn:hover {
+    background: #0a0a0a !important;
+    border-color: #0a0a0a !important;
+    color: var(--kb-surface) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+body[data-app-page="team-space"] .chat-send-btn:disabled {
+    color: var(--kb-text-muted) !important;
+    background: var(--kb-subtle) !important;
+    border-color: var(--kb-border) !important;
+    cursor: not-allowed !important;
+}
+
+/* 聊天工具栏 */
+body[data-app-page="team-space"] .chat-tool-row {
+    min-height: 32px !important;
+    margin-bottom: 8px !important;
+}
+
+body[data-app-page="team-space"] .chat-tool-btn {
+    width: 32px !important;
+    height: 32px !important;
+    color: var(--kb-text-muted) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+}
+
+body[data-app-page="team-space"] .chat-tool-btn:hover {
+    color: var(--kb-text) !important;
+    background: var(--kb-subtle) !important;
+}
+
+/* 连接状态 */
+body[data-app-page="team-space"] .conn-status {
+    min-height: 0 !important;
+    padding: 2px 8px !important;
+    color: var(--kb-text-muted) !important;
+    background: var(--kb-subtle) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 999px !important;
+    font-size: 11px !important;
+}
+
+body[data-app-page="team-space"] .conn-status.connected {
+    color: #15803d !important;
+    background: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+}
+
+body[data-app-page="team-space"] .conn-status.disconnected {
+    color: #dc2626 !important;
+    background: #fef2f2 !important;
+    border-color: #fecaca !important;
+}
+
+/* ============================================================
+   成员面板
+   ============================================================ */
+body[data-app-page="team-space"] .members-list-area {
+    padding: 4px 0 16px !important;
+    background: transparent !important;
+    gap: 0 !important;
+}
+
+body[data-app-page="team-space"] .member-card {
+    display: flex !important;
+    align-items: center !important;
+    min-height: 64px !important;
+    gap: 12px !important;
+    padding: 14px 0 !important;
+    color: var(--kb-text) !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid var(--kb-border) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+}
+
+body[data-app-page="team-space"] .member-card:hover {
+    background: var(--kb-subtle) !important;
+    border-color: var(--kb-border) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+body[data-app-page="team-space"] .member-card-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    background: var(--kb-subtle) !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+}
+
+body[data-app-page="team-space"] .member-card-avatar img,
+body[data-app-page="team-space"] .member-card-avatar .avatar-placeholder {
+    border-radius: 50% !important;
+}
+
+body[data-app-page="team-space"] .member-card-name {
+    color: var(--kb-text) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+}
+
+body[data-app-page="team-space"] .member-card-role,
+body[data-app-page="team-space"] .member-card-meta {
+    color: var(--kb-text-muted) !important;
+    font-size: 12px !important;
+}
+
+body[data-app-page="team-space"] .skill-tag {
+    padding: 2px 8px !important;
+    color: var(--kb-text-secondary) !important;
+    background: var(--kb-subtle) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 6px !important;
+    font-size: 10px !important;
+    font-weight: 500 !important;
+}
+
+/* ============================================================
+	   Modal 弹窗 — 简白
+	   ============================================================ */
+	body[data-app-page="team-space"] .modal.show {
+	    display: flex !important;
+	    align-items: center !important;
+	    justify-content: center !important;
+	}
+
+	body[data-app-page="team-space"] .modal-content {
+    color: var(--kb-text) !important;
+    background: var(--kb-surface) !important;
+    border: 1px solid var(--kb-border) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12) !important;
+}
+
+body[data-app-page="team-space"] .modal-header,
+body[data-app-page="team-space"] .modal-footer {
+    padding: 16px 20px !important;
+    background: var(--kb-surface) !important;
+    border-color: var(--kb-border) !important;
+}
+
+body[data-app-page="team-space"] .modal-body {
+    padding: 20px !important;
+}
+
+body[data-app-page="team-space"] .modal-title,
+body[data-app-page="team-space"] .form-label {
+    color: var(--kb-text) !important;
+}
+
+body[data-app-page="team-space"] .form-label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+body[data-app-page="team-space"] .form-control,
+body[data-app-page="team-space"] .form-select {
+    min-height: 40px !important;
+    color: var(--kb-text) !important;
+    background-color: var(--kb-surface) !important;
+    border-color: var(--kb-border) !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-family: inherit !important;
+}
+
+body[data-app-page="team-space"] textarea.form-control {
+    min-height: 88px !important;
+}
+
+body[data-app-page="team-space"] .form-control:focus,
+body[data-app-page="team-space"] .form-select:focus {
+    border-color: var(--kb-text) !important;
+    box-shadow: 0 0 0 3px rgba(23,23,23,0.08) !important;
+}
+
+body[data-app-page="team-space"] .modal-footer .btn {
+    min-height: 40px !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    font-family: inherit !important;
+}
+
+body[data-app-page="team-space"] .modal-footer .btn-secondary {
+    color: var(--kb-text-secondary) !important;
+    background: var(--kb-surface) !important;
+    border: 1px solid var(--kb-border) !important;
+}
+
+body[data-app-page="team-space"] .modal-footer .btn-primary {
+    color: var(--kb-surface) !important;
+    background: var(--kb-text) !important;
+    border: 1px solid var(--kb-text) !important;
+}
+
+/* ============================================================
+   移动端适配
+   ============================================================ */
+@media (max-width: 980px) {
+    body[data-app-page="team-space"] .main-content {
+        padding: 18px 18px 48px !important;
+    }
+
+    body[data-app-page="team-space"] .workspace-layout {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar {
+        position: static !important;
+        width: 100% !important;
+        max-height: none !important;
+        min-height: 0 !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--kb-border) !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-header {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-logo {
+        margin: 0 !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-back-btn {
+        width: auto !important;
+        min-width: 76px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        padding: 8px !important;
+        overflow: visible !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-nav-item {
+        justify-content: center !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-footer-info {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .sidebar-footer-row {
+        align-items: flex-start !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+    }
+
+    body[data-app-page="team-space"] .main-content-area {
+        padding: 0 !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-columns {
+        grid-template-columns: repeat(2, minmax(250px, 1fr)) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    body[data-app-page="team-space"] .main-content {
+        padding: 12px 12px 32px !important;
+    }
+
+    body[data-app-page="team-space"] .workspace-layout {
+        gap: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .panel-header {
+        align-items: flex-start !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    body[data-app-page="team-space"] .panel-actions {
+        width: 100% !important;
+    }
+
+    body[data-app-page="team-space"] .panel-actions .btn {
+        flex: 1 1 0 !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-columns {
+        grid-template-columns: repeat(4, minmax(250px, 80vw)) !important;
+        min-width: max-content !important;
+        overflow-x: auto !important;
+    }
+
+    body[data-app-page="team-space"] .kanban-board {
+        overflow-x: auto !important;
+    }
+
+    body[data-app-page="team-space"] .task-card {
+        padding: 12px !important;
+    }
+}
+
+/* 无障碍：减弱动画 */
+@media (prefers-reduced-motion: reduce) {
+    body[data-app-page="team-space"] *,
+    body[data-app-page="team-space"] *::before,
+    body[data-app-page="team-space"] *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}

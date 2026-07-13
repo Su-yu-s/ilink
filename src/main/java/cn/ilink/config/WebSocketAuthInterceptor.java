@@ -1,17 +1,21 @@
 package cn.ilink.config;
 
 import cn.ilink.entity.User;
+import cn.ilink.service.TeamAccessService;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpSession;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -21,6 +25,17 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  */
 @Component
 public class WebSocketAuthInterceptor implements ChannelInterceptor {
+
+    private static final Pattern TEAM_TOPIC_DESTINATION = Pattern.compile("^/topic/team/(\\d+)$");
+    private static final Pattern NOTIFICATION_DESTINATION = Pattern.compile(
+        "^/topic/notification/(\\d+)(?:/(?:unread|mark-all-read))?$");
+    private static final Pattern CHAT_DESTINATION = Pattern.compile("^/app/chat/(\\d+)$");
+
+    private final TeamAccessService teamAccessService;
+
+    public WebSocketAuthInterceptor(TeamAccessService teamAccessService) {
+        this.teamAccessService = teamAccessService;
+    }
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -34,11 +49,70 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             || StompCommand.SUBSCRIBE.equals(command)) {
             User user = resolveUser(accessor);
             if (user == null) {
-                throw new IllegalStateException("未登录，无法使用聊天服务");
+                throw new AccessDeniedException("Authentication is required for WebSocket access");
             }
-            accessor.setUser(() -> String.valueOf(user.getId()));
+            // Inbound STOMP frames are commonly immutable by the time they
+            // reach this interceptor. Session attributes remain the source of
+            // truth for authorization; only set a Principal when the frame is
+            // still mutable so a valid frame is never rejected by header writes.
+            if (accessor.isMutable()) {
+                accessor.setUser(() -> String.valueOf(user.getId()));
+            }
+
+            if (StompCommand.SUBSCRIBE.equals(command)) {
+                assertCanSubscribe(accessor.getDestination(), user);
+            } else if (StompCommand.SEND.equals(command)) {
+                assertCanSend(accessor.getDestination(), user);
+            }
         }
         return message;
+    }
+
+    private void assertCanSubscribe(String destination, User user) {
+        Matcher teamTopic = TEAM_TOPIC_DESTINATION.matcher(safeDestination(destination));
+        if (teamTopic.matches()) {
+            assertTeamParticipant(teamTopic.group(1), user);
+            return;
+        }
+
+        Matcher notificationTopic = NOTIFICATION_DESTINATION.matcher(safeDestination(destination));
+        if (notificationTopic.matches() && user.getId() != null
+            && user.getId().equals(parsePositiveId(notificationTopic.group(1)))) {
+            return;
+        }
+
+        throw new AccessDeniedException("Not allowed to subscribe to this destination");
+    }
+
+    private void assertCanSend(String destination, User user) {
+        Matcher chatDestination = CHAT_DESTINATION.matcher(safeDestination(destination));
+        if (chatDestination.matches()) {
+            assertTeamParticipant(chatDestination.group(1), user);
+            return;
+        }
+
+        throw new AccessDeniedException("Not allowed to send to this destination");
+    }
+
+    private void assertTeamParticipant(String rawTeamId, User user) {
+        Long teamId = parsePositiveId(rawTeamId);
+        if (teamId == null || user.getId() == null
+            || !teamAccessService.isTeamParticipant(teamId, user.getId())) {
+            throw new AccessDeniedException("Not a member of this team");
+        }
+    }
+
+    private Long parsePositiveId(String rawValue) {
+        try {
+            long value = Long.parseLong(rawValue);
+            return value > 0 ? value : null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private String safeDestination(String destination) {
+        return destination == null ? "" : destination;
     }
 
     /**

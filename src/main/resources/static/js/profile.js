@@ -760,14 +760,22 @@ function renderOverview(user, honorsList, activity) {
     );
     const identityTitle = `${displayName} · ${escapeHtml(roleLabel)}`;
     const emailLine = user.email ? escapeHtml(user.email) : '未填写邮箱';
-    const basicRows = [
-        { label: '姓名', value: user.realName || '' },
-        { label: '用户名', value: user.username || '' },
-        { label: '年级', value: user.grade || '' },
-        { label: '专业', value: user.major || '' },
-        { label: '学校', value: user.school || '' },
-        { label: '学院', value: user.college || '' }
-    ];
+    const basicRows = role === 'TEACHER'
+        ? [
+            { label: '姓名', value: user.realName || '' },
+            { label: '用户名', value: user.username || '' },
+            { label: '专业领域', value: user.major || '' },
+            { label: '任职单位', value: user.school || '' },
+            { label: '院系 / 部门', value: user.college || '' }
+        ]
+        : [
+            { label: '姓名', value: user.realName || '' },
+            { label: '用户名', value: user.username || '' },
+            { label: '年级', value: user.grade || '' },
+            { label: '专业', value: user.major || '' },
+            { label: '学校', value: user.school || '' },
+            { label: '学院', value: user.college || '' }
+        ];
     const basicInfoHtml = `
         <div class="profile-public-basic">
             <h3 class="profile-snippet-title mb-2">基本信息</h3>
@@ -934,14 +942,22 @@ function renderPublicOverview(vo, honorsList) {
         (vo.username && String(vo.username).trim()) || vo.realName || '用户'
     );
     const identityTitle = `${displayName} · ${escapeHtml(roleLabel)}`;
-    const basicRows = [
-        { label: '姓名', value: vo.realName || '' },
-        { label: '用户名', value: vo.username || '' },
-        { label: '年级', value: vo.grade || '' },
-        { label: '专业', value: vo.major || '' },
-        { label: '学校', value: vo.school || '' },
-        { label: '学院', value: vo.college || '' }
-    ];
+    const basicRows = role === 'TEACHER'
+        ? [
+            { label: '姓名', value: vo.realName || '' },
+            { label: '用户名', value: vo.username || '' },
+            { label: '专业领域', value: vo.major || '' },
+            { label: '任职单位', value: vo.school || '' },
+            { label: '院系 / 部门', value: vo.college || '' }
+        ]
+        : [
+            { label: '姓名', value: vo.realName || '' },
+            { label: '用户名', value: vo.username || '' },
+            { label: '年级', value: vo.grade || '' },
+            { label: '专业', value: vo.major || '' },
+            { label: '学校', value: vo.school || '' },
+            { label: '学院', value: vo.college || '' }
+        ];
     const basicInfoHtml = `
         <div class="profile-public-basic">
             <h3 class="profile-snippet-title mb-2">基本信息</h3>
@@ -1296,7 +1312,7 @@ async function saveProfilePayload(includeHonors) {
     if (realNameElem) profileData.realName = realNameElem.value;
     if (avatarElem) profileData.avatar = avatarElem.value;
     if (genderElem) profileData.gender = genderElem.value;
-    if (gradeElem) profileData.grade = gradeElem.value;
+    if (gradeElem && window.__ilinkProfileRole !== 'TEACHER') profileData.grade = gradeElem.value;
     if (majorElem) profileData.major = majorElem.value;
     if (schoolElem) profileData.school = schoolElem.value;
     if (collegeElem) profileData.college = collegeElem.value;
@@ -1311,6 +1327,129 @@ async function saveProfilePayload(includeHonors) {
         body: JSON.stringify(profileData)
     });
     return response.json();
+}
+
+function setProfileText(id, value, fallback) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = String(value || '').trim() || fallback || '未设置';
+}
+
+function applyRoleAwareProfileLabels(user) {
+    const isTeacher = user && user.role === 'TEACHER';
+    window.__ilinkProfileRole = isTeacher ? 'TEACHER' : (user && user.role) || 'STUDENT';
+    const teacherFields = document.getElementById('teacherProfileFields');
+    const studentGradeGroup = document.getElementById('studentGradeGroup');
+    const grade = document.getElementById('grade');
+    const schoolLabel = document.getElementById('schoolLabel');
+    const majorLabel = document.getElementById('majorLabel');
+    const collegeLabel = document.getElementById('collegeLabel');
+    const school = document.getElementById('school');
+    const major = document.getElementById('major');
+    const college = document.getElementById('college');
+    const formTitle = document.querySelector('#profileForm .il-section-header .il-section-title');
+    const formSubtitle = document.querySelector('#profileForm .il-section-header .il-section-subtitle');
+
+    if (teacherFields) teacherFields.hidden = !isTeacher;
+    if (studentGradeGroup) studentGradeGroup.hidden = isTeacher;
+    if (grade) grade.disabled = isTeacher;
+    if (schoolLabel) schoolLabel.textContent = isTeacher ? '任职单位' : '学校';
+    if (majorLabel) majorLabel.textContent = isTeacher ? '专业领域' : '专业';
+    if (collegeLabel) collegeLabel.textContent = isTeacher ? '院系 / 部门' : '学院';
+    if (school) school.placeholder = '例如：南京晓庄学院';
+    if (major) major.placeholder = isTeacher ? '例如：软件工程、人工智能' : '例如：软件工程';
+    if (college) college.placeholder = isTeacher ? '例如：计算机学院 / 信息中心' : '例如：信息工程学院';
+    if (formTitle) formTitle.textContent = isTeacher ? '教师基本信息' : '基本信息';
+    if (formSubtitle) formSubtitle.textContent = isTeacher
+        ? '完善任职信息与导师档案，让学生准确了解您的指导方向'
+        : '完善个人资料，让更多人了解你';
+}
+
+function applyRoleAwareOverviewLayout(user) {
+    const isTeacher = user && user.role === 'TEACHER';
+    const activityCard = document.getElementById('activitySectionCard');
+    if (activityCard) {
+        activityCard.hidden = isTeacher;
+        activityCard.setAttribute('aria-hidden', isTeacher ? 'true' : 'false');
+    }
+
+    const institution = document.getElementById('profileInstitutionText');
+    if (institution) {
+        institution.textContent = isTeacher
+            ? (user.school || '未设置任职单位')
+            : (user.school || '未设置学校');
+    }
+}
+
+async function syncTeacherProfile(user, page) {
+    applyRoleAwareProfileLabels(user);
+    applyRoleAwareOverviewLayout(user);
+    const isTeacher = user && user.role === 'TEACHER';
+    const summary = document.getElementById('teacherProfileSummary');
+    if (!isTeacher) {
+        if (summary) summary.hidden = true;
+        return;
+    }
+
+    try {
+        const response = await apiFetch('/api/teacher/me', { credentials: 'same-origin' });
+        const result = await response.json();
+        if (!response.ok || !result || Number(result.code) !== 200 || !result.data) {
+            throw new Error((result && result.message) || '导师档案暂时不可用');
+        }
+        const teacher = result.data;
+        if (page === 'edit') {
+            const title = document.getElementById('professionalTitle');
+            const research = document.getElementById('teacherResearch');
+            const introduction = document.getElementById('teacherIntroduction');
+            const projects = document.getElementById('teacherProjects');
+            if (title) title.value = teacher.professionalTitle || '';
+            if (research) research.value = teacher.researchDirection || '';
+            if (introduction) introduction.value = teacher.introduction || '';
+            if (projects) projects.value = teacher.projects || '';
+        }
+        if (summary) {
+            summary.hidden = false;
+            setProfileText('teacherSummaryExpertise', teacher.expertise, '未设置');
+            setProfileText('teacherSummaryTitle', teacher.professionalTitle, '未设置');
+            setProfileText('teacherSummaryResearch', teacher.researchDirection, '未设置');
+            setProfileText('teacherSummaryProjects', teacher.projects, '未设置');
+            const detailLink = document.getElementById('teacherProfileDetailLink');
+            if (detailLink && teacher.id) {
+                detailLink.href = '/teacher-detail.html?id=' + encodeURIComponent(String(teacher.id));
+            }
+            const institution = document.getElementById('profileInstitutionText');
+            if (institution) institution.textContent = user.school || '未设置任职单位';
+        }
+    } catch (error) {
+        console.error('同步导师资料失败:', error);
+        if (summary) {
+            summary.hidden = false;
+            setProfileText('teacherSummaryExpertise', user.major, '未设置');
+            setProfileText('teacherSummaryTitle', '', '待完善');
+            setProfileText('teacherSummaryResearch', '', '待完善');
+            setProfileText('teacherSummaryProjects', '', '待完善');
+        }
+    }
+}
+
+async function saveTeacherProfilePayload() {
+    const payload = {
+        professionalTitle: (document.getElementById('professionalTitle') || {}).value || '',
+        researchDirection: (document.getElementById('teacherResearch') || {}).value || '',
+        introduction: (document.getElementById('teacherIntroduction') || {}).value || '',
+        projects: (document.getElementById('teacherProjects') || {}).value || ''
+    };
+    const response = await apiFetch('/api/teacher/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (!response.ok || !result || Number(result.code) !== 200) {
+        throw new Error((result && result.message) || '导师资料保存失败');
+    }
+    return result;
 }
 
 let myTeamsStatusFilter = 'ALL';
@@ -1932,6 +2071,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                         return normalizeHonor(x);
                     });
                     applyUserToProfileForm(u);
+                    syncTeacherProfile(u, page);
                     bindAvatarPreview();
                     updateAvatarClearButton();
                 })
@@ -1954,7 +2094,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
         const ct = response.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) {
+        if (!ct.includes('application/json') && response.status === 401) {
             console.error('获取用户信息：响应非 JSON', response.status);
             showMessage('登录状态异常或会话已失效，请重新登录', 'warning');
             setTimeout(function () {
@@ -1965,11 +2105,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         const result = await response.json();
 
+        if (Number(result.code) !== 200 && Number(result.code) !== 401) {
+            showMessage('获取用户信息失败: ' + (result.message || '请稍后重试'), 'error');
+            return;
+        }
+
         if (Number(result.code) === 200) {
             const user = result.data;
             honorsState = parseHonorsJson(user.honors).map((x) => normalizeHonor(x));
 
             applyUserToProfileForm(user);
+            await syncTeacherProfile(user, page);
 
             if (page === 'overview') {
                 bindAvatarPreview();
@@ -2049,6 +2195,15 @@ document.addEventListener('DOMContentLoaded', async function () {
             try {
                 const result = await saveProfilePayload(false);
                 if (Number(result.code) === 200) {
+                    if (window.__ilinkProfileRole === 'TEACHER') {
+                        try {
+                            await saveTeacherProfilePayload();
+                        } catch (teacherError) {
+                            console.error('导师资料保存失败:', teacherError);
+                            showMessage('基本资料已保存，但导师资料未保存：' + (teacherError.message || '请重试'), 'warning');
+                            return;
+                        }
+                    }
                     showMessage('保存成功，资料已更新', 'success');
                     bindAvatarPreview();
                     if (result.data && typeof applyAccountMenuFromUser === 'function') {

@@ -5,6 +5,8 @@ import cn.ilink.mapper.UserMapper;
 import cn.ilink.dto.LoginRequest;
 import cn.ilink.dto.RegisterRequest;
 import cn.ilink.dto.ProfileRequest;
+import cn.ilink.entity.TeacherApplication;
+import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.UserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.slf4j.Logger;
@@ -12,6 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
@@ -23,6 +28,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private TeacherApplicationServiceImpl teacherApplicationService;
 
     private boolean matchesPassword(User user, String rawPassword) {
         if (user == null || rawPassword == null) {
@@ -36,6 +44,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional
     public boolean register(RegisterRequest registerRequest) {
         if (registerRequest.getPhoneNumber() != null && !registerRequest.getPhoneNumber().trim().isEmpty()) {
             User existingUserByPhone = userMapper.findByPhoneNumber(registerRequest.getPhoneNumber());
@@ -80,7 +89,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setRealName(username);
         user.setGender(registerRequest.getGender());
 
-        return save(user);
+        user.setCreatedAt(new Date());
+        if (!save(user)) {
+            return false;
+        }
+
+        if ("TEACHER".equals(user.getRole())) {
+            TeacherApplication mentorProfile = new TeacherApplication();
+            mentorProfile.setUserId(user.getId());
+            mentorProfile.setStatus("APPROVED");
+            mentorProfile.setCreatedAt(new Date());
+            if (!teacherApplicationService.save(mentorProfile)) {
+                throw new IllegalStateException("教师账号创建成功，但导师档案创建失败");
+            }
+        }
+        return true;
     }
 
     @Override

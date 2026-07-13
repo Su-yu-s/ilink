@@ -1047,10 +1047,20 @@ a.il-link:active {
 }
 
 .il-modal-backdrop.show {
-    display: block;
-}
+	    display: block;
+	}
 
-.il-modal {
+	.il-modal-overlay {
+	    position: fixed;
+	    inset: 0;
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	    z-index: var(--z-modal);
+	    padding: var(--space-6);
+	}
+
+	.il-modal {
     position: fixed;
     inset: 0;
     display: flex;
@@ -1202,53 +1212,54 @@ a.il-link:active {
    ======================================== */
 .ilink-toast-host {
     position: fixed;
-    top: clamp(24px, 8vh, 84px);
-    left: 50%;
-    right: auto;
+    top: calc(var(--header-height, 64px) + 16px);
+    left: auto;
+    right: clamp(16px, 2.5vw, 32px);
     z-index: var(--z-toast, 10050);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    width: min(420px, calc(100vw - 32px));
+    align-items: flex-end;
+    gap: 8px;
+    width: min(360px, calc(100vw - 32px));
     min-width: 0;
-    transform: translateX(-50%);
     pointer-events: none;
 }
 
 .ilink-toast {
     position: relative;
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    gap: 10px;
     width: 100%;
     min-width: 0;
-    padding: 12px 42px 13px 12px;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg-strong);
-    backdrop-filter: blur(16px) saturate(1.12);
-    -webkit-backdrop-filter: blur(16px) saturate(1.12);
+    min-height: 58px;
+    padding: 10px 38px 11px 11px;
+    border-radius: 12px;
+    border: 1px solid #e8e2d9;
+    background: var(--toast-surface);
+    backdrop-filter: blur(14px) saturate(1.05);
+    -webkit-backdrop-filter: blur(14px) saturate(1.05);
     box-shadow:
-        0 16px 36px rgba(17, 24, 39, 0.14),
-        0 2px 8px rgba(17, 24, 39, 0.05);
+        0 12px 30px rgba(44, 36, 25, 0.1),
+        0 2px 6px rgba(44, 36, 25, 0.04);
     opacity: 0;
-    transform: translateY(-10px) scale(0.98);
+    transform: translate3d(12px, 0, 0);
     transition:
-        opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+        opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.2s ease;
     pointer-events: auto;
     overflow: hidden;
 }
 
 .ilink-toast--visible {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0);
 }
 
 .ilink-toast--out {
     opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+    transform: translate3d(8px, 0, 0);
 }
 
 .ilink-toast--success {
@@ -1273,19 +1284,18 @@ a.il-link:active {
 
 .ilink-toast__icon {
     flex-shrink: 0;
-    width: 34px;
-    height: 34px;
-    margin-top: 1px;
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-full);
+    border-radius: 9px;
 }
 
 .ilink-toast__svg {
     display: block;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 .ilink-toast--success .ilink-toast__icon {
@@ -1311,17 +1321,16 @@ a.il-link:active {
 .ilink-toast__body {
     flex: 1;
     min-width: 0;
-    padding-top: 1px;
 }
 
 .ilink-toast__label {
     display: block;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: var(--font-weight-semibold);
-    line-height: 1.3;
-    margin: 0 0 2px;
+    line-height: 1.25;
+    margin: 0 0 1px;
     letter-spacing: 0;
-    opacity: 0.85;
+    opacity: 1;
 }
 
 .ilink-toast--success .ilink-toast__label { color: var(--toast-success-icon); }
@@ -1330,10 +1339,10 @@ a.il-link:active {
 .ilink-toast--info .ilink-toast__label { color: var(--toast-info-icon); }
 
 .ilink-toast__text {
-    font-size: 14px;
-    font-weight: var(--font-weight-medium);
+    font-size: 13px;
+    font-weight: var(--font-weight-normal);
     margin: 0;
-    line-height: 1.45;
+    line-height: 1.4;
     word-break: break-word;
 }
 
@@ -1350,7 +1359,7 @@ a.il-link:active {
     height: 2px;
     transform-origin: left center;
     transform: scaleX(1);
-    opacity: 0.55;
+    opacity: 0.7;
 }
 
 .ilink-toast--success .ilink-toast__progress { background: var(--toast-success-icon); }
@@ -1360,10 +1369,10 @@ a.il-link:active {
 
 .ilink-toast__close {
     position: absolute;
-    top: 9px;
-    right: 9px;
-    width: 26px;
-    height: 26px;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1371,18 +1380,18 @@ a.il-link:active {
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    color: var(--text-tertiary);
-    opacity: 0.7;
+    color: #a89a8a;
+    opacity: 0.65;
     transition: opacity var(--transition-fast), background var(--transition-fast);
 }
 
 .ilink-toast__close:hover {
     opacity: 1;
-    background: rgba(17, 24, 39, 0.06);
+    background: #f5f0eb;
 }
 
 .ilink-toast__close:focus-visible {
-    outline: 2px solid var(--color-primary);
+    outline: 2px solid #b8956a;
     outline-offset: 2px;
 }
 
@@ -1411,17 +1420,26 @@ select.il-input-invalid {
 
 @media (max-width: 480px) {
     .ilink-toast-host {
-        top: calc(env(safe-area-inset-top, 0px) + 72px);
-        right: auto;
-        left: 50%;
+        top: calc(env(safe-area-inset-top, 0px) + var(--header-height, 64px) + 10px);
+        right: 14px;
+        left: 14px;
         width: auto;
-        max-width: calc(100vw - 28px);
+        max-width: none;
         min-width: 0;
     }
 
     .ilink-toast {
-        width: calc(100vw - 28px);
+        width: 100%;
         min-width: 0;
+        transform: translate3d(0, -8px, 0);
+    }
+
+    .ilink-toast--visible {
+        transform: translate3d(0, 0, 0);
+    }
+
+    .ilink-toast--out {
+        transform: translate3d(0, -6px, 0);
     }
 }
 
@@ -1662,7 +1680,7 @@ select.il-input-invalid {
 
 .profile-post-card__actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: var(--space-2);
     flex-shrink: 0;
 }
@@ -1922,8 +1940,8 @@ select.il-input-invalid {
 }
 
 .notification-bell--visible {
-    display: block !important;
-}
+	    display: flex !important;
+	}
 
 .notification-dropdown--hidden {
     display: none !important;
@@ -2231,7 +2249,7 @@ a.il-btn:focus-visible {
     align-items: center;
     width: 100%;
     min-height: 42px;
-    padding: 0 14px 0 42px;
+    padding: 0 14px 0 56px;
     background: var(--bg-white);
     border: 1px solid var(--border-light);
     border-radius: 12px;
@@ -2276,7 +2294,7 @@ a.il-btn:focus-visible {
     min-width: 0;
     width: 100%;
     min-height: 40px;
-    padding: 0;
+    padding: 0 0 0 56px;
     border: none !important;
     border-radius: 0;
     background: transparent !important;
@@ -2291,8 +2309,8 @@ a.il-btn:focus-visible {
 }
 
 .il-search-field__input::placeholder,
-.il-filter-search input::placeholder,
-.il-search input::placeholder {
+	.il-filter-search input::placeholder,
+	.il-search input::placeholder {
     color: var(--text-tertiary);
 }
 
@@ -3199,11 +3217,6 @@ a.il-btn:focus-visible {
 .skeleton-text { height: 14px; margin-bottom: 8px; width: 90%; }
 .skeleton-text:last-child { width: 50%; }
 
-/* ---- 过渡动画增强 ---- */
-.il-page-transition-surface {
-    transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1), transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
 /* ---- 通用 hover 提升效果 ---- */
 .il-card-hover {
     transition: all 0.2s ease;
@@ -3359,27 +3372,6 @@ body[data-app-page="team-detail"] .detail-view__row dd .publisher-avatar {
 body[data-app-page="team-detail"] .detail-view__header .detail-view__title,
 body[data-app-page="teacher-detail"] .detail-view__header .detail-view__title {
     font-size: 1.375rem;
-}
-
-body[data-app-page] .page-transition {
-    animation: il-detail-enter 0.45s ease-out both;
-}
-
-@keyframes il-detail-enter {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    body[data-app-page] .page-transition {
-        animation: none;
-    }
 }
 
 @media (max-width: 576px) {
@@ -3727,4 +3719,3 @@ body[data-app-page] .page-transition {
   height: 48px;
   font-size: 18px;
 }
-

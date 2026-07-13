@@ -1,0 +1,769 @@
+/*
+ * iLink public portal v1
+ * The portal stays navigation-led. Team Space is intentionally the only
+ * workspace-style screen; public pages use quiet lists, filters and detail
+ * surfaces so discovery remains fast.
+ */
+
+html.ilink-app body[data-app-page="team-market"] .content-section,
+html.ilink-app body[data-app-page="teacher-wall"] .content-section,
+html.ilink-app body[data-app-page="team-market"] .toolbar-section,
+html.ilink-app body[data-app-page="teacher-wall"] .toolbar-section {
+  width: min(100% - 48px, 1200px) !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .content-inner,
+html.ilink-app body[data-app-page="teacher-wall"] .content-inner {
+  width: 100% !important;
+  padding: 0 0 56px !important;
+}
+
+/* Team discovery: two readable records rather than a decorative tile wall. */
+html.ilink-app body[data-app-page="team-market"] #teamList {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .il-team-card-shell {
+  display: block !important;
+  min-width: 0;
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card {
+  display: flex !important;
+  min-height: 258px;
+  flex-direction: column;
+  padding: 20px !important;
+  overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .card-header {
+  display: flex !important;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 12px !important;
+  border: 0 !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .card-title {
+  min-width: 0;
+  margin: 0 !important;
+  overflow: hidden;
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 18px !important;
+  font-weight: 650 !important;
+  line-height: 1.35 !important;
+  text-decoration: none !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .category-tag,
+html.ilink-app body[data-app-page="team-market"] .team-card .skill-tag {
+  flex: 0 0 auto;
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .card-meta {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 0 !important;
+  color: var(--ui-text-muted) !important;
+  font-size: 13px !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .meta-dot,
+html.ilink-app body[data-app-page="team-market"] .team-card .il-team-meta-item:not(:last-child)::after {
+  display: none !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .skill-tags {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px !important;
+  margin: 16px 0 0 !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .card-desc {
+  display: -webkit-box;
+  min-height: 44px;
+  margin: 16px 0 !important;
+  overflow: hidden;
+  color: var(--ui-text-secondary) !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .card-divider {
+  margin: auto 0 14px !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .card-footer {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .team-card .author-info,
+html.ilink-app body[data-app-page="community"] .article-card .author-info {
+  min-width: 0;
+}
+
+html.ilink-app .author-avatar,
+html.ilink-app .il-author-avatar,
+html.ilink-app .il-post-avatar {
+  display: grid !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex: 0 0 32px !important;
+  place-items: center;
+  overflow: hidden !important;
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 50% !important;
+}
+
+html.ilink-app .author-avatar img,
+html.ilink-app .il-author-avatar img,
+html.ilink-app .il-post-avatar img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+}
+
+html.ilink-app .author-avatar .avatar-fallback--hidden,
+html.ilink-app .il-author-avatar .avatar-fallback--hidden,
+html.ilink-app .il-post-avatar .avatar-fallback--hidden {
+  display: none !important;
+}
+
+html.ilink-app .author-avatar .il-author-avatar-fallback:not(.avatar-fallback--hidden),
+html.ilink-app .author-avatar .il-post-avatar-fallback:not(.avatar-fallback--hidden),
+html.ilink-app .il-author-avatar .il-author-avatar-fallback:not(.avatar-fallback--hidden),
+html.ilink-app .il-post-avatar .il-post-avatar-fallback:not(.avatar-fallback--hidden) {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+/* Mentor discovery uses compact professional records; the old corner ornament is retired. */
+html.ilink-app body[data-app-page="teacher-wall"] #teacherList {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell {
+  display: flex !important;
+  min-height: 310px;
+  flex-direction: column;
+  padding: 20px !important;
+  color: var(--ui-text) !important;
+  cursor: pointer;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-corner {
+  display: none !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-header {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar {
+  display: grid !important;
+  width: 56px !important;
+  height: 56px !important;
+  flex: 0 0 56px !important;
+  place-items: center;
+  overflow: hidden;
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 50% !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar::after {
+  content: none !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: cover !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar .avatar-fallback {
+  display: grid !important;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--ui-text-secondary);
+  font-size: 22px;
+  font-weight: 650;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-name {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 18px !important;
+  font-weight: 650 !important;
+  line-height: 1.35 !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-title-row,
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-dept,
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat-label {
+  color: var(--ui-text-muted) !important;
+  font-size: 13px !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-dept {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  width: fit-content;
+  margin-top: 6px;
+  padding: 0 8px;
+  background: var(--ui-surface-subtle) !important;
+  border-radius: 999px;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-divider {
+  margin: 18px 0 !important;
+  background: var(--ui-border) !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-divider::after {
+  content: none !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-bio {
+  display: -webkit-box;
+  min-height: 48px;
+  overflow: hidden;
+  color: var(--ui-text-secondary) !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-tags {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-tag {
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-footer {
+  display: flex !important;
+  align-items: end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-stats {
+  gap: 18px !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat-value {
+  color: var(--ui-text) !important;
+  font-size: 18px !important;
+}
+
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-btn {
+  min-height: 36px;
+  padding: 0 11px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+}
+
+/* Community is an editorial reading flow, not a gallery of oversized cards. */
+html.ilink-app body[data-app-page="community"] #postList,
+html.ilink-app body[data-app-page="community"] #postPager {
+  width: 100% !important;
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+html.ilink-app body[data-app-page="community"] #postList {
+  display: grid;
+  gap: 12px;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card {
+  padding: 22px 24px !important;
+  cursor: pointer;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card::before,
+html.ilink-app body[data-app-page="community"] .article-card::after {
+  content: none !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .card-header {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .author-name,
+html.ilink-app body[data-app-page="community"] .article-card .card-title {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .author-name {
+  font-size: 14px !important;
+  font-weight: 650 !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .author-meta,
+html.ilink-app body[data-app-page="community"] .article-card .meta-item {
+  color: var(--ui-text-muted) !important;
+  font-size: 12px !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .card-title {
+  margin: 18px 0 8px !important;
+  font-size: 20px !important;
+  font-weight: 650 !important;
+  line-height: 1.4 !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .card-excerpt {
+  display: -webkit-box;
+  margin: 0 !important;
+  overflow: hidden;
+  color: var(--ui-text-secondary) !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .card-tags {
+  margin-top: 14px !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .card-divider {
+  margin: 18px 0 14px !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .card-footer {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 !important;
+  border: 0 !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .action-btn {
+  min-height: 30px;
+  padding: 0 4px !important;
+  color: var(--ui-text-muted) !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .action-btn:hover,
+html.ilink-app body[data-app-page="community"] .article-card .action-btn.il-feed-action--on {
+  color: var(--ui-text) !important;
+  background: transparent !important;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .read-more-btn {
+  min-height: 34px !important;
+  padding: 0 11px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-color: transparent !important;
+}
+
+/* Results use an even image rhythm and neutral metadata. */
+html.ilink-app body[data-app-page="gallery"] .gc-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-card {
+  display: flex !important;
+  min-height: 0 !important;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-card::before {
+  content: none !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-cover {
+  aspect-ratio: 16 / 10;
+  height: auto !important;
+  overflow: hidden;
+  background: var(--ui-surface-subtle) !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-cover::after,
+html.ilink-app body[data-app-page="gallery"] .gc-cover-overlay {
+  display: none !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-cover img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transform: none !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-card:hover .gc-cover img {
+  transform: none !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-content {
+  display: flex !important;
+  min-height: 210px;
+  flex-direction: column;
+  padding: 18px !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-title {
+  margin: 12px 0 6px !important;
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 17px !important;
+  font-weight: 650 !important;
+  line-height: 1.4 !important;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-desc {
+  display: -webkit-box;
+  margin: 0 !important;
+  overflow: hidden;
+  color: var(--ui-text-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+html.ilink-app body[data-app-page="gallery"] .gc-stats {
+  margin-top: auto !important;
+  color: var(--ui-text-muted) !important;
+  border-color: var(--ui-border) !important;
+}
+
+/* Competition catalogue keeps information dense and comparable. */
+html.ilink-app body[data-app-page="competitions"] .competition-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  margin: 0 !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-grid > [class*="col-"] {
+  width: auto !important;
+  padding: 0 !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card {
+  display: flex !important;
+  min-height: 300px;
+  flex-direction: column;
+  padding: 20px !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card::before {
+  content: none !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card__header,
+html.ilink-app body[data-app-page="competitions"] .competition-card__foot {
+  display: flex !important;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card__title {
+  margin: 0 !important;
+  font-size: 18px !important;
+  line-height: 1.4 !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card__levels,
+html.ilink-app body[data-app-page="competitions"] .competition-card__tags {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card__meta,
+html.ilink-app body[data-app-page="competitions"] .competition-card__desc {
+  color: var(--ui-text-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card__divider {
+  margin: auto 0 14px !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card__season {
+  color: var(--ui-text-muted) !important;
+  font-size: 12px !important;
+}
+
+html.ilink-app body[data-app-page="competitions"] .competition-card__link {
+  min-height: 34px !important;
+  padding: 0 11px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-color: transparent !important;
+}
+
+/* Public detail pages use a readable column and consistent load/error states. */
+html.ilink-app body[data-app-page="team-detail"] .team-detail-shell,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-shell,
+html.ilink-app body[data-app-page="asset-detail"] .asset-detail-shell,
+html.ilink-app body[data-app-page="community-article"] .community-article-shell {
+  width: min(100% - 48px, 960px) !important;
+  margin: 0 auto !important;
+  padding: 32px 0 56px !important;
+}
+
+html.ilink-app .detail-view,
+html.ilink-app .teacher-detail-card,
+html.ilink-app .community-article-card,
+html.ilink-app .community-article-comments,
+html.ilink-app .share-card {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .detail-view__header,
+html.ilink-app .teacher-detail__header,
+html.ilink-app .community-article-card__header {
+  padding: 24px !important;
+  background: transparent !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+}
+
+html.ilink-app .detail-view__title,
+html.ilink-app .community-article__title,
+html.ilink-app .project-title {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.03em;
+}
+
+html.ilink-app .detail-view__body,
+html.ilink-app .teacher-detail__body,
+html.ilink-app .community-article-card__body,
+html.ilink-app .community-article-comments__body {
+  padding: 24px !important;
+}
+
+html.ilink-app .detail-view__row,
+html.ilink-app .teacher-detail__apply,
+html.ilink-app .community-article-compose {
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 0 8px;
+  color: var(--ui-text-secondary);
+  background: var(--ui-surface-subtle);
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status::before {
+  width: 6px;
+  height: 6px;
+  background: var(--ui-text-muted);
+  border-radius: 50%;
+  content: "";
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status.is-open {
+  color: var(--ui-success);
+  background: var(--ui-success-soft);
+  border-color: #bbf7d0;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status.is-open::before {
+  background: var(--ui-success);
+}
+
+html.ilink-app .detail-load-state,
+html.ilink-app .asset-detail-state,
+html.ilink-app .community-article-state {
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="team-publish"] .il-surface {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 28px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="team-publish"] .il-form-label {
+  color: var(--ui-text) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+}
+
+html.ilink-app body[data-app-page="team-chat"] .chat-page {
+  min-height: calc(100vh - 152px);
+  overflow: hidden;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-panel) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="team-chat"] .chat-header,
+html.ilink-app body[data-app-page="team-chat"] .chat-sidebar {
+  background: var(--ui-surface-subtle) !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app body[data-app-page="team-chat"] .chat-textarea,
+html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 980px) {
+  html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
+  html.ilink-app body[data-app-page="gallery"] .gc-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  html.ilink-app body[data-app-page="team-market"] .content-section,
+  html.ilink-app body[data-app-page="teacher-wall"] .content-section,
+  html.ilink-app body[data-app-page="team-market"] .toolbar-section,
+  html.ilink-app body[data-app-page="teacher-wall"] .toolbar-section,
+  html.ilink-app body[data-app-page="team-detail"] .team-detail-shell,
+  html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-shell,
+  html.ilink-app body[data-app-page="asset-detail"] .asset-detail-shell,
+  html.ilink-app body[data-app-page="community-article"] .community-article-shell {
+    width: min(100% - 32px, 960px) !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] #teamList,
+  html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
+  html.ilink-app body[data-app-page="gallery"] .gc-grid,
+  html.ilink-app body[data-app-page="competitions"] .competition-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .team-card,
+  html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell,
+  html.ilink-app body[data-app-page="competitions"] .competition-card {
+    min-height: 0;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-card,
+  html.ilink-app .detail-view__header,
+  html.ilink-app .teacher-detail__header,
+  html.ilink-app .community-article-card__header,
+  html.ilink-app .detail-view__body,
+  html.ilink-app .teacher-detail__body,
+  html.ilink-app .community-article-card__body,
+  html.ilink-app .community-article-comments__body {
+    padding: 18px !important;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-card .card-footer,
+  html.ilink-app body[data-app-page="competitions"] .competition-card__foot {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* modal 居中 */
+html.ilink-app body[data-app-page="team-detail"] .modal.show {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}

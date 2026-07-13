@@ -57,7 +57,7 @@ public class SecurityConfig {
                 .antMatchers("/api/upload/**").authenticated()
                 .antMatchers("/api/files/**").authenticated()
                 .antMatchers("/home", "/home.html", "/profile.html", "/profile-edit.html", "/profile-honors.html",
-                    "/profile-posts.html", "/profile-favorites.html", "/profile-article-edit.html").authenticated()
+                    "/profile-posts.html", "/profile-favorites.html", "/profile-article-edit.html", "/profile-asset-edit.html").authenticated()
                 .antMatchers("/team-publish.html", "/team-detail.html").authenticated()
                 .antMatchers("/teacher-detail.html").authenticated()
                 .antMatchers("/asset-detail.html").authenticated()
@@ -84,7 +84,7 @@ public class SecurityConfig {
                     String path = request.getRequestURI();
                     response.setHeader("X-Content-Type-Options", "nosniff");
                     response.setHeader("X-Frame-Options", "SAMEORIGIN");
-                    if (isFaviconRequest(path)) {
+                    if (isFaviconRequest(path) || isStaticResource(path)) {
                         response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
                         response.setHeader("Pragma", "");
                         response.setHeader("Expires", "Tue, 22 Jun 2038 00:00:00 GMT");
@@ -117,5 +117,14 @@ public class SecurityConfig {
             || "/favicon.ico".equals(path)
             || "/uploads/images/favicon.svg".equals(path)
             || "/uploads/images/favicon.png".equals(path);
+    }
+
+    /** 静态资源路径：上传文件和 classpath 静态资源，允许浏览器长期缓存 */
+    private boolean isStaticResource(String path) {
+        return path.startsWith("/uploads/")
+            || path.startsWith("/css/")
+            || path.startsWith("/js/")
+            || path.startsWith("/lib/")
+            || path.startsWith("/img/");
     }
 }

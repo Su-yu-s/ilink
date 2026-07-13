@@ -1,0 +1,1320 @@
+/*
+ * iLink visual system v1
+ * Loaded last on every top-level page. It intentionally bridges legacy page
+ * styles while the duplicated historical CSS files are retired incrementally.
+ */
+
+:root {
+  --ui-canvas: #F7F7F8;
+  --ui-surface: #FCFCFD;
+  --ui-surface-subtle: #F1F1F2;
+  --ui-surface-selected: #ECEDEF;
+  --ui-border: #E5E5E7;
+  --ui-border-strong: #D7D8DB;
+  --ui-text: #282A2F;
+  --ui-text-secondary: #52555C;
+  --ui-text-muted: #73757A;
+  --ui-success: #16A34A;
+  --ui-success-soft: #F0FDF4;
+  --ui-danger: #DC2626;
+  --ui-danger-soft: #FEF2F2;
+  --ui-radius-control: 8px;
+  --ui-radius-surface: 12px;
+  --ui-radius-panel: 16px;
+  --ui-ring: 0 0 0 3px rgba(40, 42, 47, 0.12);
+  --ui-shadow-float: 0 12px 28px rgba(40, 42, 47, 0.12);
+  --ui-font: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+
+  --primary: var(--ui-text);
+  --primary-dark: #181A1E;
+  --primary-light: var(--ui-surface-selected);
+  --accent: var(--ui-text-muted);
+  --success: var(--ui-success);
+  --warning: var(--ui-danger);
+  --error: var(--ui-danger);
+  --danger: var(--ui-danger);
+  --bg-body: var(--ui-canvas);
+  --bg-light: var(--ui-canvas);
+  --bg-white: var(--ui-surface);
+  --bg-surface: var(--ui-surface);
+  --bg-surface-hover: var(--ui-surface-subtle);
+  --bg-muted: var(--ui-surface-subtle);
+  --text-primary: var(--ui-text);
+  --text-secondary: var(--ui-text-secondary);
+  --text-tertiary: var(--ui-text-muted);
+  --border-light: var(--ui-border);
+  --border-default: var(--ui-border-strong);
+  --border-dark: #A1A3A8;
+  --color-black: var(--ui-text);
+  --color-dark: var(--ui-text);
+  --color-gray-700: var(--ui-text-secondary);
+  --color-gray-600: #63666D;
+  --color-gray-500: var(--ui-text-muted);
+  --color-gray-400: #A1A3A8;
+  --color-gray-300: var(--ui-border-strong);
+  --color-gray-200: var(--ui-border);
+  --color-gray-100: var(--ui-surface-subtle);
+  --color-gray-50: var(--ui-canvas);
+  --color-white: var(--ui-surface);
+  --font-display: var(--ui-font);
+  --font-family: var(--ui-font);
+  --font-sans: var(--ui-font);
+  --font-serif: var(--ui-font);
+  --home-accent: var(--ui-text-secondary);
+  --home-accent-dark: var(--ui-text);
+  --home-bg-warm: var(--ui-canvas);
+  --home-text-secondary: var(--ui-text-secondary);
+  --home-text-muted: var(--ui-text-muted);
+  --home-border: rgba(40, 42, 47, 0.08);
+  --home-border-strong: rgba(40, 42, 47, 0.14);
+  --home-radius: var(--ui-radius-panel);
+  --home-radius-sm: var(--ui-radius-control);
+  --bg-grid: none;
+  --bg-mesh: none;
+}
+
+html.ilink-app,
+html.ilink-app body {
+  min-height: 100%;
+}
+
+html.ilink-app body,
+html.ilink-app body.ilink-page-bg,
+html.ilink-app body[data-app-page],
+html.ilink-app body[data-profile-page] {
+  background: var(--ui-canvas) !important;
+  background-image: none !important;
+  color: var(--ui-text);
+  font-family: var(--ui-font) !important;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+html.ilink-app body::before,
+html.ilink-app body::after,
+html.ilink-app .particle-canvas,
+html.ilink-app #particleCanvas,
+html.ilink-app .floating-shapes {
+  display: none !important;
+}
+
+html.ilink-app *,
+html.ilink-app *::before,
+html.ilink-app *::after {
+  box-sizing: border-box;
+}
+
+html.ilink-app :focus-visible {
+  outline: 2px solid var(--ui-text);
+  outline-offset: 2px;
+}
+
+html.ilink-app a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+html.ilink-app ::selection {
+  background: var(--ui-surface-selected);
+  color: var(--ui-text);
+}
+
+/* Shared top navigation for public, profile, workspace and admin surfaces. */
+html.ilink-app .il-header {
+  position: sticky !important;
+  top: 0;
+  z-index: var(--z-sticky);
+  min-height: 72px;
+  background: rgba(252, 252, 253, 0.96) !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+html.ilink-app .il-header__inner {
+  width: min(100% - 48px, 1320px);
+  min-height: 72px;
+  margin: 0 auto;
+  gap: 28px;
+}
+
+html.ilink-app .il-header__brand {
+  color: var(--ui-text) !important;
+  gap: 10px;
+  text-decoration: none;
+}
+
+html.ilink-app .il-header__logo {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: var(--ui-surface);
+  background: var(--ui-text) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+html.ilink-app .il-header__title {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+
+html.ilink-app .il-header__nav {
+  gap: 4px;
+}
+
+html.ilink-app .il-header__link {
+  position: relative;
+  min-height: 38px;
+  padding: 0 12px;
+  color: var(--ui-text-secondary) !important;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 38px;
+  text-decoration: none !important;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+html.ilink-app .il-header__link:hover {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-subtle) !important;
+}
+
+html.ilink-app .il-header__link--active {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-selected) !important;
+  font-weight: 600;
+}
+
+html.ilink-app .il-header__link--active::after {
+  content: none !important;
+}
+
+html.ilink-app .il-header__auth,
+html.ilink-app .il-header__actions {
+  gap: 8px;
+}
+
+html.ilink-app .il-header__auth-link,
+html.ilink-app .il-header__auth-btn,
+html.ilink-app .il-header__user-link,
+html.ilink-app .il-header__dropdown-toggle {
+  min-height: 38px;
+  border-radius: 8px !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+html.ilink-app .il-header__auth-link {
+  color: var(--ui-text) !important;
+  background: transparent !important;
+  border: 1px solid var(--ui-border) !important;
+}
+
+html.ilink-app .il-header__auth-btn {
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border: 1px solid var(--ui-text) !important;
+}
+
+html.ilink-app .il-header__dropdown-menu {
+  margin-top: 8px;
+  padding: 6px;
+  color: var(--ui-text);
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--ui-shadow-float) !important;
+}
+
+html.ilink-app .il-header__dropdown-item {
+  border-radius: 6px;
+  color: var(--ui-text-secondary) !important;
+}
+
+html.ilink-app .il-header__dropdown-item:hover {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-subtle) !important;
+}
+
+/* Shared public portal shell. */
+html.ilink-app body[data-app-page] .main-content,
+html.ilink-app body[data-app-page] .il-page-wrapper,
+html.ilink-app body[data-profile-page] .il-page-wrapper {
+  width: min(100% - 48px, 1200px);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+html.ilink-app body[data-app-page] .main-content {
+  padding-top: 32px;
+  padding-bottom: 56px;
+}
+
+html.ilink-app body[data-app-page="team-market"] .hero-section,
+html.ilink-app body[data-app-page="teacher-wall"] .hero-section,
+html.ilink-app body[data-app-page] .il-hero {
+  width: min(100% - 48px, 1200px) !important;
+  min-height: 0 !important;
+  margin: 0 auto !important;
+  padding: 40px 0 24px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page] .il-hero__eyebrow,
+html.ilink-app body[data-app-page] .il-hero__badge,
+html.ilink-app body[data-app-page] .hero-eyebrow,
+html.ilink-app body[data-app-page] .il-hero__eyebrow * {
+  color: var(--ui-text-muted) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+}
+
+html.ilink-app body[data-app-page] .il-hero__eyebrow,
+html.ilink-app body[data-app-page] .il-hero__badge,
+html.ilink-app body[data-app-page] .hero-eyebrow {
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page] .il-hero__title,
+html.ilink-app body[data-app-page] .hero-title,
+html.ilink-app body[data-app-page] .hero-section h1 {
+  max-width: 760px !important;
+  margin: 10px 0 0 !important;
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: clamp(28px, 3vw, 36px) !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1.2 !important;
+  white-space: normal !important;
+}
+
+html.ilink-app body[data-app-page] .il-hero__desc,
+html.ilink-app body[data-app-page] .hero-desc,
+html.ilink-app body[data-app-page] .hero-section p {
+  max-width: 680px !important;
+  margin: 12px 0 0 !important;
+  color: var(--ui-text-secondary) !important;
+  font-size: 15px !important;
+  line-height: 1.7 !important;
+}
+
+/* Unified controls, including the legacy search field that previously had two padding systems. */
+html.ilink-app .il-btn,
+html.ilink-app .btn,
+html.ilink-app .il-search-bar__btn,
+html.ilink-app .competition-card__link,
+html.ilink-app .mentor-btn {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-control) !important;
+  box-shadow: none !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none !important;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+html.ilink-app .il-btn:hover,
+html.ilink-app .btn:hover,
+html.ilink-app .il-search-bar__btn:hover,
+html.ilink-app .competition-card__link:hover,
+html.ilink-app .mentor-btn:hover {
+  transform: translateY(-1px);
+}
+
+html.ilink-app .il-btn-primary,
+html.ilink-app .btn-primary,
+html.ilink-app .il-search-bar__btn--primary,
+html.ilink-app .il-btn-xs-dark {
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border-color: var(--ui-text) !important;
+}
+
+html.ilink-app .il-btn-primary:hover,
+html.ilink-app .btn-primary:hover,
+html.ilink-app .il-search-bar__btn--primary:hover,
+html.ilink-app .il-btn-xs-dark:hover {
+  color: var(--ui-surface) !important;
+  background: #181A1E !important;
+  border-color: #181A1E !important;
+}
+
+html.ilink-app .il-btn-secondary,
+html.ilink-app .btn-outline-secondary,
+html.ilink-app .il-search-bar__btn--secondary,
+html.ilink-app .il-search-bar__btn--ghost,
+html.ilink-app .il-btn-xs-ghost {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app .il-btn-secondary:hover,
+html.ilink-app .btn-outline-secondary:hover,
+html.ilink-app .il-search-bar__btn--secondary:hover,
+html.ilink-app .il-search-bar__btn--ghost:hover,
+html.ilink-app .il-btn-xs-ghost:hover {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-color: var(--ui-border-strong) !important;
+}
+
+html.ilink-app .btn-danger,
+html.ilink-app .il-btn-danger,
+html.ilink-app .il-btn-xs-danger {
+  color: var(--ui-danger) !important;
+  background: var(--ui-danger-soft) !important;
+  border-color: #fecaca !important;
+}
+
+html.ilink-app .il-search-bar {
+  display: flex !important;
+  width: min(100% - 48px, 1200px) !important;
+  min-height: 64px !important;
+  align-items: center;
+  gap: 10px !important;
+  margin: 0 auto 28px !important;
+  padding: 10px !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-panel) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .il-search-bar__input-wrap,
+html.ilink-app .il-toolbar-search,
+html.ilink-app .competition-toolbar__search {
+  flex: 1 1 280px;
+  min-width: 220px;
+}
+
+html.ilink-app .il-search-field {
+  position: relative !important;
+  display: flex !important;
+  width: 100% !important;
+  min-height: 44px !important;
+  align-items: center;
+  padding: 0 !important;
+  color: var(--ui-text-secondary);
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-control) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .il-search-field:focus-within {
+  border-color: var(--ui-text) !important;
+  box-shadow: var(--ui-ring) !important;
+}
+
+html.ilink-app .il-search-field__icon {
+  position: absolute !important;
+  z-index: 1;
+  left: 14px !important;
+  width: 18px;
+  height: 18px;
+  color: var(--ui-text-muted) !important;
+  pointer-events: none;
+}
+
+html.ilink-app .il-search-field__input,
+html.ilink-app .il-search-field input,
+html.ilink-app .il-search-bar__input {
+  width: 100% !important;
+  min-height: 42px !important;
+  padding: 0 12px 0 44px !important;
+  color: var(--ui-text) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  box-shadow: none !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px !important;
+  outline: 0 !important;
+}
+
+html.ilink-app .il-search-field__input::placeholder,
+html.ilink-app .il-search-field input::placeholder,
+html.ilink-app .il-search-bar__input::placeholder {
+  color: var(--ui-text-muted) !important;
+  opacity: 1;
+}
+
+html.ilink-app .il-search-field--combo .il-search-field__input {
+  padding-right: 8px !important;
+}
+
+html.ilink-app .il-search-field__action {
+  min-height: 34px;
+  margin-right: 4px;
+  padding: 0 14px;
+  color: var(--ui-surface);
+  background: var(--ui-text);
+  border: 0;
+  border-radius: 6px;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+html.ilink-app .il-search-bar__select,
+html.ilink-app .il-toolbar-select {
+  min-width: 132px;
+}
+
+html.ilink-app .il-search-bar__select select,
+html.ilink-app .il-toolbar-select,
+html.ilink-app .form-select,
+html.ilink-app .form-control,
+html.ilink-app .il-form-input,
+html.ilink-app .il-form-select {
+  min-height: 44px !important;
+  color: var(--ui-text) !important;
+  background-color: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-control) !important;
+  box-shadow: none !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px !important;
+}
+
+html.ilink-app .form-control:focus,
+html.ilink-app .form-select:focus,
+html.ilink-app .il-form-input:focus,
+html.ilink-app .il-form-select:focus {
+  border-color: var(--ui-text) !important;
+  box-shadow: var(--ui-ring) !important;
+}
+
+html.ilink-app textarea.form-control,
+html.ilink-app textarea.il-form-input {
+  min-height: 110px !important;
+  padding-top: 10px;
+}
+
+/* Status and metadata share a quiet default; colors only express actual states. */
+html.ilink-app .il-tag,
+html.ilink-app .skill-tag,
+html.ilink-app .mentor-tag,
+html.ilink-app .gallery-tag,
+html.ilink-app .meta-chip,
+html.ilink-app .badge:not(.bg-success):not(.bg-danger):not(#unreadCount),
+html.ilink-app .competition-card__level,
+html.ilink-app .competition-card__tag {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  font-family: var(--ui-font) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+html.ilink-app .il-status-recruiting,
+html.ilink-app .il-team-card__badge--open,
+html.ilink-app .il-team-card__badge--approved,
+html.ilink-app .status-approved,
+html.ilink-app .status-open,
+html.ilink-app .status-success {
+  --ui-status-color: var(--ui-success);
+  color: var(--ui-success) !important;
+  background: var(--ui-success-soft) !important;
+  border-color: #bbf7d0 !important;
+}
+
+html.ilink-app .il-status-closed,
+html.ilink-app .il-status-teamed,
+html.ilink-app .il-team-card__badge--teaming,
+html.ilink-app .il-team-card__badge--closed,
+html.ilink-app .il-team-card__badge--pending,
+html.ilink-app .status-pending,
+html.ilink-app .status-teaming,
+html.ilink-app .status-closed,
+html.ilink-app .status-neutral {
+  --ui-status-color: var(--ui-text-muted);
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app .il-team-card__badge--rejected,
+html.ilink-app .status-rejected,
+html.ilink-app .status-error,
+html.ilink-app .status-expired,
+html.ilink-app .il-status-danger {
+  --ui-status-color: var(--ui-danger);
+  color: var(--ui-danger) !important;
+  background: var(--ui-danger-soft) !important;
+  border-color: #fecaca !important;
+}
+
+html.ilink-app .il-status-recruiting,
+html.ilink-app .il-status-closed,
+html.ilink-app .il-status-teamed,
+html.ilink-app .il-team-card__badge,
+html.ilink-app .status-approved,
+html.ilink-app .status-open,
+html.ilink-app .status-pending,
+html.ilink-app .status-teaming,
+html.ilink-app .status-closed,
+html.ilink-app .status-rejected,
+html.ilink-app .status-expired,
+html.ilink-app .status-success,
+html.ilink-app .status-error,
+html.ilink-app .status-neutral {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  font-family: var(--ui-font);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+html.ilink-app .il-status-recruiting::before,
+html.ilink-app .il-status-closed::before,
+html.ilink-app .il-status-teamed::before,
+html.ilink-app .il-team-card__badge::before,
+html.ilink-app .status-approved::before,
+html.ilink-app .status-open::before,
+html.ilink-app .status-pending::before,
+html.ilink-app .status-teaming::before,
+html.ilink-app .status-closed::before,
+html.ilink-app .status-rejected::before,
+html.ilink-app .status-expired::before,
+html.ilink-app .status-success::before,
+html.ilink-app .status-error::before,
+html.ilink-app .status-neutral::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ui-status-color, var(--ui-text-muted));
+  content: "";
+}
+
+/* Common standalone objects. Lists remain flat surfaces instead of card stacks. */
+html.ilink-app .card,
+html.ilink-app .team-card,
+html.ilink-app .il-team-card,
+html.ilink-app .mentor-card,
+html.ilink-app .mentor-card-shell,
+html.ilink-app .article-card,
+html.ilink-app .il-post-card,
+html.ilink-app .gc-card,
+html.ilink-app .contest-card,
+html.ilink-app .competition-card,
+html.ilink-app .il-profile-card,
+html.ilink-app .il-section-card,
+html.ilink-app .admin-content-panel,
+html.ilink-app .admin-table-card,
+html.ilink-app .detail-view {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .team-card:hover,
+html.ilink-app .il-team-card:hover,
+html.ilink-app .mentor-card-shell:hover,
+html.ilink-app .article-card:hover,
+html.ilink-app .il-post-card:hover,
+html.ilink-app .gc-card:hover,
+html.ilink-app .contest-card:hover,
+html.ilink-app .competition-card:hover {
+  border-color: var(--ui-border-strong) !important;
+  box-shadow: 0 2px 8px rgba(40, 42, 47, 0.06) !important;
+  transform: translateY(-1px);
+}
+
+html.ilink-app .card-header,
+html.ilink-app .card-footer,
+html.ilink-app .il-team-card-header,
+html.ilink-app .il-section-header {
+  color: inherit;
+  background: transparent !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app .team-card h1,
+html.ilink-app .team-card h2,
+html.ilink-app .il-team-card__title,
+html.ilink-app .mentor-card h2,
+html.ilink-app .mentor-card h3,
+html.ilink-app .article-card h2,
+html.ilink-app .competition-card__title,
+html.ilink-app .gc-card h2 {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.02em;
+}
+
+html.ilink-app .il-empty-state,
+html.ilink-app .empty-state,
+html.ilink-app .gc-empty,
+html.ilink-app .kanban-empty {
+  color: var(--ui-text-secondary) !important;
+  background: transparent !important;
+  border: 1px dashed var(--ui-border-strong) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .pagination .page-link,
+html.ilink-app .page-btn {
+  min-width: 36px;
+  min-height: 36px;
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border) !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .pagination .page-item.active .page-link,
+html.ilink-app .page-btn.active {
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border-color: var(--ui-text) !important;
+}
+
+/* Shared feedback elements from common.js and Bootstrap. */
+html.ilink-app .ilink-toast,
+html.ilink-app .ilink-toast-container .toast,
+html.ilink-app .toast {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--ui-shadow-float) !important;
+}
+
+html.ilink-app .ilink-toast--success,
+html.ilink-app .toast-success {
+  border-color: #bbf7d0 !important;
+}
+
+html.ilink-app .ilink-toast--error,
+html.ilink-app .ilink-toast--danger,
+html.ilink-app .toast-error {
+  border-color: #fecaca !important;
+}
+
+html.ilink-app .modal-content,
+html.ilink-app .offcanvas,
+html.ilink-app .dropdown-menu {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: var(--ui-shadow-float) !important;
+}
+
+html.ilink-app .modal-header,
+html.ilink-app .modal-footer {
+  border-color: var(--ui-border) !important;
+}
+
+/* Authentication is deliberately quiet: one focused form on a neutral canvas. */
+html.ilink-app body.auth-page--login,
+html.ilink-app body.auth-page--register {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--ui-canvas) !important;
+  color: var(--ui-text);
+  font-family: var(--ui-font) !important;
+}
+
+html.ilink-app .auth-wrapper {
+  width: 100%;
+  max-width: calc(440px + 48px);
+  padding: 24px;
+}
+
+html.ilink-app .auth-card {
+  width: min(100%, 440px);
+  padding: 32px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-panel) !important;
+  box-shadow: 0 18px 48px rgba(40, 42, 47, 0.08) !important;
+}
+
+html.ilink-app .brand-logo__icon {
+  width: 42px !important;
+  height: 42px !important;
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .auth-card__title {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 26px !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.04em;
+}
+
+html.ilink-app .auth-card__subtitle,
+html.ilink-app .auth-card__footer,
+html.ilink-app .form-group > label {
+  color: var(--ui-text-secondary) !important;
+  font-family: var(--ui-font) !important;
+}
+
+html.ilink-app .auth-card input,
+html.ilink-app .auth-card select {
+  min-height: 44px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-control) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .auth-card input:focus {
+  border-color: var(--ui-text) !important;
+  box-shadow: var(--ui-ring) !important;
+}
+
+html.ilink-app .identifier-toggle {
+  padding: 3px;
+  background: var(--ui-surface-subtle) !important;
+  border-radius: 9px !important;
+}
+
+html.ilink-app .identifier-toggle__btn {
+  min-height: 36px;
+  color: var(--ui-text-secondary) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  font-family: var(--ui-font) !important;
+  font-weight: 600;
+}
+
+html.ilink-app .identifier-toggle__btn.active {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  box-shadow: 0 1px 2px rgba(40, 42, 47, 0.08) !important;
+}
+
+html.ilink-app .btn-submit {
+  min-height: 44px;
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border: 1px solid var(--ui-text) !important;
+  border-radius: var(--ui-radius-control) !important;
+  box-shadow: none !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+html.ilink-app .il-link {
+  color: var(--ui-text) !important;
+  font-weight: 600;
+}
+
+html.ilink-app .error-message,
+html.ilink-app .il-field-hint.is-error {
+  color: var(--ui-danger) !important;
+}
+
+/* 协议勾选框不被 auth-card input 的 min-height 误伤 */
+html.ilink-app .agreement-wrapper input[type="checkbox"] {
+  min-height: auto !important;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* Settings-style profile shell. */
+html.ilink-app body[data-profile-page] .il-page-wrapper {
+  padding-top: 32px;
+  padding-bottom: 56px;
+}
+
+html.ilink-app .il-profile-layout {
+  display: grid !important;
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+  gap: 24px !important;
+  align-items: start;
+}
+
+html.ilink-app .il-profile-sidebar {
+  position: sticky;
+  top: 96px;
+  padding: 16px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .il-profile-sidebar-title {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 16px !important;
+  font-weight: 650 !important;
+}
+
+html.ilink-app .il-profile-sidebar-subtitle {
+  color: var(--ui-text-muted) !important;
+  font-size: 12px !important;
+}
+
+html.ilink-app .il-profile-nav {
+  gap: 2px;
+}
+
+html.ilink-app .il-profile-nav-item {
+  min-height: 40px;
+  padding: 0 10px !important;
+  color: var(--ui-text-secondary) !important;
+  border-radius: 7px !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+html.ilink-app .il-profile-nav-item:hover,
+html.ilink-app .il-profile-nav-item.active {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-selected) !important;
+}
+
+html.ilink-app .il-profile-content {
+  min-width: 0;
+}
+
+html.ilink-app .il-profile-card,
+html.ilink-app .il-section-card {
+  padding: 24px !important;
+}
+
+html.ilink-app .il-profile-name,
+html.ilink-app .il-section-title,
+html.ilink-app .il-form-section-title {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.02em;
+}
+
+html.ilink-app .il-profile-role {
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid var(--ui-border) !important;
+}
+
+html.ilink-app .il-tabs {
+  gap: 4px;
+  padding: 4px;
+  background: var(--ui-surface-subtle) !important;
+  border-radius: 9px;
+}
+
+html.ilink-app .il-tab {
+  min-height: 36px;
+  color: var(--ui-text-secondary) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  font-family: var(--ui-font) !important;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+html.ilink-app .il-tab.active {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  box-shadow: 0 1px 2px rgba(40, 42, 47, 0.08) !important;
+}
+
+/* Team Space is the only full collaboration workbench. */
+html.ilink-app body[data-app-page="team-space"] .main-content {
+  width: min(100% - 48px, 1440px) !important;
+  padding-top: 0;
+}
+
+html.ilink-app body[data-app-page="team-space"] .workspace-layout {
+  display: grid !important;
+  grid-template-columns: 224px minmax(0, 1fr) !important;
+  min-height: calc(100vh - 128px);
+  overflow: hidden;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-panel) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .sidebar {
+  padding: 16px !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-right: 1px solid var(--ui-border) !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .sidebar-logo,
+html.ilink-app body[data-app-page="team-space"] .sidebar-header,
+html.ilink-app body[data-app-page="team-space"] .panel-title {
+  color: var(--ui-text) !important;
+  font-family: var(--ui-font) !important;
+  font-weight: 650 !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .sidebar-back-btn,
+html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item {
+  min-height: 40px;
+  color: var(--ui-text-secondary) !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px !important;
+  font-weight: 550 !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .sidebar-back-btn:hover,
+html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item:hover,
+html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item.active {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-selected) !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .main-content-area {
+  padding: 24px !important;
+  background: var(--ui-surface) !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .panel-header {
+  min-height: 44px;
+  margin-bottom: 20px !important;
+  border-bottom: 0 !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .kanban-board {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .kanban-columns {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 14px !important;
+  overflow-x: auto;
+}
+
+html.ilink-app body[data-app-page="team-space"] .kanban-col {
+  min-height: 420px;
+  padding: 10px !important;
+  background: var(--ui-surface-subtle) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 10px !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .kanban-col-header {
+  padding: 4px 4px 10px;
+  color: var(--ui-text-secondary) !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+html.ilink-app body[data-app-page="team-space"] .kanban-col-count {
+  color: var(--ui-text-muted) !important;
+  background: transparent !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .col-dot-gray,
+html.ilink-app body[data-app-page="team-space"] .col-dot-blue,
+html.ilink-app body[data-app-page="team-space"] .col-dot-orange {
+  background: var(--ui-text-muted) !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .col-dot-green {
+  background: var(--ui-success) !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .kanban-task-card,
+html.ilink-app body[data-app-page="team-space"] .task-card {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .kanban-task-card:hover,
+html.ilink-app body[data-app-page="team-space"] .task-card:hover {
+  border-color: var(--ui-border-strong) !important;
+  box-shadow: 0 2px 6px rgba(40, 42, 47, 0.06) !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .chat-window-panel,
+html.ilink-app body[data-app-page="team-space"] .members-list-area {
+  background: var(--ui-surface) !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .chat-composer,
+html.ilink-app body[data-app-page="team-space"] .chat-input-bar {
+  background: var(--ui-surface-subtle) !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] #chatInput {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="team-space"] .chat-send-btn {
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border: 1px solid var(--ui-text) !important;
+  border-radius: 7px !important;
+}
+
+/* Admin remains data-first, reusing its existing tabs and tables. */
+html.ilink-app body[data-app-page="admin"] .admin-shell {
+  width: min(100% - 48px, 1360px) !important;
+  padding-top: 32px;
+  padding-bottom: 56px;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-page-header,
+html.ilink-app body[data-app-page="admin"] .admin-stats-grid,
+html.ilink-app body[data-app-page="admin"] .admin-workspace {
+  color: var(--ui-text) !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-workspace {
+  display: grid !important;
+  grid-template-columns: 210px minmax(0, 1fr) !important;
+  gap: 24px !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-sidebar {
+  position: sticky;
+  top: 96px;
+  padding: 14px !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-tabs .nav-link {
+  min-height: 40px;
+  color: var(--ui-text-secondary) !important;
+  border-radius: 7px !important;
+  font-family: var(--ui-font) !important;
+  font-size: 14px;
+  font-weight: 550;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-tabs .nav-link.active,
+html.ilink-app body[data-app-page="admin"] .admin-tabs .nav-link:hover {
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-selected) !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-table-card {
+  overflow: hidden;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-table-card .card-header {
+  padding: 20px 24px;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-table {
+  margin: 0;
+  color: var(--ui-text) !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-table > :not(caption) > * > * {
+  padding: 14px 16px;
+  color: inherit;
+  background: transparent !important;
+  border-color: var(--ui-border) !important;
+  font-family: var(--ui-font) !important;
+  font-size: 13px;
+}
+
+html.ilink-app body[data-app-page="admin"] .admin-table thead th {
+  color: var(--ui-text-muted) !important;
+  background: var(--ui-surface-subtle) !important;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+/* Narrow screens retain hierarchy without shrinking interactive targets. */
+@media (max-width: 960px) {
+  html.ilink-app .il-header__inner,
+  html.ilink-app body[data-app-page] .main-content,
+  html.ilink-app body[data-app-page] .il-page-wrapper,
+  html.ilink-app body[data-profile-page] .il-page-wrapper,
+  html.ilink-app body[data-app-page] .il-hero,
+  html.ilink-app body[data-app-page="team-market"] .hero-section,
+  html.ilink-app body[data-app-page="teacher-wall"] .hero-section,
+  html.ilink-app .il-search-bar,
+  html.ilink-app body[data-app-page="team-space"] .main-content,
+  html.ilink-app body[data-app-page="admin"] .admin-shell {
+    width: min(100% - 32px, 1200px) !important;
+  }
+
+  html.ilink-app .il-profile-layout,
+  html.ilink-app body[data-app-page="admin"] .admin-workspace {
+    grid-template-columns: 1fr !important;
+  }
+
+  html.ilink-app .il-profile-sidebar,
+  html.ilink-app body[data-app-page="admin"] .admin-sidebar {
+    position: static;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .workspace-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar {
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--ui-border) !important;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar-nav {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 720px) {
+  html.ilink-app .il-header__inner,
+  html.ilink-app body[data-app-page] .main-content,
+  html.ilink-app body[data-app-page] .il-page-wrapper,
+  html.ilink-app body[data-profile-page] .il-page-wrapper,
+  html.ilink-app body[data-app-page] .il-hero,
+  html.ilink-app body[data-app-page="team-market"] .hero-section,
+  html.ilink-app body[data-app-page="teacher-wall"] .hero-section,
+  html.ilink-app .il-search-bar,
+  html.ilink-app body[data-app-page="team-space"] .main-content,
+  html.ilink-app body[data-app-page="admin"] .admin-shell {
+    width: min(100% - 24px, 1200px) !important;
+  }
+
+  html.ilink-app .il-header__inner {
+    min-height: 64px;
+  }
+
+  html.ilink-app .il-header {
+    min-height: 64px;
+  }
+
+  html.ilink-app .il-header__title {
+    font-size: 18px;
+  }
+
+  html.ilink-app .il-header__brand {
+    display: flex !important;
+  }
+
+  html.ilink-app .il-search-bar {
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding: 8px !important;
+  }
+
+  html.ilink-app .il-search-bar__input-wrap,
+  html.ilink-app .il-toolbar-search,
+  html.ilink-app .competition-toolbar__search,
+  html.ilink-app .il-search-bar__select,
+  html.ilink-app .il-toolbar-select,
+  html.ilink-app .il-search-bar__btn {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  html.ilink-app .il-search-bar__spacer {
+    display: none;
+  }
+
+  html.ilink-app .auth-wrapper {
+    padding: 24px 16px;
+  }
+
+  html.ilink-app .auth-card {
+    padding: 24px !important;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .main-content-area {
+    padding: 16px !important;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .kanban-columns {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ilink-app *,
+  html.ilink-app *::before,
+  html.ilink-app *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
