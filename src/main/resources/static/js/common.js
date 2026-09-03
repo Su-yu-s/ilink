@@ -4,6 +4,20 @@
 // API基础URL
 const API_BASE_URL = '/api';
 
+function buildLoginUrl() {
+    const returnTo = window.location.pathname + window.location.search + window.location.hash;
+    if (!returnTo.startsWith('/') || returnTo.startsWith('//') || returnTo.startsWith('/login')) {
+        return '/login.html';
+    }
+    return '/login.html?redirect=' + encodeURIComponent(returnTo);
+}
+
+function redirectToLogin(delayMs) {
+    window.setTimeout(function () {
+        window.location.assign(buildLoginUrl());
+    }, Math.max(0, Number(delayMs) || 0));
+}
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -11,6 +25,50 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+/**
+ * 将 Markdown 渲染结果写入元素，统一经过 DOMPurify 净化，
+ * 防止编辑预览与成果/文章展示场景的 XSS（marked 默认透传原始 HTML）。
+ * 无 DOMPurify 或渲染失败时降级为纯文本展示。
+ */
+function renderMarkdownSafe(el, raw) {
+    const text = raw == null ? '' : String(raw);
+    if (!el) return;
+    if (typeof marked === 'undefined') {
+        el.textContent = text;
+        return;
+    }
+    let html;
+    try {
+        html = marked.parse(text);
+    } catch (e) {
+        el.textContent = text;
+        return;
+    }
+    if (typeof DOMPurify !== 'undefined') {
+        el.innerHTML = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+    } else {
+        // 无 DOMPurify 时展示纯文本，杜绝原始 HTML 注入
+        el.textContent = text;
+    }
+}
+
+/**
+ * 判断头像地址是否值得发起请求：仅站内受管上传目录（相对 /uploads/，
+ * 或与本页同源的绝对 /uploads/ 地址）。存量脏数据中的外链假地址不再渲染，
+ * 避免产生加载失败的控制台错误与破图。
+ */
+function isRenderableAvatarUrl(avatar) {
+    const v = avatar == null ? '' : String(avatar).trim();
+    if (!v) return false;
+    if (v.startsWith('/uploads/')) return true;
+    try {
+        const url = new URL(v, window.location.origin);
+        return url.origin === window.location.origin && url.pathname.startsWith('/uploads/');
+    } catch (e) {
+        return false;
+    }
 }
 
 // CSRF Token 辅助函数
@@ -128,7 +186,7 @@ async function request(url, options = {}) {
                     showMessage(userMessage, messageType);
                     if (shouldRedirectLogin) {
                         setTimeout(function () {
-                            window.location.assign('/login.html');
+                            window.location.assign(buildLoginUrl());
                         }, 1200);
                     }
                 }
@@ -165,7 +223,7 @@ async function request(url, options = {}) {
                 showMessage(userMessage, messageType);
                 if (shouldRedirectLogin) {
                     setTimeout(function () {
-                        window.location.assign('/login.html');
+                        window.location.assign(buildLoginUrl());
                     }, 1500);
                 }
             }
@@ -229,6 +287,54 @@ function formatTime(timestamp) {
     return formatter.format(date);
 }
 
+const MOBILE_NAV_MEDIA = '(max-width: 767.98px)';
+let mobileNavReturnFocus = null;
+
+function isMobileNavigation() {
+    return !!(window.matchMedia && window.matchMedia(MOBILE_NAV_MEDIA).matches);
+}
+
+function setMobileMenuOpen(open, options) {
+    const menu = document.getElementById('ilHeaderNav');
+    const button = document.getElementById('menuToggle');
+    const overlay = document.getElementById('ilHeaderOverlay');
+    if (!menu) return;
+
+    const mobile = isMobileNavigation();
+    const nextOpen = mobile && !!open;
+    const restoreFocus = !options || options.restoreFocus !== false;
+
+    if (nextOpen) {
+        mobileNavReturnFocus = document.activeElement;
+    }
+
+    menu.classList.toggle('il-header__nav--open', nextOpen);
+    document.body.classList.toggle('nav-open', nextOpen);
+    if (mobile) {
+        menu.setAttribute('aria-hidden', String(!nextOpen));
+        if (nextOpen) menu.removeAttribute('inert');
+        else menu.setAttribute('inert', '');
+    } else {
+        menu.removeAttribute('aria-hidden');
+        menu.removeAttribute('inert');
+    }
+    if (overlay) overlay.setAttribute('tabindex', nextOpen ? '0' : '-1');
+    if (button) {
+        button.setAttribute('aria-expanded', String(nextOpen));
+        button.setAttribute('aria-label', nextOpen ? '关闭菜单' : '打开菜单');
+    }
+
+    if (nextOpen) {
+        window.requestAnimationFrame(function () {
+            const closeButton = document.getElementById('menuClose');
+            if (closeButton) closeButton.focus({ preventScroll: true });
+        });
+    } else if (restoreFocus && mobileNavReturnFocus && typeof mobileNavReturnFocus.focus === 'function') {
+        mobileNavReturnFocus.focus({ preventScroll: true });
+        mobileNavReturnFocus = null;
+    }
+}
+
 // 兼容旧页面与当前统一页头的菜单契约。
 function toggleMobileMenu() {
     const legacyMenu = document.getElementById('navMenu');
@@ -238,14 +344,24 @@ function toggleMobileMenu() {
     }
 
     const menu = document.getElementById('ilHeaderNav');
-    const button = document.getElementById('menuToggle');
     if (!menu) return;
-    const open = menu.classList.toggle('il-header__nav--open');
-    document.body.classList.toggle('nav-open', open);
-    if (button) {
-        button.setAttribute('aria-expanded', String(open));
-        button.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
-    }
+    setMobileMenuOpen(!menu.classList.contains('il-header__nav--open'));
+}
+
+function toggleNotifications() {
+    const dropdown = document.getElementById('notificationDropdown');
+    const button = document.getElementById('notificationBell');
+    if (!dropdown) return;
+    const open = dropdown.classList.contains('notification-dropdown--hidden');
+    if (open) closeAllDropdowns();
+    dropdown.classList.toggle('notification-dropdown--hidden', !open);
+    dropdown.classList.toggle('notification-dropdown--open', open);
+    if (button) button.setAttribute('aria-expanded', String(open));
+    if (open && window.notificationManager) window.notificationManager.loadNotifications();
+}
+
+function markAllAsRead() {
+    if (window.notificationManager) window.notificationManager.markAllAsRead();
 }
 
 function toggleUserMenu() {
@@ -255,6 +371,7 @@ function toggleUserMenu() {
     const legacyWrap = document.querySelector('.user-menu');
     const legacyButton = document.getElementById('accountMenuBtn');
     if (legacyWrap) {
+        if (!dropdown.classList.contains('show')) closeNotifications();
         dropdown.classList.toggle('show');
         const open = dropdown.classList.contains('show');
         legacyWrap.classList.toggle('is-open', open);
@@ -263,6 +380,7 @@ function toggleUserMenu() {
     }
 
     const button = document.getElementById('userDropdownToggle');
+    if (!dropdown.classList.contains('il-header__dropdown--open')) closeNotifications();
     const open = dropdown.classList.toggle('il-header__dropdown--open');
     if (button) button.setAttribute('aria-expanded', String(open));
 }
@@ -293,7 +411,7 @@ function buildAccountAvatarInnerHtml(user) {
     const displayName = computeNavbarDisplayName(user);
     const initials = escapeHtml(computeNavbarInitials(displayName));
     const avatar = user && user.avatar ? String(user.avatar).trim() : '';
-    if (avatar) {
+    if (isRenderableAvatarUrl(avatar)) {
         return '<span class="account-trigger__avatar-wrap"><img class="account-trigger__avatar account-trigger__avatar--photo" src="' + escapeHtml(avatar) + '" alt="" referrerpolicy="no-referrer"></span>';
     }
     return '<span class="account-trigger__avatar-wrap"><span class="account-trigger__avatar" aria-hidden="true">' + initials + '</span></span>';
@@ -317,7 +435,7 @@ function applyUnifiedHeaderUser(user) {
     fallback.textContent = computeNavbarInitials(displayName).slice(0, 1);
 
     const avatar = user.avatar ? String(user.avatar).trim() : '';
-    if (!avatar) {
+    if (!isRenderableAvatarUrl(avatar)) {
         container.appendChild(fallback);
         return;
     }
@@ -373,6 +491,118 @@ function closeAllDropdowns() {
     if (dropdown) dropdown.classList.remove('il-header__dropdown--open');
     const dropdownButton = document.getElementById('userDropdownToggle');
     if (dropdownButton) dropdownButton.setAttribute('aria-expanded', 'false');
+}
+
+function closeNotifications() {
+    const dropdown = document.getElementById('notificationDropdown');
+    const button = document.getElementById('notificationBell');
+    if (dropdown) {
+        dropdown.classList.remove('notification-dropdown--open');
+        dropdown.classList.add('notification-dropdown--hidden');
+    }
+    if (button) button.setAttribute('aria-expanded', 'false');
+}
+
+function initUnifiedHeader() {
+    const header = document.getElementById('ilHeader');
+    if (!header || header.dataset.interactionsBound === '1') return;
+    header.dataset.interactionsBound = '1';
+
+    const menu = document.getElementById('ilHeaderNav');
+    const menuToggle = document.getElementById('menuToggle');
+    const menuClose = document.getElementById('menuClose');
+    const overlay = document.getElementById('ilHeaderOverlay');
+    const userDropdown = document.getElementById('userDropdown');
+    const userDropdownToggle = document.getElementById('userDropdownToggle');
+    const notificationBell = document.getElementById('notificationBell');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+    const markAllButton = document.getElementById('markAllNotificationsRead');
+
+    const syncNavigationMode = function () {
+        setMobileMenuOpen(false, { restoreFocus: false });
+    };
+
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function (event) {
+            event.stopPropagation();
+            toggleMobileMenu();
+        });
+    }
+    if (menuClose) menuClose.addEventListener('click', function () { setMobileMenuOpen(false); });
+    if (overlay) overlay.addEventListener('click', function () { setMobileMenuOpen(false); });
+    if (menu) {
+        menu.addEventListener('click', function (event) {
+            if (isMobileNavigation() && event.target.closest('a[href]')) {
+                setMobileMenuOpen(false, { restoreFocus: false });
+            }
+        });
+    }
+
+    if (userDropdownToggle && userDropdown) {
+        userDropdownToggle.addEventListener('click', function (event) {
+            event.stopPropagation();
+            toggleUserMenu();
+        });
+    }
+    if (notificationBell) {
+        notificationBell.addEventListener('click', function (event) {
+            event.stopPropagation();
+            toggleNotifications();
+        });
+    }
+    if (markAllButton) markAllButton.addEventListener('click', markAllAsRead);
+
+    document.addEventListener('click', function (event) {
+        if (userDropdown && !event.target.closest('#userDropdown')) closeAllDropdowns();
+        if (notificationDropdown &&
+            !event.target.closest('#notificationDropdown') &&
+            !event.target.closest('#notificationBell')) {
+            closeNotifications();
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            if (menu && menu.classList.contains('il-header__nav--open')) setMobileMenuOpen(false);
+            closeAllDropdowns();
+            closeNotifications();
+            return;
+        }
+
+        if (event.key !== 'Tab' || !menu || !menu.classList.contains('il-header__nav--open')) return;
+        const focusable = Array.from(menu.querySelectorAll(
+            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter(function (element) {
+            return element.getClientRects().length > 0;
+        });
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    });
+
+    if (window.matchMedia) {
+        const media = window.matchMedia(MOBILE_NAV_MEDIA);
+        if (typeof media.addEventListener === 'function') media.addEventListener('change', syncNavigationMode);
+        else if (typeof media.addListener === 'function') media.addListener(syncNavigationMode);
+    }
+    syncNavigationMode();
+
+    const currentUserId = header.dataset.currentUserId;
+    if (currentUserId && notificationBell) {
+        notificationBell.classList.remove('notification-bell--hidden');
+        notificationBell.classList.add('notification-bell--visible');
+        if (typeof NotificationManager !== 'undefined' && !window.notificationManager) {
+            window.notificationManager = new NotificationManager(currentUserId);
+            window.notificationManager.init();
+        }
+    }
 }
 
 // Toast 类型处理 — compact
@@ -514,10 +744,6 @@ function showMessage(message, type, durationMs) {
     textEl.className = 'ilink-toast__text';
     textEl.textContent = text;
 
-    const progress = document.createElement('div');
-    progress.className = 'ilink-toast__progress';
-    progress.setAttribute('aria-hidden', 'true');
-
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'ilink-toast__close';
@@ -532,23 +758,12 @@ function showMessage(message, type, durationMs) {
     toast.appendChild(icon);
     toast.appendChild(body);
     toast.appendChild(closeBtn);
-    toast.appendChild(progress);
     host.appendChild(toast);
 
     const wait = getToastDurationMs(type, durationMs);
-    if (window.matchMedia && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        progress.style.transition = 'transform ' + wait + 'ms linear';
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () {
-                toast.classList.add('ilink-toast--visible');
-                progress.style.transform = 'scaleX(0)';
-            });
-        });
-    } else {
-        requestAnimationFrame(function () {
-            toast.classList.add('ilink-toast--visible');
-        });
-    }
+    requestAnimationFrame(function () {
+        toast.classList.add('ilink-toast--visible');
+    });
 
     toast._ilinkTimer = setTimeout(function () {
         dismissIlinkToast(toast);
@@ -694,6 +909,8 @@ var CATEGORY_LABELS = {
 // Initialize All Interactions
 // ========================================
 document.addEventListener('DOMContentLoaded', function() {
+    initUnifiedHeader();
+
     // Particle system — only if canvas exists (loaded from ui-particles.js)
     if (document.getElementById('particleCanvas') && typeof ParticleSystem !== 'undefined') {
         new ParticleSystem('particleCanvas', window.ILINK_PARTICLE_OPTIONS);
@@ -724,6 +941,8 @@ document.addEventListener('DOMContentLoaded', function() {
 const ilinkPublicApi = {
     apiFetch: apiFetch,
     request: request,
+    buildLoginUrl: buildLoginUrl,
+    redirectToLogin: redirectToLogin,
     getCurrentUser: getCurrentUser,
     logout: logout,
     showMessage: showMessage,
@@ -732,7 +951,10 @@ const ilinkPublicApi = {
     formatTime: formatTime,
     getTypeClass: getTypeClass,
     toggleMobileMenu: toggleMobileMenu,
+    setMobileMenuOpen: setMobileMenuOpen,
     toggleUserMenu: toggleUserMenu,
+    toggleNotifications: toggleNotifications,
+    markAllAsRead: markAllAsRead,
     closeAllDropdowns: closeAllDropdowns,
     computeNavbarDisplayName: computeNavbarDisplayName,
     computeNavbarInitials: computeNavbarInitials,

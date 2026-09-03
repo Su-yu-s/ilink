@@ -3,10 +3,12 @@ package cn.ilink.service.impl;
 import cn.ilink.dto.TeamTaskDTO;
 import cn.ilink.entity.TaskComment;
 import cn.ilink.entity.TaskParticipant;
+import cn.ilink.entity.TaskSubmission;
 import cn.ilink.entity.TeamTask;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.TaskCommentMapper;
 import cn.ilink.mapper.TaskParticipantMapper;
+import cn.ilink.mapper.TaskSubmissionMapper;
 import cn.ilink.mapper.TeamTaskMapper;
 import cn.ilink.service.TeamTaskService;
 import cn.ilink.service.UserService;
@@ -14,6 +16,7 @@ import cn.ilink.vo.TaskCommentVO;
 import cn.ilink.vo.TaskParticipantVO;
 import cn.ilink.vo.TeamTaskVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,9 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     private TaskCommentMapper taskCommentMapper;
 
     @Autowired
+    private TaskSubmissionMapper taskSubmissionMapper;
+
+    @Autowired
     private UserService userService;
 
     @Override
@@ -40,7 +46,18 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         wrapper.eq(TeamTask::getTeamId, teamId)
                .orderByDesc(TeamTask::getCreatedAt);
         List<TeamTask> tasks = this.list(wrapper);
-        return tasks.stream().map(this::convertToVO).collect(Collectors.toList());
+
+        // 批量加载所有相关用户，避免 N+1 查询
+        Set<Long> userIds = new HashSet<>();
+        for (TeamTask task : tasks) {
+            if (task.getAssignedTo() != null) userIds.add(task.getAssignedTo());
+            if (task.getCreatedBy() != null) userIds.add(task.getCreatedBy());
+        }
+        Map<Long, User> userMap = userIds.isEmpty() ? Collections.emptyMap()
+                : userService.listByIds(userIds).stream()
+                        .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
+
+        return tasks.stream().map(task -> convertToVO(task, userMap)).collect(Collectors.toList());
     }
 
     @Override
@@ -54,7 +71,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean createTask(TeamTaskDTO dto, Long userId) {
+    public TeamTaskVO createTask(TeamTaskDTO dto, Long userId) {
         TeamTask task = new TeamTask();
         task.setTeamId(dto.getTeamId());
         task.setTaskTitle(dto.getTaskTitle());
@@ -69,8 +86,10 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         task.setCreatedAt(new Date());
         task.setUpdatedAt(new Date());
 
-        boolean saved = this.save(task);
-        if (saved && dto.getAssignedTo() != null) {
+        if (!this.save(task)) {
+            throw new IllegalStateException("\u4efb\u52a1\u4fdd\u5b58\u5931\u8d25");
+        }
+        if (dto.getAssignedTo() != null) {
             TaskParticipant participant = new TaskParticipant();
             participant.setTaskId(task.getId());
             participant.setUserId(dto.getAssignedTo());
@@ -87,7 +106,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         creator.setJoinedAt(new Date());
         taskParticipantMapper.insert(creator);
 
-        return saved;
+        return convertToVO(task);
     }
 
     @Override
@@ -125,16 +144,41 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateTaskStatus(Long taskId, String status) {
-        TeamTask task = this.getById(taskId);
-        if (task == null) {
+        String normalized = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+        if (!"IN_PROGRESS".equals(normalized)) {
             return false;
         }
-        task.setStatus(status.toUpperCase());
-        task.setUpdatedAt(new Date());
-        if ("COMPLETED".equals(status.toUpperCase())) {
-            task.setCompletedAt(new Date());
+        return transitionTaskStatus(taskId, "PENDING", normalized);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean transitionTaskStatus(Long taskId, String expectedStatus, String targetStatus) {
+        if (taskId == null || expectedStatus == null || targetStatus == null) {
+            return false;
         }
-        return this.updateById(task);
+        String expected = expectedStatus.trim().toUpperCase(Locale.ROOT);
+        String target = targetStatus.trim().toUpperCase(Locale.ROOT);
+        if (!isAllowedTransition(expected, target)) {
+            return false;
+        }
+        UpdateWrapper<TeamTask> update = new UpdateWrapper<TeamTask>()
+            .eq("id", taskId)
+            .eq("status", expected)
+            .set("status", target)
+            .set("updated_at", new Date());
+        if ("COMPLETED".equals(target)) {
+            update.set("completed_at", new Date());
+        } else {
+            update.set("completed_at", null);
+        }
+        return this.update(update);
+    }
+
+    private boolean isAllowedTransition(String expected, String target) {
+        return ("PENDING".equals(expected) && "IN_PROGRESS".equals(target))
+            || ("IN_PROGRESS".equals(expected) && "REVIEW".equals(target))
+            || ("REVIEW".equals(expected) && ("COMPLETED".equals(target) || "IN_PROGRESS".equals(target)));
     }
 
     @Override
@@ -147,6 +191,10 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         LambdaQueryWrapper<TaskComment> commentWrapper = new LambdaQueryWrapper<>();
         commentWrapper.eq(TaskComment::getTaskId, taskId);
         taskCommentMapper.delete(commentWrapper);
+
+        LambdaQueryWrapper<TaskSubmission> submissionWrapper = new LambdaQueryWrapper<>();
+        submissionWrapper.eq(TaskSubmission::getTaskId, taskId);
+        taskSubmissionMapper.delete(submissionWrapper);
 
         return this.removeById(taskId);
     }
@@ -286,6 +334,10 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     }
 
     private TeamTaskVO convertToVO(TeamTask task) {
+        return convertToVO(task, Collections.emptyMap());
+    }
+
+    private TeamTaskVO convertToVO(TeamTask task, Map<Long, User> userMap) {
         TeamTaskVO vo = new TeamTaskVO();
         vo.setId(task.getId());
         vo.setTeamId(task.getTeamId());
@@ -335,7 +387,8 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         }
 
         if (task.getAssignedTo() != null) {
-            User assignee = userService.getById(task.getAssignedTo());
+            User assignee = userMap.get(task.getAssignedTo());
+            if (assignee == null) assignee = userService.getById(task.getAssignedTo());
             if (assignee != null) {
                 vo.setAssigneeName(assignee.getRealName() != null ? assignee.getRealName() : assignee.getUsername());
                 vo.setAssigneeAvatar(assignee.getAvatar());
@@ -343,7 +396,8 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         }
 
         if (task.getCreatedBy() != null) {
-            User creator = userService.getById(task.getCreatedBy());
+            User creator = userMap.get(task.getCreatedBy());
+            if (creator == null) creator = userService.getById(task.getCreatedBy());
             if (creator != null) {
                 vo.setCreatorName(creator.getRealName() != null ? creator.getRealName() : creator.getUsername());
                 vo.setCreatorAvatar(creator.getAvatar());

@@ -16,6 +16,16 @@
     function saveDraft() { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(honors)); } catch(e){} }
     function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch(e){} }
 
+    function cloneHonors(items) {
+        return (items || []).map(function(item) { return norm(item); });
+    }
+
+    function notifyChange() {
+        document.dispatchEvent(new CustomEvent('profile:honors-changed', {
+            detail: { honors: cloneHonors(honors) }
+        }));
+    }
+
     function honorLevelTierClass(level) {
         if(!level) return 'tier-none';
         var k = String(level).toLowerCase();
@@ -110,6 +120,7 @@
 
         if(!honors.length) {
             container.innerHTML = '<div class="honors-empty"><div class="honors-empty__icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l2.4 7.4H22l-6 4.6 2.3 7L12 17.8 5.7 22 8 14.4 2 10.6h7.6L12 3z"/></svg></div><p class="honors-empty__title">暂无成果条目</p><p class="honors-empty__text">点击「添加成果」开始记录您的获奖与荣誉</p></div>';
+            notifyChange();
             return;
         }
 
@@ -144,6 +155,7 @@
                 '</div></div>';
         }
         container.innerHTML = html;
+        notifyChange();
     }
 
     function updateBatch() {
@@ -426,6 +438,39 @@
             if(link) link.href = escapeHtml(u);
         }
     }
+
+    window.profileHonorsManager = {
+        getItems: function() {
+            return cloneHonors(honors);
+        },
+        snapshot: function() {
+            return cloneHonors(honors);
+        },
+        setItems: function(items, options) {
+            honors = cloneHonors(items);
+            manageMode = false;
+            var section = document.getElementById('honorsListSection');
+            if(section) section.classList.remove('honors-manage-mode');
+            var manageButton = $('btnManage');
+            if(manageButton) {
+                manageButton.textContent = '管理奖项';
+                manageButton.classList.remove('is-active');
+            }
+            if(options && options.persist) saveDraft();
+            else clearDraft();
+            render();
+            updateBatch();
+        },
+        restore: function(snapshot) {
+            this.setItems(snapshot, { persist: false });
+        },
+        markSaved: function(items) {
+            honors = cloneHonors(items);
+            clearDraft();
+            render();
+            updateBatch();
+        }
+    };
 
     document.addEventListener('DOMContentLoaded', function() {
         loadData();

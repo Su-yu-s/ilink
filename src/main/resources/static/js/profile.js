@@ -1318,7 +1318,8 @@ async function saveProfilePayload(includeHonors) {
     if (collegeElem) profileData.college = collegeElem.value;
     if (bioElem) profileData.bio = bioElem.value;
     if (includeHonors) {
-        profileData.honors = JSON.stringify(collectHonorsFromState());
+        const managedHonors = window.profileHonorsManager?.getItems();
+        profileData.honors = JSON.stringify(Array.isArray(managedHonors) ? managedHonors : collectHonorsFromState());
     }
     const response = await apiFetch('/api/user/profile', {
         method: 'POST',
@@ -1387,7 +1388,7 @@ async function syncTeacherProfile(user, page) {
     const summary = document.getElementById('teacherProfileSummary');
     if (!isTeacher) {
         if (summary) summary.hidden = true;
-        return;
+        return null;
     }
 
     try {
@@ -1420,6 +1421,7 @@ async function syncTeacherProfile(user, page) {
             const institution = document.getElementById('profileInstitutionText');
             if (institution) institution.textContent = user.school || '未设置任职单位';
         }
+        return teacher;
     } catch (error) {
         console.error('同步导师资料失败:', error);
         if (summary) {
@@ -1429,6 +1431,7 @@ async function syncTeacherProfile(user, page) {
             setProfileText('teacherSummaryResearch', '', '待完善');
             setProfileText('teacherSummaryProjects', '', '待完善');
         }
+        return null;
     }
 }
 
@@ -2071,7 +2074,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                         return normalizeHonor(x);
                     });
                     applyUserToProfileForm(u);
-                    syncTeacherProfile(u, page);
+                    syncTeacherProfile(u, page).then(function (teacherProfile) {
+                        window.profileDetailsController?.setProfileData(u, teacherProfile);
+                    });
                     bindAvatarPreview();
                     updateAvatarClearButton();
                 })
@@ -2107,6 +2112,9 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         if (Number(result.code) !== 200 && Number(result.code) !== 401) {
             showMessage('获取用户信息失败: ' + (result.message || '请稍后重试'), 'error');
+            if (page === 'edit') {
+                window.profileDetailsController?.showLoadError('个人资料暂时无法加载，请稍后重试。');
+            }
             return;
         }
 
@@ -2115,7 +2123,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             honorsState = parseHonorsJson(user.honors).map((x) => normalizeHonor(x));
 
             applyUserToProfileForm(user);
-            await syncTeacherProfile(user, page);
+            const teacherProfile = await syncTeacherProfile(user, page);
 
             if (page === 'overview') {
                 bindAvatarPreview();
@@ -2130,6 +2138,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             } else if (page === 'edit') {
                 bindAvatarPreview();
                 updateAvatarClearButton();
+                window.profileDetailsController?.setProfileData(user, teacherProfile);
                 /* 不再自动 focus 邮箱：易触发浏览器自动填充覆盖接口刚写入的值 */
                 (function scheduleEditFormRefill(u) {
                     function refill() {
@@ -2155,6 +2164,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             }
         } else {
             showMessage('获取用户信息失败: ' + result.message, 'error');
+            if (page === 'edit') {
+                window.profileDetailsController?.showLoadError('登录状态已失效，请重新登录。');
+            }
             setTimeout(() => {
                 window.location.href = '/login';
             }, 1500);
@@ -2162,6 +2174,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     } catch (error) {
         console.error('获取用户信息异常:', error);
         showMessage('系统异常，请稍后重试', 'error');
+        if (page === 'edit') {
+            window.profileDetailsController?.showLoadError('个人资料暂时无法加载，请检查网络后重试。');
+        }
     }
 
     const profileForm = document.getElementById('profileForm');
@@ -2193,22 +2208,34 @@ document.addEventListener('DOMContentLoaded', async function () {
                 btn.disabled = true;
             }
             try {
-                const result = await saveProfilePayload(false);
+                const result = await saveProfilePayload(true);
                 if (Number(result.code) === 200) {
+                    let savedTeacher = null;
                     if (window.__ilinkProfileRole === 'TEACHER') {
                         try {
-                            await saveTeacherProfilePayload();
+                            const teacherResult = await saveTeacherProfilePayload();
+                            savedTeacher = teacherResult.data || null;
                         } catch (teacherError) {
                             console.error('导师资料保存失败:', teacherError);
                             showMessage('基本资料已保存，但导师资料未保存：' + (teacherError.message || '请重试'), 'warning');
                             return;
                         }
                     }
+                    try {
+                        await window.userSkillManager?.saveChanges();
+                    } catch (skillError) {
+                        console.error('技能保存失败:', skillError);
+                        showMessage('基本资料已保存，但技能未全部保存：' + (skillError.message || '请重试'), 'warning');
+                        return;
+                    }
+                    const savedUser = result.data || {};
+                    window.profileHonorsManager?.markSaved(parseHonorsJson(savedUser.honors));
                     showMessage('保存成功，资料已更新', 'success');
                     bindAvatarPreview();
                     if (result.data && typeof applyAccountMenuFromUser === 'function') {
                         applyAccountMenuFromUser(result.data);
                     }
+                    window.profileDetailsController?.setProfileData(savedUser, savedTeacher);
                 } else {
                     showMessage('更新失败: ' + (result.message || ''), 'error');
                 }

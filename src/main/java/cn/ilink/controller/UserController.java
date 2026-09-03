@@ -9,10 +9,12 @@ import cn.ilink.entity.CommunityPost;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.CommunityPostMapper;
 import cn.ilink.service.UserService;
+import cn.ilink.service.RememberMeService;
 import cn.ilink.util.PasswordPolicy;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +36,12 @@ public class UserController {
 
     @Autowired
     private CommunityPostMapper communityPostMapper;
+
+    @Autowired
+    private RememberMeService rememberMeService;
+
+    @Value("${file.access-url-prefix:/uploads/}")
+    private String accessUrlPrefix;
 
     /**
      * 公开用户概览（组队/社区/导师等场景跳转主页，仅展示可公开字段）
@@ -113,6 +121,11 @@ public class UserController {
             return Result.unauthorized().toResponseEntity();
         }
 
+        if (profileRequest.getAvatar() != null
+                && !ControllerUtils.isManagedUploadUrl(profileRequest.getAvatar(), accessUrlPrefix)) {
+            return Result.badRequest("头像地址仅支持站内上传文件").toResponseEntity();
+        }
+
         boolean success = userService.updateProfile(user.getId(), profileRequest);
         if (success) {
             // 更新session中的用户信息
@@ -173,6 +186,7 @@ public class UserController {
         }
         boolean ok = userService.changePassword(user.getId(), req.getOldPassword(), req.getNewPassword());
         if (!ok) return Result.badRequest("原密码错误").toResponseEntity();
+        rememberMeService.revokeAllForUser(user.getId());
         return Result.ok("密码修改成功", null).toResponseEntity();
     }
 }

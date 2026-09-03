@@ -1,13 +1,14 @@
 # 本地开发（默认 spring.profiles.active=dev）
-# 数据库密码请通过环境变量 SPRING_DATASOURCE_PASSWORD 或本文件配置，勿提交真实密码到仓库
+# 数据库密码请通过环境变量 SPRING_DATASOURCE_PASSWORD 或 DB_PASSWORD 配置，勿提交真实密码到仓库
+# 本地私有配置（如 AI Key）放在 application-local.yml，由主配置 spring.profiles.group.dev=local 自动引入
 spring:
   datasource:
-    password: ${SPRING_DATASOURCE_PASSWORD:1234}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:1234}}
   thymeleaf:
     cache: false
   flyway:
-    validate-on-migrate: false
-    repair-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: false
 
 logging:
   level:
@@ -16,6 +17,8 @@ logging:
     com.baomidou.mybatisplus: warn
 
 # 接口是否向客户端返回异常详情（切勿在生产开启）
+# AI Key 等私有值不写在本文件：请复制 application-local.yml.example 为 application-local.yml 填写，
+# 或直接设置 AGNES_API_KEY 环境变量（环境变量优先级最高）
 app:
   api:
     expose-error-detail: ${APP_EXPOSE_ERROR_DETAIL:false}

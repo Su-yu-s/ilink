@@ -97,7 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if ("TEACHER".equals(user.getRole())) {
             TeacherApplication mentorProfile = new TeacherApplication();
             mentorProfile.setUserId(user.getId());
-            mentorProfile.setStatus("APPROVED");
+            mentorProfile.setStatus("INCOMPLETE");
             mentorProfile.setCreatedAt(new Date());
             if (!teacherApplicationService.save(mentorProfile)) {
                 throw new IllegalStateException("教师账号创建成功，但导师档案创建失败");
@@ -135,6 +135,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateProfile(Long userId, ProfileRequest profileRequest) {
         User user = getById(userId);
         if (user == null) {
@@ -190,7 +191,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             user.setHonors(profileRequest.getHonors());
         }
 
-        return updateById(user);
+        boolean updated = updateById(user);
+        if (updated && "TEACHER".equals(user.getRole())) {
+            synchronizeTeacherProfileStatus(user);
+        }
+        return updated;
+    }
+
+    private void synchronizeTeacherProfileStatus(User user) {
+        TeacherApplication profile = teacherApplicationService.getOne(
+            new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<TeacherApplication>()
+                .eq(TeacherApplication::getUserId, user.getId()));
+        if (profile == null || "REVOKED".equals(profile.getStatus()) || "PENDING".equals(profile.getStatus())) {
+            return;
+        }
+        String desiredStatus = isTeacherProfileComplete(user, profile) ? "APPROVED" : "INCOMPLETE";
+        if (!desiredStatus.equals(profile.getStatus())) {
+            profile.setStatus(desiredStatus);
+            if (!teacherApplicationService.updateById(profile)) {
+                throw new IllegalStateException("导师档案状态同步失败");
+            }
+        }
+    }
+
+    private boolean isTeacherProfileComplete(User user, TeacherApplication profile) {
+        return hasText(user.getRealName())
+            && hasText(user.getSchool())
+            && hasText(user.getMajor())
+            && hasText(profile.getProfessionalTitle())
+            && hasText(profile.getResearchDirection())
+            && hasText(profile.getIntroduction());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     @Override

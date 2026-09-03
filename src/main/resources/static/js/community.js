@@ -12,7 +12,6 @@ const PAGE_SIZE = 10;
 let currentCategory = '';
 let currentPage = 1;
 
-let composeQuill = null;
 let pendingAttachments = [];
 let currentUser = null;
 
@@ -72,13 +71,12 @@ function openComposeModal() {
     const title = document.getElementById('composeTitle');
     if (title) title.value = '';
 
+    const mdEditor = document.getElementById('composeMdEditor');
+    if (mdEditor) mdEditor.value = '';
+
     pendingAttachments = [];
     renderComposeAttachments();
-
-    const q = ensureComposeQuill();
-    if (q) {
-        q.setContents([]);
-    }
+    renderComposePreview();
 
     const modalEl = document.getElementById('composeModal');
     if (modalEl) {
@@ -95,72 +93,104 @@ function closeComposeModal() {
     }
 }
 
-function ensureComposeQuill() {
-    if (typeof Quill === 'undefined') {
-        return null;
+/** 初始化撰写弹窗的 Markdown 编辑器 */
+function initComposeMarkdown() {
+    // 添加 has-toolbar 到 pane-wrap
+    const paneWrap = document.querySelector('#composeModal .md-pane-wrap');
+    if (paneWrap) paneWrap.classList.add('has-toolbar');
+
+    // 工具栏按钮
+    const toolbar = document.querySelector('#composeModal .md-toolbar');
+    if (toolbar && !toolbar.dataset.mdBound) {
+        toolbar.dataset.mdBound = '1';
+        toolbar.querySelectorAll('.md-toolbar-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const action = btn.getAttribute('data-action');
+                const ta = document.getElementById('composeMdEditor');
+                if (!ta || !action) return;
+                applyMdAction(ta, action);
+            });
+        });
     }
-    if (composeQuill) {
-        return composeQuill;
-    }
-    const el = document.getElementById('composeEditor');
-    if (!el) {
-        return null;
-    }
-    const toolbarOptions = [
-        [{ header: [1, 2, 3, false] }],
-        ['bold', 'italic', 'underline', 'strike'],
-        ['blockquote', 'code-block'],
-        [{ list: 'ordered' }, { list: 'bullet' }],
-        ['link', 'image'],
-        ['clean']
-    ];
-    composeQuill = new Quill('#composeEditor', {
-        theme: 'snow',
-        modules: {
-            toolbar: {
-                container: toolbarOptions,
-                handlers: {
-                    image: function() {
-                        uploadImageForQuill(this.quill);
-                    }
+
+    // 模式切换
+    const modeBar = document.querySelector('#composeModal .md-mode-bar');
+    if (modeBar && !modeBar.dataset.mdBound) {
+        modeBar.dataset.mdBound = '1';
+        modeBar.querySelectorAll('.md-mode-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const mode = btn.getAttribute('data-mode');
+                modeBar.querySelectorAll('.md-mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const wrap = document.querySelector('#composeModal .md-pane-wrap');
+                if (wrap) {
+                    wrap.classList.remove('split', 'edit-only', 'preview-only');
+                    wrap.classList.add(mode === 'split' ? 'split' : (mode === 'edit' ? 'edit-only' : 'preview-only'));
+                    const divider = wrap.querySelector('.md-divider');
+                    if (divider) divider.classList.toggle('visible', mode === 'split');
                 }
-            }
-        },
-        placeholder: '建议结构：背景 → 过程 → 结果/建议。可插入图片、链接与代码块。'
-    });
-    return composeQuill;
+                if (mode === 'split' || mode === 'preview') {
+                    renderComposePreview();
+                }
+            });
+        });
+    }
+
+    // textarea input → 实时预览
+    const ta = document.getElementById('composeMdEditor');
+    if (ta && !ta.dataset.mdPreviewBound) {
+        ta.dataset.mdPreviewBound = '1';
+        ta.addEventListener('input', renderComposePreview);
+    }
+    // 初次渲染
+    renderComposePreview();
 }
 
-function uploadImageForQuill(quill) {
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', 'image/*');
-    input.click();
-    input.onchange = async function() {
-        const file = input.files && input.files[0];
-        if (!file) return;
-        const fd = new FormData();
-        fd.append('file', file);
-        try {
-            const r = await apiFetch('/api/upload/attachment?kind=avatar', {
-                method: 'POST',
-                body: fd,
-                credentials: 'same-origin'
-            });
-            const j = await r.json();
-            if (j.code !== 200 || !j.data || !j.data.url) {
-                showMessage(j.message || '图片上传失败', 'error');
-                return;
-            }
-            const range = quill.getSelection(true);
-            const idx = range ? range.index : quill.getLength();
-            quill.insertEmbed(idx, 'image', j.data.url);
-            quill.setSelection(idx + 1);
-        } catch (e) {
-            console.error(e);
-            showMessage('图片上传失败', 'error');
-        }
+function renderComposePreview() {
+    const ta = document.getElementById('composeMdEditor');
+    const preview = document.getElementById('composeMdPreview');
+    if (!ta || !preview) return;
+    const raw = ta.value || '';
+    if (typeof marked !== 'undefined') {
+        renderMarkdownSafe(preview, raw);
+    } else {
+        preview.innerHTML = '<pre>' + escapeHtml(raw) + '</pre>';
+    }
+}
+
+/* ========== Markdown 工具栏动作 ========== */
+function applyMdAction(ta, action) {
+    var start = ta.selectionStart, end = ta.selectionEnd;
+    var text = ta.value, sel = text.substring(start, end), rep = '';
+    var markers = {
+        bold: { wrap: '**', label: '粗体' }, italic: { wrap: '*', label: '斜体' },
+        strikethrough: { wrap: '~~', label: '删除线' }, code: { wrap: '`', label: '代码' },
+        h2: { prefix: '## ', label: '标题' }, h3: { prefix: '### ', label: '小标题' },
+        ul: { prefix: '- ', label: '列表' }, ol: { prefix: '1. ', label: '有序' },
+        quote: { prefix: '> ', label: '引用' },
+        link: { prefix: '[', suffix: '](url)', label: '链接', selectLabel: '链接文字' },
+        image: { prefix: '![', suffix: '](url)', label: '图片', selectLabel: '图片描述' },
+        hr: { line: '\n---\n', label: '分隔线' }
     };
+    var m = markers[action];
+    if (!m) return;
+    if (m.line != null) { rep = m.line; }
+    else if (m.prefix != null && m.suffix != null) {
+        rep = sel ? (m.prefix + sel + m.suffix) : (m.prefix + (m.selectLabel || m.label) + m.suffix);
+    } else if (m.prefix != null) {
+        var lineStart = text.lastIndexOf('\n', start - 1) + 1;
+        rep = m.prefix + text.substring(lineStart, end);
+        start = lineStart; end = lineStart + rep.length;
+    } else if (m.wrap != null) {
+        var w = m.wrap, wLen = w.length;
+        var check = text.substring(Math.max(0, start - wLen), Math.min(text.length, end + wLen));
+        if (check === w + sel + w) { rep = sel; start -= wLen; end += wLen; }
+        else if (sel) { rep = w + sel + w; }
+        else { rep = w + m.label + w; start += wLen; end = start + m.label.length; }
+    }
+    ta.focus();
+    ta.setRangeText(rep, start, end, 'end');
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 async function uploadCommunityAttachment(file) {
@@ -606,20 +636,27 @@ function renderPager(pag, pagerEl, innerEl) {
 async function submitPost() {
     const category = document.getElementById('composeCategory')?.value;
     const title = document.getElementById('composeTitle')?.value.trim() || '';
-    const q = ensureComposeQuill();
+    const mdEditor = document.getElementById('composeMdEditor');
 
-    if (!q) {
+    if (!mdEditor) {
         showMessage('编辑器加载失败，请刷新页面重试', 'error');
         return;
     }
 
-    const plain = q.getText().trim();
-    if (!title || !plain) {
+    const mdContent = mdEditor.value.trim();
+    if (!title || !mdContent) {
         showMessage('请填写标题与正文', 'warning');
         return;
     }
 
-    const html = q.root.innerHTML;
+    let htmlContent = '';
+    if (typeof marked !== 'undefined') {
+        try { htmlContent = marked.parse(mdContent); } catch(_) { htmlContent = '<p>' + escapeHtml(mdContent) + '</p>'; }
+    } else {
+        htmlContent = '<p>' + escapeHtml(mdContent) + '</p>';
+    }
+    const mdB64 = btoa(unescape(encodeURIComponent(mdContent)));
+    const wrappedHtml = '<!--md:' + mdB64 + '-->' + htmlContent;
 
     try {
         const response = await apiFetch('/api/community/posts', {
@@ -629,7 +666,7 @@ async function submitPost() {
             body: JSON.stringify({
                 category,
                 title,
-                content: html,
+                content: wrappedHtml,
                 attachments: pendingAttachments
             })
         });
@@ -655,3 +692,14 @@ async function submitPost() {
     }
 }
 
+
+document.addEventListener('DOMContentLoaded', function () {
+    var tb = document.querySelector('#composeModal .md-toolbar');
+    if (tb) { tb.querySelectorAll('.md-toolbar-btn').forEach(function (btn) { btn.addEventListener('click', function () { var a = btn.getAttribute('data-action'); var ta = document.getElementById('composeMdEditor'); if (ta && a) applyMdAction(ta, a); }); }); }
+
+    var mb = document.querySelector('#composeModal .md-mode-bar');
+    if (mb) { mb.querySelectorAll('.md-mode-btn').forEach(function (btn) { btn.addEventListener('click', function () { var m = btn.getAttribute('data-mode'); mb.querySelectorAll('.md-mode-btn').forEach(function (b) { b.classList.remove('active'); }); btn.classList.add('active'); var w = document.querySelector('#composeModal .md-pane-wrap'); if (w) { w.classList.remove('split', 'edit-only', 'preview-only'); w.classList.add(m === 'split' ? 'split' : (m === 'edit' ? 'edit-only' : 'preview-only')); var d = w.querySelector('.md-divider'); if (d) d.classList.toggle('visible', m === 'split'); } if (m === 'split' || m === 'preview') renderComposePreview(); }); }); }
+
+    var ta = document.getElementById('composeMdEditor');
+    if (ta) ta.addEventListener('input', renderComposePreview);
+});

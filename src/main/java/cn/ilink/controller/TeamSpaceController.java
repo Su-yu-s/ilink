@@ -76,6 +76,26 @@ public class TeamSpaceController {
     }
 
     /**
+     * 检查用户是否为团队成员，同时返回团队对象避免重复查询
+     * @return 团队对象，如果不是成员则返回 null
+     */
+    private TeamDemand checkMembershipAndGetTeam(Long teamId, Long userId) {
+        if (teamId == null || userId == null) return null;
+        TeamDemand team = teamDemandService.getById(teamId);
+        if (team == null) return null;
+        // 创建者直接通过
+        if (userId.equals(team.getCreatorId())) return team;
+        // 检查审批记录
+        long approvedCount = teamApplicationService.count(
+                new LambdaQueryWrapper<TeamApplication>()
+                        .eq(TeamApplication::getTeamId, teamId)
+                        .eq(TeamApplication::getUserId, userId)
+                        .eq(TeamApplication::getStatus, "APPROVED")
+        );
+        return approvedCount > 0 ? team : null;
+    }
+
+    /**
      * 获取工作空间概览信息
      * GET /api/team-space/{teamId}/info
      */
@@ -88,31 +108,46 @@ public class TeamSpaceController {
             return Result.unauthorized().toResponseEntity();
         }
 
-        if (!isTeamMember(teamId, user.getId())) {
+        // 一次性检查成员资格并获取团队对象，避免重复查询
+        TeamDemand team = checkMembershipAndGetTeam(teamId, user.getId());
+        if (team == null) {
+            // 区分“不存在”和“无权访问”
+            TeamDemand exists = teamDemandService.getById(teamId);
+            if (exists == null) {
+                return Result.notFound("团队不存在").toResponseEntity();
+            }
             return Result.fail(403, "你不是该团队成员，无权访问工作空间").toResponseEntity();
         }
 
-        TeamDemand team = teamDemandService.getById(teamId);
-        if (team == null) {
-            return Result.notFound("团队不存在").toResponseEntity();
-        }
-
-        // 统计成员数
-        long memberCount = countMembers(teamId);
-
-        // 统计待办任务数
-        long pendingTaskCount = teamTaskMapper.selectCount(
-                new LambdaQueryWrapper<TeamTask>()
-                        .eq(TeamTask::getTeamId, teamId)
-                        .and(w -> w.eq(TeamTask::getStatus, "PENDING").or().eq(TeamTask::getStatus, "pending"))
+        // 统计成员数（不再重复调用 getById）
+        long approvedCount = teamApplicationService.count(
+                new LambdaQueryWrapper<TeamApplication>()
+                        .eq(TeamApplication::getTeamId, teamId)
+                        .eq(TeamApplication::getStatus, "APPROVED")
         );
+        long memberCount = approvedCount + 1; // +创建者
 
-        // 统计各状态任务数
+        // 一次性查询所有任务，在内存中统计各状态数量
+        List<TeamTask> allTasks = teamTaskMapper.selectList(
+                new LambdaQueryWrapper<TeamTask>().eq(TeamTask::getTeamId, teamId)
+        );
         Map<String, Long> taskStats = new LinkedHashMap<>();
-        taskStats.put("todo", countTasksByStatus(teamId, "pending"));
-        taskStats.put("in_progress", countTasksByStatus(teamId, "in_progress"));
-        taskStats.put("review", countTasksByStatus(teamId, "review"));
-        taskStats.put("completed", countTasksByStatus(teamId, "completed"));
+        long todo = 0, inProgress = 0, review = 0, completed = 0;
+        for (TeamTask t : allTasks) {
+            String s = t.getStatus() == null ? "" : t.getStatus().toLowerCase(Locale.ROOT);
+            switch (s) {
+                case "pending": case "todo": todo++; break;
+                case "in_progress": inProgress++; break;
+                case "review": review++; break;
+                case "completed": completed++; break;
+            }
+        }
+        taskStats.put("todo", todo);
+        taskStats.put("in_progress", inProgress);
+        taskStats.put("review", review);
+        taskStats.put("completed", completed);
+
+        boolean isLeader = user.getId().equals(team.getCreatorId());
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("teamId", team.getId());
@@ -121,9 +156,9 @@ public class TeamSpaceController {
         data.put("status", team.getStatus());
         data.put("statusLabel", statusLabel(team.getStatus()));
         data.put("memberCount", memberCount);
-        data.put("pendingTaskCount", pendingTaskCount);
+        data.put("pendingTaskCount", todo);
         data.put("taskStats", taskStats);
-        data.put("isLeader", isTeamLeader(teamId, user.getId()));
+        data.put("isLeader", isLeader);
         data.put("deadline", team.getDeadline());
         data.put("requiredMemberCount", team.getRequiredMemberCount());
 
@@ -142,17 +177,22 @@ public class TeamSpaceController {
         if (user == null) {
             return Result.unauthorized().toResponseEntity();
         }
-        if (!isTeamMember(teamId, user.getId())) {
+        TeamDemand team = checkMembershipAndGetTeam(teamId, user.getId());
+        if (team == null) {
+            TeamDemand exists = teamDemandService.getById(teamId);
+            if (exists == null) return Result.notFound("团队不存在").toResponseEntity();
             return Result.fail(403, "你不是该团队成员，无权访问工作空间").toResponseEntity();
         }
-        TeamDemand team = teamDemandService.getById(teamId);
-        if (team == null) {
-            return Result.notFound("团队不存在").toResponseEntity();
-        }
+
+        long approvedCount = teamApplicationService.count(
+                new LambdaQueryWrapper<TeamApplication>()
+                        .eq(TeamApplication::getTeamId, teamId)
+                        .eq(TeamApplication::getStatus, "APPROVED")
+        );
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("teamId", team.getId());
-        data.put("memberCount", countMembers(teamId));
+        data.put("memberCount", approvedCount + 1);
         data.put("requiredMemberCount", team.getRequiredMemberCount());
         data.put("status", team.getStatus());
         data.put("statusLabel", statusLabel(team.getStatus()));
@@ -173,13 +213,11 @@ public class TeamSpaceController {
             return Result.unauthorized().toResponseEntity();
         }
 
-        if (!isTeamMember(teamId, user.getId())) {
-            return Result.fail(403, "你不是该团队成员").toResponseEntity();
-        }
-
-        TeamDemand team = teamDemandService.getById(teamId);
+        TeamDemand team = checkMembershipAndGetTeam(teamId, user.getId());
         if (team == null) {
-            return Result.notFound("团队不存在").toResponseEntity();
+            TeamDemand exists = teamDemandService.getById(teamId);
+            if (exists == null) return Result.notFound("团队不存在").toResponseEntity();
+            return Result.fail(403, "你不是该团队成员").toResponseEntity();
         }
 
         List<Map<String, Object>> members = new ArrayList<>();
@@ -195,7 +233,6 @@ public class TeamSpaceController {
             view.put("grade", creator.getGrade());
             view.put("role", "队长");
             view.put("isLeader", true);
-            view.put("online", true);
             members.add(view);
         }
 
@@ -230,7 +267,6 @@ public class TeamSpaceController {
                 view.put("grade", u.getGrade());
                 view.put("role", "队员");
                 view.put("isLeader", false);
-                view.put("online", false);
                 view.put("joinedAt", app.getCreatedAt());
                 members.add(view);
             }
@@ -252,17 +288,41 @@ public class TeamSpaceController {
             return Result.unauthorized().toResponseEntity();
         }
 
-        if (!isTeamMember(teamId, user.getId())) {
+        TeamDemand team = checkMembershipAndGetTeam(teamId, user.getId());
+        if (team == null) {
+            TeamDemand exists = teamDemandService.getById(teamId);
+            if (exists == null) return Result.notFound("团队不存在").toResponseEntity();
             return Result.fail(403, "你不是该团队成员").toResponseEntity();
         }
 
+        // 一次性查询所有任务，内存统计
+        List<TeamTask> allTasks = teamTaskMapper.selectList(
+                new LambdaQueryWrapper<TeamTask>().eq(TeamTask::getTeamId, teamId)
+        );
+        long todo = 0, inProgress = 0, review = 0, completed = 0;
+        for (TeamTask t : allTasks) {
+            String s = t.getStatus() == null ? "" : t.getStatus().toLowerCase(Locale.ROOT);
+            switch (s) {
+                case "pending": case "todo": todo++; break;
+                case "in_progress": inProgress++; break;
+                case "review": review++; break;
+                case "completed": completed++; break;
+            }
+        }
+
+        long approvedCount = teamApplicationService.count(
+                new LambdaQueryWrapper<TeamApplication>()
+                        .eq(TeamApplication::getTeamId, teamId)
+                        .eq(TeamApplication::getStatus, "APPROVED")
+        );
+
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("totalTasks", countAllTasks(teamId));
-        stats.put("pendingTasks", countTasksByStatus(teamId, "pending"));
-        stats.put("inProgressTasks", countTasksByStatus(teamId, "in_progress"));
-        stats.put("reviewTasks", countTasksByStatus(teamId, "review"));
-        stats.put("completedTasks", countTasksByStatus(teamId, "completed"));
-        stats.put("memberCount", countMembers(teamId));
+        stats.put("totalTasks", allTasks.size());
+        stats.put("pendingTasks", todo);
+        stats.put("inProgressTasks", inProgress);
+        stats.put("reviewTasks", review);
+        stats.put("completedTasks", completed);
+        stats.put("memberCount", approvedCount + 1);
 
         return Result.ok("获取成功", stats).toResponseEntity();
     }
@@ -275,26 +335,7 @@ public class TeamSpaceController {
                         .eq(TeamApplication::getTeamId, teamId)
                         .eq(TeamApplication::getStatus, "APPROVED")
         );
-        // 创建者也算一个成员
-        TeamDemand team = teamDemandService.getById(teamId);
-        return team != null ? approvedCount + 1 : approvedCount;
-    }
-
-    private long countAllTasks(Long teamId) {
-        return teamTaskMapper.selectCount(
-                new LambdaQueryWrapper<TeamTask>()
-                        .eq(TeamTask::getTeamId, teamId)
-        );
-    }
-
-    private long countTasksByStatus(Long teamId, String status) {
-        String upper = status == null ? "" : status.toUpperCase(Locale.ROOT);
-        String lower = status == null ? "" : status.toLowerCase(Locale.ROOT);
-        return teamTaskMapper.selectCount(
-                new LambdaQueryWrapper<TeamTask>()
-                        .eq(TeamTask::getTeamId, teamId)
-                        .and(w -> w.eq(TeamTask::getStatus, upper).or().eq(TeamTask::getStatus, lower))
-        );
+        return approvedCount + 1; // 创建者也算一个成员
     }
 
     private String normalizeAvatar(String avatar) {

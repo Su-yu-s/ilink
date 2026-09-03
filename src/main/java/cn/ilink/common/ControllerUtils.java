@@ -107,4 +107,45 @@ public final class ControllerUtils {
     public static int safeSize(int size, int max) {
         return Math.min(Math.max(size, 1), max);
     }
+
+    /**
+     * 头像等资源地址白名单校验：只允许站内受管上传目录。
+     * 允许相对地址 {@code /uploads/...}；当配置了完整 URL 前缀时，
+     * 只允许与该前缀同源（同 host:port）的绝对地址。其余一律拒绝，
+     * 防止外链跟踪、data:/javascript: 等非受管资源写入用户资料。
+     *
+     * @param value           待校验地址；null 或空字符串视为清空，允许
+     * @param accessUrlPrefix 受管上传访问前缀（如 {@code /uploads/} 或完整 URL）
+     * @return 是否允许写入
+     */
+    public static boolean isManagedUploadUrl(String value, String accessUrlPrefix) {
+        if (value == null || value.trim().isEmpty()) {
+            return true;
+        }
+        String v = value.trim();
+        if (v.startsWith("/uploads/")) {
+            return true;
+        }
+        String prefix = accessUrlPrefix == null ? "" : accessUrlPrefix.trim();
+        if (prefix.isEmpty()) {
+            return false;
+        }
+        try {
+            java.net.URI uri = new java.net.URI(v);
+            java.net.URI prefixUri = new java.net.URI(prefix);
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return false;
+            }
+            if (!"http".equalsIgnoreCase(uri.getScheme()) && !"https".equalsIgnoreCase(uri.getScheme())) {
+                return false;
+            }
+            if (uri.getPath() == null || !uri.getPath().startsWith("/uploads/")) {
+                return false;
+            }
+            String authority = prefixUri.getAuthority();
+            return authority != null && authority.equalsIgnoreCase(uri.getAuthority());
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

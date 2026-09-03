@@ -4,16 +4,18 @@
    Layout: Editorial Split + Asymmetrical Bento
    ======================================== */
 
-/* ── Design Tokens ── */
-:root {
+/* ── Design Tokens（仅首页作用域，避免与全局 home-* 令牌冲突） ── */
+body[data-app-page="home"] {
   /* Colors */
-  --home-bg: #faf9f7;
-  --home-bg-warm: #f5f3ef;
+  --home-bg: #ffffff;
+  --home-bg-warm: #ffffff;
   --home-text: #111111;
   --home-text-secondary: #444444;
-  --home-text-muted: #888888;
-  --home-accent: #c4a77d;
-  --home-accent-dark: #a8895e;
+  /* 弱化文字加深至 AA：#888888 → #63666D */
+  --home-text-muted: #63666D;
+  /* 金色编号加深至 AA：#c4a77d → #8a6d45 */
+  --home-accent: #8a6d45;
+  --home-accent-dark: #6b5536;
   --home-border: rgba(0, 0, 0, 0.06);
   --home-border-strong: rgba(0, 0, 0, 0.1);
 
@@ -160,12 +162,12 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 .il-desktop-menu--open .il-desktop-menu__link:nth-child(8) { transition-delay: 0.34s; }
 
 .il-desktop-menu__link:hover {
-  color: var(--home-accent-dark, #a8895e);
+  color: var(--home-accent-dark, #6b5536);
   background: rgba(0, 0, 0, 0.03);
 }
 
 .il-desktop-menu__link--cta {
-  color: var(--home-accent, #c4a77d);
+  color: var(--home-accent, #8a6d45);
 }
 
 .il-desktop-menu__divider {
@@ -514,12 +516,16 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
    ═══════════════════════════════════════════ */
 .home-bezel {
   height: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
 }
 
 .home-bezel__shell {
   height: 100%;
-  padding: 6px;
-  background: var(--home-bg-warm);
+  padding: 0;
+  background: #ffffff;
   border: 1px solid var(--home-border);
   border-radius: var(--home-radius);
   transition: all var(--home-duration) var(--home-ease);
@@ -533,7 +539,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 .home-bezel__core {
   height: 100%;
   background: #ffffff;
-  border-radius: calc(var(--home-radius) - 6px);
+  border-radius: calc(var(--home-radius) - 1px);
   overflow: hidden;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
 }
@@ -647,6 +653,11 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
   height: 100%;
   object-fit: cover;
   transition: transform 0.8s var(--home-ease);
+}
+
+/* 图片加载失败时的中性兜底底色 */
+.home-img-fallback {
+  background: linear-gradient(135deg, #E5E5E7 0%, #D7D8DB 100%);
 }
 
 .home-bezel__shell:hover .home-bento__media img {
@@ -1034,6 +1045,13 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
     min-height: auto;
   }
 
+  /* 小屏允许标题折行，避免 17 字长句被 nowrap 截断 */
+  body[data-app-page="home"] .home-hero__title {
+    font-size: clamp(24px, 7.2vw, 30px) !important;
+    white-space: normal !important;
+    letter-spacing: -0.02em;
+  }
+
   .home-hero__grid {
     grid-template-columns: 1fr;
     gap: 40px;
@@ -1129,8 +1147,8 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 
   body[data-app-page="home"] .il-header__hamburger {
     display: flex !important;
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
   }
 
   body[data-app-page="home"] .il-header__title {
@@ -1252,6 +1270,33 @@ body[data-app-page="home"] .il-header__auth-btn:hover {
   background: #ffffff;
   border-color: rgba(0,0,0,0.1);
   transform: none;
+}
+
+/* Keep the full desktop navigation inside tablet-width viewports. */
+@media (min-width: 768px) and (max-width: 900px) {
+  body[data-app-page="home"] .il-header__inner {
+    padding-inline: 12px;
+  }
+
+  body[data-app-page="home"] .il-header__title {
+    display: none;
+  }
+
+  body[data-app-page="home"] .il-header__nav {
+    gap: 0;
+    margin-inline: 4px;
+  }
+
+  body[data-app-page="home"] .il-header__link {
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+
+  body[data-app-page="home"] .il-header__auth-link,
+  body[data-app-page="home"] .il-header__auth-btn {
+    padding-inline: 10px;
+    font-size: 13px;
+  }
 }
 
 /* Hamburger → X morph */
@@ -1554,6 +1599,12 @@ body[data-app-page="home"] {
    ═══════════════════════════════════════════ */
 body[data-app-page="home"] .il-header__menu-toggle {
   display: none !important;
+}
+
+@media (max-width: 767.98px) {
+  body[data-app-page="home"] .il-header__menu-toggle {
+    display: inline-flex !important;
+  }
 }
 
 /* ═══════════════════════════════════════════

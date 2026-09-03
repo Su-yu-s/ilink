@@ -4,6 +4,7 @@
 let assetId = null;
 let currentFile = null;
 let currentFileUrl = null;
+const compactEditorQuery = window.matchMedia('(max-width: 767.98px)');
 
 document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams(window.location.search);
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initMarked();
     initToolbars();
     initModeSwitches();
+    initResponsiveEditorModes();
     initFileButton();
     initSaveButton();
     initPreviewLink();
@@ -227,6 +229,7 @@ function initModeSwitches() {
         bar.querySelectorAll('.md-mode-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var mode = btn.getAttribute('data-mode');
+                if (mode === 'split' && compactEditorQuery.matches) return;
                 var wrapId = bar.id === 'mdModeBarInsight' ? 'insightPaneWrap' : 'descPaneWrap';
                 switchMode(wrapId, mode, bar);
             });
@@ -238,6 +241,25 @@ function initModeSwitches() {
     var insTa = document.getElementById('mdInsightEditor');
     if (descTa) descTa.addEventListener('input', function () { renderPreview('mdDescEditor', 'mdDescPreview'); });
     if (insTa) insTa.addEventListener('input', function () { renderPreview('mdInsightEditor', 'mdInsightPreview'); });
+}
+
+function initResponsiveEditorModes() {
+    function sync() {
+        document.querySelectorAll('.md-mode-bar').forEach(function (bar) {
+            var splitButton = bar.querySelector('[data-mode="split"]');
+            if (splitButton) {
+                splitButton.disabled = compactEditorQuery.matches;
+                splitButton.setAttribute('aria-hidden', String(compactEditorQuery.matches));
+            }
+            if (compactEditorQuery.matches) {
+                var wrapId = bar.id === 'mdModeBarInsight' ? 'insightPaneWrap' : 'descPaneWrap';
+                var wrap = document.getElementById(wrapId);
+                if (wrap && wrap.classList.contains('split')) switchMode(wrapId, 'edit', bar);
+            }
+        });
+    }
+    sync();
+    compactEditorQuery.addEventListener?.('change', sync);
 }
 
 function switchMode(wrapId, mode, barEl) {
@@ -268,8 +290,7 @@ function renderPreview(textareaId, previewId) {
 
     var raw = ta.value || '';
     if (typeof marked !== 'undefined') {
-        try { preview.innerHTML = marked.parse(raw); }
-        catch (e) { preview.innerHTML = '<p style="color:var(--ui-danger)">渲染错误</p>'; }
+        renderMarkdownSafe(preview, raw);
     } else {
         preview.innerHTML = '<pre style="white-space:pre-wrap;font-family:inherit;">' + escapeHtml(raw) + '</pre>';
     }
@@ -411,6 +432,7 @@ async function saveAsset() {
     var fd = new FormData();
     fd.append('title', title);
     fd.append('description', description);
+    fd.append('category', category || '其他');
     if (currentFile) fd.append('file', currentFile);
 
     try {

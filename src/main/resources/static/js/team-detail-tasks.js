@@ -84,19 +84,22 @@ function renderTaskCard(task) {
     const isAssignee = Number(task.assignedTo) === Number(currentTaskUserId);
     const actions = [`<button type="button" class="btn btn-sm btn-ilink-outline" onclick="viewTaskDetail(${Number(task.id)})">查看</button>`];
 
+    const normalizedStatus = String(task.status || '').toUpperCase();
+
     if (isLeader) {
         actions.push(`<button type="button" class="btn btn-sm btn-ilink-ghost" onclick="openTaskForm(${Number(task.id)})">编辑</button>`);
         actions.push(`<button type="button" class="btn btn-sm btn-ilink-danger-ghost" onclick="deleteTask(${Number(task.id)})">删除</button>`);
-        if (String(task.status).toUpperCase() === 'REVIEW') {
+        if (normalizedStatus === 'REVIEW') {
             actions.push(`<button type="button" class="btn btn-sm btn-ilink-success" onclick="reviewTask(${Number(task.id)}, 'COMPLETED')">确认完成</button>`);
             actions.push(`<button type="button" class="btn btn-sm btn-ilink-warning" onclick="reviewTask(${Number(task.id)}, 'RETURNED')">退回修改</button>`);
         }
-    } else if (isAssignee && !['COMPLETED', 'CANCELLED'].includes(String(task.status).toUpperCase())) {
-        if (String(task.status).toUpperCase() === 'REVIEW') {
-            actions.push('<span class="badge-ilink badge-ilink--line">待队长审核</span>');
-        } else {
-            actions.push(`<button type="button" class="btn btn-sm btn-ilink-primary" onclick="openSubmitModal(${Number(task.id)})">提交材料</button>`);
-        }
+    }
+    if (isAssignee && normalizedStatus === 'PENDING') {
+        actions.push(`<button type="button" class="btn btn-sm btn-ilink-primary" onclick="startTask(${Number(task.id)})">开始任务</button>`);
+    } else if (isAssignee && normalizedStatus === 'IN_PROGRESS') {
+        actions.push(`<button type="button" class="btn btn-sm btn-ilink-primary" onclick="openSubmitModal(${Number(task.id)})">提交材料</button>`);
+    } else if (isAssignee && normalizedStatus === 'REVIEW' && !isLeader) {
+        actions.push('<span class="badge-ilink badge-ilink--line">待队长审核</span>');
     }
 
     return `<article class="il-task-card" data-task-id="${Number(task.id)}">
@@ -113,6 +116,15 @@ function renderTaskCard(task) {
         </div>
         <div class="il-task-card__footer">${actions.join('')}</div>
     </article>`;
+}
+
+async function startTask(taskId) {
+    await request('/tasks/' + taskId + '/status', {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'IN_PROGRESS' })
+    });
+    showMessage('任务已开始', 'success');
+    await loadTasks();
 }
 
 async function openTaskForm(taskId) {

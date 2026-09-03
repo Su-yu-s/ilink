@@ -1,4 +1,4 @@
-﻿// 社区文章详情页：正文、阅读量、评论
+// 社区文章详情页：正文、阅读量、评论
 
 const COMMUNITY_ARTICLE_CATEGORY_LABELS = {
     general: '综合交流',
@@ -132,7 +132,7 @@ function applyInteractionUi(d) {
 async function toggleArticleLike() {
     if (!currentUser) {
         showMessage('请先登录后再点赞', 'warning');
-        setTimeout(() => { window.location.href = '/login'; }, 900);
+        redirectToLogin(900);
         return;
     }
     try {
@@ -145,7 +145,7 @@ async function toggleArticleLike() {
         const result = await response.json();
         if (result.code === 401) {
             showMessage('请先登录', 'warning');
-            setTimeout(() => { window.location.href = '/login'; }, 1200);
+            redirectToLogin(1200);
             return;
         }
         if (result.code !== 200 || !result.data) {
@@ -164,7 +164,7 @@ async function toggleArticleLike() {
 async function toggleArticleFavorite() {
     if (!currentUser) {
         showMessage('请先登录后再收藏', 'warning');
-        setTimeout(() => { window.location.href = '/login'; }, 900);
+        redirectToLogin(900);
         return;
     }
     try {
@@ -177,7 +177,7 @@ async function toggleArticleFavorite() {
         const result = await response.json();
         if (result.code === 401) {
             showMessage('请先登录', 'warning');
-            setTimeout(() => { window.location.href = '/login'; }, 1200);
+            redirectToLogin(1200);
             return;
         }
         if (result.code !== 200 || !result.data) {
@@ -200,6 +200,18 @@ function renderArticleBody(el, content) {
         el.textContent = '';
         el.classList.add('community-post-body--plain');
         return;
+    }
+    // 检测 markdown 包裹格式，解码并渲染
+    const mdMatch = raw.match(/^<!--md:([A-Za-z0-9+/=]+)-->/);
+    if (mdMatch && typeof marked !== 'undefined') {
+        try {
+            const decoded = decodeURIComponent(escape(atob(mdMatch[1])));
+            // 如果解码后是 HTML，提取纯文本作为 markdown 渲染（渲染结果经 DOMPurify 净化）
+            const markdownText = decoded.replace(/<[^>]+>/g, '').trim();
+            renderMarkdownSafe(el, markdownText);
+            el.classList.remove('community-post-body--plain');
+            return;
+        } catch (_) {}
     }
     const looksLikeHtml = /<[a-z][\s\S]*>/i.test(raw);
     if (looksLikeHtml && typeof DOMPurify !== 'undefined') {
@@ -408,7 +420,7 @@ async function submitComment() {
             await loadComments();
         } else if (result.code === 401) {
             showMessage('请先登录', 'warning');
-            setTimeout(() => { window.location.href = '/login'; }, 1200);
+            redirectToLogin(1200);
         } else {
             showMessage(result.message || '失败', 'error');
         }

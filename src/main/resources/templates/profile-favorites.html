@@ -6,8 +6,7 @@
     <title>我的收藏 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
-    <link href="/css/profile-redesign.css?v=1.0" rel="stylesheet">
+    <link href="/css/profile.css?v=10.4" rel="stylesheet">
 </head>
 <body data-profile-page="favorites" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -27,7 +26,7 @@
                     </div>
 
                     <div id="myFavoritesList" style="min-height: 100px;">
-                        <p class="text-muted mb-0" style="font-size: 14px;">加载中…</p>
+                        <p class="text-muted mb-0" style="font-size: 14px;">加载中...</p>
                     </div>
                     <nav id="myFavoritesPager" class="d-none mt-4" aria-label="分页">
                         <ul class="pagination pagination-sm justify-content-center mb-0" id="myFavoritesPagerInner"></ul>
@@ -38,8 +37,8 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script src="/js/profile.js?v=5.2"></script>
-    <script src="/js/profile-favorites.js?v=4.5"></script>
+    <script src="/js/profile-favorites.js?v=4.9"></script>
 </body>
 </html>

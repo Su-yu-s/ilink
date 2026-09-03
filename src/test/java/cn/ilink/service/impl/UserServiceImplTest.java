@@ -115,7 +115,7 @@ class UserServiceImplTest {
     }
 
     @Test
-    void teacherRegistrationCreatesApprovedMentorProfile() {
+    void teacherRegistrationCreatesIncompleteMentorProfileUntilDetailsAreFilled() {
         validRegister.setRole("TEACHER");
         when(userMapper.findByPhoneNumber(anyString())).thenReturn(null);
         when(userMapper.findByUsername(anyString())).thenReturn(null);
@@ -132,7 +132,7 @@ class UserServiceImplTest {
         ArgumentCaptor<TeacherApplication> captor = ArgumentCaptor.forClass(TeacherApplication.class);
         verify(teacherApplicationService).save(captor.capture());
         assertEquals(42L, captor.getValue().getUserId());
-        assertEquals("APPROVED", captor.getValue().getStatus());
+        assertEquals("INCOMPLETE", captor.getValue().getStatus());
     }
 
     // ===== 登录测试 =====

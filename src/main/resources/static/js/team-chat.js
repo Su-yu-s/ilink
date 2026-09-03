@@ -60,8 +60,7 @@ class ChatManager {
             id: raw.userId || raw.id,
             username: raw.username || '',
             displayName: raw.displayName || raw.username || '成员',
-            role: raw.role || '成员',
-            isOnline: raw.isOnline || false
+            role: raw.role || '成员'
         };
     }
 
@@ -149,7 +148,6 @@ class ChatManager {
                 <div class="member-item ${isCurrentUser ? 'bg-primary bg-opacity-10' : ''}">
                     <div class="member-avatar">
                         ${initials}
-                        <span class="member-status ${member.isOnline ? 'online' : 'offline'}"></span>
                     </div>
                     <div class="member-info">
                         <div class="member-name">${displayName}${isCurrentUser ? ' (我)' : ''}</div>

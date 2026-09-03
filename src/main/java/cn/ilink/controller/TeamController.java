@@ -9,6 +9,7 @@ import cn.ilink.entity.User;
 import cn.ilink.entity.UserSkill;
 import cn.ilink.mapper.UserSkillMapper;
 import cn.ilink.service.NotificationService;
+import cn.ilink.service.TeamApplicationWorkflowService;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
@@ -63,17 +64,20 @@ public class TeamController {
     private final UserService userService;
     private final NotificationService notificationService;
     private final UserSkillMapper userSkillMapper;
+    private final TeamApplicationWorkflowService teamApplicationWorkflowService;
 
     public TeamController(TeamDemandServiceImpl teamDemandService,
                           TeamApplicationServiceImpl teamApplicationService,
                           UserService userService,
                           NotificationService notificationService,
-                          UserSkillMapper userSkillMapper) {
+                          UserSkillMapper userSkillMapper,
+                          TeamApplicationWorkflowService teamApplicationWorkflowService) {
         this.teamDemandService = teamDemandService;
         this.teamApplicationService = teamApplicationService;
         this.userService = userService;
         this.notificationService = notificationService;
         this.userSkillMapper = userSkillMapper;
+        this.teamApplicationWorkflowService = teamApplicationWorkflowService;
     }
 
     @GetMapping("/list")
@@ -805,68 +809,17 @@ public class TeamController {
     public ResponseEntity<Result<?>> approveApplication(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
-        TeamApplication app = teamApplicationService.getById(id);
-        if (app == null) return Result.notFound("申请不存在").toResponseEntity();
-        TeamDemand team = teamDemandService.getById(app.getTeamId());
-        if (team == null || team.getCreatorId() == null || !team.getCreatorId().equals(user.getId()))
-            return Result.forbidden().toResponseEntity();
-        if (!"PENDING".equals(app.getStatus()))
-            return Result.badRequest("该申请已被处理").toResponseEntity();
-        String action = body.getOrDefault("action", "");
-        if (!"APPROVED".equals(action) && !"REJECTED".equals(action))
-            return Result.badRequest("无效的操作").toResponseEntity();
-        String note = body.get("note");
-        if ("REJECTED".equals(action) && (note == null || note.trim().length() < 10))
-            return Result.badRequest("拒绝理由至少填写 10 个字").toResponseEntity();
-        if (note != null && note.length() > 500)
-            return Result.badRequest("备注不能超过 500 字").toResponseEntity();
-
-        // 检查队伍是否已满
-        if ("APPROVED".equals(action) && isTeamFull(team))
-            return Result.badRequest("队伍已满，无法通过更多申请").toResponseEntity();
-
-        // 更新申请状态
-        app.setStatus(action);
-        app.setReviewerNote(note != null ? note.trim() : null);
-        app.setReviewedAt(new Date());
-        teamApplicationService.updateById(app);
-
-        // 满员自动切换状态
-        if ("APPROVED".equals(action) && STATUS_OPEN.equals(team.getStatus()) && isTeamFull(team)) {
-            team.setStatus(STATUS_TEAMING);
-            team.setUpdatedAt(new Date());
-            teamDemandService.updateById(team);
+        try {
+            String action = body == null ? null : body.get("action");
+            String note = body == null ? null : body.get("note");
+            TeamApplication application = teamApplicationWorkflowService.review(id, user.getId(), action, note);
+            return Result.ok("申请已处理", Map.of("id", application.getId(), "status", application.getStatus()))
+                .toResponseEntity();
+        } catch (TeamApplicationWorkflowService.WorkflowException e) {
+            if (e.getStatus() == 404) return Result.notFound(e.getMessage()).toResponseEntity();
+            if (e.getStatus() == 403) return Result.fail(403, e.getMessage()).toResponseEntity();
+            return Result.badRequest(e.getMessage()).toResponseEntity();
         }
-
-        // 通知申请人
-        String teamTitle = team.getTitle() != null ? team.getTitle() : "未知队伍";
-        if ("APPROVED".equals(action)) {
-            String content = "你已成功加入队伍「" + teamTitle + "」";
-            if (note != null && !note.trim().isEmpty()) {
-                content += "\n队长留言：" + note.trim();
-            }
-            notificationService.create(
-                app.getUserId(),
-                user.getId(),
-                "TEAM_APPROVED",
-                "申请通过",
-                content,
-                app.getTeamId());
-        } else {
-            String content = "你的申请未被通过「" + teamTitle + "」";
-            if (note != null && !note.trim().isEmpty()) {
-                content += "\n队长留言：" + note.trim();
-            }
-            notificationService.create(
-                app.getUserId(),
-                user.getId(),
-                "TEAM_REJECTED",
-                "申请未通过",
-                content,
-                app.getTeamId());
-        }
-
-        return Result.ok(action.equals("APPROVED") ? "已通过申请" : "已拒绝申请", null).toResponseEntity();
     }
 
     /** Get team members (approved applications) */

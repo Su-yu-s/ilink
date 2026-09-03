@@ -5,6 +5,99 @@
  * surfaces so discovery remains fast.
  */
 
+/* Shared public-page rhythm; component rules remain in their page modules. */
+body[data-app-page="team-market"] .il-page-wrapper,
+body[data-app-page="teacher-wall"] .il-page-wrapper,
+body[data-app-page="community"] .il-page-wrapper,
+body[data-app-page="gallery"] .il-page-wrapper {
+  padding-top: 0 !important;
+}
+
+body[data-app-page="competitions"] .container.main-content,
+body[data-app-page="competitions"] .main-content {
+  padding-top: 0 !important;
+}
+
+body[data-app-page="team-market"] .hero-section,
+body[data-app-page="teacher-wall"] .hero-section {
+  padding-top: 22px !important;
+  padding-bottom: 24px !important;
+}
+
+body[data-app-page="community"] .il-hero,
+body[data-app-page="gallery"] .il-hero,
+body[data-app-page="competitions"] .il-hero {
+  padding-top: 22px !important;
+  padding-bottom: 24px !important;
+  margin-bottom: 24px !important;
+}
+
+body[data-app-page="competitions"] .competition-hub {
+  padding-top: 0 !important;
+}
+
+body[data-app-page="team-market"] .hero-eyebrow,
+body[data-app-page="teacher-wall"] .hero-eyebrow,
+body[data-app-page="community"] .il-hero__eyebrow,
+body[data-app-page="competitions"] .il-hero__eyebrow,
+body[data-app-page="gallery"] .il-hero__badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  width: auto !important;
+  max-width: max-content !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  padding: 0 14px !important;
+  margin: 0 0 18px !important;
+  border: 1px solid #f5efe6 !important;
+  border-radius: 999px !important;
+  background: #faf6f0 !important;
+  color: #a08055 !important;
+  box-shadow: none !important;
+  font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+body[data-app-page="team-market"] .hero-eyebrow svg,
+body[data-app-page="teacher-wall"] .hero-eyebrow svg,
+body[data-app-page="community"] .il-hero__eyebrow svg,
+body[data-app-page="competitions"] .il-hero__eyebrow svg,
+body[data-app-page="gallery"] .il-hero__badge svg {
+  width: 15px !important;
+  height: 15px !important;
+  flex: 0 0 15px !important;
+  color: #a08055 !important;
+  stroke: currentColor !important;
+}
+
+body[data-app-page="team-market"] .toolbar-section,
+body[data-app-page="teacher-wall"] .toolbar-section {
+  padding-bottom: 10px !important;
+}
+
+body[data-app-page="team-market"] .content-section,
+body[data-app-page="teacher-wall"] .content-section {
+  padding-top: 8px !important;
+}
+
+body[data-app-page="community"] .il-search-bar,
+body[data-app-page="competitions"] .il-search-bar,
+body[data-app-page="gallery"] .il-search-bar {
+  margin-bottom: 16px !important;
+}
+
+body[data-app-page="community"] #postList,
+body[data-app-page="competitions"] #competitionGrid,
+body[data-app-page="gallery"] #listContainer {
+  margin-top: 0 !important;
+}
+
 html.ilink-app body[data-app-page="team-market"] .content-section,
 html.ilink-app body[data-app-page="teacher-wall"] .content-section,
 html.ilink-app body[data-app-page="team-market"] .toolbar-section,
@@ -711,23 +804,118 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
   box-shadow: none !important;
 }
 
-@media (max-width: 980px) {
-  html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
-  html.ilink-app body[data-app-page="gallery"] .gc-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (max-width: 720px) {
+/* Public portal breakpoints: tablet keeps two-column discovery grids. */
+@media (min-width: 768px) and (max-width: 1024px) {
   html.ilink-app body[data-app-page="team-market"] .content-section,
   html.ilink-app body[data-app-page="teacher-wall"] .content-section,
   html.ilink-app body[data-app-page="team-market"] .toolbar-section,
   html.ilink-app body[data-app-page="teacher-wall"] .toolbar-section,
+  html.ilink-app body[data-app-page="community"] .il-page-wrapper,
+  html.ilink-app body[data-app-page="gallery"] .il-page-wrapper,
+  html.ilink-app body[data-app-page="competitions"] .container.main-content {
+    width: min(100% - 48px, 1200px) !important;
+    max-width: 1200px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .hero-section,
+  html.ilink-app body[data-app-page="teacher-wall"] .hero-section {
+    width: min(100% - 48px, 1200px) !important;
+    max-width: 1200px !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-hero,
+  html.ilink-app body[data-app-page="gallery"] .il-hero,
+  html.ilink-app body[data-app-page="competitions"] .il-hero {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] #teamList,
+  html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
+  html.ilink-app body[data-app-page="gallery"] .gc-grid,
+  html.ilink-app body[data-app-page="competitions"] .competition-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Mobile public pages: one column, touch-first controls and no page overflow. */
+@media (max-width: 767.98px) {
+  html.ilink-app body[data-app-page="team-market"],
+  html.ilink-app body[data-app-page="teacher-wall"],
+  html.ilink-app body[data-app-page="community"],
+  html.ilink-app body[data-app-page="competitions"],
+  html.ilink-app body[data-app-page="gallery"] {
+    min-width: 0;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .il-page-wrapper,
+  html.ilink-app body[data-app-page="teacher-wall"] .il-page-wrapper,
+  html.ilink-app body[data-app-page="community"] .il-page-wrapper,
+  html.ilink-app body[data-app-page="gallery"] .il-page-wrapper,
+  html.ilink-app body[data-app-page="competitions"] .container.main-content,
   html.ilink-app body[data-app-page="team-detail"] .team-detail-shell,
   html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-shell,
   html.ilink-app body[data-app-page="asset-detail"] .asset-detail-shell,
   html.ilink-app body[data-app-page="community-article"] .community-article-shell {
-    width: min(100% - 32px, 960px) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .content-section,
+  html.ilink-app body[data-app-page="teacher-wall"] .content-section,
+  html.ilink-app body[data-app-page="team-market"] .toolbar-section,
+  html.ilink-app body[data-app-page="teacher-wall"] .toolbar-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .hero-section,
+  html.ilink-app body[data-app-page="teacher-wall"] .hero-section {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 18px 0 20px !important;
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-hero,
+  html.ilink-app body[data-app-page="gallery"] .il-hero,
+  html.ilink-app body[data-app-page="competitions"] .il-hero {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 18px 0 20px !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .hero-title,
+  html.ilink-app body[data-app-page="teacher-wall"] .hero-title,
+  html.ilink-app body[data-app-page="community"] .il-hero__title,
+  html.ilink-app body[data-app-page="gallery"] .il-hero__title,
+  html.ilink-app body[data-app-page="competitions"] .il-hero__title {
+    font-size: 28px !important;
+    line-height: 1.5 !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .hero-desc,
+  html.ilink-app body[data-app-page="teacher-wall"] .hero-desc,
+  html.ilink-app body[data-app-page="community"] .il-hero__desc,
+  html.ilink-app body[data-app-page="gallery"] .il-hero__desc,
+  html.ilink-app body[data-app-page="competitions"] .il-hero__desc {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
   }
 
   html.ilink-app body[data-app-page="team-market"] #teamList,
@@ -741,9 +929,79 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
   html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell,
   html.ilink-app body[data-app-page="competitions"] .competition-card {
     min-height: 0;
+    padding: 20px !important;
   }
 
-  html.ilink-app body[data-app-page="community"] .article-card,
+  html.ilink-app body[data-app-page="team-market"] .team-card .card-title,
+  html.ilink-app body[data-app-page="teacher-wall"] .mentor-name,
+  html.ilink-app body[data-app-page="community"] .article-card .card-title,
+  html.ilink-app body[data-app-page="competitions"] .competition-card__title,
+  html.ilink-app body[data-app-page="gallery"] .gc-title {
+    font-size: 18px !important;
+  }
+
+  html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar .avatar-fallback {
+    font-size: 17px;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-card {
+    padding: 20px 24px !important;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-card .card-footer {
+    align-items: center;
+    flex-flow: row wrap;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-card .card-actions,
+  html.ilink-app body[data-app-page="community"] .article-card .il-feed-actions {
+    display: flex !important;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px !important;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-card .action-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-card .read-more-btn {
+    width: 100%;
+    min-height: 44px !important;
+    flex: 0 0 100%;
+    justify-content: center;
+  }
+
+  html.ilink-app body[data-app-page="gallery"] .gc-card {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  html.ilink-app body[data-app-page="gallery"] .gc-cover {
+    aspect-ratio: auto !important;
+    height: 160px !important;
+  }
+
+  html.ilink-app body[data-app-page="gallery"] .gc-content {
+    min-height: 0;
+    padding: 20px !important;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .competition-card__header,
+  html.ilink-app body[data-app-page="competitions"] .competition-card__foot {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
   html.ilink-app .detail-view__header,
   html.ilink-app .teacher-detail__header,
   html.ilink-app .community-article-card__header,
@@ -754,10 +1012,80 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
     padding: 18px !important;
   }
 
-  html.ilink-app body[data-app-page="community"] .article-card .card-footer,
-  html.ilink-app body[data-app-page="competitions"] .competition-card__foot {
-    align-items: flex-start;
-    flex-direction: column;
+  html.ilink-app body[data-app-page="team-market"] .team-card .card-footer,
+  html.ilink-app body[data-app-page="teacher-wall"] .mentor-footer {
+    flex-wrap: wrap;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] :is(button, .il-search-bar__btn, .page-link),
+  html.ilink-app body[data-app-page="teacher-wall"] :is(button, .il-search-bar__btn, .page-link),
+  html.ilink-app body[data-app-page="community"] :is(button, .il-search-bar__btn, .read-more-btn, .page-link),
+  html.ilink-app body[data-app-page="competitions"] :is(button, .competition-card__link, .page-link),
+  html.ilink-app body[data-app-page="gallery"] :is(button, .il-search-bar__btn, .page-link) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .particle-canvas,
+  html.ilink-app body[data-app-page="teacher-wall"] .particle-canvas,
+  html.ilink-app body[data-app-page="community"] .particle-canvas,
+  html.ilink-app body[data-app-page="competitions"] .particle-canvas,
+  html.ilink-app body[data-app-page="gallery"] .particle-canvas {
+    display: none !important;
+  }
+}
+
+@media (max-width: 479.98px) {
+  html.ilink-app body[data-app-page="team-market"] .team-card,
+  html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell,
+  html.ilink-app body[data-app-page="community"] .article-card,
+  html.ilink-app body[data-app-page="competitions"] .competition-card,
+  html.ilink-app body[data-app-page="gallery"] .gc-content {
+    padding: 16px !important;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-card .action-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  html.ilink-app body[data-app-page="team-market"] .team-card:hover,
+  html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell:hover,
+  html.ilink-app body[data-app-page="community"] .article-card:hover,
+  html.ilink-app body[data-app-page="competitions"] .competition-card:hover,
+  html.ilink-app body[data-app-page="gallery"] .gc-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .team-card:active,
+  html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell:active,
+  html.ilink-app body[data-app-page="community"] .article-card:active,
+  html.ilink-app body[data-app-page="competitions"] .competition-card:active,
+  html.ilink-app body[data-app-page="gallery"] .gc-card:active {
+    background: color-mix(in srgb, var(--ui-surface) 94%, var(--ui-text)) !important;
+    transition-duration: 150ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ilink-app body[data-app-page="team-market"] *,
+  html.ilink-app body[data-app-page="teacher-wall"] *,
+  html.ilink-app body[data-app-page="community"] *,
+  html.ilink-app body[data-app-page="competitions"] *,
+  html.ilink-app body[data-app-page="gallery"] * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 

@@ -63,7 +63,7 @@
   --color-gray-700: #52555C;
   --color-gray-600: #63666D;
   --color-gray-500: #73757A;
-  --color-gray-400: #A1A3A8;
+  --color-gray-400: #74767B;
   --color-gray-300: #D7D8DB;
   --color-gray-200: #E5E5E7;
   --color-gray-100: #F1F1F2;
@@ -203,17 +203,7 @@
   --container-max: 1200px;
   --container-narrow: 960px;
 
-  /* === Home-level tokens (warm editorial accent) === */
-  --home-accent: #52555C;
-  --home-accent-dark: #282A2F;
-  --home-bg-warm: #F7F7F8;
-  --home-text-secondary: #52555C;
-  --home-text-muted: #73757A;
-  --home-border: rgba(40, 42, 47, 0.08);
-  --home-border-strong: rgba(40, 42, 47, 0.14);
-  --home-radius: 16px;
-  --home-radius-sm: 8px;
-  --home-radius-pill: 100px;
+  /* === Home-level motion tokens（供全局组件复用，全站一致） === */
   --transition-home: 700ms cubic-bezier(0.32, 0.72, 0, 1);
   --transition-fast-home: 350ms cubic-bezier(0.32, 0.72, 0, 1);
 }

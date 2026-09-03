@@ -5,6 +5,7 @@ import java.util.List;
 
 @Data
 public class RecommendedUserVO {
+    private Long logId;
     private Long userId;
     private String username;
     private String realName;

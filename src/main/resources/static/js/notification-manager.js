@@ -80,7 +80,7 @@ class NotificationManager {
                     <div class="notification-item__content">
                         <div class="notification-item__title">${this.escapeHtml(notification.title)}</div>
                         <div class="notification-item__text">${this.escapeHtml(notification.content)}</div>
-                        <div class="notification-item__time">${notification.timeAgo}</div>
+                        <div class="notification-item__time">${this.escapeHtml(notification.timeAgo)}</div>
                     </div>
                     ${!notification.isRead ? '<div class="notification-item__dot"></div>' : ''}
                 </div>

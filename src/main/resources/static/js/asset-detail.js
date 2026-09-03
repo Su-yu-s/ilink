@@ -197,6 +197,16 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
     }
 
+    document.addEventListener('click', function (event) {
+        const download = event.target.closest('.download-btn');
+        if (!download) return;
+        if (!document.body.dataset.userId) {
+            event.preventDefault();
+            showMessage('请先登录后再下载成果附件', 'warning');
+            redirectToLogin(700);
+        }
+    });
+
     if (window.AssetPublish) {
         AssetPublish.bind({
             onSuccess: async function () {
@@ -289,15 +299,19 @@ function renderAssetDetail(asset) {
     const extraEl = document.getElementById('assetDescExtra');
     const leadText = parsed.lead || parsed.full || '暂无描述';
     if (leadEl) {
-        leadEl.innerHTML = typeof marked !== 'undefined'
-            ? marked.parse(leadText)
-            : escapeHtml(leadText).replace(/\n/g, '<br>');
+        if (typeof marked !== 'undefined') {
+            renderMarkdownSafe(leadEl, leadText);
+        } else {
+            leadEl.innerHTML = escapeHtml(leadText).replace(/\n/g, '<br>');
+        }
     }
     if (extraEl) {
         if (parsed.extra && parsed.extra !== leadText) {
-            extraEl.innerHTML = typeof marked !== 'undefined'
-                ? marked.parse(parsed.extra)
-                : escapeHtml(parsed.extra).replace(/\n/g, '<br>');
+            if (typeof marked !== 'undefined') {
+                renderMarkdownSafe(extraEl, parsed.extra);
+            } else {
+                extraEl.innerHTML = escapeHtml(parsed.extra).replace(/\n/g, '<br>');
+            }
             extraEl.hidden = false;
         } else {
             extraEl.hidden = true;
@@ -309,9 +323,11 @@ function renderAssetDetail(asset) {
     if (insightEl) {
         const insightBody = parsed.insight;
         if (insightBody) {
-            insightEl.innerHTML = typeof marked !== 'undefined'
-                ? marked.parse(insightBody)
-                : escapeHtml(insightBody).replace(/\n/g, '<br>');
+            if (typeof marked !== 'undefined') {
+                renderMarkdownSafe(insightEl, insightBody);
+            } else {
+                insightEl.innerHTML = escapeHtml(insightBody).replace(/\n/g, '<br>');
+            }
             const op = asset.ownerPreview;
             const signer =
                 op && typeof displayUsername === 'function' ? displayUsername(op) : '发布者';

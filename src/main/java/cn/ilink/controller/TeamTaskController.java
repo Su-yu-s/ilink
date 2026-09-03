@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +43,7 @@ import javax.servlet.http.HttpSession;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -130,10 +132,7 @@ public class TeamTaskController {
             return Result.badRequest(MSG_VALID_ASSIGNEE).toResponseEntity();
         }
         dto.setTeamId(teamId);
-        boolean success = teamTaskService.createTask(dto, user.getId());
-        if (!success) {
-            return Result.fail("\u4efb\u52a1\u521b\u5efa\u5931\u8d25").toResponseEntity();
-        }
+        TeamTaskVO task = teamTaskService.createTask(dto, user.getId());
         // 给被指派人发送任务分配通知
         TeamTaskDTO finalDto = dto;
         Long assigneeId = dto.getAssignedTo();
@@ -144,13 +143,8 @@ public class TeamTaskController {
             user.getId(),
             "TASK_ASSIGNED",
             "新任务指派",
-            user.getRealName() != null ? user.getRealName() : user.getUsername() + " 给你分配了任务「" + finalDto.getTaskTitle() + "」",
+            (user.getRealName() != null ? user.getRealName() : user.getUsername()) + " 给你分配了任务「" + finalDto.getTaskTitle() + "」",
             null);
-        TeamTaskVO task = teamTaskService.getTasksByTeam(teamId).stream()
-            .filter(t -> Objects.equals(t.getCreatedBy(), user.getId()))
-            .filter(t -> Objects.equals(t.getTaskTitle(), dto.getTaskTitle()))
-            .findFirst()
-            .orElse(null);
         return Result.ok("\u4efb\u52a1\u521b\u5efa\u6210\u529f", task).toResponseEntity();
     }
 
@@ -202,9 +196,16 @@ public class TeamTaskController {
         if (!canAccessTask(team, task, user)) {
             return Result.forbidden().toResponseEntity();
         }
-        boolean success = teamTaskService.updateTaskStatus(taskId, dto.getStatus());
+        String targetStatus = dto.getStatus().trim().toUpperCase(Locale.ROOT);
+        if (!"IN_PROGRESS".equals(targetStatus)) {
+            return Result.badRequest("请通过提交与审核操作推进任务状态").toResponseEntity();
+        }
+        if (!"PENDING".equals(task.getStatus())) {
+            return Result.badRequest("当前任务状态不能开始").toResponseEntity();
+        }
+        boolean success = teamTaskService.updateTaskStatus(taskId, targetStatus);
         return success ? Result.ok(MSG_SUCCESS, null).toResponseEntity()
-            : Result.notFound(MSG_TASK_NOT_FOUND).toResponseEntity();
+            : Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
     }
 
     @DeleteMapping("/tasks/{taskId}")
@@ -264,7 +265,7 @@ public class TeamTaskController {
                     user.getId(),
                     "TASK_ASSIGNED",
                     "新任务指派",
-                    user.getRealName() != null ? user.getRealName() : user.getUsername() + " 给你分配了任务「" + assignedTask.getTaskTitle() + "」",
+                    (user.getRealName() != null ? user.getRealName() : user.getUsername()) + " 给你分配了任务「" + assignedTask.getTaskTitle() + "」",
                     null);
             }
         }
@@ -387,6 +388,7 @@ public class TeamTaskController {
 
     @PutMapping("/tasks/{taskId}/review")
     @ResponseBody
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<Result<?>> reviewTask(@PathVariable Long taskId,
                                                     @RequestBody Map<String, String> body,
                                                     HttpSession session) {
@@ -403,19 +405,19 @@ public class TeamTaskController {
         if (guard != null) {
             return guard;
         }
+        if (!"REVIEW".equals(task.getStatus())) {
+            return Result.badRequest("只有待审核任务可以执行审核").toResponseEntity();
+        }
         String action = body == null ? "" : body.getOrDefault("action", "");
         if ("COMPLETED".equals(action)) {
-            task.setStatus("COMPLETED");
-            task.setUpdatedAt(new Date());
-            task.setCompletedAt(new Date());
-            teamTaskService.updateById(task);
-            return Result.ok("\u4efb\u52a1\u5df2\u786e\u8ba4\u5b8c\u6210", null).toResponseEntity();
+            return teamTaskService.transitionTaskStatus(taskId, "REVIEW", "COMPLETED")
+                ? Result.ok("\u4efb\u52a1\u5df2\u786e\u8ba4\u5b8c\u6210", null).toResponseEntity()
+                : Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
         }
         if ("RETURNED".equals(action)) {
-            task.setStatus("IN_PROGRESS");
-            task.setUpdatedAt(new Date());
-            teamTaskService.updateById(task);
-            return Result.ok("\u5df2\u9000\u56de\u4fee\u6539", null).toResponseEntity();
+            return teamTaskService.transitionTaskStatus(taskId, "REVIEW", "IN_PROGRESS")
+                ? Result.ok("\u5df2\u9000\u56de\u4fee\u6539", null).toResponseEntity()
+                : Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
         }
         return Result.badRequest("\u65e0\u6548\u64cd\u4f5c").toResponseEntity();
     }
@@ -450,6 +452,7 @@ public class TeamTaskController {
 
     @PostMapping("/tasks/{taskId}/submit")
     @ResponseBody
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<Result<?>> submitTask(@PathVariable Long taskId,
                                                     @RequestBody Map<String, Object> body,
                                                     HttpSession session) {
@@ -468,8 +471,15 @@ public class TeamTaskController {
         if (task.getAssignedTo() == null || !task.getAssignedTo().equals(user.getId())) {
             return Result.fail(403, "\u4ec5\u88ab\u6307\u6d3e\u7684\u961f\u5458\u53ef\u4ee5\u63d0\u4ea4").toResponseEntity();
         }
+        if (!"IN_PROGRESS".equals(task.getStatus())) {
+            return Result.badRequest("请先开始任务，再提交审核").toResponseEntity();
+        }
 
         String content = body == null ? "" : String.valueOf(body.getOrDefault("remark", body.getOrDefault("content", "")));
+        if (!teamTaskService.transitionTaskStatus(taskId, "IN_PROGRESS", "REVIEW")) {
+            return Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
+        }
+
         TaskSubmission submission = new TaskSubmission();
         submission.setTaskId(taskId);
         submission.setSubmitterId(user.getId());
@@ -478,9 +488,6 @@ public class TeamTaskController {
         submission.setCreatedAt(new Date());
         taskSubmissionMapper.insert(submission);
 
-        task.setStatus("REVIEW");
-        task.setUpdatedAt(new Date());
-        teamTaskService.updateById(task);
         if (content != null && !content.trim().isEmpty()) {
             teamTaskService.addComment(taskId, user.getId(), content, null);
         }

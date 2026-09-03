@@ -15,4 +15,6 @@ public class LoginRequest {
 
     // 新增一个通用标识符字段
     private String identifier;
+    private boolean rememberMe;
+    private String returnTo;
 }

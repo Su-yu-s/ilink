@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -7,7 +7,6 @@
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <link href="/css/admin-shell.css?v=1.0" rel="stylesheet">
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
     <link href="/css/admin-redesign.css?v=1.0" rel="stylesheet">
 </head>
 <body data-app-page="admin" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
@@ -19,7 +18,7 @@
         <div class="page-header admin-page-header">
             <div class="page-header-info">
                 <h1 class="neon-text">管理后台</h1>
-                <p class="page-subtitle">管理平台用户、组队需求、导师申请、成果作品与社区帖子</p>
+                <p class="page-subtitle">管理平台用户、组队需求、导师申请、竞赛目录、成果作品与社区帖子</p>
             </div>
         </div>
 
@@ -73,6 +72,11 @@
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="community-tab" data-bs-toggle="tab" data-bs-target="#community" type="button" role="tab">
                             <span>社区帖子</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="competitions-tab" data-bs-toggle="tab" data-bs-target="#competitions" type="button" role="tab">
+                            <span>竞赛目录</span>
                         </button>
                     </li>
                 </ul>
@@ -239,6 +243,32 @@
                     </div>
                 </div>
             </div>
+
+            <div class="tab-pane fade" id="competitions" role="tabpanel">
+                <div class="card admin-table-card">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="mb-0">竞赛目录</h5>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openCompetitionEditModal()">新增竞赛</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center mb-3">
+                            <div class="col-md-10">
+                                <div th:replace="~{fragments/search-field :: field('competitionSearchInput', '搜索：名称 / 主办单位 / 赛道 / 标签', '搜索竞赛', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-2 d-flex justify-content-md-end gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="competitionSearchBtn">搜索</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle admin-table">
+                                <thead><tr><th>竞赛名称</th><th>赛道</th><th>类别/级别</th><th>状态</th><th>操作</th></tr></thead>
+                                <tbody id="competitionTableBody"></tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-3" id="competitionListHint">共 0 条</small>
+                    </div>
+                </div>
+            </div>
                 </div>
             </section>
         </div>
@@ -351,10 +381,208 @@
         </div>
     </div>
 
+    <div class="modal fade" id="adminTeamEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑组队需求</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="adminEditTeamId">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="adminEditTeamTitle" class="form-label">标题 *</label>
+                            <input type="text" class="form-control" id="adminEditTeamTitle" maxlength="200">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="adminEditTeamStatus" class="form-label">状态 *</label>
+                            <select class="form-select" id="adminEditTeamStatus">
+                                <option value="OPEN">招募中</option>
+                                <option value="TEAMING">已组队</option>
+                                <option value="CLOSED">已结束</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditTeamSkills" class="form-label">所需技能</label>
+                            <input type="text" class="form-control" id="adminEditTeamSkills" maxlength="500">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="adminEditTeamMemberCount" class="form-label">所需人数</label>
+                            <input type="number" class="form-control" id="adminEditTeamMemberCount" min="1" max="99">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="adminEditTeamCompetitionId" class="form-label">竞赛ID（选填）</label>
+                            <input type="number" class="form-control" id="adminEditTeamCompetitionId" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="adminEditTeamDeadline" class="form-label">截止日期（选填）</label>
+                            <input type="date" class="form-control" id="adminEditTeamDeadline">
+                        </div>
+                        <div class="col-12">
+                            <label for="adminEditTeamDescription" class="form-label">需求描述</label>
+                            <textarea class="form-control" id="adminEditTeamDescription" rows="5" maxlength="5000"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="adminTeamSaveBtn">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminTeacherEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑导师档案</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="adminEditTeacherId">
+                    <div class="alert alert-warning py-2 mb-3" id="adminTeacherEditRequiredHint"></div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="adminEditTeacherTitle" class="form-label">职称</label>
+                            <input type="text" class="form-control" id="adminEditTeacherTitle" maxlength="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditTeacherStatus" class="form-label">状态 *</label>
+                            <select class="form-select" id="adminEditTeacherStatus">
+                                <option value="PENDING">待审核</option>
+                                <option value="INCOMPLETE">资料不完整</option>
+                                <option value="APPROVED">已批准</option>
+                                <option value="REJECTED">已拒绝</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="adminEditTeacherDirection" class="form-label">研究方向</label>
+                            <input type="text" class="form-control" id="adminEditTeacherDirection" maxlength="500">
+                        </div>
+                        <div class="col-12">
+                            <label for="adminEditTeacherIntro" class="form-label">导师简介</label>
+                            <textarea class="form-control" id="adminEditTeacherIntro" rows="4" maxlength="2000"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="adminEditTeacherProjects" class="form-label">项目经历</label>
+                            <textarea class="form-control" id="adminEditTeacherProjects" rows="4" maxlength="3000"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="adminTeacherSaveBtn">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminAssetEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑成果</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="adminEditAssetId">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="adminEditAssetTitle" class="form-label">标题 *</label>
+                            <input type="text" class="form-control" id="adminEditAssetTitle" maxlength="200">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="adminEditAssetCategory" class="form-label">分类</label>
+                            <input type="text" class="form-control" id="adminEditAssetCategory" maxlength="100">
+                        </div>
+                        <div class="col-12">
+                            <label for="adminEditAssetDescription" class="form-label">成果描述</label>
+                            <textarea class="form-control" id="adminEditAssetDescription" rows="6" maxlength="5000"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="adminAssetSaveBtn">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminCommunityPostEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑社区帖子</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="adminEditPostId">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="adminEditPostTitle" class="form-label">标题 *</label>
+                            <input type="text" class="form-control" id="adminEditPostTitle" maxlength="200">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="adminEditPostCategory" class="form-label">分区 *</label>
+                            <select class="form-select" id="adminEditPostCategory">
+                                <option value="general">综合交流</option>
+                                <option value="tech">技术讨论</option>
+                                <option value="competition">竞赛经验</option>
+                                <option value="resource">资源分享</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="adminEditPostContent" class="form-label">正文内容</label>
+                            <textarea class="form-control" id="adminEditPostContent" rows="10" maxlength="20000"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="adminCommunityPostSaveBtn">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adminCompetitionEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminCompetitionEditTitle">新增竞赛</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="competitionEditId">
+                    <div class="row g-3">
+                        <div class="col-12"><label class="form-label" for="competitionEditName">竞赛名称 *</label><input class="form-control" id="competitionEditName" maxlength="160"></div>
+                        <div class="col-md-6"><label class="form-label" for="competitionEditTrack">赛道 *</label><select class="form-select" id="competitionEditTrack"><option value="cs">计算机软件</option><option value="ee">电子信息</option><option value="innovation">创新创业</option><option value="stem">数理建模</option><option value="robot">机器人 / 智能车</option><option value="general">综合 / 语言</option></select></div>
+                        <div class="col-md-6"><label class="form-label" for="competitionEditOrganizer">主办单位 *</label><input class="form-control" id="competitionEditOrganizer" maxlength="160"></div>
+                        <div class="col-md-6"><label class="form-label" for="competitionEditLevel">竞赛类别 *</label><select class="form-select" id="competitionEditLevel"><option>一类A</option><option>一类B</option><option>二类A</option><option>二类B</option><option>三类</option></select></div>
+                        <div class="col-md-6"><label class="form-label" for="competitionEditScope">竞赛级别 *</label><select class="form-select" id="competitionEditScope"><option>国际赛</option><option>国赛</option><option>国赛/省赛</option><option>省赛</option><option>校赛</option></select></div>
+                        <div class="col-md-8"><label class="form-label" for="competitionEditSeason">赛季参考</label><input class="form-control" id="competitionEditSeason" maxlength="160"></div>
+                        <div class="col-md-4"><label class="form-label" for="competitionEditDeadline">报名截止日</label><input class="form-control" id="competitionEditDeadline" type="date"></div>
+                        <div class="col-md-8"><label class="form-label" for="competitionEditUrl">官网地址</label><input class="form-control" id="competitionEditUrl" type="url" maxlength="500" placeholder="https://"></div>
+                        <div class="col-md-4"><label class="form-label" for="competitionEditStatus">发布状态</label><select class="form-select" id="competitionEditStatus"><option value="ACTIVE">已发布</option><option value="INACTIVE">已停用</option></select></div>
+                        <div class="col-12"><label class="form-label" for="competitionEditTags">标签</label><input class="form-control" id="competitionEditTags" maxlength="300" placeholder="使用中文逗号或英文逗号分隔"></div>
+                        <div class="col-12"><label class="form-label" for="competitionEditDescription">赛事简介</label><textarea class="form-control" id="competitionEditDescription" rows="4" maxlength="2000"></textarea></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="adminCompetitionSaveBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script src="/lib/bootstrap.bundle.min.js?v=2.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script src="/js/ui-particles.js?v=1.0"></script>
-    <script src="/js/admin.js?v=3.0"></script>
+    <script src="/js/admin.js?v=4.2"></script>
 </body>
 </html>

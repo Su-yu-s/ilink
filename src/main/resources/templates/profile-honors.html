@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人成果 - iLink</title>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
-    <link href="/css/profile-redesign.css?v=1.1" rel="stylesheet">
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link href="/css/profile.css?v=10.4" rel="stylesheet">
 </head>
 <body data-profile-page="honors" th:data-user-id="${currentUser?.id}" class="ilink-page-bg">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -34,7 +34,7 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script>
     (function(){
         var PAGE_SIZE=12,cp=1,uid=document.body.getAttribute('data-user-id');

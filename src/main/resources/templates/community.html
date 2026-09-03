@@ -6,34 +6,10 @@
     <title>交流社区 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/community-feed.css?v=4.5" rel="stylesheet">
-    <link href="/css/search-bar.css?v=1.7" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet" crossorigin="anonymous">
-    <style>
-        /* iLink 交流社区专用样式 */
-        body[data-app-page="community"] .il-hero__eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: 28px;
-            padding: 0 12px;
-            border-radius: 999px;
-            background: var(--ui-surface-subtle);
-            border: 1px solid var(--ui-border);
-            font-size: 12px;
-            font-weight: 500;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--ui-text-muted);
-            margin-bottom: 16px;
-        }
-        body[data-app-page="community"] .il-hero__eyebrow svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        body[data-app-page="community"] .il-hero__title { font-family: var(--ui-font, sans-serif); font-weight: 650; max-width: 640px; }
-        body[data-app-page="community"] .il-hero__desc { font-size: 16px; color: var(--text-secondary); max-width: 520px; margin: 16px 0 0; }
-        body[data-app-page="community"] .il-btn--sm { font-size: 13px; }
-    </style>
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
-    <link href="/css/portal-redesign.css?v=1.1" rel="stylesheet">
+    <link href="/css/community-feed.css?v=4.7" rel="stylesheet">
+    <link href="/css/search-bar.css?v=1.9" rel="stylesheet">
+    <link href="/css/md-editor.css?v=1.0" rel="stylesheet">
+    <link href="/css/portal-redesign.css?v=1.3" rel="stylesheet">
 </head>
 <body data-app-page="community" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'community')"></div>
@@ -100,9 +76,47 @@
                     <input type="text" class="il-form-input" id="composeTitle" maxlength="200" placeholder="一句话概括，方便他人检索">
                 </div>
                 <div class="il-form-group">
-                    <label class="il-form-label">正文</label>
-                    <div id="composeEditor" style="background: var(--ui-surface); border-radius: 8px; border: 1px solid var(--ui-border);"></div>
-                    <p class="form-text small text-muted mb-0 mt-2">支持排版、链接；工具栏「图片」可插入正文配图（自动上传）。</p>
+                    <label class="il-form-label">正文（支持 Markdown）</label>
+                    <div class="md-toolbar">
+                        <button type="button" class="md-toolbar-btn" data-action="bold" title="粗体"><b>B</b></button>
+                        <button type="button" class="md-toolbar-btn" data-action="italic" title="斜体"><i>I</i></button>
+                        <button type="button" class="md-toolbar-btn" data-action="strikethrough" title="删除线"><s>S</s></button>
+                        <button type="button" class="md-toolbar-btn" data-action="code" title="行内代码">&lt;/&gt;</button>
+                        <span class="md-toolbar-sep"></span>
+                        <button type="button" class="md-toolbar-btn" data-action="h2" title="二级标题">H2</button>
+                        <button type="button" class="md-toolbar-btn" data-action="h3" title="三级标题">H3</button>
+                        <span class="md-toolbar-sep"></span>
+                        <button type="button" class="md-toolbar-btn" data-action="ul" title="无序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+                        <button type="button" class="md-toolbar-btn" data-action="ol" title="有序列表"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 18h2l-2 3h2"/><path d="M5 12H3l1-2h1"/></svg></button>
+                        <button type="button" class="md-toolbar-btn" data-action="quote" title="引用"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg></button>
+                        <span class="md-toolbar-sep"></span>
+                        <button type="button" class="md-toolbar-btn" data-action="link" title="插入链接"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+                        <button type="button" class="md-toolbar-btn" data-action="image" title="插入图片"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+                        <button type="button" class="md-toolbar-btn" data-action="hr" title="分隔线">&mdash;</button>
+                    </div>
+                    <div class="md-mode-bar">
+                        <button type="button" class="md-mode-btn active" data-mode="split">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+                            分栏
+                        </button>
+                        <button type="button" class="md-mode-btn" data-mode="edit">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                            编辑
+                        </button>
+                        <button type="button" class="md-mode-btn" data-mode="preview">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            预览
+                        </button>
+                    </div>
+                    <div class="md-pane-wrap split">
+                        <div class="md-edit-pane">
+                            <textarea id="composeMdEditor" placeholder="使用 Markdown 撰写正文…&#10;&#10;## 标题&#10;**粗体** *斜体* &#96;代码&#96;&#10;- 列表项&#10;> 引用&#10;&#10;[链接](url) ![图片](url)"></textarea>
+                        </div>
+                        <div class="md-divider visible"></div>
+                        <div class="md-preview-pane">
+                            <div class="markdown-body" id="composeMdPreview"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="il-form-group" style="margin-bottom: 0;">
                     <label class="il-form-label">附件（可选）</label>
@@ -122,9 +136,10 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script src="/js/ui-particles.js?v=1.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
     <script src="/js/community.js?v=4.9"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +7,7 @@
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <link href="/css/team-detail.css?v=1.1" rel="stylesheet">
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
-    <link href="/css/portal-redesign.css?v=1.1" rel="stylesheet">
+    <link href="/css/portal-redesign.css?v=1.3" rel="stylesheet">
 </head>
 <body data-app-page="team-detail" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -158,7 +157,7 @@
 
     <!-- 分配任务弹窗 -->
     <div class="modal fade" id="assignTaskModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">分配任务</h5>
@@ -194,7 +193,7 @@
 
     <!-- 任务详情弹窗 -->
     <div class="modal fade" id="taskDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="taskDetailTitle">任务详情</h5>
@@ -234,7 +233,7 @@
 
     <!-- 提交材料弹窗 -->
     <div class="modal fade" id="submitMaterialModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">提交材料</h5>
@@ -261,7 +260,7 @@
 
     <!-- 申请加入弹窗（填写自我介绍） -->
     <div class="modal fade" id="applyModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">申请加入</h5>
@@ -284,7 +283,7 @@
 
     <!-- 审批弹窗（通过/拒绝） -->
     <div class="modal fade" id="approveModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="approveModalTitle">通过申请</h5>
@@ -308,7 +307,7 @@
 
     <!-- 申请人资料浮层 -->
     <div class="modal fade" id="profileOverlay" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">申请人资料</h5>
@@ -330,7 +329,7 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script src="/js/ui-particles.js?v=1.0"></script>
     <script src="/js/team-detail.js?v=10"></script>
     <script src="/js/team-detail-tasks.js?v=5"></script>

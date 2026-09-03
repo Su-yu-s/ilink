@@ -83,6 +83,15 @@ class AdminControllerWebTest {
     @MockBean
     private cn.ilink.service.NotificationService notificationService;
 
+    @MockBean
+    private cn.ilink.service.UserRoleService userRoleService;
+
+    @MockBean
+    private cn.ilink.service.AdminDataService adminDataService;
+
+    @MockBean
+    private cn.ilink.service.AdminAuditService adminAuditService;
+
     @Test
     void dashboardReturns403WhenNoUserInSession() throws Exception {
         mockMvc.perform(get("/api/admin/dashboard"))

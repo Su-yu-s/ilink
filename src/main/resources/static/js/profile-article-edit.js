@@ -10,7 +10,8 @@ const PROFILE_ARTICLE_CATEGORY_LABELS = {
 
 let pendingAttachments = [];
 let postId = null;
-let currentMode = 'split';   // 'edit' | 'split' | 'preview'
+const compactEditorQuery = window.matchMedia('(max-width: 767.98px)');
+let currentMode = compactEditorQuery.matches ? 'edit' : 'split';
 
 document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams(window.location.search);
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initMarked();
     initToolbar();
     initModeButtons();
+    initResponsiveEditorMode();
     initDividerDrag();
     initAttachmentHandlers();
     initSaveButton();
@@ -83,9 +85,23 @@ function initModeButtons() {
     bar.querySelectorAll('.md-mode-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             const mode = this.getAttribute('data-mode');
-            if (mode) switchMode(mode);
+            if (mode && !(mode === 'split' && compactEditorQuery.matches)) switchMode(mode);
         });
     });
+}
+
+function initResponsiveEditorMode() {
+    const sync = () => {
+        const splitButton = document.getElementById('mdModeSplit');
+        if (splitButton) {
+            splitButton.disabled = compactEditorQuery.matches;
+            splitButton.setAttribute('aria-hidden', String(compactEditorQuery.matches));
+        }
+        if (compactEditorQuery.matches && currentMode === 'split') currentMode = 'edit';
+        switchMode(currentMode);
+    };
+    sync();
+    compactEditorQuery.addEventListener?.('change', sync);
 }
 
 function switchMode(mode) {
@@ -128,7 +144,7 @@ function initDividerDrag() {
     let startLeftWidth = 0;
 
     divider.addEventListener('mousedown', function (e) {
-        if (currentMode !== 'split') return;
+        if (currentMode !== 'split' || compactEditorQuery.matches) return;
         dragging = true;
         divider.classList.add('dragging');
         startX = e.clientX;
@@ -171,11 +187,7 @@ function renderPreview() {
     const raw = mdEditor.value || '';
 
     if (typeof marked !== 'undefined') {
-        try {
-            preview.innerHTML = marked.parse(raw);
-        } catch (e) {
-            preview.innerHTML = `<p style="color:var(--ui-danger)">Markdown 渲染错误：${escapeHtml(e.message)}</p>`;
-        }
+        renderMarkdownSafe(preview, raw);
     } else {
         // 无 marked 时显示纯文本
         preview.innerHTML = `<pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(raw)}</pre>`;

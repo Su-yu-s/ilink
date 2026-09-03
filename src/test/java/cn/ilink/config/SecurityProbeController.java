@@ -13,4 +13,14 @@ public class SecurityProbeController {
     public String publicCommunityPosts() {
         return "[]";
     }
+
+    @GetMapping({"/team-detail.html", "/teacher-detail.html", "/asset-detail.html", "/community-article.html"})
+    public String publicDetailPage() {
+        return "detail";
+    }
+
+    @GetMapping("/internal-probe")
+    public String internalProbe() {
+        return "private";
+    }
 }

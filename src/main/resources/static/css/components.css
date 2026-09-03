@@ -326,7 +326,7 @@ a.il-link:active {
     gap: 8px;
 }
 
-/* 登录 / 注册 — 同款次要按钮（白底、深灰字、灰边框） */
+/* 登录 / 注册 — 白底黑字统一样式 */
 .il-header__auth-link,
 .il-header__auth-btn {
     display: inline-flex;
@@ -336,8 +336,8 @@ a.il-link:active {
     padding: 8px 18px;
     font-size: 14px;
     font-weight: 600;
-    color: #111827;
-    background: #ffffff;
+    color: #111827 !important;
+    background: #ffffff !important;
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
     text-decoration: none;
@@ -378,128 +378,371 @@ a.il-link:active {
     background: rgba(0, 0, 0, 0.04);
 }
 
-/* Mobile Styles — 侧滑抽屉式导航 */
-@media (max-width: 768px) {
-    .il-header__inner {
-        padding: 0 16px;
+/* Current iLink theme for the shared header. Kept here so structure and theme
+   cannot diverge across public, profile, workspace and admin pages. */
+html.ilink-app .il-header {
+    position: sticky !important;
+    top: 0;
+    z-index: var(--z-sticky);
+    height: 72px !important;
+    min-height: 72px;
+    background: rgba(252, 252, 253, 0.96) !important;
+    border-bottom: 1px solid var(--ui-border) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+html.ilink-app .il-header__inner {
+    width: min(100% - 48px, 1320px);
+    min-height: 72px;
+    margin: 0 auto;
+    padding: 0;
+    gap: 28px;
+}
+
+html.ilink-app .il-header__brand {
+    color: var(--ui-text) !important;
+    gap: 10px;
+}
+
+html.ilink-app .il-header__logo {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    color: var(--ui-surface);
+    background: var(--ui-text) !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+    font-size: 14px;
+}
+
+html.ilink-app .il-header__title {
+    color: var(--ui-text) !important;
+    font-family: var(--ui-font) !important;
+    font-size: 20px;
+    font-weight: 650;
+}
+
+html.ilink-app .il-header__nav {
+    gap: 4px;
+}
+
+html.ilink-app .il-header__link {
+    min-height: 38px;
+    padding: 0 12px;
+    color: var(--ui-text-secondary) !important;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 38px;
+    text-decoration: none !important;
+    transition: background-color 140ms ease, color 140ms ease;
+}
+
+html.ilink-app .il-header__link:hover {
+    color: var(--ui-text) !important;
+    background: var(--ui-surface-subtle) !important;
+}
+
+html.ilink-app .il-header__link--active {
+    color: var(--ui-text) !important;
+    background: var(--ui-surface-selected) !important;
+    font-weight: 600;
+}
+
+html.ilink-app .il-header__link--active::after {
+    content: none !important;
+}
+
+html.ilink-app .il-header__auth,
+html.ilink-app .il-header__actions {
+    gap: 8px;
+}
+
+html.ilink-app .il-header__auth-link,
+html.ilink-app .il-header__auth-btn,
+html.ilink-app .il-header__user-link,
+html.ilink-app .il-header__dropdown-toggle {
+    min-height: 38px;
+    border-radius: 8px !important;
+    font-family: var(--ui-font) !important;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+html.ilink-app .il-header__auth-link {
+    color: var(--ui-text) !important;
+    background: transparent !important;
+    border: 1px solid var(--ui-border) !important;
+}
+
+html.ilink-app .il-header__auth-btn {
+    color: #111827 !important;
+    background: #ffffff !important;
+    border: 1px solid var(--ui-border) !important;
+}
+
+html.ilink-app .il-header__dropdown-menu {
+    margin-top: 8px;
+    color: var(--ui-text);
+    background: var(--ui-surface) !important;
+    border: 1px solid var(--ui-border) !important;
+    border-radius: 10px !important;
+    box-shadow: var(--ui-shadow-float) !important;
+}
+
+html.ilink-app .il-header__dropdown-item {
+    border-radius: 6px;
+    color: var(--ui-text-secondary) !important;
+}
+
+html.ilink-app .il-header__dropdown-item:hover {
+    color: var(--ui-text) !important;
+    background: var(--ui-surface-subtle) !important;
+}
+
+/* Drawer-only elements stay out of the desktop navigation flow. */
+.il-header__drawer-head,
+.il-header__drawer-footer,
+.il-header__overlay {
+    display: none;
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    html.ilink-app .il-header__inner {
+        padding-inline: 16px;
     }
 
-    /* 侧滑导航面板 */
-    .il-header__nav {
+    html.ilink-app .il-header__title,
+    html.ilink-app .il-header__username {
+        display: none;
+    }
+
+    html.ilink-app .il-header__nav {
+        gap: 0;
+        margin-inline: 8px;
+    }
+
+    html.ilink-app .il-header__link {
+        padding-inline: 9px;
+        font-size: 13px;
+    }
+
+    html.ilink-app .il-header__auth-link,
+    html.ilink-app .il-header__auth-btn {
+        padding-inline: 12px;
+    }
+}
+
+/* Mobile: fixed 56px header and one shared right-side drawer. */
+@media (max-width: 767.98px) {
+    html.ilink-app .il-header {
+        z-index: 1150;
+        height: calc(56px + env(safe-area-inset-top)) !important;
+        min-height: calc(56px + env(safe-area-inset-top));
+        padding-top: env(safe-area-inset-top);
+        background: #fcfcfd;
+        border-bottom: 1px solid var(--border-light);
+        box-shadow: 0 1px 8px rgba(24, 28, 34, 0.04);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+
+    html.ilink-app .il-header__inner {
+        width: 100%;
+        height: 56px;
+        padding: 0 12px;
+        gap: 8px;
+    }
+
+    html.ilink-app .il-header__nav {
         position: fixed;
         top: 0;
         right: 0;
         bottom: 0;
-        width: 280px;
-        max-width: 85vw;
-        background: var(--bg-white);
+        width: min(360px, calc(100vw - 24px));
+        max-width: none;
+        height: 100dvh;
+        margin: 0;
+        padding: max(12px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+        align-items: stretch;
+        gap: 4px;
+        background: var(--bg-white, #ffffff);
         z-index: 1200;
         transform: translateX(100%);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        visibility: hidden;
+        pointer-events: none;
+        transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.24s;
         display: flex;
         flex-direction: column;
-        padding: 72px 24px 32px;
         overflow-y: auto;
-        box-shadow: -8px 0 32px rgba(0, 0, 0, 0.15);
+        overscroll-behavior: contain;
+        box-shadow: -12px 0 32px rgba(24, 28, 34, 0.14);
         -webkit-overflow-scrolling: touch;
     }
 
-    .il-header__nav--open {
+    html.ilink-app .il-header__nav--open {
         transform: translateX(0);
+        visibility: visible;
+        pointer-events: auto;
     }
 
-    /* 独立遮罩层 */
     .il-header__overlay {
+        display: block;
         position: fixed;
         inset: 0;
+        width: 100%;
+        height: 100%;
+        padding: 0;
         background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
+        border: 0;
         z-index: 1100;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.3s ease, visibility 0.3s ease;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
         pointer-events: none;
     }
 
-    .il-header__nav--open ~ .il-header__overlay {
+    html.ilink-app .il-header__nav--open + .il-header__overlay {
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
     }
 
-    /* 导航链接 — 允许文字换行 */
-    .il-header__link {
+    .il-header__drawer-head {
+        min-height: 52px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .il-header__drawer-title {
+        color: var(--text-primary);
+        font-size: 16px;
+        font-weight: 650;
+    }
+
+    .il-header__drawer-close {
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        background: transparent;
+        border: 0;
+        border-radius: 10px;
+    }
+
+    html.ilink-app .il-header__nav .il-header__link {
         width: 100%;
-        padding: 14px 16px;
+        min-height: 48px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
         font-size: 16px;
         font-weight: 500;
         color: var(--color-gray-700);
-        text-decoration: none;
-        border-radius: var(--radius-md);
-        transition: all 0.15s ease;
+        border-radius: 10px;
+        transition: background-color 0.15s ease, color 0.15s ease;
         -webkit-tap-highlight-color: transparent;
-        white-space: normal !important;
         line-height: 1.4;
-        word-break: keep-all;
     }
 
-    .il-header__link:hover,
-    .il-header__link:active {
+    html.ilink-app .il-header__nav .il-header__link:active {
         background: var(--color-gray-100);
         color: var(--color-black);
     }
 
-    .il-header__link--active {
-        color: var(--primary) !important;
-        background: var(--primary-light) !important;
+    html.ilink-app .il-header__nav .il-header__link--active {
+        color: var(--text-primary);
+        background: var(--bg-muted);
         font-weight: 600;
     }
 
-    .il-header__link--active::after {
+    html.ilink-app .il-header__nav .il-header__link--active::after {
         display: none;
     }
 
-    /* 移动端菜单按钮 */
-    .il-header__menu-toggle {
-        display: flex;
+    .il-header__drawer-footer {
+        margin-top: auto;
+        padding-top: 16px;
+        display: grid;
+        gap: 8px;
+        border-top: 1px solid var(--border-light);
     }
 
-    /* 移动端菜单按钮图标旋转 */
-    .il-header__menu-toggle svg {
-        transition: transform 0.3s ease;
+    .il-header__drawer-action {
+        min-height: 46px;
+        padding: 0 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-primary);
+        background: var(--bg-white);
+        border: 1px solid var(--border-default);
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
     }
 
-    .il-header__nav--open ~ .il-header__actions .il-header__menu-toggle svg {
-        transform: rotate(90deg);
+    .il-header__drawer-action--primary {
+        color: #ffffff;
+        background: var(--primary);
+        border-color: var(--primary);
     }
 
-    /* Body scroll lock */
+    .il-header__drawer-action--danger {
+        color: var(--color-danger);
+    }
+
+    html.ilink-app .il-header__menu-toggle {
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        flex: 0 0 44px;
+    }
+
+    html.ilink-app .il-header__actions {
+        margin-left: auto;
+        gap: 4px;
+    }
+
+    html.ilink-app .il-header__auth {
+        display: none;
+    }
+
+    html.ilink-app .il-header__username,
+    html.ilink-app .il-header__dropdown {
+        display: none;
+    }
+
+    html.ilink-app .il-header__user-link {
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        min-height: 44px;
+        padding: 4px;
+        justify-content: center;
+        border: 0;
+        background: transparent;
+    }
+
+    .notification-bell {
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        min-height: 44px;
+    }
+
     body.nav-open {
-        overflow: hidden !important;
-        position: fixed;
-        width: 100%;
-        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
     }
-
-    /* 导航项渐入动画 */
-    .il-header__nav .il-header__link {
-        opacity: 0;
-        transform: translateX(20px);
-        transition: opacity 0.3s ease, transform 0.3s ease, background 0.15s ease, color 0.15s ease;
-    }
-
-    .il-header__nav--open .il-header__link {
-        opacity: 1;
-        transform: translateX(0);
-    }
-
-    .il-header__nav--open .il-header__link:nth-child(1) { transition-delay: 0.05s; }
-    .il-header__nav--open .il-header__link:nth-child(2) { transition-delay: 0.1s; }
-    .il-header__nav--open .il-header__link:nth-child(3) { transition-delay: 0.15s; }
-    .il-header__nav--open .il-header__link:nth-child(4) { transition-delay: 0.2s; }
-    .il-header__nav--open .il-header__link:nth-child(5) { transition-delay: 0.25s; }
-    .il-header__nav--open .il-header__link:nth-child(6) { transition-delay: 0.3s; }
 }
 
 /* ========================================
@@ -515,60 +758,62 @@ a.il-link:active {
     border: 0;
     border-radius: 0;
     color: #9ca3af;
-    padding: var(--space-10) var(--space-8) var(--space-8);
+    padding: 48px 24px 24px;
     margin: 0;
     box-shadow: none;
 }
 
 .il-footer__inner {
-    max-width: var(--container-max);
+    max-width: 1200px;
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1.5fr repeat(2, 1fr);
-    gap: var(--space-12);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 80px;
 }
 
 .il-footer-brand {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
+    gap: 16px;
+    max-width: 280px;
 }
 
 .il-footer-logo {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .il-footer-logo-mark {
-    width: 36px;
-    height: 36px;
-    background: var(--primary);
-    border-radius: var(--radius-sm);
+    width: 40px;
+    height: 40px;
+    background: #111827 !important;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-weight: var(--font-weight-bold);
-    font-size: var(--font-size-sm);
+    color: #ffffff !important;
+    font-weight: 800;
+    font-size: 18px;
 }
 
 .il-footer-title {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 700;
 }
 
 .il-footer-desc {
-    color: var(--text-secondary);
-    font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
+    color: #9ca3af;
+    font-size: 14px;
+    line-height: 1.6;
     max-width: 280px;
 }
 
 .il-footer-links {
     display: flex;
-    gap: var(--space-12);
+    gap: 48px;
 }
 
 .il-footer-section {
@@ -578,61 +823,122 @@ a.il-link:active {
 }
 
 .il-footer-section-title {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: var(--space-2);
+    margin-bottom: 16px;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
 }
 
 .il-footer-link {
-    color: var(--text-secondary);
+    display: block;
+    padding: 6px 0;
+    color: #9ca3af;
     text-decoration: none;
-    font-size: var(--font-size-sm);
-    transition: color var(--transition-fast);
+    font-size: 14px;
+    transition: color 0.15s ease, transform 0.15s ease;
 }
 
 .il-footer-link:hover {
-    color: var(--brand);
+    color: #ffffff;
+    transform: translateX(2px);
 }
 
 .il-footer-bottom {
-    max-width: var(--container-max);
-    margin: var(--space-8) auto 0;
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--border-light);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: var(--font-size-xs);
-    color: var(--text-secondary);
+    max-width: 1200px;
+    margin: 32px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: #9ca3af;
+    font-size: 13px;
+    text-align: center;
+}
+
+.il-footer-bottom p {
+    margin: 0;
 }
 
 @media (max-width: 1024px) {
     .il-footer__inner {
-        grid-template-columns: 1fr 1fr;
-        gap: var(--space-8);
+        gap: 48px;
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .il-footer {
-        padding: var(--space-8) var(--space-6) var(--space-6);
-        margin: var(--space-4);
+        padding: 18px 28px calc(14px + env(safe-area-inset-bottom));
     }
+
     .il-footer__inner {
-        grid-template-columns: 1fr;
-        gap: var(--space-8);
+        width: 100%;
+        flex-direction: column;
+        gap: 14px;
     }
+
+    .il-footer-brand,
+    .il-footer-desc {
+        max-width: none;
+    }
+
+    .il-footer-logo {
+        margin-bottom: 8px;
+        gap: 10px;
+    }
+
+    .il-footer-logo-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        font-size: 13px;
+    }
+
+    .il-footer-title {
+        font-size: 18px;
+        line-height: 1.2;
+    }
+
+    .il-footer-desc {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.52);
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
     .il-footer-links {
-        flex-direction: column;
-        gap: var(--space-6);
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
     }
+
+    .il-footer-section {
+        gap: 4px;
+    }
+
+    .il-footer-section-title {
+        margin: 0 0 4px;
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 13px;
+        line-height: 1.3;
+    }
+
+    .il-footer-link {
+        min-height: 44px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        color: rgba(255, 255, 255, 0.58);
+        font-size: 12px;
+        line-height: 1.2;
+    }
+
     .il-footer-bottom {
-        flex-direction: column;
-        gap: var(--space-3);
-        text-align: center;
+        margin: 12px 0 0;
+        padding-top: 10px;
+        border-top-color: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.42);
+        font-size: 11px;
+        line-height: 1.3;
     }
 }
 
@@ -848,7 +1154,7 @@ a.il-link:active {
     color: inherit;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .il-card__header,
     .il-card__body,
     .il-card__footer {
@@ -1209,47 +1515,63 @@ a.il-link:active {
 
 /* ========================================
    11. TOAST NOTIFICATIONS
+   · 位置：屏幕上部中央
+   · 外观：白底卡片 + 状态色正文/图标/边框
+   · 比例：宽度 320~380px，高度随内容自适应（不再是极扁胶囊）
    ======================================== */
+:root {
+    --toast-surface:     #FFFFFF;
+    --toast-border:      #EAEAEE;
+    --toast-text:        #282A2F;
+    --toast-text-muted:  #6A6E77;
+
+    --toast-success:     #2F8A64;
+    --toast-error:       #C95050;
+    --toast-warning:     #B37A1F;
+    --toast-info:        #5A606C;
+}
+
 .ilink-toast-host {
     position: fixed;
     top: calc(var(--header-height, 64px) + 16px);
-    left: auto;
-    right: clamp(16px, 2.5vw, 32px);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
     z-index: var(--z-toast, 10050);
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-    width: min(360px, calc(100vw - 32px));
-    min-width: 0;
+    align-items: center;
+    gap: 10px;
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    min-width: 320px;
     pointer-events: none;
 }
 
 .ilink-toast {
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: "icon body close";
+    align-items: flex-start;
+    column-gap: 10px;
+    row-gap: 2px;
     width: 100%;
-    min-width: 0;
-    min-height: 58px;
-    padding: 10px 38px 11px 11px;
+    padding: 12px 12px 12px 14px;
     border-radius: 12px;
-    border: 1px solid #e8e2d9;
+    border: 1px solid var(--toast-border);
     background: var(--toast-surface);
-    backdrop-filter: blur(14px) saturate(1.05);
-    -webkit-backdrop-filter: blur(14px) saturate(1.05);
+    color: var(--toast-text);
     box-shadow:
-        0 12px 30px rgba(44, 36, 25, 0.1),
-        0 2px 6px rgba(44, 36, 25, 0.04);
+        0 14px 34px rgba(17, 20, 30, 0.09),
+        0 2px 6px rgba(17, 20, 30, 0.05);
     opacity: 0;
-    transform: translate3d(12px, 0, 0);
+    transform: translate3d(0, -8px, 0);
     transition:
         opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
         transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
         border-color 0.2s ease;
     pointer-events: auto;
-    overflow: hidden;
 }
 
 .ilink-toast--visible {
@@ -1259,139 +1581,102 @@ a.il-link:active {
 
 .ilink-toast--out {
     opacity: 0;
-    transform: translate3d(8px, 0, 0);
+    transform: translate3d(0, -6px, 0);
 }
 
-.ilink-toast--success {
-    background: var(--toast-success-bg);
-    border-color: var(--toast-success-border);
-}
+/* 状态色：正文与图标着色（白底不变） */
+.ilink-toast--success { border-color: color-mix(in srgb, var(--toast-success) 22%, var(--toast-border)); }
+.ilink-toast--success .ilink-toast__text,
+.ilink-toast--success .ilink-toast__label { color: var(--toast-success); }
 
-.ilink-toast--error {
-    background: var(--toast-error-bg);
-    border-color: var(--toast-error-border);
-}
+.ilink-toast--error   { border-color: color-mix(in srgb, var(--toast-error) 22%, var(--toast-border)); }
+.ilink-toast--error   .ilink-toast__text,
+.ilink-toast--error   .ilink-toast__label { color: var(--toast-error); }
 
-.ilink-toast--warning {
-    background: var(--toast-warning-bg);
-    border-color: var(--toast-warning-border);
-}
+.ilink-toast--warning { border-color: color-mix(in srgb, var(--toast-warning) 22%, var(--toast-border)); }
+.ilink-toast--warning .ilink-toast__text,
+.ilink-toast--warning .ilink-toast__label { color: var(--toast-warning); }
 
-.ilink-toast--info {
-    background: var(--toast-info-bg);
-    border-color: var(--toast-info-border);
-}
+.ilink-toast--info    { border-color: color-mix(in srgb, var(--toast-info) 22%, var(--toast-border)); }
+.ilink-toast--info    .ilink-toast__text,
+.ilink-toast--info    .ilink-toast__label { color: var(--toast-info); }
 
 .ilink-toast__icon {
+    grid-area: icon;
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 9px;
+    border-radius: 8px;
+    margin-top: 1px;
 }
 
-.ilink-toast__svg {
-    display: block;
-    width: 18px;
-    height: 18px;
-}
+.ilink-toast__svg { display: block; width: 16px; height: 16px; }
 
-.ilink-toast--success .ilink-toast__icon {
-    background: var(--toast-success-icon-bg);
-    color: var(--toast-success-icon);
-}
-
-.ilink-toast--error .ilink-toast__icon {
-    background: var(--toast-error-icon-bg);
-    color: var(--toast-error-icon);
-}
-
-.ilink-toast--warning .ilink-toast__icon {
-    background: var(--toast-warning-icon-bg);
-    color: var(--toast-warning-icon);
-}
-
-.ilink-toast--info .ilink-toast__icon {
-    background: var(--toast-info-icon-bg);
-    color: var(--toast-info-icon);
-}
+.ilink-toast--success .ilink-toast__icon { background: color-mix(in srgb, var(--toast-success) 14%, transparent); color: var(--toast-success); }
+.ilink-toast--error   .ilink-toast__icon { background: color-mix(in srgb, var(--toast-error)   16%, transparent); color: var(--toast-error);   }
+.ilink-toast--warning .ilink-toast__icon { background: color-mix(in srgb, var(--toast-warning) 18%, transparent); color: var(--toast-warning); }
+.ilink-toast--info    .ilink-toast__icon { background: color-mix(in srgb, var(--toast-info)    16%, transparent); color: var(--toast-info);    }
 
 .ilink-toast__body {
-    flex: 1;
+    grid-area: body;
     min-width: 0;
+    padding-top: 1px;
+    padding-right: 2px;
 }
 
 .ilink-toast__label {
     display: block;
-    font-size: 12px;
-    font-weight: var(--font-weight-semibold);
-    line-height: 1.25;
-    margin: 0 0 1px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
     letter-spacing: 0;
-    opacity: 1;
+    margin: 0 0 2px;
 }
-
-.ilink-toast--success .ilink-toast__label { color: var(--toast-success-icon); }
-.ilink-toast--error .ilink-toast__label { color: var(--toast-error-icon); }
-.ilink-toast--warning .ilink-toast__label { color: var(--toast-warning-icon); }
-.ilink-toast--info .ilink-toast__label { color: var(--toast-info-icon); }
 
 .ilink-toast__text {
     font-size: 13px;
-    font-weight: var(--font-weight-normal);
+    font-weight: 400;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.5;
+    letter-spacing: .01em;
     word-break: break-word;
 }
+/* 若正文是通用信息但正文没有特殊含义，保留深灰可读的"正文灰"兜底 */
+.ilink-toast--info .ilink-toast__text { color: var(--toast-text); }
 
-.ilink-toast--success .ilink-toast__text { color: var(--toast-success-text); }
-.ilink-toast--error .ilink-toast__text { color: var(--toast-error-text); }
-.ilink-toast--warning .ilink-toast__text { color: var(--toast-warning-text); }
-.ilink-toast--info .ilink-toast__text { color: var(--toast-info-text); }
-
-.ilink-toast__progress {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 2px;
-    transform-origin: left center;
-    transform: scaleX(1);
-    opacity: 0.7;
-}
-
-.ilink-toast--success .ilink-toast__progress { background: var(--toast-success-icon); }
-.ilink-toast--error .ilink-toast__progress { background: var(--toast-error-icon); }
-.ilink-toast--warning .ilink-toast__progress { background: var(--toast-warning-icon); }
-.ilink-toast--info .ilink-toast__progress { background: var(--toast-info-icon); }
+/* 进度条已移除（用户要求） */
 
 .ilink-toast__close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
+    grid-area: close;
+    align-self: flex-start;
+    justify-self: end;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: transparent;
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     cursor: pointer;
-    color: #a89a8a;
-    opacity: 0.65;
-    transition: opacity var(--transition-fast), background var(--transition-fast);
+    color: var(--toast-text-muted);
+    opacity: 0.9;
+    transition: opacity .16s ease, background .16s ease, color .16s ease;
+    margin-top: -3px;
+    margin-right: -4px;
 }
 
 .ilink-toast__close:hover {
     opacity: 1;
-    background: #f5f0eb;
+    background: #F1F1F5;
+    color: var(--toast-text);
 }
 
 .ilink-toast__close:focus-visible {
-    outline: 2px solid #b8956a;
+    outline: 2px solid #CBD0D9;
     outline-offset: 2px;
 }
 
@@ -1418,29 +1703,22 @@ select.il-input-invalid {
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 479.98px) {
     .ilink-toast-host {
-        top: calc(env(safe-area-inset-top, 0px) + var(--header-height, 64px) + 10px);
-        right: 14px;
-        left: 14px;
-        width: auto;
-        max-width: none;
-        min-width: 0;
+        top: calc(env(safe-area-inset-top, 0px) + var(--header-height, 64px) + 12px);
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: min(360px, calc(100vw - 24px));
+        min-width: auto;
     }
 
-    .ilink-toast {
-        width: 100%;
-        min-width: 0;
-        transform: translate3d(0, -8px, 0);
-    }
-
-    .ilink-toast--visible {
-        transform: translate3d(0, 0, 0);
-    }
-
-    .ilink-toast--out {
-        transform: translate3d(0, -6px, 0);
-    }
+    .ilink-toast { padding: 11px 12px 11px 12px; }
+    .ilink-toast__icon { width: 26px; height: 26px; }
+    .ilink-toast__svg  { width: 15px; height: 15px; }
+    .ilink-toast__label { font-size: 12.5px; }
+    .ilink-toast__text  { font-size: 12.5px; line-height: 1.5; }
+    .ilink-toast__close { width: 24px; height: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1452,10 +1730,6 @@ select.il-input-invalid {
     .ilink-toast--visible,
     .ilink-toast--out {
         transform: none;
-    }
-
-    .ilink-toast__progress {
-        display: none;
     }
 }
 
@@ -1718,7 +1992,7 @@ select.il-input-invalid {
     margin-top: var(--space-6);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .profile-post-card__body {
         flex-direction: column;
     }
@@ -2109,17 +2383,15 @@ a.il-btn:focus-visible {
     border-radius: var(--radius-full);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .notification-dropdown {
         position: fixed;
-        top: 64px;
-        left: 0;
-        right: 0;
-        width: 100%;
-        max-height: calc(100vh - 64px);
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
+        top: calc(64px + env(safe-area-inset-top));
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-height: calc(100dvh - 76px - env(safe-area-inset-top));
+        border-radius: 12px;
     }
 }
 
@@ -2382,7 +2654,7 @@ a.il-btn:focus-visible {
     min-height: 44px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .il-search-field--toolbar {
         max-width: none;
         min-width: 0;
@@ -2407,7 +2679,7 @@ a.il-btn:focus-visible {
     border-top: 1px solid var(--border-light);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .il-filter-grid {
         grid-template-columns: 1fr;
     }
@@ -2451,7 +2723,7 @@ a.il-btn:focus-visible {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .il-grid-3,
     .il-grid-4 {
         grid-template-columns: repeat(2, 1fr);
@@ -2465,7 +2737,7 @@ a.il-btn:focus-visible {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 479.98px) {
     .il-grid-2,
     .il-grid-3,
     .il-grid-4 {
@@ -2599,7 +2871,7 @@ a.il-btn:focus-visible {
     margin: 0 auto;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
     .il-section {
         padding: var(--space-8) 0;
     }
@@ -3380,153 +3652,6 @@ body[data-app-page="teacher-detail"] .detail-view__header .detail-view__title {
     }
 }
 
-/* Mobile header final override: compact one-line, horizontally scrollable nav */
-@media (max-width: 768px) {
-    .il-header {
-        height: auto !important;
-        min-height: 0 !important;
-        overflow: visible !important;
-    }
-
-    .il-header__inner {
-        width: 100%;
-        max-width: 100% !important;
-        height: auto !important;
-        min-height: 0 !important;
-        padding: 8px 10px !important;
-        display: flex !important;
-        align-items: center !important;
-        align-content: flex-start !important;
-        justify-content: flex-start !important;
-        flex-wrap: wrap !important;
-        column-gap: 8px !important;
-        row-gap: 6px !important;
-    }
-
-    .il-header__brand {
-        order: 1;
-        flex: 0 0 auto;
-        gap: 6px;
-        min-width: 0;
-    }
-
-    .il-header__logo {
-        width: 34px !important;
-        height: 34px !important;
-        border-radius: 9px !important;
-        font-size: 12px !important;
-    }
-
-    .il-header__title {
-        display: none !important;
-    }
-
-    .il-header__nav,
-    .il-header__nav.il-header__nav--open {
-        position: static !important;
-        inset: auto !important;
-        transform: none !important;
-        order: 3;
-        flex: 0 0 100% !important;
-        min-width: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        align-items: stretch !important;
-        gap: 6px !important;
-        overflow: visible !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        z-index: auto !important;
-    }
-
-    .il-header__nav::-webkit-scrollbar {
-        display: none;
-    }
-
-    .il-header__nav .il-header__link,
-    .il-header__nav--open .il-header__link {
-        flex: 0 0 auto !important;
-        width: 100% !important;
-        min-height: 32px !important;
-        padding: 7px 6px !important;
-        opacity: 1 !important;
-        transform: none !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-size: 13px !important;
-        font-weight: 600 !important;
-        line-height: 1.2 !important;
-        white-space: nowrap !important;
-        word-break: normal !important;
-        border-radius: 999px !important;
-    }
-
-    .il-header__link--active::after,
-    .il-header__overlay,
-    .il-header__menu-toggle {
-        display: none !important;
-    }
-
-    .il-header__actions {
-        order: 2;
-        margin-left: auto;
-        flex: 0 0 auto;
-        gap: 6px !important;
-    }
-
-    .il-header__auth {
-        gap: 6px !important;
-    }
-
-    .il-header__auth-link,
-    .il-header__auth-btn {
-        min-height: 34px !important;
-        padding: 7px 10px !important;
-        font-size: 13px !important;
-        border-radius: 9px !important;
-    }
-
-    .il-header__user-link {
-        padding: 2px !important;
-        border-radius: 999px !important;
-    }
-
-    .il-header__username,
-    .il-header__dropdown {
-        display: none !important;
-    }
-
-    .notification-bell {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px !important;
-    }
-
-    body.nav-open {
-        position: static !important;
-        width: auto !important;
-        height: auto !important;
-        overflow: auto !important;
-    }
-}
-
-@media (max-width: 430px) {
-    .il-header__auth-link {
-        display: none !important;
-    }
-
-    .il-header__nav .il-header__link {
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-    }
-}
-
 /* Admin desktop action buttons stay in one line. */
 @media (min-width: 761px) {
     body[data-app-page="admin"] .admin-table th:last-child,
@@ -3562,7 +3687,6 @@ body[data-app-page="teacher-detail"] .detail-view__header .detail-view__title {
 #adminRecordDetailModal .modal-content {
     max-height: 90vh;
     overflow-y: auto;
-}
 }
 
 /* ========================================

@@ -4,10 +4,12 @@ import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import cn.ilink.dto.TeacherApplicationRequest;
 import cn.ilink.entity.ProjectApplication;
+import cn.ilink.entity.Asset;
 import cn.ilink.entity.TeacherApplication;
 import cn.ilink.entity.User;
 import cn.ilink.service.impl.ProjectApplicationServiceImpl;
 import cn.ilink.service.impl.TeacherApplicationServiceImpl;
+import cn.ilink.service.impl.AssetServiceImpl;
 import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.util.UserPreviewHelper;
@@ -51,6 +53,9 @@ public class TeacherController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private AssetServiceImpl assetService;
+
     @GetMapping("/list")
     @ResponseBody
     public ResponseEntity<Result<?>> listTeachers(@RequestParam(defaultValue = "1") Integer page,
@@ -64,14 +69,27 @@ public class TeacherController {
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             String kw = keyword.trim();
-            wrapper.and(w -> w.like(TeacherApplication::getResearchDirection, kw)
+            Set<Long> matchingUsers = findMatchingUsers(kw, false);
+            wrapper.and(w -> {
+                if (!matchingUsers.isEmpty()) {
+                    w.in(TeacherApplication::getUserId, matchingUsers).or();
+                }
+                w.like(TeacherApplication::getResearchDirection, kw)
                 .or().like(TeacherApplication::getProjects, kw)
                 .or().like(TeacherApplication::getProfessionalTitle, kw)
-                .or().like(TeacherApplication::getIntroduction, kw));
+                .or().like(TeacherApplication::getIntroduction, kw);
+            });
         }
 
         if (major != null && !major.trim().isEmpty()) {
-            wrapper.like(TeacherApplication::getResearchDirection, major.trim());
+            String value = major.trim();
+            Set<Long> matchingUsers = findMatchingUsers(value, true);
+            wrapper.and(w -> {
+                if (!matchingUsers.isEmpty()) {
+                    w.in(TeacherApplication::getUserId, matchingUsers).or();
+                }
+                w.like(TeacherApplication::getResearchDirection, value);
+            });
         }
 
         if (title != null && !title.trim().isEmpty()) {
@@ -117,13 +135,20 @@ public class TeacherController {
     @GetMapping("/{id}")
     @ResponseBody
     @Cacheable(value = "teacherDetail", key = "#id")
-    public ResponseEntity<Result<?>> getTeacher(@PathVariable Long id) {
+    public ResponseEntity<Result<?>> getTeacher(@PathVariable Long id, HttpSession session) {
         TeacherApplication teacher = teacherApplicationService.getById(id);
-        if (teacher != null && "APPROVED".equals(teacher.getStatus())) {
-            return Result.ok("获取成功", teacherToMap(teacher, userService.getById(teacher.getUserId()))).toResponseEntity();
-        } else {
+        if (teacher == null) {
             return Result.notFound("导师不存在").toResponseEntity();
         }
+        // 公开视角：仅 APPROVED 可见
+        if (!"APPROVED".equals(teacher.getStatus())) {
+            // 本人可查看详情（含 INCOMPLETE 状态，引导补全资料）
+            User currentUser = ControllerUtils.requireUser(session);
+            if (currentUser == null || !teacher.getUserId().equals(currentUser.getId())) {
+                return Result.notFound("导师不存在").toResponseEntity();
+            }
+        }
+        return Result.ok("获取成功", teacherToMapWithStats(teacher, userService.getById(teacher.getUserId()))).toResponseEntity();
     }
 
     @PostMapping("/apply")
@@ -246,6 +271,11 @@ public class TeacherController {
     }
 
     private Map<String, Object> teacherToMap(TeacherApplication t, User account) {
+        return teacherToMap(t, account, 0L, 0L);
+    }
+
+    private Map<String, Object> teacherToMap(TeacherApplication t, User account,
+                                              long approvedProjectCount, long publicAssetCount) {
         Map<String, Object> m = new LinkedHashMap<>();
         String legacyProjects = cleanField(t.getProjects());
         String professionalTitle = cleanField(t.getProfessionalTitle());
@@ -263,6 +293,9 @@ public class TeacherController {
         m.put("department", account == null ? "" : cleanField(account.getCollege()));
         m.put("projects", representativeProjects);
         m.put("status", t.getStatus());
+        m.put("profileComplete", isProfileComplete(account, t));
+        m.put("approvedProjectCount", approvedProjectCount);
+        m.put("publicAssetCount", publicAssetCount);
         m.put("createdAt", t.getCreatedAt());
         m.put("userPreview", UserPreviewHelper.toPreview(account));
         return m;
@@ -278,7 +311,23 @@ public class TeacherController {
         }
         Map<Long, User> map = userService.listByIds(ids).stream()
             .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
-        return teachers.stream().map(t -> teacherToMap(t, map.get(t.getUserId()))).collect(Collectors.toList());
+        Set<Long> teacherIds = teachers.stream().map(TeacherApplication::getId)
+            .filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, Long> projectCounts = teacherIds.isEmpty() ? Collections.emptyMap()
+            : projectApplicationService.list(
+                new LambdaQueryWrapper<ProjectApplication>()
+                    .in(ProjectApplication::getTeacherId, teacherIds)
+                    .eq(ProjectApplication::getStatus, "APPROVED"))
+                .stream().collect(Collectors.groupingBy(ProjectApplication::getTeacherId, Collectors.counting()));
+        Map<Long, Long> assetCounts = assetService.list(
+            new LambdaQueryWrapper<Asset>().in(Asset::getUserId, ids))
+            .stream().collect(Collectors.groupingBy(Asset::getUserId, Collectors.counting()));
+        return teachers.stream().map(t -> teacherToMap(
+            t,
+            map.get(t.getUserId()),
+            projectCounts.getOrDefault(t.getId(), 0L),
+            assetCounts.getOrDefault(t.getUserId(), 0L)
+        )).collect(Collectors.toList());
     }
 
     @GetMapping("/me")
@@ -289,10 +338,10 @@ public class TeacherController {
         TeacherApplication teacher = teacherApplicationService.getOne(
             new LambdaQueryWrapper<TeacherApplication>()
                 .eq(TeacherApplication::getUserId, user.getId())
-                .eq(TeacherApplication::getStatus, "APPROVED")
+                .ne(TeacherApplication::getStatus, "REVOKED")
         );
         if (teacher == null) return Result.notFound("当前账号尚无已启用的导师档案").toResponseEntity();
-        return Result.ok(teacherToMap(teacher, user)).toResponseEntity();
+        return Result.ok(teacherToMapWithStats(teacher, user)).toResponseEntity();
     }
 
     @PutMapping("/profile")
@@ -306,7 +355,7 @@ public class TeacherController {
         TeacherApplication teacher = teacherApplicationService.getOne(
             new LambdaQueryWrapper<TeacherApplication>()
                 .eq(TeacherApplication::getUserId, user.getId())
-                .eq(TeacherApplication::getStatus, "APPROVED")
+                .ne(TeacherApplication::getStatus, "REVOKED")
         );
         if (teacher == null) return Result.notFound("导师档案不存在").toResponseEntity();
 
@@ -322,10 +371,14 @@ public class TeacherController {
         teacher.setResearchDirection(researchDirection.isEmpty() ? null : researchDirection);
         teacher.setProfessionalTitle(professionalTitle.isEmpty() ? null : professionalTitle);
         teacher.setProjects(projects.isEmpty() ? null : projects);
+        teacher.setStatus(isProfileComplete(user, teacher) ? "APPROVED" : "INCOMPLETE");
         if (!teacherApplicationService.updateById(teacher)) {
             return Result.fail(500, "导师资料保存失败，请稍后重试").toResponseEntity();
         }
-        return Result.ok("导师资料已保存", teacherToMap(teacher, user)).toResponseEntity();
+        String message = "APPROVED".equals(teacher.getStatus())
+            ? "导师资料已保存并公开展示"
+            : "导师资料已保存，补全姓名、任职单位、专业领域、职称、研究方向和简介后将公开展示";
+        return Result.ok(message, teacherToMapWithStats(teacher, user)).toResponseEntity();
     }
 
     /** Teacher: get pending project applications */
@@ -406,6 +459,48 @@ public class TeacherController {
             return user.getUsername().trim();
         }
         return "用户";
+    }
+
+    private Set<Long> findMatchingUsers(String value, boolean majorOnly) {
+        LambdaQueryWrapper<User> query = new LambdaQueryWrapper<>();
+        if (majorOnly) {
+            query.like(User::getMajor, value);
+        } else {
+            query.and(w -> w.like(User::getRealName, value)
+                .or().like(User::getUsername, value)
+                .or().like(User::getMajor, value)
+                .or().like(User::getSchool, value)
+                .or().like(User::getCollege, value));
+        }
+        return userService.list(query).stream()
+            .map(User::getId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+    }
+
+    private boolean isProfileComplete(User user, TeacherApplication profile) {
+        return user != null
+            && hasText(user.getRealName())
+            && hasText(user.getSchool())
+            && hasText(user.getMajor())
+            && profile != null
+            && hasText(profile.getProfessionalTitle())
+            && hasText(profile.getResearchDirection())
+            && hasText(profile.getIntroduction());
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
+    private Map<String, Object> teacherToMapWithStats(TeacherApplication teacher, User user) {
+        long projectCount = projectApplicationService.count(
+            new LambdaQueryWrapper<ProjectApplication>()
+                .eq(ProjectApplication::getTeacherId, teacher.getId())
+                .eq(ProjectApplication::getStatus, "APPROVED"));
+        long assetCount = assetService.count(
+            new LambdaQueryWrapper<Asset>().eq(Asset::getUserId, teacher.getUserId()));
+        return teacherToMap(teacher, user, projectCount, assetCount);
     }
 
     private String cleanField(String value) {

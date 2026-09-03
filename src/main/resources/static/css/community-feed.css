@@ -1,6 +1,6 @@
 /* ========================================
    iLink Community Feed — 交流社区
-   Card styles live in search-bar.css (loaded later).
+   Feed cards and compose flow are owned by this module.
    ======================================== */
 
 /* === Compose Modal Editor (community-only) === */
@@ -28,95 +28,582 @@ body[data-app-page="community"] .il-compose-editor {
   line-height: 1.7;
 }
 
-/* === Compose Modal Shell (community-only) === */
-body[data-app-page="community"] .il-modal-overlay {
+/* === Feed Card Foundation === */
+body[data-app-page="community"] {
+  background: #faf9f7;
+}
+
+body[data-app-page="community"] .article-card {
+  background: #ffffff;
+  border: 1px solid #e8e2d9;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04);
+  color: #2c2419;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card {
+  padding: 28px;
+}
+
+body[data-app-page="community"] .article-card::before {
+  display: none;
+  content: none;
+}
+
+body[data-app-page="community"] .article-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(44, 36, 25, 0.08);
+  border-color: #d4ccc0;
+}
+
+body[data-app-page="community"] .article-card .card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+}
+
+body[data-app-page="community"] .article-card .card-header {
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+body[data-app-page="community"] .article-card .card-title {
+
+  font-weight: 600;
+  color: #2c2419;
+  line-height: 1.4;
+  margin: 0;
+  letter-spacing: 0;
+  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card .card-title {
+  font-size: 22px;
+}
+
+body[data-app-page="community"] .article-card .card-title:hover {
+  color: #a08055;
+}
+
+body[data-app-page="community"] .article-card .article-badge,
+body[data-app-page="community"] .article-card .card-tag.primary {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: #faf6f0;
+  border: 1px solid #f5efe6;
+  color: #a08055;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card .card-tag {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+body[data-app-page="community"] .article-card .article-badge {
+  height: 24px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+body[data-app-page="community"] .article-card .article-badge svg {
+  width: 13px;
+  height: 13px;
+  color: currentColor;
+}
+
+body[data-app-page="community"] .article-card .article-badge.badge-hot {
+  background: #fdf2f0;
+  border-color: #f5d5d0;
+  color: #c45c4a;
+}
+
+body[data-app-page="community"] .article-card .card-tag.primary:hover {
+  background: #f5efe6;
+}
+
+body[data-app-page="community"] .article-card .author-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: #a89a8a;
+}
+
+body[data-app-page="community"] .article-card .meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #a89a8a;
+  min-width: 0;
+}
+
+body[data-app-page="community"] .article-card .meta-item svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  color: #a89a8a;
+  stroke: currentColor;
+}
+
+body[data-app-page="community"] .article-card .meta-item svg {
+  width: 14px;
+  height: 14px;
+  flex-basis: 14px;
+}
+
+body[data-app-page="community"] .article-card .author-meta > span + span::before {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #d4ccc0;
+  flex: 0 0 3px;
+}
+
+body[data-app-page="community"] .article-card .author-meta > span + span::before {
+  content: "";
+  margin: 0 8px;
+  vertical-align: middle;
+}
+
+body[data-app-page="community"] .article-card .card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+body[data-app-page="community"] .article-card .card-tags {
+  margin-top: 2px;
+}
+
+body[data-app-page="community"] .article-card .card-tag {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: #f0ebe5;
+  border: 1px solid transparent;
+  color: #6b5e4f;
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card .card-tag:hover {
+  background: #faf6f0;
+  color: #a08055;
+}
+
+body[data-app-page="community"] .article-card .card-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: #6b5e4f;
+  margin: 0;
+  word-break: break-word;
+}
+
+body[data-app-page="community"] .article-card .card-excerpt {
+  -webkit-line-clamp: 2;
+  font-size: 14.5px;
+  line-height: 1.8;
+}
+
+body[data-app-page="community"] .article-card .card-divider {
+  height: 1px;
+  width: 100%;
+  margin: 18px 0 0;
+  background: linear-gradient(to right, #e8e2d9, transparent);
+}
+
+body[data-app-page="community"] .article-card .card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-image: none;
+}
+
+body[data-app-page="community"] .article-card .author-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+body[data-app-page="community"] .article-card .author-avatar {
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid #e8e2d9;
+  background: #f5f0eb;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card .author-avatar {
+  width: 44px;
+  height: 44px;
+}
+
+html.ilink-app body[data-app-page="community"] .article-card .author-avatar.il-post-avatar {
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  max-height: 44px;
+}
+
+body[data-app-page="community"] .article-card .author-avatar:hover {
+  border-color: #b8956a;
+  transform: scale(1.05);
+}
+
+body[data-app-page="community"] .article-card .author-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+body[data-app-page="community"] .article-card .author-name {
+  color: #2c2419;
+  min-width: 0;
+}
+
+body[data-app-page="community"] .article-card .author-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+body[data-app-page="community"] .article-card .card-actions,
+body[data-app-page="community"] .article-card .il-feed-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+body[data-app-page="community"] .article-card .action-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: transparent;
+  border: 0;
+  color: #a89a8a;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card .action-btn svg {
+  width: 16px;
+  height: 16px;
+  color: currentColor;
+  stroke: currentColor;
+}
+
+body[data-app-page="community"] .article-card .action-btn:hover {
+  background: #f5f0eb;
+  color: #6b5e4f;
+}
+
+body[data-app-page="community"] .article-card .action-btn.il-feed-action--on {
+  background: #faf6f0;
+  color: #a08055;
+}
+
+body[data-app-page="community"] .article-card .action-btn.il-feed-action--on svg {
+  fill: #b8956a;
+  stroke: #b8956a;
+}
+
+body[data-app-page="community"] .article-card .read-more-btn {
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  padding: 0 20px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e8e2d9;
+  color: #2c2419;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card .read-more-btn span {
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card .read-more-btn:hover {
+  background: #3d3229;
+  border-color: #3d3229;
+  color: #faf6f0;
+}
+
+body[data-app-page="community"] .article-card .read-more-btn:hover span {
+  transform: translateX(3px);
+}
+
+body[data-app-page="community"] .article-card.featured {
+  border-color: #b8956a;
+  box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04), 0 0 0 1px #f5efe6;
+}
+
+body[data-app-page="community"] .article-card.with-cover {
+  padding: 0;
+  overflow: hidden;
+}
+
+body[data-app-page="community"] .article-card.with-cover .card-cover {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+body[data-app-page="community"] .article-card.with-cover .card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body[data-app-page="community"] .article-card.with-cover:hover .card-cover img {
+  transform: scale(1.02);
+}
+
+body[data-app-page="community"] .article-card.with-cover .card-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(44, 36, 25, 0), rgba(44, 36, 25, 0.4));
+}
+
+body[data-app-page="community"] .article-card.with-cover .card-body {
+  padding: 24px 32px 28px;
+}
+
+body[data-app-page="community"] .article-card.compact {
+  padding: 20px 28px;
+}
+
+body[data-app-page="community"] .article-card.compact .author-avatar {
+  width: 36px;
+  height: 36px;
+}
+
+body[data-app-page="community"] .article-card.compact .card-title {
+  font-size: 17px;
+}
+
+body[data-app-page="community"] .article-card.compact .card-excerpt {
+  -webkit-line-clamp: 1;
+}
+
+body[data-app-page="community"] .article-card .avatar-fallback--hidden {
+  display: none;
+}
+
+body[data-app-page="community"] #composeModal.il-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(26, 26, 26, 0.45);
-  backdrop-filter: blur(6px);
+  z-index: 1300;
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
-  padding: var(--space-6);
+  padding: 24px;
+  background: rgba(44, 36, 25, 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-body[data-app-page="community"] .il-modal-overlay.show {
+body[data-app-page="community"] #composeModal.il-modal-overlay.show {
   display: flex;
 }
 
-body[data-app-page="community"] .il-modal-header {
-  padding: var(--space-5) var(--space-6);
+body[data-app-page="community"] #composeModal > .il-modal {
+  width: min(760px, 100%);
+  max-height: min(86vh, 860px);
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e8e2d9;
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(44, 36, 25, 0.18);
+  color: #2c2419;
+}
+
+body[data-app-page="community"] #composeModal .il-modal-header,
+body[data-app-page="community"] #composeModal .il-modal-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--border-light);
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e8e2d9;
 }
 
-body[data-app-page="community"] .il-modal-title {
-  
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+body[data-app-page="community"] #composeModal .il-modal-footer {
+  justify-content: flex-end;
+  border-top: 1px solid #e8e2d9;
+  border-bottom: 0;
+}
+
+body[data-app-page="community"] #composeModal .il-modal-title {
   margin: 0;
-  color: var(--text-primary);
+
+  font-size: 22px;
+  font-weight: 600;
+  color: #2c2419;
 }
 
-body[data-app-page="community"] .il-modal-close {
+body[data-app-page="community"] #composeModal .il-modal-close {
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-full);
-  border: none;
-  background: var(--bg-gray);
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  border: 1px solid #e8e2d9;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #6b5e4f;
+  cursor: pointer;
 }
 
-body[data-app-page="community"] .il-modal-close:hover {
-  background: var(--primary-light);
-  color: var(--primary);
+body[data-app-page="community"] #composeModal .il-modal-close:hover {
+  background: #f5f0eb;
+  color: #2c2419;
 }
 
-body[data-app-page="community"] .il-modal-body {
-  padding: var(--space-6);
+body[data-app-page="community"] #composeModal .il-modal-body {
+  max-height: calc(min(86vh, 860px) - 156px);
   overflow-y: auto;
-  flex: 1;
+  padding: 24px;
 }
 
-body[data-app-page="community"] .il-modal-footer {
-  padding: var(--space-4) var(--space-6) var(--space-6);
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  border-top: 1px solid var(--border-light);
+body[data-app-page="community"] #composeModal .il-form-group {
+  margin-bottom: 18px;
 }
 
-body[data-app-page="community"] .il-form-label {
+body[data-app-page="community"] #composeModal .il-form-label {
   display: block;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-2);
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2419;
 }
 
-body[data-app-page="community"] .il-form-input,
-body[data-app-page="community"] .il-form-select,
-body[data-app-page="community"] .il-form-textarea {
+body[data-app-page="community"] #composeModal .il-form-select,
+body[data-app-page="community"] #composeModal .il-form-input {
   width: 100%;
-  padding: 12px 14px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  background: var(--bg-white);
+  min-height: 42px;
+  border: 1px solid #e8e2d9;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #2c2419;
+  padding: 0 14px;
 }
 
-body[data-app-page="community"] .il-form-input:focus,
-body[data-app-page="community"] .il-form-select:focus,
-body[data-app-page="community"] .il-form-textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--brand-ring);
+body[data-app-page="community"] #composeModal .ql-toolbar,
+body[data-app-page="community"] #composeModal .ql-container {
+  border-color: #e8e2d9;
+}
+
+/* Alias classes emitted by community.js keep the article as one vertical record. */
+body[data-app-page="community"] .article-card.il-post-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+body[data-app-page="community"] .article-card .il-post-author,
+body[data-app-page="community"] .article-card .il-feed-actions {
+  flex: 1 1 0%;
+}
+
+body[data-app-page="community"] .article-card .il-post-meta {
+  line-height: 1.3;
+}
+
+body[data-app-page="community"] .article-card .il-feed-action__num {
+  font-weight: 600;
+}
+
+body[data-app-page="community"] #submitPostBtn.il-btn-primary {
+  gap: 4px;
+  padding-right: 20px;
+  padding-left: 20px;
+}
+
+@media (max-width: 767.98px) {
+  body[data-app-page="community"] .il-modal-overlay {
+    align-items: flex-end;
+    padding: 16px 16px max(16px, env(safe-area-inset-bottom));
+  }
+
+  body[data-app-page="community"] .il-modal {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 32px - env(safe-area-inset-bottom));
+    border-radius: 16px;
+  }
+
+  body[data-app-page="community"] .il-modal-header,
+  body[data-app-page="community"] .il-modal-body,
+  body[data-app-page="community"] .il-modal-footer {
+    padding: 16px;
+  }
+
+  body[data-app-page="community"] .il-modal-close,
+  body[data-app-page="community"] .il-modal-footer button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  body[data-app-page="community"] .il-form-input,
+  body[data-app-page="community"] .il-form-select,
+  body[data-app-page="community"] .il-form-textarea,
+  body[data-app-page="community"] .ql-editor {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 479.98px) {
+  body[data-app-page="community"] .il-modal-footer button {
+    flex: 1 1 0;
+  }
 }

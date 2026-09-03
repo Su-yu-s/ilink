@@ -3,6 +3,7 @@ package cn.ilink.controller;
 import cn.ilink.security.LoginAttemptService;
 import cn.ilink.service.HomeStatsService;
 import cn.ilink.service.UserService;
+import cn.ilink.service.RememberMeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,6 +34,9 @@ class AuthControllerWebTest {
 
     @MockBean
     private HomeStatsService homeStatsService;
+
+    @MockBean
+    private RememberMeService rememberMeService;
 
     @Test
     void rootIndexAddsAllHomeStats() throws Exception {

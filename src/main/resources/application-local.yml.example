@@ -1,0 +1,13 @@
+# ============================================================
+# 本地私有配置模板：复制本文件为 application-local.yml 后填入真实值。
+#   PowerShell: Copy-Item application-local.yml.example application-local.yml
+# application-local.yml 已被 .gitignore 忽略，不会进入版本库。
+# 使用 ${环境变量:默认值} 写法：若设置了 AGNES_API_KEY 环境变量则以其为准，
+# 否则使用冒号后的默认值；也可以完全不建本文件，只靠环境变量。
+# ============================================================
+app:
+  ai:
+    # Agnes（OpenAI 兼容）API Key，把冒号后替换为你自己的 Key
+    api-key: ${AGNES_API_KEY:sk-在这里填入你的Key}
+    # 国内节点 https://apihub.agnes-ai.cn/v1；国际站 https://apihub.agnes-ai.com/v1
+    base-url: ${AGNES_BASE_URL:https://apihub.agnes-ai.cn/v1}
