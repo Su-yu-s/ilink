@@ -592,16 +592,6 @@ body[data-app-page="team-space"] .main-content {
 .chat-input-bar { display: flex; align-items: flex-end; gap: 10px; }
 
 /* ============ AI 任务拆解 / 团队周报 ============ */
-.ai-privacy-note {
-    padding: 10px 14px;
-    margin-bottom: 14px;
-    background: #fff8e6;
-    border: 1px solid #f0dfa8;
-    border-radius: 10px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #6b5410;
-}
 .ai-preview-fields { display: grid; grid-template-columns: 84px 1fr; gap: 8px 14px; margin: 0; }
 .ai-preview-fields dt { color: var(--kb-text-muted); font-weight: 600; font-size: 13px; }
 .ai-preview-fields dd { margin: 0; font-size: 13px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
