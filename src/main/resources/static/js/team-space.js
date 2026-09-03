@@ -1419,7 +1419,7 @@
         var confirmBtn = byId('aiBreakdownConfirmBtn');
         confirmBtn.hidden = false;
         confirmBtn.disabled = false;
-        confirmBtn.textContent = '确认发送给 AI';
+        confirmBtn.textContent = '确认拆解';
         byId('aiBreakdownRegenBtn').hidden = true;
         byId('aiCreateSubtasksBtn').hidden = true;
     }
@@ -1756,7 +1756,7 @@
             } catch (error) {
                 notify(error.message || 'AI 拆解失败，请稍后重试', 'error');
                 btn.disabled = false;
-                btn.textContent = '确认发送给 AI';
+                btn.textContent = '确认拆解';
             }
         },
         createSelectedSubtasks: async function () {
