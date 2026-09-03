@@ -193,12 +193,57 @@ img.honors-preview-proof__img {
   inset: auto !important;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 767.98px) {
+  .profile-public-page,
+  .profile-page-content {
+    max-width: 100%;
+    padding: 0 0 calc(32px + env(safe-area-inset-bottom));
+  }
+
+  #userInfo .profile-summary.profile-summary--inline,
+  .profile-public-page__body .profile-summary.profile-summary--inline {
+    padding: 20px;
+  }
+
   #userInfo .profile-public-basic__grid {
     grid-template-columns: 1fr;
   }
 
   #userInfo .honors-preview-card__layout {
     flex-direction: column;
+  }
+
+  #userInfo a.honors-preview-proof--image,
+  #userInfo .honors-preview-proof--image {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    min-height: 80px;
+  }
+
+  #userInfo img.honors-preview-proof__img,
+  .profile-page-content img.honors-preview-proof__img,
+  img.honors-preview-proof__img {
+    width: 80px !important;
+    height: 80px !important;
+  }
+}
+
+@media (max-width: 479.98px) {
+  #userInfo .profile-summary.profile-summary--inline,
+  .profile-public-page__body .profile-summary.profile-summary--inline {
+    padding: 16px;
+  }
+
+  #userInfo .profile-summary-identity,
+  .profile-summary-identity {
+    gap: 12px;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .profile-public-page__body .profile-summary.profile-summary--inline:hover {
+    box-shadow: var(--shadow-sm);
+    transform: none;
   }
 }

@@ -275,6 +275,11 @@ function bindApplyButton() {
         }
         // 如果按钮是被禁用 / REJECTED 状态直提
         if (applyBtn.disabled) return;
+        if (teamDetailCurrentUserId == null) {
+            showMessage('请先登录后再申请加入团队', 'warning');
+            redirectToLogin(700);
+            return;
+        }
         // 打开申请弹窗
         var teamNameEl = document.getElementById('applyTeamName');
         if (teamNameEl && currentTeamData) {
@@ -309,6 +314,11 @@ function bindApplyModal() {
                 applyBtn.textContent = '申请审核中';
             }
         } catch (e) {
+            if (Number(e.status || e.code) === 401) {
+                showMessage('请先登录后再提交申请', 'warning');
+                redirectToLogin(700);
+                return;
+            }
             showMessage(e.message || '提交失败', 'error');
         } finally {
             btn.disabled = false;
@@ -689,6 +699,14 @@ async function checkApplicationStatus(teamId) {
             applyBtn.textContent = '申请加入';
         }
     } catch (error) {
+        if (Number(error && (error.status || error.code)) === 401) {
+            const applyBtn = document.getElementById('applyBtn');
+            if (applyBtn) {
+                applyBtn.disabled = false;
+                applyBtn.textContent = '登录后申请';
+            }
+            return;
+        }
         console.error('检查申请状态失败:', error);
     }
 }

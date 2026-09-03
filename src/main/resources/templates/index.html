@@ -6,6 +6,7 @@
     <title>iLink — 同声相应，同气相求</title>
     <meta name="description" content="频率相近的人，终会在某个路口相遇。iLink 帮高校学生找队友、对接导师、追踪竞赛信息并展示成果。">
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link href="/css/home.css?v=4.9" rel="stylesheet">
 </head>
 <body data-app-page="home" class="ilink-page-bg home-page" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
 
@@ -127,7 +128,7 @@
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core">
                                     <div class="home-bento__media">
-                                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1300&q=80" alt="学生团队围坐讨论" loading="lazy">
+                                        <img src="/img/home/bento-team-cn.jpg" alt="学生团队围坐讨论" loading="lazy">
                                     </div>
                                     <div class="home-bento__body">
                                         <span class="home-bento__num">01</span>
@@ -149,7 +150,7 @@
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core">
                                     <div class="home-bento__media">
-                                        <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80" alt="导师与学生讨论" loading="lazy">
+                                        <img src="/img/home/bento-mentor-cn.jpg" alt="导师与学生讨论" loading="lazy">
                                     </div>
                                     <div class="home-bento__body">
                                         <span class="home-bento__num">02</span>
@@ -167,7 +168,7 @@
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core">
                                     <div class="home-bento__media">
-                                        <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80" alt="在线交流界面" loading="lazy">
+                                        <img src="/img/home/bento-community-cn.jpg" alt="在线交流界面" loading="lazy">
                                     </div>
                                     <div class="home-bento__body">
                                         <span class="home-bento__num">03</span>
@@ -189,7 +190,7 @@
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core">
                                     <div class="home-bento__media">
-                                        <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80" alt="竞赛团队工作" loading="lazy">
+                                        <img src="/img/home/bento-competition-cn.jpg" alt="竞赛团队工作" loading="lazy">
                                     </div>
                                     <div class="home-bento__body">
                                         <span class="home-bento__num">04</span>
@@ -211,7 +212,7 @@
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core">
                                     <div class="home-bento__media">
-                                        <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80" alt="团队展示成果" loading="lazy">
+                                        <img src="/img/home/bento-achievement-cn.jpg" alt="团队展示成果" loading="lazy">
                                     </div>
                                     <div class="home-bento__body">
                                         <span class="home-bento__num">05</span>
@@ -229,7 +230,7 @@
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core">
                                     <div class="home-bento__media">
-                                        <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80" alt="团队协作" loading="lazy">
+                                        <img src="/img/home/bento-space-cn.jpg" alt="团队协作" loading="lazy">
                                     </div>
                                     <div class="home-bento__body">
                                         <span class="home-bento__num">06</span>
@@ -296,7 +297,7 @@
                         <div class="home-bezel">
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core home-mag-tile__inner">
-                                    <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80" alt="计算机软件竞赛" loading="lazy">
+                                    <img src="/img/home/mag-software-cn2.jpg" alt="计算机软件竞赛" loading="lazy">
                                     <div class="home-mag-tile__overlay">
                                         <span class="home-mag-tile__tag">计算机软件</span>
                                         <strong>逻辑织经纬，代码写春秋。</strong>
@@ -313,7 +314,7 @@
                         <div class="home-bezel">
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core home-mag-tile__inner">
-                                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80" alt="电子信息" loading="lazy">
+                                    <img src="/img/home/mag-electronics.jpg" alt="电子信息" loading="lazy">
                                     <div class="home-mag-tile__overlay">
                                         <span class="home-mag-tile__tag">电子信息</span>
                                         <strong>硅基藏日月，电路贯虹霓。</strong>
@@ -326,7 +327,7 @@
                         <div class="home-bezel">
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core home-mag-tile__inner">
-                                    <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80" alt="机器人" loading="lazy">
+                                    <img src="/img/home/mag-robot-cn.jpg" alt="机器人" loading="lazy">
                                     <div class="home-mag-tile__overlay">
                                         <span class="home-mag-tile__tag">机器人 / 智能车</span>
                                         <strong>钢铁生灵性，轮辙写纵横。</strong>
@@ -339,7 +340,7 @@
                         <div class="home-bezel">
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core home-mag-tile__inner">
-                                    <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=900&q=80" alt="创新创业" loading="lazy">
+                                    <img src="/img/home/mag-innovation-cn.jpg" alt="创新创业" loading="lazy">
                                     <div class="home-mag-tile__overlay">
                                         <span class="home-mag-tile__tag">创新创业</span>
                                         <strong>磨璞方成玉，炼沙始作金。</strong>
@@ -356,7 +357,7 @@
                         <div class="home-bezel">
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core home-mag-tile__inner">
-                                    <img src="https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=900&q=80" alt="数理建模" loading="lazy">
+                                    <img src="/img/home/mag-math.jpg" alt="数理建模" loading="lazy">
                                     <div class="home-mag-tile__overlay">
                                         <span class="home-mag-tile__tag">数理建模</span>
                                         <strong>推演穷数理，建模近天心。</strong>
@@ -369,7 +370,7 @@
                         <div class="home-bezel">
                             <div class="home-bezel__shell">
                                 <div class="home-bezel__core home-mag-tile__inner">
-                                    <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80" alt="综合" loading="lazy">
+                                    <img src="/img/home/mag-general-cn.jpg" alt="综合" loading="lazy">
                                     <div class="home-mag-tile__overlay">
                                         <span class="home-mag-tile__tag">综合 / 语言</span>
                                         <strong>辞锋凝玉露，文气贯长虹。</strong>
@@ -409,9 +410,9 @@
     <div th:replace="fragments/footer :: footer(showFooter=true)"></div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=7.8"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="/js/home.js?v=2.7"></script>
+    <script src="/js/common.js?v=9.1"></script>
+    <script src="/lib/gsap.min.js"></script>
+    <script src="/lib/ScrollTrigger.min.js"></script>
+    <script src="/js/home.js?v=2.8"></script>
 </body>
 </html>

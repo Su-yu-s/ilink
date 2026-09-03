@@ -76,10 +76,6 @@ public class ChatServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage>
         return vos;
     }
 
-    @Override
-    public void markAsRead(Long teamId, Long userId) {
-    }
-
     private ChatMessageVO toVO(ChatMessage message) {
         User sender = message.getSenderId() != null ? userService.getById(message.getSenderId()) : null;
         return toVO(message, sender);

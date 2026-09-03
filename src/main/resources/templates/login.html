@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -26,7 +26,7 @@
                 <p class="auth-card__subtitle">登录你的 iLink 账号</p>
             </div>
 
-            <form id="loginForm">
+            <form id="loginForm" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="form-group">
                     <label for="identifier">手机号或学号/工号</label>
@@ -74,7 +74,7 @@
         </div>
     </div>
 
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script src="/js/login.js?v=7.5"></script>
     <script>
         function togglePasswordVisibility() {

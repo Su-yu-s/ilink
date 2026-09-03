@@ -8,8 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.0/github-markdown.min.css" rel="stylesheet" crossorigin="anonymous">
     <link href="/css/md-editor.css?v=1.0" rel="stylesheet">
 </head>
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
-    <link href="/css/profile-redesign.css?v=1.1" rel="stylesheet">
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link href="/css/profile.css?v=10.4" rel="stylesheet">
 </head>
 <body data-profile-page="posts" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -103,8 +103,9 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
     <script src="/js/profile-article-edit.js?v=5"></script>
 </body>
 </html>

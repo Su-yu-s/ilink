@@ -1,452 +1,235 @@
-# iLink — 高校竞赛组队与成果展示平台
-
-> 基于 Spring Boot + Thymeleaf 的智能组队协作平台，打造 **"找队友 — 找项目 — 找导师"** 完整生态。
-
-## 设计风格
-
-暖白金系 · 黑灰白极简美学 — 柔和、克制、专业：
-- 主色调 `#282A2F`，灰阶 `#52555C` ~ `#F7F7F8`
-- 毛玻璃卡片 `backdrop-filter: blur(16px)`，柔和阴影与微光泽
-- 流畅过渡动画 `cubic-bezier(0.2, 0.8, 0.2, 1)`
-- 粒子背景点缀，字体 Microsoft YaHei / PingFang SC
-
----
-
-## 功能模块
-
-### 1. 用户系统（认证、注册、资料）
-
-多因素登录（手机号 / 学号 / 用户名），渐进式限流防护。注册强制身份选择（学生 / 教师 / 管理员），密码强度校验，重复检测。支持邮箱验证找回密码。
-
-**实体:** `User` — id, username, studentId, phoneNumber, password, email, role (STUDENT/TEACHER/ADMIN), avatar, realName, gender, grade, major, school, college, bio, honors, createdAt
-
-<img width="1209" height="945" alt="登录页面" src="https://github.com/user-attachments/assets/1d5b1d97-4c6d-4cb3-bb2e-e9ae5070b2fc" />
-<img width="998" height="1135" alt="注册页面" src="https://github.com/user-attachments/assets/32a6ac55-f7cf-4706-a002-ce75d991ead7" />
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/login` | POST | 多模式登录（失败锁定） |
-| `/api/register` | POST | 注册（限流 3次/分钟） |
-| `/api/logout` | GET/POST | 登出 |
-| `/api/user/profile` | GET | 获取当前用户资料 |
-| `/api/user/profile` | POST | 更新资料（姓名、头像、年级、专业、学校、简介、荣誉） |
-| `/api/user/password` | PUT | 修改密码 |
-| `/api/user/public/{userId}` | GET | 公开用户概览（含最新 20 条帖子） |
-| `/api/forgot-password` | POST | 发送密码重置邮件 |
-| `/api/reset-password` | POST | 重置密码 |
-
-**页面:** `login.html`, `register.html`, `forgot-password.html`, `profile.html`, `profile-edit.html`, `profile-password.html`, `profile-honors.html`, `profile-posts.html`, `profile-favorites.html`, `profile-article-edit.html`, `profile-asset-edit.html`, `user-profile.html`
-
----
-
-### 2. 组队市场（招募 & 匹配）
-
-全生命周期组队管理：发布需求 → 浏览市场 → 申请加入 → 审核批准 → 成团。支持关键词搜索、分类筛选、状态追踪。
-
-<img width="1942" height="810" alt="组队市场" src="https://github.com/user-attachments/assets/edc84ad6-f0c3-40aa-b062-2206191b2b18" />
-
-**状态流转:** `OPEN`（招募中） → `TEAMING`（组队中） → `CLOSED`（已结束）
-
-**实体:**
-- `TeamDemand` — id, title, description, competitionId, requiredSkills, requiredMemberCount, deadline, status, creatorId
-- `TeamApplication` — id, teamId, userId, status (PENDING/APPROVED/REJECTED), message
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/team/list` | GET | 团队列表（分页、搜索、分类/状态筛选） |
-| `/api/team/{id}` | GET | 团队详情（创建者信息、成员、申请数） |
-| `/api/team` | POST | 发布招募需求 |
-| `/api/team/{id}` | PUT | 编辑需求（仅创建者，OPEN 状态） |
-| `/api/team/{id}` | DELETE | 删除需求（仅创建者，无申请时） |
-| `/api/team/{id}/status` | PUT | 更新状态（OPEN→TEAMING / →CLOSED） |
-| `/api/team/join` | POST | 申请加入团队 |
-| `/api/team/application-status` | GET | 查询用户申请状态 |
-| `/api/team/application/{id}/approve` | PUT | 批准/拒绝申请（满员自动关闭） |
-| `/api/team/my/published` | GET | 我发布的需求 |
-| `/api/team/my/applications` | GET | 我提交的申请 |
-| `/api/team/my/pending-applications` | GET | 待审批申请（创建者视角） |
-| `/api/team/{id}/members` | GET | 团队成员列表 |
-
----
-
-### 3. 团队工作区 & 任务协作
-
-四列看板（**待办 → 进行中 → 审核 → 已完成**），支持拖拽。任务分配、提交、审核工作流。支持嵌套评论与文件附件。
-
-<img width="1302" height="792" alt="团队工作区" src="https://github.com/user-attachments/assets/e966c064-1321-4072-b44e-67f00c929893" />
-
-**实体:**
-- `TeamTask` — id, teamId, taskTitle, taskDescription, taskType (DEVELOPMENT/DESIGN/TESTING/DOCUMENTATION/OTHER), priority (LOW/MEDIUM/HIGH/URGENT), status (PENDING/IN_PROGRESS/REVIEW/COMPLETED/CANCELLED), estimatedHours, actualHours, deadline, assignedTo, createdBy
-- `TaskParticipant` — taskId, userId, role (OWNER/LEAD/MEMBER/REVIEWER), contributionHours, contributionRate
-- `TaskSubmission` — taskId, submitterId, content, attachments
-- `TaskComment` — taskId, parentId（支持嵌套回复）, userId, content, commentType, attachments, likeCount
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `GET /api/tasks?teamId=` | GET | 获取团队任务（按角色筛选） |
-| `GET /api/tasks/{taskId}` | GET | 获取任务详情 |
-| `POST /api/team/{teamId}/tasks` | POST | 创建任务（仅队长） |
-| `PUT /api/tasks/{taskId}` | PUT | 更新任务 |
-| `PUT /api/tasks/{taskId}/status` | PUT | 更新任务状态 |
-| `DELETE /api/tasks/{taskId}` | DELETE | 删除任务（仅队长） |
-| `PUT /api/tasks/{taskId}/assign` | PUT | 分配任务给成员 |
-| `GET /api/tasks/{taskId}/participants` | GET | 获取任务参与者 |
-| `POST /api/tasks/{taskId}/participants` | POST | 添加参与者 |
-| `DELETE /api/tasks/{taskId}/participants/{userId}` | DELETE | 移除参与者 |
-| `GET /api/tasks/{taskId}/comments` | GET | 获取任务评论（嵌套结构） |
-| `POST /api/tasks/{taskId}/comments` | POST | 添加评论（支持 parentId 回复） |
-| `PUT /api/tasks/{taskId}/review` | PUT | 审核提交（通过→COMPLETED / 驳回→IN_PROGRESS） |
-| `GET /api/tasks/{taskId}/submissions` | GET | 获取提交记录（按角色筛选） |
-| `POST /api/tasks/{taskId}/submit` | POST | 提交任务（自动切换至 REVIEW 状态） |
-
----
-
-### 4. 项目里程碑
-
-追踪团队项目进度：命名里程碑、完成率、交付物、状态跟踪。
-
-**实体:** `ProjectMilestone` — id, teamId, milestoneName, milestoneDescription, dueDate, completedDate, completionRate, deliverables, status (PENDING/IN_PROGRESS/COMPLETED/DELAYED)
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `GET /api/team/{teamId}/milestones` | GET | 获取团队里程碑 |
-| `GET /api/milestones/{id}` | GET | 获取单个里程碑 |
-| `POST /api/team/{teamId}/milestones` | POST | 创建里程碑（团队成员） |
-| `PUT /api/milestones/{id}` | PUT | 更新里程碑 |
-| `PUT /api/milestones/{id}/progress` | PUT | 更新完成进度 |
-| `DELETE /api/milestones/{id}` | DELETE | 删除里程碑 |
-
----
-
-### 5. 团队实时聊天（WebSocket）
-
-STOMP over WebSocket 实时消息。消息持久化到数据库，支持历史检索。WebSocket 连接与订阅均强制鉴权。
-
-| 端点/主题 | 方法 | 说明 |
-|-----------|------|------|
-| `GET /api/team/{teamId}/messages` | GET | 获取聊天历史（REST 降级） |
-| `POST /api/team/{teamId}/messages` | POST | 发送消息（REST 降级） |
-| `/ws` | WebSocket | SockJS STOMP 端点 |
-| `/app/chat/{teamId}` | STOMP SEND | 发送消息 → 广播 |
-| `/topic/team/{teamId}` | STOMP SUBSCRIBE | 接收团队消息 |
-
----
-
-### 6. 交流社区
-
-全功能论坛，四大分类（**综合 / 技术 / 竞赛 / 资源**）。富文本编辑器 + HTML 净化（Jsoup + 自定义白名单）。点赞、收藏、嵌套评论。
-
-<img width="1905" height="903" alt="交流社区" src="https://github.com/user-attachments/assets/ab7ff117-1a5f-48cf-9614-6e22d13083d7" />
-
-**实体:**
-- `CommunityPost` — id, authorId, category, title, content, attachments (JSON), viewCount, likeCount, favoriteCount
-- `CommunityComment` — id, postId, userId, content
-- `CommunityPostLike` — postId, userId
-- `CommunityPostFavorite` — postId, userId
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/community/posts` | GET | 帖子列表（分页、搜索、分类筛选）— 公开 |
-| `/api/community/posts/{id}` | GET | 帖子详情（自动增加浏览量） |
-| `/api/community/posts` | POST | 发帖（HTML 净化） |
-| `/api/community/posts/{id}` | PUT | 编辑帖子（作者或管理员） |
-| `/api/community/posts/{id}` | DELETE | 删除帖子（作者或管理员） |
-| `/api/community/posts/{id}/like` | POST | 切换点赞 |
-| `/api/community/posts/{id}/favorite` | POST | 切换收藏 |
-| `/api/community/posts/{postId}/comments` | GET | 获取评论列表 |
-| `/api/community/posts/{postId}/comments` | POST | 添加评论 |
-| `/api/community/comments/{commentId}` | DELETE | 删除评论 |
-| `/api/community/my-posts` | GET | 我的帖子 |
-| `/api/community/my-favorites` | GET | 我的收藏 |
-
----
-
-### 7. 成果展示 & 竞赛列表
-
-项目成果、研究成果、竞赛奖项数字化展示。支持文件上传（MIME 校验），公开画廊可搜索、排序（最新 / 最热），Caffeine 缓存。
-
-<img width="1818" height="1032" alt="成果展示" src="https://github.com/user-attachments/assets/c17a581c-06a3-45e4-99e7-490a0437e976" />
-<img width="1864" height="1122" alt="竞赛列表" src="https://github.com/user-attachments/assets/7bef811a-101b-49a0-9b33-cdc12e77a6c7" />
-
-**实体:** `Asset` — id, title, description, fileUrl, userId, viewCount, downloadCount, createdAt
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/asset/list` | GET | 成果列表（分页、搜索、分类筛选、排序） |
-| `/api/asset/{id}` | GET | 成果详情（含发布者信息，30分钟缓存） |
-| `/api/asset/upload` | POST | 上传成果（标题 + 描述 + 可选文件） |
-| `/api/asset/{id}` | PUT | 编辑成果（替换旧文件） |
-| `/api/asset/download/{id}` | GET | 下载成果文件（增加下载计数） |
-
----
-
-### 8. 导师匹配
-
-双向师生匹配系统。教师申请成为导师（研究方向、项目），学生浏览导师资料并申请加入项目，导师审批。
-
-<img width="1857" height="776" alt="导师匹配" src="https://github.com/user-attachments/assets/f743a79d-7832-4feb-80ab-0598c09e424b" />
-
-**实体:**
-- `TeacherApplication` — id, userId, introduction, researchDirection, professionalTitle, projects, status (PENDING/APPROVED)
-- `ProjectApplication` — id, teacherId, userId, status (PENDING/APPROVED/REJECTED), message
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/teacher/list` | GET | 导师列表（仅 APPROVED，分页、搜索、筛选） |
-| `/api/teacher/{id}` | GET | 导师详情（含关联用户信息，缓存） |
-| `/api/teacher/apply` | POST | 申请成为导师（每人限一次） |
-| `/api/teacher/project-apply` | POST | 学生申请加入导师项目 |
-| `/api/teacher/project-application-status` | GET | 查询学生申请状态 |
-| `/api/teacher/my/project-applications` | GET | 导师的待处理项目申请 |
-| `/api/teacher/project-application/{id}/approve` | PUT | 导师审批项目申请 |
-
----
-
-### 9. 用户技能标签
-
-细粒度技能管理，提升匹配精度。每条技能包含等级、分类、认证、经验年限与作品集链接。
-
-**实体:** `UserSkill` — id, userId, skillName, skillLevel, skillCategory, certification, yearsExperience, portfolioUrl
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `GET /api/user/skills` | GET | 获取当前用户技能列表 |
-| `POST /api/user/skills` | POST | 添加技能（防重复） |
-| `DELETE /api/user/skills/{skillId}` | DELETE | 删除技能（所有权校验） |
-
----
-
-### 10. 通知中心
-
-实时通知系统，按类型归类。支持未读角标、批量已读、按角色投递。
-
-**实体:** `Notification` — id, userId, senderId, type (TEAM_INVITE/TASK_ASSIGNED/TASK_COMPLETED/MILESTONE_UPDATE/RECOMMENDATION/SYSTEM), title, content, isRead, relatedId, relatedType
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `GET /api/notifications` | GET | 获取通知列表（所有权校验） |
-| `GET /api/notifications/unread-count` | GET | 获取未读数 |
-| `PUT /api/notifications/{id}/read` | PUT | 标记单条已读 |
-| `PUT /api/notifications/read-all` | PUT | 全部标记已读 |
-| `POST /api/notifications` | POST | 创建通知 |
-
----
-
-### 11. 管理后台
-
-综合管理仪表盘。用户、团队、导师、成果、社区帖子的完整 CRUD。角色管理含自降级保护。删除用户时级联清理关联数据。
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/admin/dashboard` | GET | 仪表盘统计 |
-| `/api/admin/users` | GET | 用户列表 |
-| `/api/admin/teams` | GET | 团队列表 |
-| `/api/admin/teachers` | GET | 导师列表 |
-| `/api/admin/assets` | GET | 成果列表 |
-| `/api/admin/community-posts` | GET | 帖子列表 |
-| `/api/admin/user/{id}` | PUT | 编辑用户 |
-| `/api/admin/user/{id}/role` | PUT | 修改角色（防自降级） |
-| `/api/admin/user/{id}` | DELETE | 删除用户（级联清理） |
-| `/api/admin/team/{id}` | DELETE | 删除团队 |
-| `/api/admin/teacher/{id}/approve` | PUT | 审批导师申请 |
-| `/api/admin/teacher/{id}` | DELETE | 删除导师 |
-| `/api/admin/asset/{id}` | DELETE | 删除成果 |
-| `/api/admin/community-post/{id}` | DELETE | 删除帖子 |
-
----
-
-### 12. 文件与附件上传
-
-统一文件管理，头像、成果附件、富文本图片上传。MIME 白名单校验，SHA-256 去重存储。
-
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/file/upload` | POST | 通用文件上传 |
-| `/api/file/{filename}` | GET | 文件下载/预览 |
-| `/api/attachment/upload` | POST | 富文本编辑器附件上传 |
-
----
-
-### 13. 安全与基础设施
-
-- **登录限流** — `LoginAttemptService` 渐进式锁定（5分钟内 5 次失败 → 锁定 15 分钟）
-- **密码策略** — 最少 8 位，含大小写字母与数字
-- **HTML 净化** — Jsoup 自定义白名单，防范 XSS
-- **统一响应** — `Result<T>` 包装器（code + message + data）
-- **全局异常处理** — `@ControllerAdvice` 拦截校验异常、认证异常、运行时异常
-- **CSRF 防护** — Spring Security 内置，AJAX 自动携带 Token
-- **CORS 配置** — 跨域策略可配置
-
----
+# iLink — 高校师生竞赛组队与协作平台
+
+iLink 面向高校学生、教师和平台管理员，串联“找队伍、找导师、找赛事、做协作、沉淀成果”的完整路径。公开门户负责信息发现，登录后的团队空间负责真实协作。
+
+当前项目采用 Spring Boot 2.7、Thymeleaf 和原生 JavaScript 构建，默认运行端口为 `8090`。
+
+## 产品角色
+
+| 角色 | 主要能力 |
+| --- | --- |
+| 学生 `STUDENT` | 浏览并申请队伍、寻找导师、参与团队任务与沟通、发布文章和成果 |
+| 教师 `TEACHER` | 注册后自动拥有导师身份和可编辑档案；资料完整后自动公开，能够处理学生合作申请并参与团队协作 |
+| 管理员 `ADMIN` | 管理用户、角色、队伍、导师、成果和社区内容；管理员账号不能通过公开注册创建 |
+
+登录支持手机号、学号/工号、用户名和邮箱。公开注册只允许选择学生或教师身份，且必须提供手机号或学号/工号。密码要求为 8–32 位，同时包含大写字母、小写字母和数字。
+
+## 核心功能
+
+### 公开发现
+
+- 首页：保留诗句、竞赛叙事、区块顺序和桌面动效，是全站视觉中的明确例外。
+- 组队大厅：搜索、分类和状态筛选；查看招募详情与成员信息。
+- 导师招贤：只展示 `APPROVED` 导师；学生可提交合作申请，教师进入“我的导师主页”。
+- 交流社区：综合、技术、竞赛、资源四类内容；支持文章、点赞、收藏和评论。
+- 竞赛目录：由后端竞赛实体和公开分页 API 驱动，支持搜索与分类；管理员可在后台增删改。
+- 成果展示：公开浏览和检索成果，登录用户可发布、编辑和下载。
+
+### 组队与协作
+
+- 团队状态：`OPEN`（招募中）→ `TEAMING`（已组队）→ `CLOSED`（已结束）。
+- 申请流程：申请人只能加入招募中的队伍；队长审批，批准人数达到目标后自动进入 `TEAMING`。
+- 团队空间：仅创建者和已批准成员可以访问团队数据。
+- 任务看板：`PENDING`、`IN_PROGRESS`、`REVIEW`、`COMPLETED`，另保留 `CANCELLED` 状态。
+- 任务闭环：队长创建和分配任务，成员提交后进入审核，队长通过或退回。
+- 里程碑：记录截止时间、交付物与完成率，并派生待开始、进行中、已完成、已延期状态。
+- 团队聊天：STOMP/WebSocket 实时推送，REST 历史记录和发送接口作为降级路径。
+- 在线状态：按 WebSocket 连接计数维护实时在线状态，并持久化最近活跃时间；聊天明确不提供已读回执。
+- 通知中心：数据库持久化、未读计数缓存和用户级 WebSocket 推送。
+
+### 内容与个人中心
+
+- 社区文章提交前通过 Jsoup 清理 HTML；作者或管理员可以编辑、删除。
+- 点赞、收藏和各类申请由数据库唯一约束防止重复。
+- 学生资料展示学校、学院、专业和年级。
+- 教师资料将 `user.school/college/major` 分别解释为任职单位、院系/部门、专业领域，并隐藏年级；职称、研究方向、导师简介和代表项目存放在导师档案中。
+- 用户可以维护技能、荣誉、文章、收藏、成果、头像和密码。
+
+## 主要页面
+
+| 场景 | 页面 |
+| --- | --- |
+| 门户 | `/index.html`、`/team-market.html`、`/teacher-wall.html`、`/community.html`、`/competitions.html`、`/gallery.html` |
+| 详情与发布 | `/team-detail.html`、`/team-publish.html`、`/teacher-detail.html`、`/community/article/{id}`、`/asset-detail.html` |
+| 团队协作 | `/team-space.html`、`/team-chat.html`、`/team-workspace.html` |
+| 个人中心 | `/profile.html`、`/profile-edit.html`、`/profile-honors.html`、`/profile-posts.html`、`/profile-favorites.html`、`/profile-password.html` |
+| 认证与管理 | `/login`、`/register`、`/forgot-password.html`、`/admin.html` |
+
+`/home.html` 会跳转到个人中心，`/chat.html` 为历史兼容入口。忘记密码页已接入限流、账号枚举防护、30 分钟一次性令牌和邮件发送；本地未配置 SMTP 时只在开发日志中输出重置链接。
+
+## API 概览
+
+所有 JSON 接口使用 `Result<T>` 统一包装：
+
+```json
+{
+  "code": 200,
+  "message": "获取成功",
+  "data": {},
+  "extra": {},
+  "timestamp": 0
+}
+```
+
+分页信息位于 `extra.pagination`。浏览器请求通过 Session 识别用户；变更类 AJAX 请求由 `common.js` 自动携带 `X-XSRF-TOKEN` 和同源凭证。
+
+| 接口组 | 代表端点 | 访问规则 |
+| --- | --- | --- |
+| 认证 | `POST /api/login`、`POST /api/register`、`GET/POST /api/logout`、`/api/password-reset/**` | 登录注册和找回密码公开；支持轮换式“记住我”令牌与安全站内回跳 |
+| 用户 | `GET/POST /api/user/profile`、`PUT /api/user/password`、`GET /api/user/public/{userId}` | 私有资料需登录；公开资料可匿名读取 |
+| 技能 | `/api/user/skills`、`/api/user/skills/public/{userId}` | 本人维护，公开列表可匿名读取 |
+| 队伍 | `/api/team/**` | 列表与详情公开；发布、申请、审批和“我的队伍”需登录 |
+| 团队空间 | `/api/team-space/{teamId}/**` | 仅团队参与者 |
+| 任务 | `/api/tasks/**`、`/api/team/{teamId}/tasks` | 团队成员；队长拥有管理和审核权限 |
+| 里程碑 | `/api/team/{teamId}/milestones`、`/api/milestones/**` | 团队成员 |
+| 聊天 | `GET/POST /api/team/{teamId}/messages` | 团队成员 |
+| 导师 | `/api/teacher/**` | 列表与详情公开；档案维护和项目申请需登录并校验身份 |
+| 社区 | `/api/community/**` | 文章列表与详情公开；写入操作需登录 |
+| 成果 | `/api/asset/**` | 列表与详情公开；发布、编辑和下载需登录 |
+| 竞赛 | `GET /api/competitions`、`/api/admin/competitions/**` | 公开分页查询；管理员维护目录 |
+| 推荐 | `/api/recommendations/**` | 登录用户；组队大厅和团队空间已接入，失败时回退普通列表 |
+| 通知 | `/api/notifications/**` | 仅当前用户自己的通知 |
+| 管理 | `/api/admin/**` | 仅 `ADMIN` |
+| 文件 | `POST /api/files/upload`、`POST /api/upload/attachment` | 需登录 |
+
+WebSocket 入口为 `/ws`（SockJS）和 `/ws-native`。聊天发送目的地为 `/app/chat/{teamId}`，订阅主题为 `/topic/team/{teamId}`；拦截器会校验登录状态和团队成员资格。通知使用当前用户自己的消息主题。
+
+## 权限与安全
+
+- Spring Security + BCrypt；登录成功后同时维护 SecurityContext 和 Session 用户。
+- 同一登录键连续失败 5 次后锁定 15 分钟；成功登录会清除失败计数。
+- “记住我”使用 selector/validator 分离的持久令牌，Cookie 为 HttpOnly、SameSite=Lax，使用后轮换，退出或改密后撤销。
+- 密码重置响应不暴露账号是否存在，令牌只存哈希、30 分钟过期且只能使用一次。
+- CSRF Cookie Token 用于常规写接口；WebSocket 握手、连接、发送和订阅另做鉴权。
+- 管理页面和 `/api/admin/**` 要求 `ADMIN`，控制器同时执行会话角色校验。
+- 安全响应头包含 CSP、Permissions-Policy、Referrer-Policy 和 nosniff；未声明路由默认要求认证，API 未登录统一返回 JSON 401。
+- 社区富文本使用 Jsoup 白名单净化。
+- 上传文件使用 UUID 命名和规范化路径；`/api/files/upload` 会检查扩展名、大小和文件头签名。
+- 管理员的删除、角色变更、导师审核和竞赛维护记录到 `admin_audit_log`。
+- `prod` profile 启动时强制校验非 root 数据库账号、非默认密码、HTTPS 公网地址、SMTP、绝对上传目录和 Secure Cookie；仅公开 Actuator 的 `health` 与 `info`。
+
+## 文件上传
+
+`POST /api/files/upload` 接受 `bizType`：
+
+| 业务类型 | 格式 | 单文件上限 |
+| --- | --- | --- |
+| `avatars` | jpg、jpeg、png、gif、webp | 1 MB |
+| `certificates` | jpg、jpeg、png、pdf | 2 MB |
+| `images` | jpg、jpeg、png、gif、webp | 2 MB |
+
+`POST /api/upload/attachment` 服务于头像、证明、社区和任务附件，按 `kind` 使用对应扩展名白名单。Spring 全局限制为单文件 20 MB、单请求 50 MB。上传根目录和访问前缀分别由 `FILE_UPLOAD_DIR`、`FILE_ACCESS_URL_PREFIX` 配置，并通过 `/uploads/**` 访问。
+
+## 视觉与交互规范
+
+全站以克制的冷灰中性色为基础：主文字 `#282A2F`，页面背景 `#F7F7F8`，表面 `#FCFCFD`。绿色 `#16A34A` 只表达成功、招募中等正向状态，红色 `#DC2626` 表达错误或危险操作，已组队等稳定状态使用灰色。
+
+- 正文采用 Microsoft YaHei / PingFang SC 系统字体栈，首页诗句可使用中文衬线字体。
+- 公共组件通过 `design-tokens.css`、`layout.css`、`components.css`、`effects.css` 和 `search-bar.css` 统一。
+- 卡片依靠边框、留白和轻阴影建立层次，避免普遍使用玻璃拟态、渐变和高饱和装饰。
+- 搜索输入、筛选和操作按钮使用统一布局；无业务价值的重置按钮不再展示。
+- Toast、表单错误、Modal、状态标签和空状态使用统一语义与反馈层级。
+- 响应式基线为桌面 `>1024px`、平板 `768–1024px`、移动 `<768px`、小屏 `<480px`。
+- 共享移动导航支持焦点管理、遮罩关闭和 Escape；触摸目标至少 44px。
+- 首页是受保护的视觉例外：诗句、区块顺序、粒子与叙事动画保留，同时支持 `prefers-reduced-motion`。
+
+更完整的产品边界见 [PRODUCT.md](PRODUCT.md)，已完成的角色与响应式改造记录见 [docs/superpowers/specs](docs/superpowers/specs)。
 
 ## 技术栈
 
-| 层级 | 技术 | 版本 |
-|------|------|------|
-| 后端框架 | Spring Boot | 2.7.18 |
-| 安全框架 | Spring Security + BCrypt + CSRF | 5.7.11 |
-| 数据库 | MySQL | 8.0+ |
-| ORM | MyBatis-Plus | 3.5.5 |
-| 实时通信 | WebSocket + STOMP (SockJS) | - |
-| 前端 | HTML5 + CSS3 + JavaScript (ES6+) | - |
-| UI 框架 | Bootstrap 5 + GSAP 动画 | 5.x / 3.x |
-| 模板引擎 | Thymeleaf | 3.0.15 |
-| 缓存 | Caffeine | 2.9.3 |
-| 数据库迁移 | Flyway | 7.11.0 |
-| API 文档 | SpringDoc OpenAPI | 1.7.0 |
-| HTML 净化 | Jsoup | 1.17.2 |
-| 测试 | JUnit 5 + Mockito + H2 | - |
+| 层级 | 技术 |
+| --- | --- |
+| 后端 | Java 17、Spring Boot 2.7.18、Spring MVC、Spring Security 5.7 |
+| 数据 | MySQL 8、MyBatis-Plus 3.5.5、Flyway 7.11、Caffeine |
+| 模板与前端 | Thymeleaf 3、HTML5、CSS3、原生 JavaScript、Bootstrap 5、GSAP 3 |
+| 实时通信 | Spring WebSocket、STOMP、SockJS |
+| 内容与接口 | Jsoup 1.17.2、SpringDoc OpenAPI 1.7.0 |
+| 测试 | JUnit 5、Mockito、Spring Security Test、H2 |
 
----
+当前仓库包含 164 个 Java 源文件、39 个运行模板、28 个 CSS 文件和 33 个 JavaScript 文件。当前全量测试为 27 个测试套件、113 个测试，另有 Playwright 发布回归脚本。
 
-## 快速开始
+## 本地运行
 
 ### 环境要求
 
 - JDK 17+
-- MySQL 8.0+
 - Maven 3.9+
+- MySQL 5.7+ 或 8.0+
 
-### 数据库设置
+### 1. 创建数据库
 
 ```sql
 CREATE DATABASE ilink DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-编辑 `src/main/resources/application-dev.yml` 配置数据库连接：
+### 2. 配置环境变量
 
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/ilink?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: your_username
-    password: your_password
+至少配置数据库密码；生产环境不要使用仓库中的开发默认值。
+
+```powershell
+$env:DB_HOST = "localhost"
+$env:DB_PORT = "3306"
+$env:DB_USERNAME = "root"
+$env:DB_PASSWORD = "your_password"
+$env:FILE_UPLOAD_DIR = "E:\data\ilink\uploads"
 ```
 
-Flyway 会在启动时自动执行数据库迁移脚本（`src/main/resources/db/migration/`）。
+通用数据源变量为 `DB_HOST`、`DB_PORT`、`DB_USERNAME`、`DB_PASSWORD`；开发 profile 也兼容优先级更高的 `SPRING_DATASOURCE_PASSWORD`。默认 profile 为 `dev`。
 
-### 构建 & 运行
+### 3. 启动
 
 ```bash
-# 编译
-mvn clean compile -DskipTests
-
-# 运行
 mvn spring-boot:run
+```
 
-# 或打包运行
-mvn clean package -DskipTests
+访问 [http://localhost:8090](http://localhost:8090)。启动时 Flyway 会按 `src/main/resources/db/migration/` 自动迁移数据库。
+
+### 4. 测试与打包
+
+```bash
+mvn test
+mvn clean package
 java -jar target/iLink-1.0.jar
 ```
 
-访问 **http://localhost:8090**
+测试默认启用 `test` profile 和 H2。生产运行必须显式设置 `SPRING_PROFILES_ACTIVE=prod`、最小权限数据库账号、SMTP、`APP_PUBLIC_BASE_URL`、绝对上传目录和安全 Cookie；缺项会拒绝启动。
 
-### 测试
+## 数据库迁移
 
-```bash
-# 运行全部测试（使用 H2 内存数据库）
-mvn test
-```
+`src/main/resources/db/migration/` 是数据库结构的唯一事实来源。当前包含 23 个 SQL 迁移（`V0_5` 至 `V23`，版本号 `V3` 由 Java 迁移占用）和 1 个 Java 迁移，共 24 个迁移。迁移链已在现有 MySQL 5.7 数据库升级和全新空库安装两种路径验证。
 
----
+`sql/` 中的脚本仅用于历史参考、人工修复或演示数据，不会被应用启动时的 Flyway 自动执行。使用前请阅读 [sql/README.md](sql/README.md)，并先确认目标库的 `flyway_schema_history`。
 
 ## 项目结构
 
-```
+```text
 src/
 ├── main/
 │   ├── java/cn/ilink/
-│   │   ├── config/              # 配置类（Security, WebSocket, Cache, MVC, MyBatis-Plus, Flyway）
-│   │   ├── controller/          # REST 控制器 + 页面路由（19 个文件）
-│   │   ├── service/             # 业务接口（13 个接口）
-│   │   │   └── impl/            # 业务实现（16 个实现类）
-│   │   ├── mapper/              # MyBatis-Plus Mapper 接口（19 个）
-│   │   ├── entity/              # 实体类（20 个）
-│   │   ├── dto/                 # 请求体 DTO（18 个）
-│   │   ├── vo/                  # 响应体 VO（16 个）
-│   │   ├── common/              # 通用组件（Result 统一响应、ControllerUtils 控制器工具）
-│   │   ├── exception/           # 全局异常处理（GlobalExceptionHandler）
-│   │   ├── security/            # 安全组件（LoginAttemptService 登录限流）
-│   │   └── util/                # 工具类（HtmlSanitizer、PasswordPolicy、CacheEvictUtils、UserPreviewHelper）
+│   │   ├── config/       # Security、WebSocket、缓存、MVC、Flyway
+│   │   ├── controller/   # 页面路由与 REST 接口
+│   │   ├── service/      # 业务服务及实现
+│   │   ├── mapper/       # MyBatis-Plus Mapper
+│   │   ├── entity/       # 持久化实体
+│   │   ├── dto/          # 请求 DTO
+│   │   ├── vo/           # 响应 VO
+│   │   ├── security/     # 登录和 WebSocket 安全组件
+│   │   └── util/         # 密码、HTML、缓存、用户预览工具
 │   └── resources/
-│       ├── static/
-│       │   ├── css/             # 样式（31 个文件）
-│       │   ├── js/              # 脚本（34 个文件）
-│       │   ├── lib/             # 第三方库（Bootstrap 5, GSAP）
-│       │   └── images/          # 图片资源
-│       ├── templates/           # Thymeleaf 模板（29 个页面 + 7 个片段）
-│       │   └── fragments/       # 共享片段（header、footer、sidebar 等）
-│       ├── db/migration/        # Flyway 数据库迁移脚本（16 个 SQL）
-│       └── application*.yml     # 多环境配置（dev / test / prod）
-└── test/
-    └── java/cn/ilink/           # 测试代码（17 个测试类，JUnit 5 + Mockito + H2）
-        ├── config/              # 安全与 WebSocket 测试
-        ├── controller/          # 控制器集成测试
-        ├── service/             # 服务层单元测试
-        └── mapper/              # Mapper 测试
+│       ├── db/migration/ # Flyway 版本化迁移
+│       ├── static/       # CSS、JavaScript、图片和前端库
+│       ├── templates/    # Thymeleaf 页面与共享 fragments
+│       └── application*.yml
+└── test/java/cn/ilink/   # 单元、控制器、安全、路径契约测试
 ```
 
----
+## 当前边界
 
-## 设计系统
-
-### CSS 设计令牌（design-tokens.css v7.4）
-
-```css
-:root {
-  /* 品牌主色 — 暖灰黑 */
-  --primary: #282A2F;
-  --primary-dark: #181A1E;
-  --primary-light: #ECEDEF;
-  --accent: #73757A;
-
-  /* 灰阶 */
-  --color-gray-700: #52555C;
-  --color-gray-600: #63666D;
-  --color-gray-500: #73757A;
-  --color-gray-400: #A1A3A8;
-  --color-gray-300: #D7D8DB;
-  --color-gray-200: #E5E5E7;
-  --color-gray-100: #F1F1F2;
-  --color-gray-50: #F7F7F8;
-  --color-white: #FCFCFD;
-
-  /* 语义色 */
-  --success: #16A34A;
-  --warning: #DC2626;
-  --error: #DC2626;
-
-  /* 毛玻璃效果 */
-  --glass-blur: 16px;
-  --glass-bg: rgba(252, 252, 253, 0.98);
-  --glass-border: rgba(40, 42, 47, 0.08);
-  --glass-shadow: 0 4px 12px rgba(40, 42, 47, 0.08);
-
-  /* 圆角 */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
-
-  /* 阴影 */
-  --shadow-sm: 0 1px 2px rgba(40, 42, 47, 0.06);
-  --shadow-md: 0 4px 12px rgba(40, 42, 47, 0.08);
-  --shadow-lg: 0 12px 24px rgba(40, 42, 47, 0.10);
-
-  /* 字体 */
-  --font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", sans-serif;
-  --font-serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
-  --font-mono: "SF Mono", "Fira Code", "Consolas", monospace;
-
-  /* 过渡 */
-  --transition-fast: 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --transition-normal: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --transition-slow: 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-```
-
----
+- 聊天按产品决定不提供消息已读状态或已读回执，也不提供成员在线/离线状态，这不是待实现功能。
+- 竞赛目录由数据库维护，但不会自动同步各主办方官网；日期和链接由管理员负责更新。
+- 密码找回依赖可用 SMTP；开发环境可回退到日志链接，生产环境缺少邮件配置会拒绝启动。
+- 5 个来源不明确的历史疑似测试账号只进入只读审计报告，未自动删除；仓库明确生成的演示账号已经清理。
+- 仓库仍保留少量历史页面入口和 `sql/` 手工脚本；新增功能应以当前 Controller、模板和 Flyway 迁移为准。
 
 ## 许可证
 

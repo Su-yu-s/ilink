@@ -13,6 +13,7 @@
   background: var(--ui-surface-subtle, #f3f4f6);
   border-radius: 8px;
   width: fit-content;
+  max-width: 100%;
 }
 
 /* === 富文本工具栏 === */
@@ -25,6 +26,9 @@
   background: var(--ui-surface, #fff);
   border-bottom: 1px solid var(--ui-border, #d1d5db);
   margin-bottom: 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 .md-toolbar-btn {
   display: inline-flex;
@@ -96,6 +100,8 @@
   overflow: hidden;
   min-height: 300px;
   background: var(--ui-surface, #fff);
+  width: 100%;
+  max-width: 100%;
 }
 .md-pane-wrap.has-toolbar {
   border-top: none;
@@ -108,6 +114,7 @@
   flex: 1;
   min-width: 0;
   overflow: auto;
+  overscroll-behavior: contain;
 }
 .md-edit-pane.hidden,
 .md-preview-pane.hidden {
@@ -131,6 +138,7 @@
   line-height: 1.7;
   color: var(--ui-text, #1f2937);
   background: transparent !important;
+  overflow-wrap: anywhere;
 }
 .md-edit-pane textarea::placeholder {
   color: var(--ui-text-muted, #9ca3af);
@@ -145,6 +153,34 @@
   font-size: 14px;
   line-height: 1.75;
   background: transparent !important;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Markdown content owns its horizontal overflow; it must never widen the page. */
+.markdown-body pre {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.markdown-body pre code {
+  font-size: 13px;
+  white-space: pre;
+}
+
+.markdown-body table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 
 /* 分隔线 */
@@ -198,4 +234,121 @@
   line-height: 1.7;
   color: var(--ui-text, #1f2937);
   background: transparent !important;
+}
+
+/* Tablet keeps the desktop split editor while profile navigation moves above it. */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .md-pane-wrap {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .md-toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .md-toolbar::-webkit-scrollbar,
+  .md-mode-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .md-toolbar-btn {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .md-toolbar-sep {
+    flex: 0 0 1px;
+  }
+
+  .md-mode-bar {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 4px;
+    scrollbar-width: none;
+  }
+
+  .md-mode-btn {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding: 8px 14px;
+  }
+
+  .md-mode-btn[data-mode="split"] {
+    display: none;
+  }
+
+  .md-pane-wrap,
+  .md-pane-wrap.split {
+    display: block;
+    min-height: 360px;
+  }
+
+  .md-pane-wrap.split .md-divider,
+  .md-divider,
+  .md-divider.visible {
+    display: none;
+  }
+
+  .md-pane-wrap.split .md-edit-pane {
+    display: block;
+  }
+
+  .md-pane-wrap.split .md-preview-pane {
+    display: none;
+  }
+
+  .md-edit-pane textarea {
+    min-height: 360px;
+    padding: 16px;
+    font-size: 16px;
+  }
+
+  .md-preview-pane {
+    min-height: 360px;
+    padding: 16px;
+  }
+
+  .md-preview-pane .markdown-body {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .md-attachment-bar {
+    position: sticky;
+    z-index: 5;
+    bottom: 0;
+    margin-inline: -16px;
+    margin-bottom: 16px !important;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: var(--ui-surface, #fff);
+    border-top: 1px solid var(--ui-border, #d1d5db);
+    backdrop-filter: blur(10px);
+  }
+
+  .md-attachment-bar button {
+    min-height: 44px;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .md-toolbar-btn:hover,
+  .md-mode-btn:hover:not(.active),
+  .md-divider:hover {
+    color: inherit;
+    background: transparent;
+  }
+
+  .md-toolbar-btn:active,
+  .md-mode-btn:active {
+    background: var(--ui-surface-selected, #f3f4f6);
+  }
 }

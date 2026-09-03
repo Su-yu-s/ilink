@@ -150,4 +150,47 @@ class ApiPathContractTest {
             );
         }
     }
+
+    @Test
+    void profileDetailsDefaultToReadModeAndSidebarUsesCompetitionLanguage() throws Exception {
+        Path template = Path.of("src/main/resources/templates/profile-edit.html");
+        String profileHtml = Files.readString(template, StandardCharsets.UTF_8);
+        assertTrue(profileHtml.contains("<title>个人资料 - iLink</title>"));
+        assertTrue(profileHtml.contains("id=\"profileReadView\""));
+        assertTrue(profileHtml.contains("id=\"profileEditBtn\""));
+        assertTrue(profileHtml.contains("id=\"profileCancelBtn\""));
+        assertTrue(profileHtml.contains("<form id=\"profileForm\" novalidate hidden"),
+            "profile form must be hidden until the user enters edit mode");
+
+        Path sidebar = Path.of("src/main/resources/templates/fragments/profile-sidebar.html");
+        String sidebarHtml = Files.readString(sidebar, StandardCharsets.UTF_8);
+        assertTrue(sidebarHtml.contains("<span>竞赛概览</span>"));
+        assertTrue(sidebarHtml.contains("<span>个人资料</span>"));
+        assertTrue(sidebarHtml.contains("<path d=\"M12 13v8\"/>"),
+            "competition overview trophy stem should connect to the cup");
+        assertFalse(sidebarHtml.contains("<path d=\"M12 17v4\"/>"),
+            "disconnected trophy stem should not return");
+        assertFalse(sidebarHtml.contains("<span>个人概览</span>"));
+        assertFalse(sidebarHtml.contains("<span>编辑资料</span>"));
+
+        String controller = Files.readString(JS_ROOT.resolve("profile-edit.js"), StandardCharsets.UTF_8);
+        assertTrue(controller.contains("class ProfileDetailsController"));
+        assertTrue(controller.contains("setMode('view'"));
+        assertTrue(controller.contains("setMode('edit'"));
+        assertTrue(controller.contains("暂时无法加载"));
+        assertTrue(controller.contains("honorProofHtml"),
+            "profile read view should render proof material previews");
+        assertTrue(controller.contains("il-profile-read-honor__level"),
+            "profile read view should render honor level badges");
+        assertTrue(controller.contains("il-profile-read-honor__proof-fallback"),
+            "broken proof images should have a visible fallback");
+    }
+
+    @Test
+    void homePageLoadsItsScopedLayoutStyles() throws Exception {
+        Path template = Path.of("src/main/resources/templates/index.html");
+        String homeHtml = Files.readString(template, StandardCharsets.UTF_8);
+        assertTrue(homeHtml.contains("href=\"/css/home.css?v="),
+            "index.html must load its page-specific stylesheet after shared assets");
+    }
 }

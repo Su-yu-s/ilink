@@ -6,10 +6,9 @@
     <title>组队大厅 - iLink</title>
 
     <th:block th:replace="~{fragments/head-assets :: core(bootstrap=true)}"></th:block>
-    <link href="/css/team-market.css?v=2.1" rel="stylesheet">
-    <link href="/css/search-bar.css?v=1.7" rel="stylesheet">
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
-    <link href="/css/portal-redesign.css?v=1.1" rel="stylesheet">
+    <link href="/css/team-market.css?v=2.4" rel="stylesheet">
+    <link href="/css/search-bar.css?v=1.9" rel="stylesheet">
+    <link href="/css/portal-redesign.css?v=1.3" rel="stylesheet">
 </head>
 <body data-app-page="team-market" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'team')"></div>
@@ -85,7 +84,7 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
-    <script src="/js/team-market.js?v=5.1"></script>
+    <script src="/js/common.js?v=9.1"></script>
+    <script src="/js/team-market.js?v=5.2"></script>
 </body>
 </html>

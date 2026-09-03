@@ -54,7 +54,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const requestData = {
                 identifier: identifierInput.value.trim(),
-                password: passwordInput.value
+                password: passwordInput.value,
+                rememberMe: Boolean(document.getElementById('rememberMe')?.checked),
+                returnTo: safeLoginReturnPath(new URLSearchParams(window.location.search).get('redirect'))
             };
 
             const submitButton = loginForm.querySelector('button[type="submit"]');
@@ -107,3 +109,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function safeLoginReturnPath(value) {
+    if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+        return null;
+    }
+    try {
+        const url = new URL(value, window.location.origin);
+        if (url.origin !== window.location.origin || url.pathname.startsWith('/login')
+                || url.pathname.startsWith('/api/login') || url.pathname.startsWith('/api/logout')) {
+            return null;
+        }
+        return url.pathname + url.search + url.hash;
+    } catch (error) {
+        return null;
+    }
+}

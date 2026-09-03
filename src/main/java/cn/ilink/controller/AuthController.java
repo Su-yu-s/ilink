@@ -6,8 +6,10 @@ import cn.ilink.dto.RegisterRequest;
 import cn.ilink.entity.User;
 import cn.ilink.security.LoginAttemptService;
 import cn.ilink.service.HomeStatsService;
+import cn.ilink.service.RememberMeService;
 import cn.ilink.service.UserService;
 import cn.ilink.util.PasswordPolicy;
+import cn.ilink.util.ClientIpResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,15 +45,18 @@ public class AuthController {
     private final UserService userService;
     private final LoginAttemptService loginAttemptService;
     private final HomeStatsService homeStatsService;
+    private final RememberMeService rememberMeService;
 
     /** 读取登录前访问的地址，登录成功后跳回原页面。 */
     private final RequestCache requestCache = new HttpSessionRequestCache();
 
     public AuthController(UserService userService, LoginAttemptService loginAttemptService,
-                          @Autowired(required = false) HomeStatsService homeStatsService) {
+                          @Autowired(required = false) HomeStatsService homeStatsService,
+                          RememberMeService rememberMeService) {
         this.userService = userService;
         this.loginAttemptService = loginAttemptService;
         this.homeStatsService = homeStatsService;
+        this.rememberMeService = rememberMeService;
     }
 
     @GetMapping("/login")
@@ -112,7 +117,14 @@ public class AuthController {
             user.setPassword(null);
             session.setAttribute("user", user);
 
-            String redirectAfterLogin = resolveRedirectAfterLogin(request, servletResponse);
+            if (loginRequest.isRememberMe()) {
+                rememberMeService.issue(user.getId(), request, servletResponse);
+            } else {
+                rememberMeService.revokeCurrentCookie(request, servletResponse);
+            }
+
+            String redirectAfterLogin = resolveRedirectAfterLogin(
+                request, servletResponse, loginRequest.getReturnTo());
             loginAttemptService.loginSucceeded(clientKey);
             return json(Result.ok("登录成功", user).withExtra("redirectAfterLogin", redirectAfterLogin));
         } catch (Exception e) {
@@ -131,10 +143,7 @@ public class AuthController {
     @ResponseBody
     public ResponseEntity<Result<?>> register(@RequestBody RegisterRequest registerRequest,
                                               HttpServletRequest request) {
-        String clientIp = request.getHeader("X-Forwarded-For");
-        if (clientIp == null || clientIp.isBlank()) {
-            clientIp = request.getRemoteAddr();
-        }
+        String clientIp = ClientIpResolver.resolve(request);
         if (!loginAttemptService.tryRegister(clientIp)) {
             return Result.badRequest("注册过于频繁，请 1 分钟后再试").toResponseEntity();
         }
@@ -205,7 +214,8 @@ public class AuthController {
     }
 
     @GetMapping("/api/logout")
-    public String logoutGet(HttpSession session, HttpServletResponse response) {
+    public String logoutGet(HttpSession session, HttpServletRequest request, HttpServletResponse response) {
+        rememberMeService.revokeCurrentCookie(request, response);
         session.invalidate();
         SecurityContextHolder.clearContext();
         return "redirect:/login.html";
@@ -213,7 +223,9 @@ public class AuthController {
 
     @PostMapping("/api/logout")
     @ResponseBody
-    public ResponseEntity<Result<?>> logoutPost(HttpSession session) {
+    public ResponseEntity<Result<?>> logoutPost(HttpSession session, HttpServletRequest request,
+                                                HttpServletResponse response) {
+        rememberMeService.revokeCurrentCookie(request, response);
         session.invalidate();
         SecurityContextHolder.clearContext();
         return Result.ok("登出成功", null).toResponseEntity();
@@ -280,8 +292,14 @@ public class AuthController {
         return authorities;
     }
 
-    private String resolveRedirectAfterLogin(HttpServletRequest request, HttpServletResponse servletResponse) {
+    private String resolveRedirectAfterLogin(HttpServletRequest request, HttpServletResponse servletResponse,
+                                             String requestedReturnTo) {
         String redirectAfterLogin = "/index.html";
+        String safeRequestedPath = safeLocalReturnPath(requestedReturnTo);
+        if (safeRequestedPath != null) {
+            requestCache.removeRequest(request, servletResponse);
+            return safeRequestedPath;
+        }
         SavedRequest saved = requestCache.getRequest(request, servletResponse);
         if (saved == null) {
             return redirectAfterLogin;
@@ -318,6 +336,25 @@ public class AuthController {
             requestCache.removeRequest(request, servletResponse);
         }
         return redirectAfterLogin;
+    }
+
+    private String safeLocalReturnPath(String value) {
+        if (value == null || value.isBlank() || !value.startsWith("/") || value.startsWith("//")
+                || value.contains("\\")) {
+            return null;
+        }
+        try {
+            java.net.URI uri = java.net.URI.create(value);
+            if (uri.isAbsolute() || uri.getHost() != null) return null;
+            String path = uri.getPath();
+            if (path == null || path.startsWith("/login") || path.startsWith("/api/login")
+                    || path.startsWith("/api/logout")) {
+                return null;
+            }
+            return value;
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static String resolveLoginAttemptKey(HttpServletRequest request, LoginRequest loginRequest) {

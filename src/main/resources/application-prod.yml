@@ -1,5 +1,9 @@
 # 生产环境：java -jar -Dspring.profiles.active=prod
 spring:
+  flyway:
+    validate-on-migrate: true
+    out-of-order: false
+    baseline-on-migrate: false
   thymeleaf:
     cache: true
   web:
@@ -13,6 +17,9 @@ logging:
     cn.ilink: info
 
 app:
+  public-base-url: ${APP_PUBLIC_BASE_URL:}
+  mail:
+    from: ${APP_MAIL_FROM:}
   api:
     expose-error-detail: false
 
@@ -35,3 +42,10 @@ management:
   endpoint:
     health:
       show-details: never
+
+server:
+  servlet:
+    session:
+      cookie:
+        # http 部署时需设置环境变量 SESSION_COOKIE_SECURE=false，否则浏览器拒收 Cookie 导致登录掉线
+        secure: ${SESSION_COOKIE_SECURE:true}

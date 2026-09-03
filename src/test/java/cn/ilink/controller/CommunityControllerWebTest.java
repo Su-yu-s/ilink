@@ -54,6 +54,9 @@ class CommunityControllerWebTest {
     private NotificationService notificationService;
 
     @MockBean
+    private cn.ilink.service.AdminDataService adminDataService;
+
+    @MockBean
     private LoginAttemptService loginAttemptService;
 
     @MockBean

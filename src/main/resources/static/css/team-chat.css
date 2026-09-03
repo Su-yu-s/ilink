@@ -332,25 +332,6 @@
     justify-content: center;
     font-size: 14px;
     font-weight: 600;
-    position: relative;
-}
-
-.member-status {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid white;
-}
-
-.member-status.online {
-    background: var(--success);
-}
-
-.member-status.offline {
-    background: var(--text-tertiary);
 }
 
 .member-info {

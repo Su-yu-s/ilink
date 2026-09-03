@@ -12,6 +12,7 @@ import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class FileServiceTest {
 
@@ -91,6 +92,38 @@ class FileServiceTest {
         MockMultipartFile file = new MockMultipartFile("file", "../evil.png", "image/png", png);
 
         assertThrows(IllegalArgumentException.class, () -> service.upload(file, "avatars"));
+    }
+
+    @Test
+    void uploadAssetPdfValidatesSignatureAndCanBeDeleted() throws Exception {
+        FileService service = newService();
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "report.pdf", "text/plain", "%PDF-1.7\n".getBytes());
+
+        String url = service.upload(file, "assets");
+        Path stored = service.resolveStoredPath(url);
+
+        assertTrue(Files.exists(stored));
+        assertTrue(url.contains("/assets/"));
+        assertTrue(service.delete(url));
+        assertFalse(Files.exists(stored));
+    }
+
+    @Test
+    void uploadAssetRejectsActiveHtmlEvenWhenClientMimeLooksSafe() {
+        FileService service = newService();
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "payload.html", "application/octet-stream", "<script>alert(1)</script>".getBytes());
+
+        assertThrows(IllegalArgumentException.class, () -> service.upload(file, "assets"));
+    }
+
+    @Test
+    void resolveStoredPathRejectsTraversalUrl() {
+        FileService service = newService();
+
+        assertThrows(IllegalArgumentException.class,
+            () -> service.resolveStoredPath("http://example.com/uploads/assets/../../outside.txt"));
     }
 
     private FileService newService() {

@@ -8,6 +8,7 @@ import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.service.impl.ProjectApplicationServiceImpl;
 import cn.ilink.service.impl.TeacherApplicationServiceImpl;
+import cn.ilink.service.impl.AssetServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -49,6 +50,9 @@ class TeacherControllerWebTest {
 
     @MockBean
     private HomeStatsService homeStatsService;
+
+    @MockBean
+    private AssetServiceImpl assetService;
 
     @Test
     void currentTeacherProfileRequiresLogin() throws Exception {

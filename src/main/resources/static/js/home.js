@@ -23,8 +23,8 @@
         initActivityFeed();
         initMagneticButtons();
         initCtaForm();
-        initScrollProgress();
         initCursorFollower();
+        initImageFallback();
         if (!reduceMotion) initParticleCanvas();
         if (!reduceMotion) ensureGsap(initGsapMotion);
     });
@@ -60,6 +60,17 @@
         }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
 
         items.forEach(function (item) { observer.observe(item); });
+    }
+
+    function initImageFallback() {
+        // 本地图片加载失败时隐藏裂图并垫一层中性底色，避免空白破损
+        document.querySelectorAll('.home-bento__media img, .home-mag-tile__inner img').forEach(function (img) {
+            img.addEventListener('error', function () {
+                var host = img.closest('.home-bento__media, .home-mag-tile__inner');
+                if (host) host.classList.add('home-img-fallback');
+                img.style.display = 'none';
+            });
+        });
     }
 
     function ensureGsap(done) {
@@ -291,25 +302,6 @@
         });
     }
 
-    function initScrollProgress() {
-        var bar = document.getElementById('homeScrollProgress');
-        if (!bar) return;
-        var ticking = false;
-        function update() {
-            var scrollTop = window.scrollY || window.pageYOffset;
-            var docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            var progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-            bar.style.width = progress + '%';
-            ticking = false;
-        }
-        window.addEventListener('scroll', function () {
-            if (!ticking) {
-                window.requestAnimationFrame(update);
-                ticking = true;
-            }
-        }, { passive: true });
-    }
-
     function initCursorFollower() {
         if (reduceMotion || !window.matchMedia || !window.matchMedia('(pointer: fine)').matches) return;
         var cursor = document.getElementById('homeCursor');
@@ -371,71 +363,4 @@
         };
     }
 
-    // ── Desktop hamburger menu (home page only) ──
-    (function initDesktopMenu() {
-        var body = document.body;
-        if (!body || body.getAttribute('data-app-page') !== 'home') return;
-
-        var hamburger = document.getElementById('desktopHamburger');
-        var menuPanel = document.getElementById('desktopMenuPanel');
-        if (!hamburger || !menuPanel) return;
-
-        hamburger.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var isOpen = menuPanel.classList.toggle('il-desktop-menu--open');
-            hamburger.setAttribute('aria-expanded', String(isOpen));
-            menuPanel.setAttribute('aria-hidden', String(!isOpen));
-            document.body.classList.toggle('desktop-menu-open', isOpen);
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!menuPanel.classList.contains('il-desktop-menu--open')) return;
-            if (e.target.closest('#desktopMenuPanel') || e.target.closest('#desktopHamburger')) return;
-            menuPanel.classList.remove('il-desktop-menu--open');
-            hamburger.setAttribute('aria-expanded', 'false');
-            menuPanel.setAttribute('aria-hidden', 'true');
-            document.body.classList.remove('desktop-menu-open');
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && menuPanel.classList.contains('il-desktop-menu--open')) {
-                menuPanel.classList.remove('il-desktop-menu--open');
-                hamburger.setAttribute('aria-expanded', 'false');
-                menuPanel.setAttribute('aria-hidden', 'true');
-                document.body.classList.remove('desktop-menu-open');
-            }
-        });
-    })();
-
-    // ── Home page: hide navbar on first paint, show on scroll ──
-    (function initHomeNavbar() {
-        var body = document.body;
-        if (!body || body.getAttribute('data-app-page') !== 'home') return;
-
-        var header = document.getElementById('ilHeader');
-        if (!header) return;
-
-        var THRESHOLD = 100;
-        var ticking = false;
-
-        function applyNavState() {
-            var scrollY = window.scrollY || window.pageYOffset;
-            var expanded = scrollY >= THRESHOLD;
-            header.classList.toggle('il-header--home-expanded', expanded);
-            header.classList.toggle('il-header--home-compact', !expanded);
-        }
-
-        function onScroll() {
-            if (!ticking) {
-                window.requestAnimationFrame(function() {
-                    applyNavState();
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        }
-
-        applyNavState();
-        window.addEventListener('scroll', onScroll, { passive: true });
-    })();
 })();

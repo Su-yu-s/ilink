@@ -8,5 +8,4 @@ import java.util.List;
 public interface ChatService extends IService<ChatMessage> {
     ChatMessageVO sendMessage(Long teamId, Long senderId, String content, String type);
     List<ChatMessageVO> getHistory(Long teamId, int limit);
-    void markAsRead(Long teamId, Long userId);
 }

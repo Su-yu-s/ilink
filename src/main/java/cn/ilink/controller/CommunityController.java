@@ -11,6 +11,7 @@ import cn.ilink.service.CommunityPostInteractionService;
 import cn.ilink.service.impl.CommunityPostServiceImpl;
 import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
+import cn.ilink.service.AdminDataService;
 import cn.ilink.mapper.CommunityPostFavoriteMapper;
 import cn.ilink.util.HtmlSanitizer;
 import cn.ilink.vo.CommunityCommentVO;
@@ -43,7 +44,7 @@ public class CommunityController {
     private static final int CONTENT_MAX = 200000;
     private static final int ATTACHMENTS_MAX = 10;
     private static final int ATTACHMENT_NAME_MAX = 200;
-    private static final Pattern UPLOADS_URL = Pattern.compile("^/uploads/[A-Za-z0-9._-]+$");
+    private static final Pattern UPLOADS_URL = Pattern.compile("^/uploads/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+$");
     private static final int COMMENT_MAX = 2000;
     private static final int EXCERPT_LEN = 220;
 
@@ -54,6 +55,7 @@ public class CommunityController {
     private final UserService userService;
     private final ObjectMapper objectMapper;
     private final NotificationService notificationService;
+    private final AdminDataService adminDataService;
 
     public CommunityController(CommunityPostServiceImpl communityPostService,
                                CommunityPostInteractionService communityPostInteractionService,
@@ -61,7 +63,8 @@ public class CommunityController {
                                CommunityCommentServiceImpl communityCommentService,
                                UserService userService,
                                ObjectMapper objectMapper,
-                               NotificationService notificationService) {
+                               NotificationService notificationService,
+                               AdminDataService adminDataService) {
         this.communityPostService = communityPostService;
         this.communityPostInteractionService = communityPostInteractionService;
         this.communityPostFavoriteMapper = communityPostFavoriteMapper;
@@ -69,6 +72,7 @@ public class CommunityController {
         this.userService = userService;
         this.objectMapper = objectMapper;
         this.notificationService = notificationService;
+        this.adminDataService = adminDataService;
     }
 
     @GetMapping("/posts")
@@ -411,13 +415,13 @@ public class CommunityController {
         if (communityCommentService.save(comment)) {
             // 通知文章作者（排除作者自己评论）
             if (!post.getAuthorId().equals(user.getId())) {
-                User author = userService.getById(post.getAuthorId());
                 notificationService.create(
                     post.getAuthorId(),
                     user.getId(),
                     "COMMENT",
                     "你的文章被评论了",
-                    author != null ? author.getUsername() : "某位用户" + " 评论了你的文章《" + post.getTitle() + "》：" + content,
+                    (user.getRealName() != null ? user.getRealName() : user.getUsername())
+                        + " 评论了你的文章《" + post.getTitle() + "》：" + content,
                     postId
                 );
             }
@@ -485,9 +489,10 @@ public class CommunityController {
         if (!ControllerUtils.isAdmin(user) && !user.getId().equals(post.getAuthorId())) {
             return Result.fail(403, "无权删除该帖").toResponseEntity();
         }
-        if (communityPostService.removeById(id)) {
+        try {
+            adminDataService.deletePost(id);
             return Result.ok("已删除", null).toResponseEntity();
-        } else {
+        } catch (RuntimeException e) {
             return Result.fail("删除失败").toResponseEntity();
         }
     }

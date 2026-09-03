@@ -18,12 +18,69 @@ function articlePublicUrl(id) {
     return `/community/article/${encodeURIComponent(String(id))}`;
 }
 
-function iconStarSvg() {
-    return (
-        '<svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round">' +
-        '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>' +
-        '</svg>'
-    );
+// ── 卡片“更多”菜单管理（portal 模式：菜单挂载到 body 层级，脱离卡片文档流）──
+let _pfOpenMenu = null;
+
+function _pfCloseMenu() {
+    if (!_pfOpenMenu) return;
+    _pfOpenMenu.btn.setAttribute('aria-expanded', 'false');
+    _pfOpenMenu.btn.classList.remove('is-open');
+    if (_pfOpenMenu.menu && _pfOpenMenu.menu.parentNode) {
+        _pfOpenMenu.menu.parentNode.removeChild(_pfOpenMenu.menu);
+    }
+    _pfOpenMenu = null;
+}
+
+function _pfEnsureGlobalListeners() {
+    if (window._pfMenuBound) return;
+    window._pfMenuBound = true;
+    document.addEventListener('click', _pfCloseMenu);
+    window.addEventListener('scroll', _pfCloseMenu, { capture: true, passive: true });
+    window.addEventListener('resize', _pfCloseMenu, { passive: true });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') _pfCloseMenu();
+    });
+}
+
+function _pfBuildMenu(btn) {
+    const rect = btn.getBoundingClientRect();
+    const id = btn.getAttribute('data-id');
+    const menu = document.createElement('div');
+    menu.className = 'profile-post-menu profile-post-menu--portal';
+    menu.innerHTML =
+        '<button type="button" class="profile-post-menu__item profile-post-menu__item--delete profile-fav-remove" data-id="' + id + '">' +
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><line x1="5" y1="2" x2="19" y2="2"/></svg>' +
+            '<span>取消收藏</span>' +
+        '</button>';
+    menu.style.position = 'fixed';
+    menu.style.top = (rect.bottom + 4) + 'px';
+    menu.style.right = (window.innerWidth - rect.right) + 'px';
+    menu.style.zIndex = '10000';
+    menu.addEventListener('click', function(e) { e.stopPropagation(); });
+    menu.querySelector('.profile-fav-remove').addEventListener('click', function(e) {
+        e.stopPropagation();
+        _pfCloseMenu();
+        if (id) unfavorite(id);
+    });
+    return menu;
+}
+
+function bindFavCardMenus(wrap) {
+    _pfEnsureGlobalListeners();
+    wrap.querySelectorAll('.profile-post-more-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const willOpen = !_pfOpenMenu || _pfOpenMenu.btn !== btn;
+            _pfCloseMenu();
+            if (willOpen) {
+                const menu = _pfBuildMenu(btn);
+                document.body.appendChild(menu);
+                btn.setAttribute('aria-expanded', 'true');
+                btn.classList.add('is-open');
+                _pfOpenMenu = { btn: btn, menu: menu };
+            }
+        });
+    });
 }
 
 async function loadMyFavorites(page) {
@@ -96,9 +153,8 @@ async function loadMyFavorites(page) {
                         </div>
                     </div>
                     <div class="profile-post-card__actions">
-                        <a href="${articlePublicUrl(p.id)}" class="il-btn il-btn-xs-ghost profile-post-card__btn" target="_blank" rel="noopener">查看</a>
-                        <button type="button" class="community-feed-action community-feed-action--fav profile-unfavorite-btn" data-id="${p.id}" title="取消收藏">
-                            ${iconStarSvg()}
+                        <button type="button" class="profile-post-more-btn" data-id="${p.id}" aria-label="更多操作" aria-haspopup="true" aria-expanded="false">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
                         </button>
                     </div>
                 </div>`;
@@ -109,12 +165,7 @@ async function loadMyFavorites(page) {
         listEl.innerHTML = '';
         listEl.appendChild(wrap);
 
-        wrap.querySelectorAll('.profile-unfavorite-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.getAttribute('data-id');
-                if (id) unfavorite(id);
-            });
-        });
+        bindFavCardMenus(wrap);
 
         renderPager(pag, pager, pagerInner);
     } catch (e) {

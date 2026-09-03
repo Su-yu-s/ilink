@@ -1,12 +1,13 @@
 package cn.ilink.service.impl;
 
 import cn.ilink.dto.MatchResult;
-import cn.ilink.dto.RecommendedTeamVO;
 import cn.ilink.dto.RecommendedUserVO;
 import cn.ilink.entity.RecommendationLog;
 import cn.ilink.entity.TeamDemand;
+import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.TeamDemandMapper;
+import cn.ilink.mapper.TeamApplicationMapper;
 import cn.ilink.mapper.UserMapper;
 import cn.ilink.service.RecommendationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -39,61 +41,34 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
     @Autowired
     private TeamDemandMapper teamDemandMapper;
 
-    @Override
-    @Cacheable(value = "recommendedTeams", key = "{#userId, #limit}")
-    public List<RecommendedTeamVO> getRecommendedTeams(Long userId, int limit) {
-        int safeLimit = normalizeLimit(limit);
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            return Collections.emptyList();
-        }
-
-        // C-06: 限制查询数量，避免全表扫描
-        int fetchLimit = Math.min(safeLimit * 10, 100);
-        Page<TeamDemand> page = new Page<>(1, fetchLimit);
-        List<TeamDemand> allTeams = teamDemandMapper.selectPage(page,
-            new LambdaQueryWrapper<TeamDemand>()
-                .eq(TeamDemand::getStatus, "OPEN")
-                .orderByDesc(TeamDemand::getCreatedAt)
-        ).getRecords();
-
-        List<RecommendedTeamVO> recommendations = new ArrayList<>();
-
-        for (TeamDemand team : allTeams) {
-            if (team.getCreatorId() != null && team.getCreatorId().equals(userId)) {
-                continue;
-            }
-
-            MatchResult matchResult = calculateMatchScore(userId, team.getId());
-            RecommendedTeamVO vo = new RecommendedTeamVO();
-            vo.setTeamId(team.getId());
-            vo.setTeamName(team.getTitle());
-            vo.setDescription(team.getDescription());
-            vo.setMatchScore(matchResult.getTotalScore());
-            vo.setMatchReasons(matchResult.getMatchReasons());
-            recommendations.add(vo);
-        }
-
-        return recommendations.stream()
-            .sorted(Comparator.comparing(RecommendedTeamVO::getMatchScore).reversed())
-            .limit(safeLimit)
-            .collect(Collectors.toList());
-    }
+    @Autowired
+    private TeamApplicationMapper teamApplicationMapper;
 
     @Override
     @Cacheable(value = "recommendedUsers", key = "{#teamId, #limit}")
-    public List<RecommendedUserVO> getRecommendedUsers(Long teamId, int limit) {
+    public List<RecommendedUserVO> getRecommendedUsers(Long requesterId, Long teamId, int limit) {
         int safeLimit = normalizeLimit(limit);
         TeamDemand team = teamDemandMapper.selectById(teamId);
         if (team == null) {
             return Collections.emptyList();
         }
+        if (!Objects.equals(team.getCreatorId(), requesterId)) {
+            throw new AccessDeniedException("只有队长可以查看候选成员推荐");
+        }
+
+        Set<Long> excludedUserIds = teamApplicationMapper.selectList(
+            new LambdaQueryWrapper<TeamApplication>()
+                .eq(TeamApplication::getTeamId, teamId)
+                .in(TeamApplication::getStatus, "PENDING", "APPROVED"))
+            .stream().map(TeamApplication::getUserId).filter(Objects::nonNull).collect(Collectors.toSet());
+        excludedUserIds.add(team.getCreatorId());
 
         // C-06: 分页查询，避免加载所有用户
         Page<User> page = new Page<>(1, 200);
         List<User> allUsers = userMapper.selectPage(page,
             new LambdaQueryWrapper<User>()
-                .ne(User::getId, team.getCreatorId())
+                .notIn(!excludedUserIds.isEmpty(), User::getId, excludedUserIds)
+                .eq(User::getRole, "STUDENT")
                 .orderByDesc(User::getCreatedAt)
         ).getRecords();
 
@@ -104,8 +79,10 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
                 continue;
             }
 
-            MatchResult matchResult = calculateMatchScore(user.getId(), teamId);
+            MatchResult matchResult = calculateMatchScoreInternal(user.getId(), team);
             RecommendedUserVO vo = new RecommendedUserVO();
+            vo.setLogId(recordRecommendation(requesterId, user.getId(), teamId, matchResult.getTotalScore(),
+                String.join(",", matchResult.getMatchReasons())));
             vo.setUserId(user.getId());
             vo.setUsername(user.getUsername());
             vo.setRealName(user.getRealName());
@@ -128,6 +105,21 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
     public MatchResult calculateMatchScore(Long userId, Long teamId) {
         User user = userMapper.selectById(userId);
         TeamDemand team = teamDemandMapper.selectById(teamId);
+
+        MatchResult result = calculateMatchScoreInternal(user, team, userId, teamId);
+        if (user != null && team != null) {
+            recordRecommendation(userId, null, teamId, result.getTotalScore(),
+                String.join(",", result.getMatchReasons()));
+        }
+        return result;
+    }
+
+    private MatchResult calculateMatchScoreInternal(Long userId, TeamDemand team) {
+        User user = userMapper.selectById(userId);
+        return calculateMatchScoreInternal(user, team, userId, team == null ? null : team.getId());
+    }
+
+    private MatchResult calculateMatchScoreInternal(User user, TeamDemand team, Long userId, Long teamId) {
 
         MatchResult result = new MatchResult();
         List<String> reasons = new ArrayList<>();
@@ -162,21 +154,25 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
         result.setActivityScore(activityScore);
         result.setMatchReasons(reasons);
 
-        recordRecommendation(userId, null, teamId, totalScore, String.join(",", reasons));
-
         return result;
     }
 
     @Override
-    public void recordFeedback(Long logId, String action) {
-        try {
-            RecommendationLog log = getById(logId);
-            if (log != null) {
-                log.setAction(action);
-                updateById(log);
-            }
-        } catch (DataAccessException e) {
-            log.warn("推荐反馈记录失败，已跳过：{}", rootMessage(e));
+    public void recordFeedback(Long logId, Long userId, String action) {
+        String normalized = action == null ? "" : action.trim().toUpperCase(Locale.ROOT);
+        if (!Set.of("VIEWED", "ACCEPTED", "DISMISSED").contains(normalized)) {
+            throw new IllegalArgumentException("无效的推荐反馈动作");
+        }
+        RecommendationLog recommendation = getById(logId);
+        if (recommendation == null) {
+            throw new NoSuchElementException("推荐记录不存在");
+        }
+        if (!Objects.equals(recommendation.getUserId(), userId)) {
+            throw new AccessDeniedException("无权修改该推荐记录");
+        }
+        recommendation.setAction(normalized);
+        if (!updateById(recommendation)) {
+            throw new IllegalStateException("推荐反馈保存失败");
         }
     }
 
@@ -332,18 +328,19 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
         return Math.round(rating * 10.0) / 10.0;
     }
 
-    private void recordRecommendation(Long userId, Long recommendedUserId, Long teamId, Double score, String reasons) {
+    private Long recordRecommendation(Long userId, Long recommendedUserId, Long teamId, Double score, String reasons) {
         try {
-            RecommendationLog log = new RecommendationLog();
-            log.setUserId(userId);
-            log.setRecommendedUserId(recommendedUserId);
-            log.setRecommendedTeamId(teamId);
-            log.setMatchScore(score);
-            log.setMatchReasons(reasons);
-            log.setCreatedAt(new Date());
-            save(log);
+            RecommendationLog recommendation = new RecommendationLog();
+            recommendation.setUserId(userId);
+            recommendation.setRecommendedUserId(recommendedUserId);
+            recommendation.setRecommendedTeamId(teamId);
+            recommendation.setMatchScore(score);
+            recommendation.setMatchReasons(reasons);
+            recommendation.setCreatedAt(new Date());
+            return save(recommendation) ? recommendation.getId() : null;
         } catch (DataAccessException e) {
             log.warn("推荐日志写入失败，已跳过：{}", rootMessage(e));
+            return null;
         }
     }
 

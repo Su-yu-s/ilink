@@ -17,6 +17,7 @@ public class LoginAttemptService {
     private static final int MAX_ATTEMPTS = 5;
     private static final int LOCK_MINUTES = 15;
     private static final int REGISTER_MAX_PER_MINUTE = 3;
+    private static final int PASSWORD_RESET_MAX_PER_15_MINUTES = 3;
 
     private final Cache<String, AtomicInteger> attempts = Caffeine.newBuilder()
         .expireAfterWrite(LOCK_MINUTES, TimeUnit.MINUTES)
@@ -26,6 +27,11 @@ public class LoginAttemptService {
     /** 注册限流：同一 IP 每分钟最多 3 次 */
     private final Cache<String, AtomicInteger> registerAttempts = Caffeine.newBuilder()
         .expireAfterWrite(1, TimeUnit.MINUTES)
+        .maximumSize(10_000)
+        .build();
+
+    private final Cache<String, AtomicInteger> passwordResetAttempts = Caffeine.newBuilder()
+        .expireAfterWrite(15, TimeUnit.MINUTES)
         .maximumSize(10_000)
         .build();
 
@@ -74,6 +80,18 @@ public class LoginAttemptService {
             if (count.get() >= REGISTER_MAX_PER_MINUTE) {
                 return false;
             }
+            count.incrementAndGet();
+            return true;
+        }
+    }
+
+    /** 密码重置邮件限流：同一 IP 每 15 分钟最多 3 次。 */
+    public boolean tryPasswordReset(String clientIp) {
+        if (clientIp == null || clientIp.isBlank()) return true;
+        AtomicInteger count = passwordResetAttempts.asMap().computeIfAbsent(
+            "password-reset:" + clientIp, key -> new AtomicInteger(0));
+        synchronized (count) {
+            if (count.get() >= PASSWORD_RESET_MAX_PER_15_MINUTES) return false;
             count.incrementAndGet();
             return true;
         }

@@ -13,6 +13,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 /**
  * Spring Security 规则与 CSRF 契约测试。
@@ -31,7 +32,8 @@ class SecurityConfigTest {
     @Test
     void anonymousCannotAccessUserProfile() throws Exception {
         mockMvc.perform(get("/api/user/profile"))
-            .andExpect(status().is3xxRedirection());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value(401));
     }
 
     @Test
@@ -54,6 +56,28 @@ class SecurityConfigTest {
                 .with(csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"title\":\"t\",\"content\":\"c\",\"category\":\"general\"}"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value(401));
+    }
+
+    @Test
+    void anonymousCanBrowsePublicDetailPagesAndAssetDownload() throws Exception {
+        for (String path : new String[]{
+                "/team-detail.html", "/teacher-detail.html", "/asset-detail.html", "/community-article.html"}) {
+            mockMvc.perform(get(path)).andExpect(status().isOk());
+        }
+    }
+
+    @Test
+    void anonymousCannotDownloadAssetAttachment() throws Exception {
+        mockMvc.perform(get("/api/asset/download/1"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value(401));
+    }
+
+    @Test
+    void unspecifiedRoutesRequireAuthentication() throws Exception {
+        mockMvc.perform(get("/internal-probe"))
             .andExpect(status().is3xxRedirection());
     }
 }

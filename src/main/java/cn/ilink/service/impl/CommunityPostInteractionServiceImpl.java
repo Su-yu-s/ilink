@@ -148,13 +148,13 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
             );
             // 通知文章作者（排除作者自己点赞）
             if (!post.getAuthorId().equals(userId)) {
-                User author = userService.getById(post.getAuthorId());
+                User actor = userService.getById(userId);
                 notificationService.create(
                     post.getAuthorId(),
                     userId,
                     "LIKE",
                     "你的文章被点赞了",
-                    author != null ? author.getUsername() : "某位用户" + " 点赞了你的文章《" + post.getTitle() + "》",
+                    displayName(actor) + " 点赞了你的文章《" + post.getTitle() + "》",
                     postId
                 );
             }
@@ -214,13 +214,13 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
             );
             // 通知文章作者（排除作者自己收藏）
             if (!post.getAuthorId().equals(userId)) {
-                User author = userService.getById(post.getAuthorId());
+                User actor = userService.getById(userId);
                 notificationService.create(
                     post.getAuthorId(),
                     userId,
                     "FAVORITE",
                     "你的文章被收藏了",
-                    author != null ? author.getUsername() : "某位用户" + " 收藏了你的文章《" + post.getTitle() + "》",
+                    displayName(actor) + " 收藏了你的文章《" + post.getTitle() + "》",
                     postId
                 );
             }
@@ -231,6 +231,13 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
         m.put("favorited", nowFavorited);
         m.put("favoriteCount", favoriteCountOf(post));
         return m;
+    }
+
+    private String displayName(User user) {
+        if (user == null) return "某位用户";
+        if (user.getRealName() != null && !user.getRealName().trim().isEmpty()) return user.getRealName().trim();
+        if (user.getUsername() != null && !user.getUsername().trim().isEmpty()) return user.getUsername().trim();
+        return "某位用户";
     }
 
     private static int likeCountOf(CommunityPost p) {

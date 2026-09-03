@@ -131,14 +131,16 @@ html.ilink-app,
     border-color var(--transition-fast);
 }
 
-.ilink-app .il-surface:hover {
-  border-color: var(--border-default);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-3px);
-}
+@media (hover: hover) and (pointer: fine) {
+  .ilink-app .il-surface:hover {
+    border-color: var(--border-default);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+  }
 
-.ilink-app .il-surface--lift:hover {
-  transform: translateY(-2px);
+  .ilink-app .il-surface--lift:hover {
+    transform: translateY(-2px);
+  }
 }
 
 /* --- Empty & loading states --- */
@@ -298,13 +300,93 @@ html.ilink-app,
   line-height: var(--line-height-relaxed);
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) and (max-width: 1024px) {
+  .ilink-app .il-page-wrapper,
+  .ilink-app body[data-app-page] .main-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 24px;
+  }
+
+  .ilink-app .il-section-head {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .ilink-app body {
+    min-width: 0;
+    font-size: 15px;
+    line-height: 1.7;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   .ilink-app .il-page-wrapper {
-    padding: var(--space-6) var(--space-4) var(--space-16);
+    width: 100%;
+    max-width: 100%;
+    padding: 16px 16px calc(32px + env(safe-area-inset-bottom));
   }
 
   .ilink-app .il-section-head {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .ilink-app h1 {
+    font-size: 28px;
+    line-height: 1.25;
+  }
+
+  .ilink-app h2 {
+    font-size: 20px;
+    line-height: 1.35;
+  }
+
+  .ilink-app h3 {
+    font-size: 18px;
+    line-height: 1.45;
+  }
+
+  .ilink-app input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
+  .ilink-app textarea,
+  .ilink-app select,
+  .ilink-app .form-control,
+  .ilink-app .form-select {
+    width: 100%;
+    min-height: 48px !important;
+    font-size: 16px !important;
+  }
+
+  .ilink-app .il-surface {
+    box-shadow: 0 1px 4px rgba(24, 28, 34, 0.05);
+    transform: none;
+  }
+
+  .ilink-app .il-surface:active {
+    background-color: rgba(24, 28, 34, 0.025);
+    transition-duration: 0.15s;
+  }
+
+  .ilink-app body > main,
+  .ilink-app body > .il-page-wrapper,
+  .ilink-app body > .main-content {
+    animation-name: none;
+  }
+}
+
+@media (max-width: 479.98px) {
+  .ilink-app .il-page-wrapper {
+    padding-inline: 16px;
+  }
+}
+
+.ilink-scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.ilink-scroll-x::-webkit-scrollbar {
+  display: none;
 }

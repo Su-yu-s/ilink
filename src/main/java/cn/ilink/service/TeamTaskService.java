@@ -11,9 +11,10 @@ import java.util.List;
 public interface TeamTaskService extends IService<TeamTask> {
     List<TeamTaskVO> getTasksByTeam(Long teamId);
     TeamTaskVO getTaskById(Long taskId);
-    boolean createTask(TeamTaskDTO dto, Long userId);
+    TeamTaskVO createTask(TeamTaskDTO dto, Long userId);
     boolean updateTask(Long taskId, TeamTaskDTO dto);
     boolean updateTaskStatus(Long taskId, String status);
+    boolean transitionTaskStatus(Long taskId, String expectedStatus, String targetStatus);
     boolean deleteTask(Long taskId);
     boolean assignTask(Long taskId, Long userId);
     List<TaskParticipantVO> getParticipants(Long taskId);

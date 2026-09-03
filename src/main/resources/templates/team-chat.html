@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +7,7 @@
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <link rel="stylesheet" href="/css/team-chat.css?v=1">
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
-    <link href="/css/portal-redesign.css?v=1.1" rel="stylesheet">
+    <link href="/css/portal-redesign.css?v=1.3" rel="stylesheet">
 </head>
 <body data-app-page="team-chat" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
         <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -97,7 +96,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script src="/js/ui-particles.js?v=1.0"></script>
     <script src="/js/team-chat.js?v=1"></script>
 </body>

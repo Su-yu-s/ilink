@@ -1,2220 +1,1035 @@
-﻿/* ========================================
-   Team Space v3 鈥?UI Polish
-   ======================================== */
+/* Team space: one mobile-first component stylesheet.
+   Breakpoints: mobile < 768, tablet 768-1024, desktop > 1024. */
 
-/* ===== 鏁翠綋甯冨眬 ===== */
-.workspace-layout {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 0;
-    min-height: calc(100vh - 140px);
-    margin: 0;
+/* 色彩映射到全站 design-tokens，保持单色品牌一致 */
+body[data-app-page="team-space"] {
+    --kb-bg: var(--bg-body);
+    --kb-surface: var(--bg-white);
+    --kb-subtle: var(--color-gray-100);
+    --kb-selected: var(--color-gray-200);
+    --kb-border: var(--color-gray-200);
+    --kb-border-strong: var(--color-gray-300);
+    --kb-text: var(--color-black);
+    --kb-text-secondary: var(--color-gray-600);
+    --kb-text-muted: var(--color-gray-500);
+    --kb-danger: var(--error);
+    --kb-success: var(--success);
+    --dot-gray: #0284c7;
+    --dot-blue: #4f46e5;
+    --dot-orange: #d97706;
+    --dot-green: #059669;
+    color: var(--kb-text);
+    background: var(--kb-bg);
 }
 
-/* ===== 宸︿晶瀵艰埅 ===== */
+body[data-app-page="team-space"] .particle-canvas,
+body[data-app-page="team-space"] #particleCanvas,
+.project-mobile-toolbar,
+.project-menu-close,
+.project-menu-backdrop,
+.kanban-status-tabs,
+.create-task-fab,
+.mobile-task-actions {
+    display: none;
+}
+
+body[data-app-page="team-space"] [hidden] {
+    display: none !important;
+}
+
+body[data-app-page="team-space"] .main-content {
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 24px 28px 56px;
+}
+
+.team-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    color: #92400e;
+    background: #fef9e7;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+}
+
+.team-warning-icon { flex: 0 0 auto; font-size: 18px; }
+.team-warning strong { font-size: 14px; }
+.team-warning p { margin: 2px 0 0; font-size: 13px; opacity: .8; }
+
+.workspace-layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    min-height: calc(100vh - 192px);
+}
+
 .sidebar {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-xl);
-    margin-right: 16px;
+    position: relative;
     display: flex;
     flex-direction: column;
-    height: fit-content;
-    max-height: calc(100vh - 160px);
-    position: sticky;
-    top: 80px;
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
+    min-width: 0;
+    min-height: 0;
+    background: var(--kb-surface);
+    border-right: 1px solid var(--kb-border);
 }
 
 .sidebar-header {
-    padding: 18px 16px 14px;
-    border-bottom: 1px solid var(--border-light);
-    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex: 0 0 auto;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--kb-border);
 }
 
 .sidebar-logo {
     display: flex;
     align-items: center;
-    gap: 8px;
+    min-width: 0;
+    gap: 10px;
     font-size: 15px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-weight: 600;
 }
 
 .sidebar-logo svg {
-    flex-shrink: 0;
-    color: var(--primary);
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    padding: 7px;
+    background: var(--kb-subtle);
+    border-radius: 8px;
+}
+
+.sidebar-logo span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-back-btn,
+.project-menu-trigger,
+.project-mobile-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--kb-text-secondary);
+    background: var(--kb-surface);
+    border: 1px solid var(--kb-border);
+    border-radius: 8px;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* 抽屉关闭按钮仅在移动端显示，避免桌面端泄漏 */
+.project-menu-close {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--kb-text-secondary);
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    cursor: pointer;
 }
 
 .sidebar-back-btn {
-    display: flex;
-    align-items: center;
+    width: auto;
+    min-width: 0;
+    min-height: 0;
     gap: 4px;
-    font-size: 12px;
-    color: var(--text-secondary);
+    padding: 0;
+    color: var(--kb-text-muted);
     background: transparent;
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-sm);
-    padding: 5px 10px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    width: 100%;
-    font-family: inherit;
+    border: 0;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color .12s;
 }
 
-.sidebar-back-btn:hover {
-    background: var(--primary);
-    color: var(--text-white);
-    border-color: var(--primary);
-}
+.sidebar-back-btn svg { width: 14px; height: 14px; }
 
-/* 瀵艰埅椤?*/
 .sidebar-nav {
-    flex: 1;
-    padding: 10px 12px;
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 2px;
+    min-height: 0;
+    padding: 12px;
     overflow-y: auto;
 }
 
 .sidebar-nav-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 11px 12px 11px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all var(--transition-fast);
-    position: relative;
-    cursor: pointer;
-    border: 1px solid transparent;
-    background: transparent;
     width: 100%;
+    min-height: 40px;
+    gap: 9px;
+    padding: 0 12px;
+    color: var(--kb-text-secondary);
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
     font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
     text-align: left;
+    cursor: pointer;
+    transition: color .12s, background-color .12s;
 }
 
-.sidebar-nav-item svg {
-    flex-shrink: 0;
-    opacity: 0.65;
-    transition: opacity var(--transition-fast);
-}
+.sidebar-nav-item svg { flex: 0 0 auto; opacity: .7; }
 
-.sidebar-nav-item:hover {
-    background: var(--bg-muted);
-    color: var(--text-primary);
-}
-
-.sidebar-nav-item:hover svg {
-    opacity: 0.85;
-}
-
-/* 閫変腑鎬?*/
 .sidebar-nav-item.active {
-    background: var(--primary);
-    color: var(--text-white) !important;
-    box-shadow: var(--shadow-md);
-}
-
-.sidebar-nav-item.active svg {
-    opacity: 1;
-    color: var(--text-white);
-}
-
-/* 底部团队概要 */
-.sidebar-footer {
-    border-top: 1px solid var(--border-light);
-    padding: 14px 16px;
-    flex-shrink: 0;
-    background: var(--bg-secondary);
-}
-
-.sidebar-footer-info {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.sidebar-footer-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-}
-
-.sidebar-footer-label {
-    color: var(--text-secondary);
+    color: var(--kb-surface);
+    background: var(--kb-text);
     font-weight: 600;
 }
 
-.sidebar-footer-value {
-    color: var(--text-primary);
-    font-weight: 700;
+.sidebar-nav-item.active svg { opacity: 1; }
+
+.sidebar-members-card {
+    margin: 8px 0 0;
+    padding: 14px;
+    background: var(--kb-subtle);
+    border-radius: 8px;
 }
 
-/* ===== 鍙充晶鍐呭鍖?===== */
+.smc-avatars { display: flex; align-items: center; margin-bottom: 10px; }
+
+.smc-avatar {
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    box-sizing: content-box;
+    object-fit: cover;
+    background: var(--kb-selected);
+    border: 2px solid var(--kb-surface);
+    border-radius: 50%;
+}
+
+.smc-avatar-fb,
+.smc-avatar-extra {
+    align-items: center;
+    justify-content: center;
+    color: var(--kb-text-secondary);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.smc-avatar-extra { display: inline-flex; margin-left: -8px; }
+.smc-info { display: flex; flex-direction: column; gap: 6px; }
+
+.smc-status {
+    width: fit-content;
+    padding: 1px 6px;
+    color: var(--kb-success);
+    background: #f0fdf4;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.smc-deadline {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--kb-text-muted);
+    font-size: 11px;
+}
+
 .main-content-area {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
+    padding-left: 32px;
 }
 
-.workspace-panel {
-    display: none;
-    flex-direction: column;
-    height: 100%;
+.workspace-panel { display: none; flex-direction: column; min-width: 0; }
+.workspace-panel.active { display: flex; flex: 1 1 auto; animation: ts-panel-in .16s ease; }
+
+@keyframes ts-panel-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
 }
 
-.workspace-panel.active {
-    display: flex;
+/* 键盘可达性：统一焦点环 */
+.sidebar-nav-item:focus-visible,
+.sidebar-back-btn:focus-visible,
+.project-menu-trigger:focus-visible,
+.project-mobile-back:focus-visible,
+.project-menu-close:focus-visible,
+.panel-actions .btn:focus-visible,
+.kanban-status-tab:focus-visible,
+.task-card:focus-visible,
+.kanban-empty:focus-visible,
+.member-card:focus-visible,
+.candidate-card:focus-visible,
+.chat-tool-btn:focus-visible,
+.chat-send-btn:focus-visible,
+.emoji-item:focus-visible {
+    outline: 2px solid var(--kb-text);
+    outline-offset: 2px;
 }
 
 .panel-header {
     display: flex;
+    align-items: flex-end;
     justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border-light);
-    flex-shrink: 0;
+    gap: 16px;
+    flex: 0 0 auto;
+    padding: 0 0 20px;
+}
+
+.panel-heading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.panel-team-name {
+    overflow: hidden;
+    color: var(--kb-text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .panel-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-primary);
     margin: 0;
+    color: var(--kb-text);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.02em;
 }
 
-.panel-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.panel-actions { display: flex; align-items: center; gap: 8px; }
 
-/* ===== 鍒锋柊鎸夐挳 ===== */
+.panel-actions .btn,
+.panel-actions .btn-primary,
 .btn-outline-secondary {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 12px;
-    border: 1px solid rgba(17, 24, 39, 0.15);
-    border-radius: 8px;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-family: inherit;
-}
-
-.btn-outline-secondary:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: var(--bg-muted);
-}
-
-.btn-outline-secondary svg {
-    opacity: 0.7;
-}
-
-.btn-primary {
-    display: inline-flex;
-    align-items: center;
+    justify-content: center;
+    min-height: 36px;
     gap: 6px;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 10px;
-    background: var(--primary);
-    color: white;
+    padding: 0 16px;
+    color: var(--kb-surface);
+    background: var(--kb-text);
+    border: 1px solid var(--kb-text);
+    border-radius: 8px;
+    box-shadow: none;
+    font-family: inherit;
     font-size: 13px;
     font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-family: inherit;
-    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.15);
+    line-height: 1;
 }
 
-.btn-primary:hover {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.2);
+.btn-outline-secondary,
+.panel-actions .btn-outline-secondary {
+    color: var(--kb-text-secondary);
+    background: var(--kb-surface);
+    border-color: var(--kb-border);
 }
 
-/* ===== 鐪嬫澘 ===== */
-.kanban-board {
-    flex: 1;
-    overflow-x: auto;
-    padding: 16px 24px 20px;
-}
+.kanban-board { flex: 1 1 auto; min-width: 0; }
 
 .kanban-columns {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    min-height: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 20px;
     min-width: 0;
+    height: 100%;
 }
 
 .kanban-col {
-    background: rgba(249, 250, 251, 0.8);
-    border-radius: 12px;
-    padding: 14px;
     display: flex;
     flex-direction: column;
-    min-height: 180px;
-    max-height: 520px;
-    transition: background var(--transition-fast);
-    border: 1px solid rgba(17, 24, 39, 0.04);
+    min-width: 0;
+    min-height: 0;
 }
-
-.kanban-col.drag-over {
-    background: rgba(17, 24, 39, 0.04);
-}
-
-/* Column status is communicated by the dot and label, without decorative bars. */
 
 .kanban-col-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-light);
-    flex-shrink: 0;
+    justify-content: space-between;
+    flex: 0 0 auto;
+    padding: 0 10px 12px;
+    border-bottom: 1px solid var(--kb-border);
 }
 
 .kanban-col-label {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
 }
 
-.col-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.col-dot-gray { background: #6b7280; }
-.col-dot-blue { background: #888888; }
-.col-dot-orange { background: #888888; }
-.col-dot-green { background: #333333; }
+.col-dot { width: 8px; height: 8px; flex: 0 0 auto; padding: 0; border-radius: 50%; }
+.col-dot-gray { background: var(--dot-gray); }
+.col-dot-blue { background: var(--dot-blue); }
+.col-dot-orange { background: var(--dot-orange); }
+.col-dot-green { background: var(--dot-green); }
 
 .kanban-col-count {
-    background: white;
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 700;
+    min-width: 22px;
     padding: 2px 8px;
-    border-radius: 12px;
-    min-width: 24px;
+    color: var(--kb-text-secondary);
+    background: var(--kb-subtle);
+    border: 1px solid var(--kb-border);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
     text-align: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
 }
 
 .kanban-col-list {
-    flex: 1;
-    overflow-y: auto;
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 10px;
     min-height: 0;
+    padding: 16px 10px 10px;
+    overflow-y: auto;
+    background: var(--color-gray-50);
+    border: 1px solid var(--kb-border);
+    border-top: 0;
+    border-radius: 0 0 8px 8px;
 }
 
-.kanban-col-list::-webkit-scrollbar { width: 4px; }
-.kanban-col-list::-webkit-scrollbar-track { background: transparent; }
-.kanban-col-list::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
+.kanban-col.drag-over .kanban-col-list {
+    background: var(--kb-subtle);
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 2px var(--kb-text);
+}
 
-/* 浠诲姟鍗＄墖 */
 .task-card {
-    background: white;
-    border-radius: 10px;
-    padding: 14px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    position: relative;
+    flex: 0 0 auto;
+    padding: 16px;
+    background: var(--kb-surface);
+    border: 1px solid var(--kb-border);
+    border-radius: 8px;
     cursor: pointer;
-    transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
-    border: 1px solid var(--border-light);
+    transition: border-color .15s, box-shadow .15s, transform .15s, background-color .15s;
 }
 
-.task-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: rgba(17, 24, 39, 0.12);
-}
-
-.task-card.dragging {
-    opacity: 0.5;
-    transform: rotate(2deg);
-}
+.task-card.dragging { opacity: .45; transform: rotate(1deg); }
+.col-completed .task-card { opacity: .7; }
+.col-completed .task-card-title { text-decoration: line-through; }
+.task-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 
 .task-card-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    color: var(--kb-text);
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 6px;
     line-height: 1.4;
+    overflow-wrap: anywhere;
 }
+
+.task-status-badge {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 5px;
+    padding: 3px 9px;
+    color: var(--kb-text-secondary);
+    background: var(--kb-surface);
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.task-status-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--dot-gray);
+}
+
+.task-status-badge--todo { color: #0369a1; }
+.task-status-badge--progress { color: #1d4ed8; }
+.task-status-badge--progress::before { background: var(--dot-blue); }
+.task-status-badge--review { color: #c2410c; }
+.task-status-badge--review::before { background: var(--dot-orange); }
+.task-status-badge--done { color: var(--kb-success); }
+.task-status-badge--done::before { background: var(--dot-green); }
 
 .task-card-desc {
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 10px;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    margin: 10px 0 12px;
     overflow: hidden;
-    line-height: 1.5;
+    color: var(--kb-text-secondary);
+    font-size: 13px;
+    line-height: 1.6;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
-.task-card-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 10px;
-}
+.task-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 
 .task-card-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    padding: 0 8px;
+    color: var(--kb-text-muted);
+    background: #f0f0f0;
+    border: 0;
+    border-radius: 999px;
     font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: var(--bg-muted);
-    color: var(--text-secondary);
     font-weight: 500;
 }
 
-.task-card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    color: var(--text-tertiary);
-}
-
-.task-card-assignee {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.task-card-assignee img {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: inline-block;
-    flex-shrink: 0;
-}
-
-.task-card-overdue {
-    color: var(--danger) !important;
+/* 优先级标签：灰底胶囊 + 彩色圆点 */
+.task-priority-tag {
+    gap: 5px;
+    color: var(--kb-text-secondary);
+    background: var(--kb-subtle);
+    border: 1px solid var(--kb-border);
     font-weight: 600;
+}
+
+.task-priority-tag::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #6366f1;
+}
+
+.task-priority-tag[data-priority="3"]::before { background: var(--dot-orange); }
+.task-priority-tag[data-priority="4"]::before { background: var(--kb-danger); }
+.task-priority-tag[data-priority="1"]::before { background: var(--dot-green); }
+
+.task-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 12px; color: var(--kb-text-muted); font-size: 12px; }
+.task-card-overdue { color: var(--kb-danger); font-weight: 600; }
+.task-card-assignee { display: inline-flex; align-items: center; gap: 6px; min-width: 0; color: var(--kb-text-secondary); }
+
+.task-card-assignee img,
+.task-card-assignee > span:first-child {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    object-fit: cover;
+    background: var(--kb-subtle);
+    border-radius: 50%;
+    font-size: 10px;
 }
 
 .kanban-empty {
-    min-height: 100px;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    padding: 24px 12px;
-    color: var(--text-secondary);
-    font-size: 13px;
-    border: 1px dashed rgba(17, 24, 39, 0.12);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.5);
-}
-
-.kanban-empty-icon {
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 8px;
+    gap: 8px;
+    min-height: 56px;
+    padding: 12px 16px;
+    color: var(--kb-text-muted);
+    border: 1px dashed var(--kb-border-strong);
     border-radius: 8px;
-    background: var(--bg-white);
-    color: var(--text-secondary);
-    box-shadow: var(--shadow-xs);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s;
 }
 
-.kanban-empty p {
-    margin: 0;
-}
+.kanban-empty svg { flex: 0 0 auto; opacity: .7; }
+.kanban-empty p { margin: 0; font-size: 12px; }
+.kanban-empty .kanban-empty-action { font-weight: 700; color: var(--kb-text-secondary); }
+.panel-loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--kb-text-muted); font-size: 13px; }
 
-/* ===== 鑱婂ぉ闈㈡澘 ===== */
-.chat-window-panel.active {
-    height: min(660px, calc(100vh - 176px));
-    min-height: 520px;
-    max-width: 1080px;
-    overflow: hidden;
-    border: 1px solid rgba(17, 24, 39, 0.08);
-    border-radius: 16px;
-    background: #ffffff;
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
-}
-
-.chat-window-panel .panel-header {
-    min-height: 72px;
-    padding: 18px 24px;
-    border-bottom-color: rgba(17, 24, 39, 0.06);
-    background: #ffffff;
-}
-
-.chat-window-panel .panel-title {
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.chat-messages-area {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px 28px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    min-height: 0;
-    background: #fafbfc;
-}
-
-.chat-messages-area::-webkit-scrollbar { width: 5px; }
-.chat-messages-area::-webkit-scrollbar-track { background: transparent; }
-.chat-messages-area::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-
-.chat-msg {
-    display: flex;
-    gap: 10px;
-    max-width: min(75%, 640px);
-}
-
-.chat-msg.sent {
-    align-self: flex-end;
-    flex-direction: row-reverse;
-}
-
-.chat-msg.received {
-    align-self: flex-start;
-}
+.chat-window-panel.active { min-height: 560px; }
+.chat-window-panel .panel-header { padding-bottom: 20px; border-bottom: 1px solid var(--kb-border); }
+.chat-messages-area { display: flex; flex: 1 1 auto; flex-direction: column; gap: 14px; min-height: 0; padding: 20px 0; overflow-y: auto; }
+.chat-msg { display: flex; gap: 10px; max-width: min(76%, 680px); }
+.chat-msg.sent { align-self: flex-end; flex-direction: row-reverse; }
+.chat-msg.received { align-self: flex-start; }
 
 .chat-msg-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #111827;
-    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 600;
-    flex-shrink: 0;
-}
-
-.chat-msg-avatar img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.chat-msg-bubble {
-    padding: 10px 14px;
-    border-radius: 14px;
-    font-size: 14px;
-    line-height: 1.6;
-    box-shadow: var(--shadow-sm);
-    word-break: break-word;
-}
-
-.chat-msg.sent .chat-msg-bubble {
-    background: var(--primary);
-    color: white;
-    border-top-right-radius: 4px;
-}
-
-.chat-msg.received .chat-msg-bubble {
-    background: #ffffff;
-    color: var(--text-primary);
-    border: 1px solid var(--border-light);
-    border-top-left-radius: 4px;
-}
-
-.chat-msg-name {
-    font-size: 11px;
-    color: var(--text-tertiary);
-    margin-bottom: 3px;
-    font-weight: 500;
-}
-
-.chat-msg-time {
-    font-size: 10px;
-    color: rgba(71, 85, 105, 0.6);
-    margin-top: 4px;
-}
-
-.chat-msg.sent .chat-msg-time {
-    text-align: right;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.chat-composer {
-    flex-shrink: 0;
-    padding: 14px 20px 16px;
-    border-top: 1px solid var(--border-light);
-    background: #ffffff;
-}
-
-.chat-tool-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    min-height: 32px;
-    margin-bottom: 8px;
-    position: relative;
-}
-
-.chat-tool-btn {
     width: 32px;
     height: 32px;
-    border: 0;
-    border-radius: 8px;
-    color: var(--text-secondary);
-    background: transparent;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.15s;
+    flex: 0 0 auto;
+    overflow: hidden;
+    color: var(--kb-text-secondary);
+    background: var(--kb-subtle);
+    border-radius: 50%;
 }
 
-.chat-tool-btn svg {
-    width: 20px;
-    height: 20px;
-}
+.chat-msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.chat-msg-body { min-width: 0; }
+.chat-msg-bubble { padding: 10px 14px; background: var(--kb-surface); border: 1px solid var(--kb-border); border-radius: 10px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.chat-msg.sent .chat-msg-bubble { color: var(--kb-surface); background: var(--kb-text); border-color: var(--kb-text); }
+.chat-msg-name,.chat-msg-time { color: var(--kb-text-muted); font-size: 11px; }
+.chat-msg.sent .chat-msg-time { text-align: right; }
+.chat-image { display: block; max-width: min(320px, 100%); border-radius: 8px; }
+.chat-file-link { color: inherit; text-decoration: underline; }
 
-.chat-tool-btn:hover {
-    background: rgba(17, 24, 39, 0.05);
-    color: var(--text-primary);
-}
+.chat-composer { position: relative; flex: 0 0 auto; padding-top: 16px; border-top: 1px solid var(--kb-border); }
+.chat-input-bar { display: flex; align-items: flex-end; gap: 10px; }
 
-.chat-input-bar {
-    padding: 0;
-    border-top: 0;
+/* ============ AI 任务拆解 / 团队周报 ============ */
+.ai-privacy-note {
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    background: #fff8e6;
+    border: 1px solid #f0dfa8;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #6b5410;
+}
+.ai-preview-fields { display: grid; grid-template-columns: 84px 1fr; gap: 8px 14px; margin: 0; }
+.ai-preview-fields dt { color: var(--kb-text-muted); font-weight: 600; font-size: 13px; }
+.ai-preview-fields dd { margin: 0; font-size: 13px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
+.ai-result-hint { color: var(--kb-text-muted); font-size: 13px; margin-bottom: 10px; }
+.ai-subtask-list { display: flex; flex-direction: column; gap: 8px; max-height: 46vh; overflow-y: auto; }
+.ai-subtask-item {
     display: flex;
     gap: 10px;
-    align-items: flex-end;
-    flex-shrink: 0;
-    background: transparent;
+    padding: 10px 12px;
+    background: var(--kb-surface);
+    border: 1px solid var(--kb-border);
+    border-radius: 10px;
+    cursor: pointer;
 }
+.ai-subtask-item:hover { border-color: var(--kb-accent, #171717); }
+.ai-subtask-item input[type="checkbox"] { flex: 0 0 auto; margin-top: 3px; width: 16px; height: 16px; }
+.ai-subtask-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ai-subtask-body strong { font-size: 14px; }
+.ai-subtask-body small { color: var(--kb-text-muted); font-size: 12.5px; line-height: 1.55; }
+.ai-subtask-body em { color: var(--kb-text-muted); font-style: normal; font-size: 12px; }
+
+.weekly-report-body { display: flex; flex-direction: column; gap: 14px; }
+.wr-meta { display: flex; gap: 10px; flex-wrap: wrap; color: var(--kb-text-muted); font-size: 12.5px; }
+.wr-counts { display: flex; gap: 8px; flex-wrap: wrap; }
+.wr-counts span {
+    padding: 4px 10px;
+    background: var(--kb-surface);
+    border: 1px solid var(--kb-border);
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+.wr-section h3 { font-size: 13.5px; margin-bottom: 6px; }
+.wr-section ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.wr-section li { font-size: 13px; line-height: 1.6; }
+.wr-section--danger h3 { color: #c0392b; }
+.wr-empty { color: var(--kb-text-muted); font-size: 13px; margin: 0; }
+
+.chat-input-wrap {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--kb-subtle);
+    border: 1px solid var(--kb-border);
+    border-radius: 8px;
+    transition: border-color .12s, background-color .12s, box-shadow .12s;
+}
+
+.chat-input-wrap:focus-within { background: var(--kb-surface); border-color: var(--kb-text); box-shadow: 0 0 0 3px rgb(40 42 47 / 8%); }
 
 .chat-input-bar textarea {
-    flex: 1;
-    border: 1px solid rgba(17, 24, 39, 0.1);
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 14px;
-    resize: none;
+    min-width: 0;
     min-height: 44px;
     max-height: 120px;
+    padding: 10px 14px 4px;
+    color: var(--kb-text);
+    background: transparent;
+    border: 0;
     font-family: inherit;
-    background: #fafbfc;
-    color: var(--text-primary);
-    transition: border-color 0.15s, background 0.15s;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: none;
 }
 
-.chat-input-bar textarea:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.04);
-}
+.chat-input-bar textarea:focus { outline: 0; }
 
-.chat-send-btn {
-    min-width: 80px;
-    height: 44px;
-    padding: 0 20px;
-    border: none;
-    background: var(--primary);
-    color: white;
-    border-radius: 12px;
-    cursor: pointer;
+.chat-tools { display: flex; gap: 2px; padding: 2px 8px 8px; }
+
+.chat-tool-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    font-weight: 700;
-    transition: all var(--transition-fast);
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.15);
+    width: 32px;
+    height: 32px;
+    color: var(--kb-text-muted);
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color .12s, background-color .12s;
 }
 
-.chat-send-btn:hover {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(17, 24, 39, 0.2);
-}
+.chat-tool-btn:hover { color: var(--kb-text); background: var(--kb-selected); }
 
-.chat-send-btn:disabled {
-    background: var(--bg-muted);
-    color: var(--text-tertiary);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-body[data-app-page="team-space"] .chat-window-panel .chat-send-btn {
-    width: auto !important;
-    min-width: 80px !important;
-    height: 44px !important;
-    padding: 0 20px !important;
-    border-radius: 12px !important;
-    background: var(--primary) !important;
-    border-color: var(--primary) !important;
-    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.15) !important;
-}
-
-body[data-app-page="team-space"] .chat-window-panel .chat-send-btn:hover {
-    background: var(--primary-dark) !important;
-    border-color: var(--primary-dark) !important;
-}
-
-/* 闅愯棌璇煶鎸夐挳锛堟殏涓嶆敮鎸侊級 */
-.chat-tool-btn[title="璇煶"] {
-    display: none;
-}
-
-.conn-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 11px;
-    padding: 3px 10px;
+.chat-send-btn {
+    min-width: 72px;
+    height: 44px;
+    padding: 0 16px;
+    color: var(--kb-surface);
+    background: var(--kb-text);
+    border: 1px solid var(--kb-text);
     border-radius: 8px;
-    min-height: 28px;
-    font-weight: 500;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
 }
 
-.conn-status.connected {
-    background: rgba(0, 0, 0, 0.06);
-    color: var(--success);
-}
+.chat-send-btn:disabled { color: var(--kb-text-muted); background: var(--kb-subtle); border-color: var(--kb-border); }
 
-.conn-status.disconnected {
-    background: rgba(0, 0, 0, 0.06);
-    color: var(--danger);
-}
-
-.conn-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-}
-
-/* ===== 鎴愬憳闈㈡澘 ===== */
-.members-list-area {
-    flex: 1;
-    padding: 20px 24px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+.members-list-area { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; padding: 4px 0 16px; }
 
 .member-card {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    background: white;
-    border: 1px solid var(--border-light);
-    border-radius: 12px;
-    transition: all var(--transition-fast);
-    cursor: pointer;
-}
-
-.member-card:hover {
-    border-color: var(--primary);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    transform: translateY(-1px);
-}
-
-.member-card-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary) 0%, #374151 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 600;
-    flex-shrink: 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.member-card-avatar img {
     width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.member-card-avatar .avatar-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #111827 0%, #374151 100%);
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: 50%;
-}
-
-.member-online-dot {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid white;
-}
-
-.member-online-dot.online {
-    background: var(--success);
-}
-
-.member-online-dot.offline {
-    background: #d1d5db;
-}
-
-.member-card-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.member-card-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.member-card-role {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    font-weight: 500;
-}
-
-.member-card-role.leader-tag {
-    color: var(--primary);
-    font-weight: 700;
-}
-
-.member-card-meta {
-    font-size: 12px;
-    color: var(--text-tertiary);
-    margin-top: 2px;
-}
-
-.member-card-skills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 4px;
-}
-
-.skill-tag {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background: rgba(17, 24, 39, 0.06);
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-.member-card:hover .member-card-name {
-    color: var(--primary);
-}
-
-/* 寮€鏀惧洟闃熻鍛?*/
-.team-warning {
-    background: rgba(245, 158, 11, 0.08);
-    border: 1px solid rgba(245, 158, 11, 0.2);
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin: 16px 0;
-    display: flex;
-    align-items: center;
+    min-height: 64px;
     gap: 12px;
-    color: #92400e;
-    font-size: 14px;
+    padding: 14px 0;
+    color: var(--kb-text);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--kb-border);
+    font: inherit;
+    text-align: left;
 }
 
-.team-warning-icon {
-    font-size: 20px;
-    flex-shrink: 0;
+.member-card-avatar { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 50%; }
+.member-card-avatar img,.member-card-avatar .avatar-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; object-fit: cover; background: var(--kb-subtle); border-radius: 50%; }
+.member-card-info { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+.member-card-name { font-size: 14px; font-weight: 600; }
+.member-card-role,.member-card-meta { color: var(--kb-text-muted); font-size: 12px; }
+.member-card-skills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.skill-tag { padding: 2px 8px; color: var(--kb-text-secondary); background: var(--kb-subtle); border: 1px solid var(--kb-border); border-radius: 6px; font-size: 10px; }
+
+.emoji-picker { position: absolute; left: 0; bottom: calc(100% + 8px); z-index: 1080; display: none; width: 320px; padding: 10px; background: var(--kb-surface); border: 1px solid var(--kb-border); border-radius: 10px; box-shadow: 0 12px 32px rgb(0 0 0 / 12%); }
+.emoji-picker.open { display: block; }
+.emoji-grid { display: grid; grid-template-columns: repeat(8, 32px); gap: 4px; }
+.emoji-item { width: 32px; height: 32px; background: transparent; border: 0; border-radius: 6px; font-size: 18px; }
+
+body[data-app-page="team-space"] .modal-content { color: var(--kb-text); background: var(--kb-surface); border: 1px solid var(--kb-border); border-radius: 12px; box-shadow: 0 20px 60px rgb(0 0 0 / 12%); }
+body[data-app-page="team-space"] .modal-dialog-centered { display: flex !important; align-items: center; min-height: calc(100vh - 2rem); margin: 0 auto; }
+body[data-app-page="team-space"] .modal-header,
+body[data-app-page="team-space"] .modal-footer { padding: 16px 20px; border-color: var(--kb-border); }
+body[data-app-page="team-space"] .modal-body { padding: 20px; }
+body[data-app-page="team-space"] .form-control,
+body[data-app-page="team-space"] .form-select { min-height: 40px; color: var(--kb-text); background-color: var(--kb-surface); border-color: var(--kb-border); border-radius: 8px; box-shadow: none; }
+body[data-app-page="team-space"] textarea.form-control { min-height: 88px; }
+body[data-app-page="team-space"] .form-control:focus,
+body[data-app-page="team-space"] .form-select:focus { border-color: var(--kb-text); box-shadow: 0 0 0 3px rgb(23 23 23 / 8%); }
+
+@media (hover: hover) and (pointer: fine) {
+    .sidebar-back-btn:hover { color: var(--kb-text); background: transparent; }
+    .sidebar-nav-item:hover { color: var(--kb-text); background: var(--kb-subtle); }
+    .sidebar-nav-item.active:hover { color: var(--kb-surface); background: var(--kb-text); }
+    .task-card:hover { border-color: var(--kb-border-strong); box-shadow: 0 4px 12px rgb(0 0 0 / 6%); transform: translateY(-1px); }
+    .member-card:hover { background: var(--kb-subtle); }
+    .emoji-item:hover { background: var(--kb-subtle); }
+    .kanban-empty:hover { border-style: solid; border-color: var(--kb-border-strong); background: var(--kb-surface); }
 }
 
-/* 绌烘€?/ 鍔犺浇 */
-.panel-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    color: var(--text-tertiary);
-    font-size: 13px;
+/* Tablet: top project navigation and a two-column board. */
+@media (min-width: 768px) and (max-width: 1024px) {
+    body[data-app-page="team-space"] .main-content { padding: 24px; }
+    .workspace-layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .sidebar { border: 1px solid var(--kb-border); border-radius: 12px; }
+    .sidebar-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px 16px; }
+    .sidebar-logo { margin: 0; }
+    .sidebar-back-btn { width: auto; }
+    .sidebar-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+    .sidebar-nav-item { justify-content: center; min-height: 44px; }
+    .sidebar-members-card { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+    .smc-avatars { margin: 0; }
+    .smc-info { flex-direction: row; align-items: center; }
+    .main-content-area { padding: 0; }
+    .kanban-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .kanban-col { min-height: 280px; }
 }
 
-/* ===== 琛ㄦ儏閫夋嫨鍣?===== */
-.emoji-picker {
-    position: fixed;
-    bottom: 140px;
-    right: 40px;
-    background: white;
-    border: 1px solid rgba(17, 24, 39, 0.1);
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    padding: 10px;
-    z-index: 1000;
-    max-width: 340px;
-}
-
-.emoji-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.emoji-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-}
-
-.emoji-item {
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background 0.1s;
-}
-
-.emoji-item:hover {
-    background: var(--bg-muted);
-}
-
-/* ===== 鍝嶅簲寮?===== */
-@media (max-width: 768px) {
-    .workspace-layout {
-        grid-template-columns: 1fr;
-        margin: 8px 0;
-        gap: 12px;
-    }
+/* Mobile: project drawer, one status at a time and touch-first actions. */
+@media (max-width: 767.98px) {
+    body[data-app-page="team-space"] { font-size: 15px; overflow-x: hidden; }
+    body[data-app-page="team-space"] .main-content { max-width: none; padding: 12px 16px calc(96px + env(safe-area-inset-bottom)); }
+    .project-mobile-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .project-menu-trigger { flex: 1 1 auto; justify-content: flex-start; gap: 9px; min-width: 0; padding: 0 14px; font-weight: 600; }
+    .project-menu-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .project-mobile-back { flex: 0 0 44px; padding: 0; }
+    .workspace-layout { display: block; min-height: 0; }
 
     .sidebar {
-        display: flex;
-        position: static;
-        max-height: none;
-        height: auto;
-        margin-right: 0;
-        margin-bottom: 0;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1170;
+        width: min(88vw, 360px);
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        border: 0;
+        border-left: 1px solid var(--kb-border);
+        box-shadow: -16px 0 40px rgb(0 0 0 / 12%);
+        transform: translateX(105%);
+        visibility: hidden;
+        transition: transform .22s ease, visibility 0s linear .22s;
     }
 
-    .sidebar-header {
-        padding: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        border-bottom: 1px solid var(--border-light);
+    .sidebar.is-open { visibility: visible; transform: translateX(0); transition-delay: 0s; }
+    .sidebar-header { padding: 16px; }
+    .sidebar-logo { padding-right: 44px; }
+    .project-menu-close { position: absolute; top: 16px; right: 16px; display: inline-flex; padding: 0; border: 0; }
+    .sidebar-back-btn { display: none; }
+    .sidebar-nav { gap: 6px; padding: 12px 16px; }
+    .sidebar-nav-item { min-height: 48px; padding: 0 14px; font-size: 16px; }
+    .sidebar-members-card { margin-top: auto; }
+
+    .project-menu-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1160;
+        display: block;
+        padding: 0;
+        visibility: hidden;
+        opacity: 0;
+        background: rgb(0 0 0 / 40%);
+        border: 0;
+        transition: opacity .2s, visibility 0s linear .2s;
     }
 
-    .sidebar-logo {
-        margin-bottom: 0;
-    }
+    .project-menu-backdrop.is-open { visibility: visible; opacity: 1; transition-delay: 0s; }
+    body.project-menu-open { overflow: hidden; }
+    .main-content-area { padding: 0; }
+    .workspace-panel.active { min-height: 0; }
+    .workspace-panel,
+    .kanban-board,
+    .kanban-col,
+    .task-card { max-width: 100%; }
+    .panel-header { padding: 4px 0 16px; }
+    .panel-title { font-size: 20px; }
+    #kanbanActions { display: none; }
 
-    .sidebar-back-btn {
-        width: auto;
-        flex-shrink: 0;
-    }
-
-    .sidebar-nav {
-        flex-direction: row;
-        gap: 8px;
-        overflow-x: auto;
-        padding: 10px 12px;
-    }
-
-    .sidebar-nav-item {
-        flex: 0 0 auto;
-        min-width: 108px;
-        justify-content: center;
-        padding: 9px 12px;
-        border-left-width: 1px;
-        border-bottom: 3px solid transparent;
-    }
-
-    .sidebar-nav-item.active {
-        border-left-color: transparent;
-        border-bottom-color: var(--primary);
-    }
-
-    .workspace-panel {
-        min-height: 60vh;
-    }
-
-    .chat-window-panel.active {
-        height: calc(100vh - 220px);
-        min-height: 520px;
-        max-width: 100%;
-        border-radius: 14px;
-    }
-
-    .chat-window-panel .panel-header {
-        padding: 14px 16px;
-    }
-
-    .chat-messages-area {
-        padding: 18px 14px;
-    }
-
-    .chat-msg {
-        max-width: 86%;
-    }
-
-    .chat-composer {
-        padding: 8px 12px 12px;
-    }
-
-    .chat-input-bar {
-        gap: 8px;
-    }
-
-    .chat-send-btn {
-        min-width: 68px;
-        padding: 0 14px;
-    }
-
-    .kanban-columns {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .kanban-col {
-        max-height: 300px;
-    }
-
-    .sidebar-footer {
-        padding: 10px 12px;
-    }
-
-    .sidebar-footer-info {
-        flex-direction: row;
-        gap: 12px;
-        overflow-x: auto;
-    }
-
-    .sidebar-footer-row {
-        min-width: max-content;
+    .kanban-status-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, max-content);
         gap: 6px;
-    }
-}
-
-/* ========================================================================== 
-   v17 - unified workspace shell
-   Matches the profile and detail-page surface language while keeping the
-   workspace dense enough for real collaboration.
-   ========================================================================== */
-body[data-app-page="team-space"] {
-    --ts-surface: #ffffff;
-    --ts-canvas: #faf9f7;
-    --ts-subtle: #f6f4f1;
-    --ts-border: #e8e2d9;
-    --ts-border-strong: #d8d0c5;
-    --ts-text: #2c2419;
-    --ts-muted: #776b5e;
-    --ts-deep: #111827;
-    --ts-shadow: 0 10px 28px rgba(44, 36, 25, 0.07);
-    background: var(--ts-canvas) !important;
-    color: var(--ts-text) !important;
-}
-
-body[data-app-page="team-space"] .main-content {
-    max-width: 1280px !important;
-    padding: 28px 24px 64px !important;
-}
-
-body[data-app-page="team-space"] .workspace-layout {
-    grid-template-columns: 248px minmax(0, 1fr) !important;
-    gap: 24px !important;
-    margin: 8px 0 32px !important;
-    min-height: calc(100vh - 156px) !important;
-}
-
-body[data-app-page="team-space"] .sidebar {
-    position: sticky !important;
-    top: calc(var(--header-height, 64px) + 20px) !important;
-    align-self: start !important;
-    max-height: calc(100vh - var(--header-height, 64px) - 40px) !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-    background: var(--ts-surface) !important;
-    border: 1px solid var(--ts-border) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-header {
-    padding: 22px 18px 16px !important;
-    border-bottom: 1px solid var(--ts-border) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-logo {
-    margin-bottom: 14px !important;
-    color: var(--ts-text) !important;
-    font-size: 16px !important;
-}
-
-body[data-app-page="team-space"] .sidebar-back-btn {
-    min-height: 40px !important;
-    justify-content: flex-start !important;
-    padding: 8px 12px !important;
-    background: var(--ts-surface) !important;
-    border: 1px solid var(--ts-border) !important;
-    border-radius: 8px !important;
-    color: var(--ts-muted) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-back-btn:hover {
-    background: var(--ts-subtle) !important;
-    border-color: var(--ts-border-strong) !important;
-    color: var(--ts-text) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav {
-    padding: 12px !important;
-    gap: 4px !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav-item {
-    min-height: 44px !important;
-    padding: 10px 12px !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-    color: var(--ts-muted) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav-item:hover {
-    background: var(--ts-subtle) !important;
-    color: var(--ts-text) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav-item.active,
-body[data-app-page="team-space"] .sidebar-nav-item.active:hover {
-    background: var(--ts-deep) !important;
-    color: #ffffff !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] .sidebar-footer {
-    padding: 16px 18px !important;
-    background: var(--ts-subtle) !important;
-    border-top: 1px solid var(--ts-border) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-footer-info {
-    gap: 8px !important;
-}
-
-body[data-app-page="team-space"] .sidebar-footer-row {
-    font-size: 12px !important;
-}
-
-body[data-app-page="team-space"] .sidebar-footer-label {
-    color: var(--ts-muted) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-footer-value {
-    color: var(--ts-text) !important;
-}
-
-body[data-app-page="team-space"] .main-content-area {
-    min-width: 0 !important;
-}
-
-body[data-app-page="team-space"] .workspace-panel.active {
-    min-width: 0 !important;
-    overflow: hidden !important;
-    background: var(--ts-surface) !important;
-    border: 1px solid var(--ts-border) !important;
-    border-radius: 16px !important;
-    box-shadow: var(--ts-shadow) !important;
-}
-
-body[data-app-page="team-space"] .panel-header {
-    min-height: 76px !important;
-    padding: 18px 22px !important;
-    background: var(--ts-surface) !important;
-    border-bottom: 1px solid var(--ts-border) !important;
-}
-
-body[data-app-page="team-space"] .panel-title {
-    color: var(--ts-text) !important;
-    font-size: 20px !important;
-}
-
-body[data-app-page="team-space"] .panel-actions {
-    flex-wrap: wrap !important;
-}
-
-body[data-app-page="team-space"] .btn-outline-secondary,
-body[data-app-page="team-space"] .btn-primary {
-    min-height: 40px !important;
-    padding: 8px 14px !important;
-    border-radius: 8px !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] .btn-outline-secondary {
-    background: var(--ts-surface) !important;
-    border: 1px solid var(--ts-border) !important;
-    color: var(--ts-muted) !important;
-}
-
-body[data-app-page="team-space"] .btn-outline-secondary:hover {
-    background: var(--ts-subtle) !important;
-    border-color: var(--ts-border-strong) !important;
-    color: var(--ts-text) !important;
-}
-
-body[data-app-page="team-space"] .btn-primary,
-body[data-app-page="team-space"] .chat-send-btn {
-    background: var(--ts-deep) !important;
-    border-color: var(--ts-deep) !important;
-    color: #ffffff !important;
-}
-
-body[data-app-page="team-space"] .btn-primary:hover,
-body[data-app-page="team-space"] .chat-send-btn:hover {
-    background: #030712 !important;
-    transform: none !important;
-}
-
-body[data-app-page="team-space"] .kanban-board {
-    padding: 20px 22px 24px !important;
-    overflow-x: hidden !important;
-    background: var(--ts-surface) !important;
-}
-
-body[data-app-page="team-space"] .kanban-columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 16px !important;
-    align-items: stretch !important;
-}
-
-body[data-app-page="team-space"] .kanban-col {
-    min-width: 0 !important;
-    min-height: 280px !important;
-    padding: 16px !important;
-    overflow: hidden !important;
-    background: var(--ts-canvas) !important;
-    border: 1px solid var(--ts-border) !important;
-    border-radius: 12px !important;
-}
-
-body[data-app-page="team-space"] .kanban-col-header {
-    margin-bottom: 14px !important;
-    padding-bottom: 12px !important;
-    border-bottom: 1px solid var(--ts-border) !important;
-}
-
-body[data-app-page="team-space"] .kanban-col-label {
-    color: var(--ts-text) !important;
-}
-
-body[data-app-page="team-space"] .kanban-col-count,
-body[data-app-page="team-space"] .task-card-tag,
-body[data-app-page="team-space"] .status-badge {
-    background: var(--ts-surface) !important;
-    border: 1px solid var(--ts-border) !important;
-    color: var(--ts-muted) !important;
-}
-
-body[data-app-page="team-space"] .task-card {
-    padding: 16px !important;
-    background: var(--ts-surface) !important;
-    border: 1px solid var(--ts-border) !important;
-    border-radius: 10px !important;
-    box-shadow: 0 1px 2px rgba(44, 36, 25, 0.04) !important;
-}
-
-body[data-app-page="team-space"] .task-card:hover {
-    background: var(--ts-surface) !important;
-    border-color: var(--ts-border-strong) !important;
-    box-shadow: 0 8px 20px rgba(44, 36, 25, 0.08) !important;
-    transform: none !important;
-}
-
-body[data-app-page="team-space"] .kanban-empty,
-body[data-app-page="team-space"] .panel-loading {
-    color: var(--ts-muted) !important;
-}
-
-body[data-app-page="team-space"] .chat-window-panel,
-body[data-app-page="team-space"] #members-panel {
-    min-height: min(720px, calc(100vh - 156px)) !important;
-}
-
-body[data-app-page="team-space"] .chat-messages-area,
-body[data-app-page="team-space"] .members-list-area {
-    background: var(--ts-canvas) !important;
-}
-
-body[data-app-page="team-space"] .chat-composer {
-    background: var(--ts-surface) !important;
-    border-top: 1px solid var(--ts-border) !important;
-}
-
-body[data-app-page="team-space"] .team-warning {
-    margin: 8px 0 16px !important;
-    border: 1px solid #e8ddcd !important;
-    border-radius: 12px !important;
-    background: #faf6f0 !important;
-    color: var(--ts-text) !important;
-}
-
-@media (max-width: 900px) {
-    body[data-app-page="team-space"] .main-content {
-        padding: 20px 16px 80px !important;
+        margin: 0 -16px 14px;
+        padding: 0 16px 2px;
+        overflow-x: auto;
+        scrollbar-width: none;
     }
 
-    body[data-app-page="team-space"] .workspace-layout {
-        grid-template-columns: 1fr !important;
-        gap: 16px !important;
-        margin-top: 4px !important;
+    .kanban-status-tabs::-webkit-scrollbar { display: none; }
+    .kanban-status-tab { min-width: 76px; min-height: 44px; padding: 0 14px; color: var(--kb-text-secondary); background: var(--kb-surface); border: 1px solid var(--kb-border); border-radius: 999px; font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1; }
+    .kanban-status-tab.active { color: #fff; background: var(--kb-text); border-color: var(--kb-text); }
+    .kanban-columns { display: block; }
+    .kanban-col { display: none; min-height: 280px; }
+    .kanban-col.mobile-active { display: flex; }
+    .kanban-col-header { position: sticky; top: calc(56px + env(safe-area-inset-top)); z-index: 2; padding: 10px 0 12px; background: var(--kb-bg); }
+    .kanban-col-list { overflow: visible; }
+    .task-card { padding: 20px; touch-action: pan-y; user-select: none; -webkit-touch-callout: none; }
+    .task-card:active { background: var(--kb-subtle); border-color: var(--kb-border-strong); transform: none; }
+    .task-card-title { font-size: 18px; }
+    .task-card-desc { font-size: 14px; }
+    .task-card[draggable="true"] { cursor: pointer; }
+    .create-task-fab {
+        position: fixed;
+        right: 20px;
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        z-index: 1040;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        color: #fff;
+        background: var(--kb-text);
+        border: 0;
+        border-radius: 50%;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
     }
 
-    body[data-app-page="team-space"] .sidebar {
-        position: static !important;
-        max-height: none !important;
+    .create-task-fab:not([hidden]) { display: inline-flex; }
+    .create-task-fab:active { transform: scale(.96); }
+    .chat-window-panel.active { min-height: calc(100dvh - 160px); }
+    .chat-msg { max-width: 90%; }
+    .chat-composer { position: sticky; bottom: 0; padding: 12px 0 env(safe-area-inset-bottom); background: var(--kb-bg); }
+    .chat-input-bar textarea { min-height: 48px; font-size: 16px; }
+    .chat-tool-btn { width: 44px; height: 44px; }
+    .chat-send-btn { min-width: 64px; height: 48px; }
+    .members-list-area { grid-template-columns: 1fr; }
+    .member-card { min-height: 72px; padding: 14px 4px; }
+
+    .mobile-task-actions {
+        position: fixed;
+        inset: 0;
+        z-index: 1180;
+        align-items: flex-end;
+        justify-content: stretch;
+        visibility: hidden;
     }
 
-    body[data-app-page="team-space"] .sidebar-header {
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr) auto !important;
-        align-items: center !important;
-        gap: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-logo {
-        margin: 0 !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-back-btn {
-        width: auto !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav {
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        overflow: visible !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav-item {
-        min-width: 0 !important;
-        justify-content: center !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-footer-info {
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 10px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-footer-row {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 2px !important;
-    }
-
-    body[data-app-page="team-space"] .kanban-columns {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-@media (max-width: 576px) {
-    body[data-app-page="team-space"] .main-content {
-        padding: 12px 12px 88px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar,
-    body[data-app-page="team-space"] .workspace-panel.active {
-        border-radius: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-header {
-        padding: 16px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-logo span {
-        max-width: 180px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav {
-        padding: 10px !important;
-        gap: 6px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav-item {
-        padding: 9px 6px !important;
-        font-size: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav-item svg {
-        display: none !important;
-    }
-
-    body[data-app-page="team-space"] .panel-header {
-        min-height: 0 !important;
-        padding: 16px !important;
-        align-items: flex-start !important;
-        gap: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .panel-actions {
-        width: 100% !important;
-    }
-
-    body[data-app-page="team-space"] .panel-actions .btn {
-        flex: 1 !important;
-        justify-content: center !important;
-    }
-
-    body[data-app-page="team-space"] .kanban-board {
-        padding: 14px !important;
-    }
-
-    body[data-app-page="team-space"] .kanban-col {
-        min-height: 220px !important;
-        padding: 14px !important;
-    }
-}
-
-/* v12 鍏ㄧ珯榛戠櫧鐏版敹鍙ｏ細鍥㈤槦绌洪棿鐙珛鏍峰紡瑕嗙洊 */
-:root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f5f5f5;
-    --bg-tertiary: #eeeeee;
-    --text-title: #000000;
-    --text-body: #333333;
-    --text-muted: #888888;
-    --border: #e0e0e0;
-    --border-light: #f0f0f0;
-}
-
-body[data-app-page="team-space"] {
-    background: var(--bg-body) !important;
-    color: var(--text-body) !important;
-}
-
-body[data-app-page="team-space"] .particle-canvas {
-    display: none !important;
-}
-
-body[data-app-page="team-space"] .workspace-layout {
-    grid-template-columns: 240px minmax(0, 1fr) !important;
-    gap: 32px !important;
-    margin: 48px 0 80px !important;
-}
-
-body[data-app-page="team-space"] .sidebar,
-body[data-app-page="team-space"] .workspace-panel,
-body[data-app-page="team-space"] .modal-content {
-    background: transparent !important;
-    border: 0 !important;
-    border-radius: var(--radius-sm) !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] .sidebar {
-    border-right: 1px solid var(--border) !important;
-    margin-right: 0 !important;
-    padding-right: 20px !important;
-    top: 104px !important;
-}
-
-body[data-app-page="team-space"] .sidebar-header,
-body[data-app-page="team-space"] .sidebar-footer,
-body[data-app-page="team-space"] .panel-header,
-body[data-app-page="team-space"] .kanban-col-header,
-body[data-app-page="team-space"] .chat-composer,
-body[data-app-page="team-space"] .modal-header,
-body[data-app-page="team-space"] .modal-footer {
-    background: transparent !important;
-    border-color: var(--border) !important;
-}
-
-body[data-app-page="team-space"] :where(.sidebar-logo, .panel-title, .kanban-col-label, .task-card-title, .member-name, .message-author, .modal-title) {
-    color: var(--text-title) !important;
-}
-
-body[data-app-page="team-space"] :where(.sidebar-footer-label, .task-card-desc, .task-card-footer, .member-meta, .message-time, .conn-status, .panel-loading) {
-    color: var(--text-muted) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-back-btn,
-body[data-app-page="team-space"] .sidebar-nav-item,
-body[data-app-page="team-space"] .btn,
-body[data-app-page="team-space"] .chat-tool-btn,
-body[data-app-page="team-space"] .chat-send-btn,
-body[data-app-page="team-space"] input,
-body[data-app-page="team-space"] textarea,
-body[data-app-page="team-space"] select {
-    border-radius: var(--radius-sm) !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] .sidebar-back-btn,
-body[data-app-page="team-space"] .btn-outline-secondary,
-body[data-app-page="team-space"] .chat-tool-btn,
-body[data-app-page="team-space"] input,
-body[data-app-page="team-space"] textarea,
-body[data-app-page="team-space"] select {
-    background: var(--bg-primary) !important;
-    border: 1px solid var(--border) !important;
-    color: var(--text-title) !important;
-}
-
-body[data-app-page="team-space"] .btn-primary,
-body[data-app-page="team-space"] .chat-send-btn,
-body[data-app-page="team-space"] .sidebar-nav-item.active {
-    background: var(--text-title) !important;
-    border: 1px solid var(--text-title) !important;
-    color: var(--bg-primary) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav-item {
-    color: var(--text-body) !important;
-    border-left: 3px solid transparent !important;
-    background: transparent !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav-item:hover {
-    background: var(--bg-secondary) !important;
-    color: var(--text-title) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav-item.active {
-    border-left-color: var(--text-title) !important;
-}
-
-body[data-app-page="team-space"] .kanban-columns {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(250px, 1fr)) !important;
-    gap: 20px !important;
-}
-
-body[data-app-page="team-space"] .kanban-board {
-    overflow-x: auto !important;
-    padding: 24px 0 28px !important;
-}
-
-body[data-app-page="team-space"] .kanban-col,
-body[data-app-page="team-space"] .task-card,
-body[data-app-page="team-space"] .member-card,
-body[data-app-page="team-space"] .kanban-empty {
-    background: var(--bg-secondary) !important;
-    border: 0 !important;
-    border-radius: var(--radius-sm) !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] .task-card,
-body[data-app-page="team-space"] .member-card {
-    border-bottom: 1px solid var(--border) !important;
-}
-
-body[data-app-page="team-space"] .task-card:hover,
-body[data-app-page="team-space"] .member-card:hover {
-    background: var(--bg-tertiary) !important;
-    transform: translateY(-2px) !important;
-}
-
-body[data-app-page="team-space"] .col-dot,
-body[data-app-page="team-space"] .col-dot-gray,
-body[data-app-page="team-space"] .col-dot-blue,
-body[data-app-page="team-space"] .col-dot-orange,
-body[data-app-page="team-space"] .col-dot-green,
-body[data-app-page="team-space"] .conn-dot {
-    background: var(--text-muted) !important;
-}
-
-body[data-app-page="team-space"] .kanban-col-count,
-body[data-app-page="team-space"] .task-card-tag,
-body[data-app-page="team-space"] .member-role,
-body[data-app-page="team-space"] .status-badge {
-    background: var(--bg-primary) !important;
-    border-radius: var(--radius-sm) !important;
-    color: var(--text-body) !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] .chat-window-panel {
-    min-height: min(720px, calc(100vh - 170px)) !important;
-    border-top: 1px solid var(--border) !important;
-    border-bottom: 1px solid var(--border) !important;
-}
-
-body[data-app-page="team-space"] .chat-messages-area {
-    background: var(--bg-secondary) !important;
-    min-height: 360px !important;
-}
-
-body[data-app-page="team-space"] .chat-composer {
-    position: sticky !important;
-    bottom: 0 !important;
-    background: var(--bg-primary) !important;
-}
-
-body[data-app-page="team-space"] .message-bubble,
-body[data-app-page="team-space"] .chat-message-bubble {
-    background: var(--bg-primary) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius-sm) !important;
-    color: var(--text-body) !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] img {
-    filter: grayscale(0.3) !important;
-}
-
-@media (max-width: 768px) {
-    body[data-app-page="team-space"] .workspace-layout {
-        grid-template-columns: 1fr !important;
-        gap: 24px !important;
-        margin-top: 28px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar {
-        position: static !important;
-        border-right: 0 !important;
-        border-bottom: 1px solid var(--border) !important;
-        padding-right: 0 !important;
-        padding-bottom: 18px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav {
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 8px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav-item {
-        justify-content: center !important;
-        border-left: 0 !important;
-        border-bottom: 3px solid transparent !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav-item.active {
-        border-bottom-color: var(--text-title) !important;
-    }
-}
-
-/* 绉诲姩绔簳閮ㄦ爣绛炬爮锛堥粯璁ら殣钘忥紝閫氳繃鍐呰仈鏍峰紡鏄剧ず锛?*/
-.mobile-tab-bar {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border-light);
-    padding: 8px 0 env(safe-area-inset-bottom, 8px);
-    z-index: 100;
-    justify-content: space-around;
-}
-
-.mobile-tab-btn {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    padding: 6px 0;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 10px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: color 0.15s;
-    font-family: inherit;
-}
-
-.mobile-tab-btn svg {
-    width: 20px;
-    height: 20px;
-    opacity: 0.7;
-}
-
-.mobile-tab-btn.active {
-    color: var(--primary);
-}
-
-.mobile-tab-btn.active svg {
-    opacity: 1;
-}
-
-/* v13：团队空间新版 DOM 的最终视觉收口 */
-body[data-app-page="team-space"] .main-content {
-    padding-top: clamp(56px, 7vw, 96px) !important;
-}
-
-body[data-app-page="team-space"] .team-warning {
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius-sm) !important;
-    background: var(--bg-secondary) !important;
-    color: var(--text-body) !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] .panel-title,
-body[data-app-page="team-space"] .sidebar-logo span {
-    letter-spacing: 0 !important;
-}
-
-body[data-app-page="team-space"] .task-card-header {
-    display: flex !important;
-    align-items: flex-start !important;
-    justify-content: space-between !important;
-    gap: 12px !important;
-}
-
-body[data-app-page="team-space"] .task-card-title {
-    margin: 0 !important;
-    font-size: 16px !important;
-    line-height: 1.4 !important;
-    font-weight: 800 !important;
-}
-
-body[data-app-page="team-space"] .task-status-badge,
-body[data-app-page="team-space"] .badge-ilink {
-    display: inline-flex !important;
-    align-items: center !important;
-    white-space: nowrap !important;
-    padding: 4px 8px !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius-sm) !important;
-    background: var(--task-todo-light) !important;
-    color: var(--task-todo-text) !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
-}
-
-body[data-app-page="team-space"] .task-status-badge--todo {
-    background: var(--task-todo-light) !important;
-    border-color: var(--task-todo) !important;
-    color: var(--task-todo-text) !important;
-}
-
-body[data-app-page="team-space"] .task-status-badge--progress {
-    background: var(--task-progress-light) !important;
-    border-color: var(--task-progress) !important;
-    color: var(--task-progress-text) !important;
-}
-
-body[data-app-page="team-space"] .task-status-badge--review {
-    background: var(--task-review-light) !important;
-    border-color: var(--task-review) !important;
-    color: var(--task-review-text) !important;
-}
-
-body[data-app-page="team-space"] .task-status-badge--done,
-body[data-app-page="team-space"] .badge-ilink--dark {
-    background: var(--task-done-light) !important;
-    border-color: var(--task-done) !important;
-    color: var(--task-done-text) !important;
-}
-
-body[data-app-page="team-space"] .task-card-desc {
-    margin: 10px 0 14px !important;
-    line-height: 1.7 !important;
-}
-
-body[data-app-page="team-space"] .task-card-assignee {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    color: var(--text-body) !important;
-}
-
-body[data-app-page="team-space"] .task-card-assignee img,
-body[data-app-page="team-space"] .task-card-assignee > span:first-child,
-body[data-app-page="team-space"] .chat-msg-avatar img,
-body[data-app-page="team-space"] .chat-msg-avatar span,
-body[data-app-page="team-space"] .member-card-avatar img,
-body[data-app-page="team-space"] .avatar-placeholder {
-    width: 28px !important;
-    height: 28px !important;
-    border-radius: var(--radius-sm) !important;
-    object-fit: cover !important;
-}
-
-body[data-app-page="team-space"] .task-card-assignee > span:first-child,
-body[data-app-page="team-space"] .chat-msg-avatar span,
-body[data-app-page="team-space"] .avatar-placeholder {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    background: var(--text-title) !important;
-    color: var(--bg-primary) !important;
-    font-size: 11px !important;
-    font-weight: 800 !important;
-}
-
-body[data-app-page="team-space"] .member-card {
-    width: 100% !important;
-    display: flex !important;
-    align-items: flex-start !important;
-    gap: 14px !important;
-    padding: 16px 0 !important;
-    text-align: left !important;
-    cursor: pointer !important;
-}
-
-body[data-app-page="team-space"] .member-card-info {
-    display: grid !important;
-    gap: 5px !important;
-}
-
-body[data-app-page="team-space"] .member-card-name {
-    color: var(--text-title) !important;
-    font-weight: 800 !important;
-}
-
-body[data-app-page="team-space"] .member-card-role,
-body[data-app-page="team-space"] .member-card-meta {
-    color: var(--text-muted) !important;
-    font-size: 13px !important;
-}
-
-body[data-app-page="team-space"] .member-card-skills {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 6px !important;
-}
-
-body[data-app-page="team-space"] .skill-tag,
-body[data-app-page="team-space"] .chat-file-link {
-    border: 1px solid var(--border) !important;
-    background: var(--bg-primary) !important;
-    color: var(--text-title) !important;
-    border-radius: var(--radius-sm) !important;
-}
-
-body[data-app-page="team-space"] .chat-msg {
-    display: flex !important;
-    gap: 10px !important;
-    margin: 16px 0 !important;
-}
-
-body[data-app-page="team-space"] .chat-msg.sent {
-    flex-direction: row-reverse !important;
-}
-
-body[data-app-page="team-space"] .chat-msg-body {
-    max-width: min(70%, 640px) !important;
-}
-
-body[data-app-page="team-space"] .chat-msg.sent .chat-msg-body {
-    text-align: right !important;
-}
-
-body[data-app-page="team-space"] .chat-msg-name,
-body[data-app-page="team-space"] .chat-msg-time {
-    color: var(--text-muted) !important;
-    font-size: 12px !important;
-}
-
-body[data-app-page="team-space"] .chat-msg-bubble {
-    display: inline-block !important;
-    padding: 10px 12px !important;
-    max-width: 100% !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius-sm) !important;
-    background: var(--bg-primary) !important;
-    color: var(--text-body) !important;
-    line-height: 1.7 !important;
-    text-align: left !important;
-}
-
-body[data-app-page="team-space"] .chat-msg.sent .chat-msg-bubble {
-    background: var(--text-title) !important;
-    border-color: var(--text-title) !important;
-    color: var(--bg-primary) !important;
-}
-
-body[data-app-page="team-space"] .chat-image {
-    display: block !important;
-    max-width: min(320px, 60vw) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius-sm) !important;
-}
-
-body[data-app-page="team-space"] .emoji-picker {
-    position: fixed !important;
-    right: 64px !important;
-    bottom: 148px !important;
-    z-index: 1200 !important;
-    padding: 10px !important;
-    border: 1px solid var(--border) !important;
-    background: var(--bg-primary) !important;
-    box-shadow: none !important;
-}
-
-body[data-app-page="team-space"] .emoji-grid {
-    display: grid !important;
-    grid-template-columns: repeat(8, 32px) !important;
-    gap: 4px !important;
-}
-
-body[data-app-page="team-space"] .emoji-item {
-    width: 32px !important;
-    height: 32px !important;
-    border: 1px solid transparent !important;
-    background: transparent !important;
-}
-
-body[data-app-page="team-space"] .emoji-item:hover {
-    border-color: var(--border) !important;
-    background: var(--bg-secondary) !important;
-}
-
-@media (max-width: 768px) {
-    body[data-app-page="team-space"] .chat-msg-body {
-        max-width: 82% !important;
-    }
-
-    body[data-app-page="team-space"] .emoji-picker {
-        left: 16px !important;
-        right: 16px !important;
-        bottom: 132px !important;
-    }
-
-    body[data-app-page="team-space"] .emoji-grid {
-        grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
-    }
-}
-
-/* v14：团队空间间距、看板与聊天头像收口 */
-body[data-app-page="team-space"] .main-content {
-    padding-top: 20px !important;
-    padding-bottom: 48px !important;
-}
-
-body[data-app-page="team-space"] .workspace-layout {
-    margin: 20px 0 56px !important;
-}
-
-body[data-app-page="team-space"] .kanban-board {
-    overflow: visible !important;
-    padding: 16px 0 28px !important;
-}
-
-body[data-app-page="team-space"] .kanban-columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 16px 20px !important;
-    align-items: start !important;
-}
-
-body[data-app-page="team-space"] .kanban-col {
-    min-height: 240px !important;
-    max-height: none !important;
-    padding: 16px !important;
-}
-
-body[data-app-page="team-space"] .chat-msg-avatar {
-    width: 36px !important;
-    height: 36px !important;
-    position: relative !important;
-    overflow: hidden !important;
-    border-radius: 50% !important;
-}
-
-body[data-app-page="team-space"] .chat-msg-avatar > img,
-body[data-app-page="team-space"] .chat-msg-avatar > span {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 50% !important;
-    object-fit: cover !important;
-}
-
-body[data-app-page="team-space"] .chat-msg-avatar > img + span[style*="display:none"],
-body[data-app-page="team-space"] .chat-msg-avatar > img + span[style*="display: none"] {
-    display: none !important;
-}
-
-body[data-app-page="team-space"] .member-card-avatar > img,
-body[data-app-page="team-space"] .member-card-avatar > .avatar-placeholder {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    border-radius: 50% !important;
-    object-fit: cover !important;
-}
-
-body[data-app-page="team-space"] .member-card-avatar > img + .avatar-placeholder[style*="display:none"],
-body[data-app-page="team-space"] .member-card-avatar > img + .avatar-placeholder[style*="display: none"] {
-    display: none !important;
-}
-
-@media (max-width: 768px) {
-    body[data-app-page="team-space"] .main-content {
-        padding-top: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .workspace-layout {
-        margin-top: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .kanban-columns {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-/* v18 cascade seal: these rules intentionally stay last. */
-body[data-app-page="team-space"] .main-content {
-    max-width: 1280px !important;
-    padding: 28px 24px 64px !important;
-}
-
-body[data-app-page="team-space"] .workspace-layout {
-    grid-template-columns: 248px minmax(0, 1fr) !important;
-    gap: 24px !important;
-    margin: 8px 0 32px !important;
-    min-height: calc(100vh - 156px) !important;
-}
-
-body[data-app-page="team-space"] .sidebar {
-    position: sticky !important;
-    top: calc(var(--header-height, 64px) + 20px) !important;
-    align-self: start !important;
-    max-height: calc(100vh - var(--header-height, 64px) - 40px) !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-    background: var(--ts-surface, #fff) !important;
-    border: 1px solid var(--ts-border, #e8e2d9) !important;
-    border-radius: 16px !important;
-    box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-header {
-    padding: 22px 18px 16px !important;
-    border-bottom: 1px solid var(--ts-border, #e8e2d9) !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav {
-    padding: 12px !important;
-    gap: 4px !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav-item {
-    min-height: 44px !important;
-    padding: 10px 12px !important;
-    border: 0 !important;
-    border-radius: 8px !important;
-}
-
-body[data-app-page="team-space"] .sidebar-nav-item.active,
-body[data-app-page="team-space"] .sidebar-nav-item.active:hover {
-    background: var(--ts-deep, #111827) !important;
-    color: #fff !important;
-}
-
-body[data-app-page="team-space"] .sidebar-footer {
-    padding: 16px 18px !important;
-    background: var(--ts-subtle, #f6f4f1) !important;
-    border-top: 1px solid var(--ts-border, #e8e2d9) !important;
-}
-
-body[data-app-page="team-space"] .workspace-panel.active {
-    min-width: 0 !important;
-    overflow: hidden !important;
-    background: var(--ts-surface, #fff) !important;
-    border: 1px solid var(--ts-border, #e8e2d9) !important;
-    border-radius: 16px !important;
-    box-shadow: var(--ts-shadow, 0 10px 28px rgba(44, 36, 25, 0.07)) !important;
-}
-
-body[data-app-page="team-space"] .panel-header {
-    min-height: 76px !important;
-    padding: 18px 22px !important;
-    background: var(--ts-surface, #fff) !important;
-    border-bottom: 1px solid var(--ts-border, #e8e2d9) !important;
-}
-
-body[data-app-page="team-space"] .kanban-board {
-    padding: 20px 22px 24px !important;
-    overflow-x: hidden !important;
-    background: var(--ts-surface, #fff) !important;
-}
-
-body[data-app-page="team-space"] .kanban-columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 16px !important;
-    align-items: stretch !important;
-}
-
-body[data-app-page="team-space"] .kanban-col {
-    min-width: 0 !important;
-    min-height: 280px !important;
-    padding: 16px !important;
-    overflow: hidden !important;
-    background: var(--ts-canvas, #faf9f7) !important;
-    border: 1px solid var(--ts-border, #e8e2d9) !important;
-    border-radius: 12px !important;
-}
-
-body[data-app-page="team-space"] .task-card {
-    background: var(--ts-surface, #fff) !important;
-    border: 1px solid var(--ts-border, #e8e2d9) !important;
-    border-radius: 10px !important;
-    box-shadow: 0 1px 2px rgba(44, 36, 25, 0.04) !important;
-}
-
-body[data-app-page="team-space"] .task-card:hover {
-    background: var(--ts-surface, #fff) !important;
-    border-color: var(--ts-border-strong, #d8d0c5) !important;
-    box-shadow: 0 8px 20px rgba(44, 36, 25, 0.08) !important;
-    transform: none !important;
-}
-
-@media (max-width: 900px) {
-    body[data-app-page="team-space"] .main-content {
-        padding: 20px 16px 80px !important;
-    }
-
-    body[data-app-page="team-space"] .workspace-layout {
-        grid-template-columns: 1fr !important;
-        gap: 16px !important;
-        margin-top: 4px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar {
-        position: static !important;
-        max-height: none !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-header {
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr) auto !important;
-        align-items: center !important;
-        gap: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-logo {
-        margin: 0 !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-back-btn {
-        width: auto !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav {
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        overflow: visible !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-nav-item {
-        min-width: 0 !important;
-        justify-content: center !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-footer-info {
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        gap: 10px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar-footer-row {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 2px !important;
-    }
-
-    body[data-app-page="team-space"] .kanban-columns {
-        grid-template-columns: 1fr !important;
-    }
-}
-
-@media (max-width: 576px) {
-    body[data-app-page="team-space"] .main-content {
-        padding: 12px 12px 88px !important;
-    }
-
-    body[data-app-page="team-space"] .sidebar,
-    body[data-app-page="team-space"] .workspace-panel.active {
-        border-radius: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .panel-header {
-        min-height: 0 !important;
-        padding: 16px !important;
-        align-items: flex-start !important;
-        gap: 12px !important;
-    }
-
-    body[data-app-page="team-space"] .panel-actions {
-        width: 100% !important;
-    }
-
-    body[data-app-page="team-space"] .panel-actions .btn {
-        flex: 1 !important;
-        justify-content: center !important;
-    }
-
-    body[data-app-page="team-space"] .kanban-board {
-        padding: 14px !important;
-    }
-
-    body[data-app-page="team-space"] .kanban-col {
-        min-height: 220px !important;
-        padding: 14px !important;
-    }
+    .mobile-task-actions.is-open { display: flex; visibility: visible; }
+    .mobile-task-actions__backdrop { position: absolute; inset: 0; width: 100%; height: 100%; background: rgb(0 0 0 / 40%); border: 0; }
+    .mobile-task-actions__sheet { position: relative; width: 100%; max-width: 100%; padding: 8px 16px calc(16px + env(safe-area-inset-bottom)); overflow-x: hidden; background: var(--kb-surface); border-radius: 18px 18px 0 0; box-shadow: 0 -16px 40px rgb(0 0 0 / 16%); }
+    .mobile-task-actions__handle { width: 36px; height: 4px; margin: 0 auto 12px; background: var(--kb-border-strong); border-radius: 999px; }
+    .mobile-task-actions__header { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+    .mobile-task-actions__header h2 { margin: 0; font-size: 18px; }
+    .mobile-task-actions__header button { width: 44px; height: 44px; padding: 0; background: transparent; border: 0; border-radius: 8px; }
+    .mobile-task-actions__statuses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px 0; }
+    .mobile-task-actions__statuses button,
+    .mobile-task-actions__footer button { min-height: 48px; padding: 0 12px; color: var(--kb-text); background: var(--kb-subtle); border: 1px solid var(--kb-border); border-radius: 9px; font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1; }
+    .mobile-task-actions__statuses button,
+    .mobile-task-actions__footer button { min-width: 0; overflow-wrap: anywhere; }
+    .mobile-task-actions__statuses button[disabled] { color: var(--kb-text-muted); opacity: .55; }
+    .mobile-task-actions__footer { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mobile-task-actions__footer .danger { color: var(--kb-danger); background: #fef2f2; border-color: #fecaca; }
+    body.mobile-task-actions-open { overflow: hidden; }
+
+    body[data-app-page="team-space"] .modal-dialog.modal-dialog-centered { margin: 0 auto; }
+    body[data-app-page="team-space"] .modal-body { max-height: 64dvh; padding: 16px; overflow-y: auto; }
+    body[data-app-page="team-space"] .form-control,
+    body[data-app-page="team-space"] .form-select { min-height: 48px; font-size: 16px; }
+    .emoji-picker { left: 0; right: 0; bottom: calc(100% + 8px); width: auto; }
+    .emoji-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}
+
+@media (max-width: 479.98px) {
+    body[data-app-page="team-space"] .main-content { padding-right: 12px; padding-left: 12px; }
+    .kanban-status-tabs { margin-right: -12px; margin-left: -12px; padding-right: 12px; padding-left: 12px; }
+    .task-card { padding: 16px; }
+    .task-card-footer { align-items: flex-start; flex-direction: column; }
+    .task-card-assignee { align-self: flex-end; }
+    .mobile-task-actions__sheet { padding-right: 12px; padding-left: 12px; }
+    body[data-app-page="team-space"] .modal-body > .row { display: block; margin-right: 0; margin-left: 0; }
+    body[data-app-page="team-space"] .modal-body > .row > .col-6 { width: 100%; padding-right: 0; padding-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body[data-app-page="team-space"] *,
+    body[data-app-page="team-space"] *::before,
+    body[data-app-page="team-space"] *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+/* 智能匹配推荐：视觉降权的紧凑次要区域（主信息是上方正式成员列表） */
+.candidate-recommendations { margin-top:8px; margin-bottom:24px; padding:12px 14px; background:var(--kb-surface); border:1px solid var(--kb-border); border-radius:10px; }
+.candidate-recommendations__header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.candidate-recommendations__header p { margin:0; color:var(--kb-text-muted); font-size:11px; font-weight:700; letter-spacing:.04em; }
+.candidate-recommendations__header h2 { margin:1px 0 0; font-size:14px; }
+.candidate-recommendations__header > span { color:var(--kb-text-muted); font-size:11px; }
+.candidate-recommendations__list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.candidate-card { position:relative; display:grid; grid-template-columns:32px minmax(0,1fr) auto; grid-template-areas:"avatar name score" "avatar meta score"; align-items:center; column-gap:10px; padding:8px 12px; color:var(--kb-text); text-decoration:none; background:transparent; border:1px solid var(--kb-border); border-radius:8px; transition:background .16s ease,border-color .16s ease; }
+.candidate-card:hover { color:var(--kb-text); background:var(--kb-subtle); border-color:var(--kb-border-strong); }
+.candidate-card__avatar { grid-area:avatar; width:32px; height:32px; overflow:hidden; border-radius:50%; }
+.candidate-card__avatar img { display:block; width:100%; height:100%; object-fit:cover; }
+.candidate-card__avatar-fb { display:flex; align-items:center; justify-content:center; width:100%; height:100%; color:var(--kb-text-secondary); background:var(--kb-selected); border-radius:50%; font-size:11px; font-weight:600; }
+.candidate-card strong { grid-area:name; min-width:0; overflow:hidden; font-size:13px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.candidate-card > span:not([class]) { grid-area:meta; min-width:0; overflow:hidden; color:var(--kb-text-muted); font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.candidate-card__score { grid-area:score; padding:1px 8px; color:var(--kb-text-muted); background:var(--kb-subtle); border-radius:999px; font-size:11px; font-weight:700; }
+.candidate-card:hover .candidate-card__score { background:var(--kb-surface); }
+/* 紧凑模式下隐藏技能标签与推荐理由，点击进主页可查看详情 */
+.candidate-card__skills, .candidate-card > small { display:none; }
+@media (max-width: 991.98px) { .candidate-recommendations__list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 575.98px) { .candidate-recommendations { padding:10px 12px; } .candidate-recommendations__list { grid-template-columns:1fr; } }
+
+/* ============ AI 协作面板 ============ */
+.ai-collab-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: stretch; flex: 1 1 auto; min-height: 0; }
+.ai-collab-card { display: flex; flex-direction: column; min-height: 0; background: var(--kb-surface); border: 1px solid var(--kb-border); border-radius: 16px; padding: 18px; }
+.ai-collab-card__header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ai-collab-card__title { flex: 0 0 auto; margin: 0; font-size: 16px; font-weight: 700; color: var(--kb-text); }
+.ai-competition-select { width: auto; min-width: 180px; max-width: 100%; margin-left: auto; border-radius: 999px; }
+.ai-leader-only { margin-left: auto; padding: 3px 10px; font-size: 12px; color: var(--kb-text-muted); background: var(--kb-subtle); border-radius: 999px; }
+.ai-collab-hint { margin: 0 0 12px; font-size: 13px; line-height: 1.6; color: var(--kb-text-secondary); }
+
+/* 竞赛答疑 */
+.ai-collab-card--qa { min-height: 430px; }
+.ai-qa-messages { display: flex; flex: 1 1 auto; flex-direction: column; gap: 10px; min-height: 280px; padding: 4px 2px; overflow-y: auto; }
+.ai-qa-welcome { max-width: 85%; align-self: flex-start; padding: 10px 14px; font-size: 13px; line-height: 1.6; color: var(--kb-text-secondary); background: var(--kb-subtle); border-radius: 4px 14px 14px 14px; }
+.ai-qa-bubble { max-width: 85%; padding: 10px 14px; font-size: 14px; line-height: 1.6; word-break: break-word; border-radius: 14px; }
+.ai-qa-bubble--user { align-self: flex-end; color: #fff; background: var(--kb-text); border-radius: 14px 4px 14px 14px; }
+.ai-qa-bubble--assistant { align-self: flex-start; color: var(--kb-text); background: var(--kb-subtle); border-radius: 4px 14px 14px 14px; }
+.ai-qa-bubble--assistant h3,
+.ai-qa-bubble--assistant h4 { margin: 10px 0 4px; font-size: 14px; font-weight: 700; line-height: 1.5; }
+.ai-qa-bubble--assistant h3:first-child,
+.ai-qa-bubble--assistant h4:first-child { margin-top: 0; }
+.ai-qa-bubble--assistant p { margin: 4px 0; }
+.ai-qa-bubble--assistant p:first-child { margin-top: 0; }
+.ai-qa-bubble--assistant p:last-child { margin-bottom: 0; }
+.ai-qa-bubble--assistant ul,
+.ai-qa-bubble--assistant ol { margin: 4px 0 4px 18px; padding: 0; }
+.ai-qa-bubble--assistant li { margin: 3px 0; line-height: 1.6; }
+.ai-qa-bubble--assistant strong { font-weight: 700; }
+.ai-qa-bubble--assistant em { font-style: italic; }
+.ai-qa-bubble--assistant code { padding: 1px 5px; font-size: 12px; font-family: Consolas, Monaco, 'Courier New', monospace; background: rgb(0 0 0 / 7%); border-radius: 4px; }
+.ai-qa-bubble--assistant pre { margin: 8px 0; padding: 10px 12px; overflow-x: auto; background: rgb(0 0 0 / 6%); border: 1px solid var(--kb-border); border-radius: 8px; }
+.ai-qa-bubble--assistant pre code { padding: 0; font-size: 12.5px; line-height: 1.6; white-space: pre; background: transparent; }
+.ai-qa-bubble--assistant table { width: 100%; margin: 8px 0; font-size: 13px; line-height: 1.5; border-collapse: collapse; }
+.ai-qa-bubble--assistant th, .ai-qa-bubble--assistant td { padding: 6px 10px; border: 1px solid var(--kb-border-strong); text-align: left; }
+.ai-qa-bubble--assistant th { font-weight: 700; background: rgb(0 0 0 / 4%); }
+.ai-qa-bubble--assistant tr:nth-child(even) td { background: rgb(0 0 0 / 2%); }
+.ai-qa-bubble--assistant a { color: var(--kb-text); text-decoration: underline; text-underline-offset: 2px; }
+.ai-qa-bubble--assistant hr { margin: 10px 0; border: 0; border-top: 1px solid var(--kb-border-strong); }
+.ai-qa-bubble--loading { display: flex; align-items: center; gap: 8px; color: var(--kb-text-muted); }
+
+/* 思考中：三个跳动圆点 */
+.ai-typing-dots { display: inline-flex; gap: 4px; }
+.ai-typing-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--kb-text-muted); animation: ai-dot-bounce 1.2s ease-in-out infinite; }
+.ai-typing-dots i:nth-child(2) { animation-delay: .18s; }
+.ai-typing-dots i:nth-child(3) { animation-delay: .36s; }
+@keyframes ai-dot-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+/* 流式输出：每个块淡入上移，模拟逐段生成 */
+.ai-flow-block { animation: ai-block-in .28s ease-out; }
+@keyframes ai-block-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 输出中的光标 */
+.ai-typing-caret { display: inline-block; width: 7px; height: 15px; margin-left: 2px; vertical-align: -2px; background: var(--kb-text-muted); border-radius: 1px; animation: ai-caret-blink .9s steps(1) infinite; }
+@keyframes ai-caret-blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .ai-typing-dots i, .ai-flow-block, .ai-typing-caret { animation: none !important; }
+}
+.ai-qa-bubble--error { color: #b91c1c; background: #fee2e2; }
+.ai-qa-composer { display: flex; align-items: flex-end; gap: 8px; margin-top: 12px; }
+.ai-qa-input { flex: 1 1 auto; min-height: 44px; max-height: 140px; padding: 10px 14px; font-family: inherit; font-size: 14px; line-height: 1.5; color: var(--kb-text); background: var(--kb-bg); border: 1px solid var(--kb-border); border-radius: 12px; resize: none; }
+.ai-qa-input:focus { outline: none; border-color: var(--kb-text); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08); }
+.ai-privacy-note { margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: var(--kb-text-muted); }
+
+/* 任务拆解 */
+.ai-task-picker { display: flex; flex: 1 1 auto; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; }
+.ai-task-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: var(--kb-bg); border: 1px solid var(--kb-border); border-radius: 12px; }
+.ai-task-row__meta { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.ai-task-row__title { overflow: hidden; font-size: 14px; font-weight: 600; color: var(--kb-text); text-overflow: ellipsis; white-space: nowrap; }
+.ai-task-row__status { font-size: 12px; color: var(--kb-text-muted); }
+.ai-task-empty { padding: 18px; text-align: center; font-size: 13px; color: var(--kb-text-muted); }
+
+@media (max-width: 991.98px) {
+    .ai-collab-grid { grid-template-columns: 1fr; }
+    .ai-collab-card--qa { min-height: 400px; }
+    /* 单栏布局下恢复内嵌滚动上限，避免消息把整页撑得过长 */
+    .ai-qa-messages { max-height: 46vh; }
 }

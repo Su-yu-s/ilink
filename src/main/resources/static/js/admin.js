@@ -1,13 +1,18 @@
-﻿// 管理后台JavaScript
+// 管理后台JavaScript
 const AdminState = {
     usersById: new Map(),
     teamsById: new Map(),
     teachersById: new Map(),
     assetsById: new Map(),
     communityPostsById: new Map(),
+    competitionsById: new Map(),
     userEditModal: null,
     userDetailModal: null,
     recordDetailModal: null,
+    teamEditModal: null,
+    teacherEditModal: null,
+    assetEditModal: null,
+    communityPostEditModal: null,
     allUsers: [],
     filteredUsers: [],
     allTeams: [],
@@ -18,6 +23,9 @@ const AdminState = {
     filteredAssets: [],
     allCommunityPosts: [],
     filteredCommunityPosts: [],
+    allCompetitions: [],
+    filteredCompetitions: [],
+    competitionEditModal: null,
     userPage: 1
 };
 const ADMIN_USER_PAGE_SIZE = 10;
@@ -33,7 +41,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         loadTeams(),
         loadTeachers(),
         loadAssets(),
-        loadCommunityPosts()
+        loadCommunityPosts(),
+        loadCompetitionsAdmin()
     ]);
 
     const modalEl = document.getElementById('adminUserEditModal');
@@ -51,10 +60,29 @@ document.addEventListener('DOMContentLoaded', async function() {
         AdminState.recordDetailModal = new window.bootstrap.Modal(recordDetailModalEl);
     }
 
+    AdminState.teamEditModal = bindBootstrapModal('adminTeamEditModal');
+    AdminState.teacherEditModal = bindBootstrapModal('adminTeacherEditModal');
+    AdminState.assetEditModal = bindBootstrapModal('adminAssetEditModal');
+    AdminState.communityPostEditModal = bindBootstrapModal('adminCommunityPostEditModal');
+
+    const competitionModalEl = document.getElementById('adminCompetitionEditModal');
+    if (competitionModalEl && window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+        AdminState.competitionEditModal = new window.bootstrap.Modal(competitionModalEl);
+    }
+
     const saveBtn = document.getElementById('adminUserEditSaveBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', saveUserEditFromModal);
     }
+    document.getElementById('adminTeamSaveBtn')?.addEventListener('click', saveTeamEditFromModal);
+    document.getElementById('adminTeacherSaveBtn')?.addEventListener('click', saveTeacherEditFromModal);
+    document.getElementById('adminAssetSaveBtn')?.addEventListener('click', saveAssetEditFromModal);
+    document.getElementById('adminCommunityPostSaveBtn')?.addEventListener('click', saveCommunityPostEditFromModal);
+    document.getElementById('adminCompetitionSaveBtn')?.addEventListener('click', saveCompetitionFromModal);
+    ['adminEditTeacherTitle', 'adminEditTeacherDirection', 'adminEditTeacherIntro', 'adminEditTeacherProjects', 'adminEditTeacherStatus']
+        .forEach(function(id) {
+            document.getElementById(id)?.addEventListener('input', displayTeacherEditHint);
+        });
 
     bindAdminSearch('userSearchInput', 'userSearchBtn', function() {
         AdminState.userPage = 1;
@@ -64,7 +92,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     bindAdminSearch('teacherSearchInput', 'teacherSearchBtn', applyTeacherSearchAndRender);
     bindAdminSearch('assetSearchInput', 'assetSearchBtn', applyAssetSearchAndRender);
     bindAdminSearch('communitySearchInput', 'communitySearchBtn', applyCommunityPostSearchAndRender);
+    bindAdminSearch('competitionSearchInput', 'competitionSearchBtn', applyCompetitionSearchAndRender);
 });
+
+function bindBootstrapModal(modalId) {
+    const el = document.getElementById(modalId);
+    if (el && window.bootstrap && typeof window.bootstrap.Modal === 'function') {
+        return new window.bootstrap.Modal(el);
+    }
+    return null;
+}
 
 function bindAdminSearch(inputId, searchBtnId, renderFn) {
     const input = document.getElementById(inputId);
@@ -140,14 +177,155 @@ function renderStatusBadge(status, type) {
 
 function formatDetailValue(value) {
     if (value == null) return '';
+    let text;
     if (typeof value === 'object') {
         try {
-            return JSON.stringify(value, null, 2);
+            text = JSON.stringify(value, null, 2);
         } catch (e) {
-            return String(value);
+            text = String(value);
+        }
+    } else {
+        text = String(value).trim();
+    }
+    // JSON 字符串美化：详情里的附件/扩展字段以 JSON 原文展示会像“乱码”
+    const trimmed = text.trim();
+    if ((trimmed.startsWith('[') && trimmed.endsWith(']'))
+        || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed !== null && typeof parsed === 'object') {
+                return JSON.stringify(parsed, null, 2);
+            }
+        } catch (e) {
+            // 不是合法 JSON，原样展示
         }
     }
-    return String(value).trim();
+    return text;
+}
+
+// 用于 title 提示，压制换行/连续空白/控制字符，避免 tooltip 显示异常
+function cleanTooltipText(text) {
+    return String(text == null ? '' : text).replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+
+// ============ 富文本内容可读化（成果描述 / 帖子正文） ============
+// 平台存储格式：'<!--md:base64(markdown源码)-->' + 渲染后 HTML；
+// 成果为两段式：base64(简介)|base64(心得)。管理后台详情/编辑需要解码后展示。
+function decodeBase64Utf8(b64) {
+    const clean = String(b64 || '').replace(/[^A-Za-z0-9+/=]/g, '');
+    if (!clean) return '';
+    try {
+        const binary = atob(clean);
+        const bytes = Uint8Array.from(binary, function (ch) { return ch.charCodeAt(0); });
+        // fatal:false，存量脏字节（如残缺的破折号）替换为 U+FFFD 而不是整体解码失败
+        return new TextDecoder('utf-8').decode(bytes);
+    } catch (e) {
+        try {
+            return decodeURIComponent(escape(atob(clean)));
+        } catch (e2) {
+            return '';
+        }
+    }
+}
+
+function encodeUtf8Base64(text) {
+    const str = String(text == null ? '' : text);
+    try {
+        const bytes = new TextEncoder().encode(str);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+    } catch (e) {
+        return btoa(unescape(encodeURIComponent(str)));
+    }
+}
+
+// 提取 <!--md:...--> 中嵌入的 markdown 源码（成果为 lead|insight 两段，合并返回）
+function extractWrappedMarkdown(raw) {
+    const text = String(raw || '');
+    const match = text.match(/^<!--md:([A-Za-z0-9+/=|]+)-->/)
+        || text.match(/<!--md:([A-Za-z0-9+/=|]+)-->/);
+    if (!match) return '';
+    return String(match[1]).split('|')
+        .map(decodeBase64Utf8)
+        .filter(Boolean)
+        .join('\n\n')
+        .trim();
+}
+
+// HTML 正文转纯文本（旧数据没有 markdown 源码时的兜底）
+function htmlToPlainText(html) {
+    return String(html || '')
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<\s*br\s*\/?\s*>/gi, '\n')
+        .replace(/<\/(p|div|h[1-6]|li|tr|ul|ol|blockquote|pre|section|article)>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '• ')
+        .replace(/<hr[^>]*\/?>/gi, '\n——————————\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&hellip;/gi, '…')
+        .replace(/&mdash;/gi, '—')
+        .replace(/&ldquo;|&rdquo;/gi, '“')
+        .replace(/&lsquo;|&rsquo;/gi, '’')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;|&apos;/gi, "'")
+        .replace(/&amp;/gi, '&')
+        .replace(/\uFFFD/g, '')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+// markdown 源码轻量净化，仅用于管理员阅读：去掉标记符号、保留文字与换行
+function markdownToReadable(md) {
+    return String(md || '')
+        .replace(/^#{1,6}[ \t]+/gm, '')
+        .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/__([^_]+)__/g, '$1')
+        .replace(/\*([^*\n]+)\*/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/^\s*>[ \t]?/gm, '')
+        .replace(/^\s*[-*+][ \t]+/gm, '• ')
+        .replace(/<\/?[^>]+>/g, '')
+        .replace(/\uFFFD/g, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+// 详情弹窗用：把存储的富文本转成管理员可读的纯文本
+function readableRichText(raw) {
+    const text = String(raw == null ? '' : raw);
+    if (!text.trim()) return '';
+    const md = extractWrappedMarkdown(text);
+    let out = md
+        ? markdownToReadable(md)
+        : htmlToPlainText(text.replace(/^<!--md:[\s\S]*?-->/, ''));
+    // 成果旧格式尾部的（分类：xxx）标记，分类字段已单独展示
+    return out.replace(/（分类：[^）]*）\s*$/g, '').trim();
+}
+
+// 编辑弹窗用：还原为可编辑文本（优先 markdown 源码，其次 HTML 转纯文本）
+function editableRichText(raw) {
+    const text = String(raw == null ? '' : raw);
+    if (!text.trim()) return '';
+    const md = extractWrappedMarkdown(text);
+    if (md) return md;
+    return htmlToPlainText(text.replace(/^<!--md:[\s\S]*?-->/, ''));
+}
+
+// 编辑保存用：重新包装为平台统一的 <!--md:base64--> 存储格式，保证公开页正常渲染
+function wrapRichTextForSave(text, kind) {
+    const value = String(text == null ? '' : text).trim();
+    if (!value) return '';
+    if (kind === 'asset') {
+        // 成果格式为 lead|insight 两段；管理后台单框编辑时整体作为 lead
+        return '<!--md:' + encodeUtf8Base64(value) + '|-->';
+    }
+    return '<!--md:' + encodeUtf8Base64(value) + '-->';
 }
 
 // 加载仪表盘数据
@@ -353,15 +531,16 @@ function renderUserCell(value, compact) {
     return `<span class="${cls}" title="${escapeHtml(text)}">${escapeHtml(text)}</span>`;
 }
 
-function renderUserDetailItem(label, value, wide) {
-    const text = formatDetailValue(value);
+function renderUserDetailItem(label, value, wide, type) {
+    const text = type === 'richtext' ? readableRichText(value) : formatDetailValue(value);
     const displayText = text || '未设置';
     const emptyClass = text ? '' : ' admin-detail-value--empty';
     const wideClass = wide ? ' admin-detail-item--wide' : '';
+    const tooltip = cleanTooltipText(displayText);
     return `
         <div class="admin-detail-item${wideClass}">
             <span class="admin-detail-label">${escapeHtml(label)}</span>
-            <span class="admin-detail-value${emptyClass}" title="${escapeHtml(displayText)}">${escapeHtml(displayText)}</span>
+            <span class="admin-detail-value${emptyClass}" title="${escapeHtml(tooltip)}">${escapeHtml(displayText)}</span>
         </div>
     `;
 }
@@ -444,7 +623,7 @@ function openUserDetailModal(userId) {
             </div>
         </div>
         <div class="admin-detail-list">
-            ${fields.map(([label, value, wide]) => renderUserDetailItem(label, value, wide)).join('')}
+            ${fields.map(([label, value, wide, type]) => renderUserDetailItem(label, value, wide, type)).join('')}
         </div>
     `;
 
@@ -609,18 +788,16 @@ function openAdminRecordDetailModal(title, summaryName, subtitle, fields) {
 
     const safeTitle = title || '详情';
     const safeName = summaryName || safeTitle;
-    const initial = safeName ? String(safeName).charAt(0).toUpperCase() : '详';
     if (titleEl) titleEl.textContent = safeTitle;
     body.innerHTML = `
         <div class="admin-detail-summary">
-            <div class="admin-detail-avatar"><span class="admin-detail-avatar-fallback">${escapeHtml(initial)}</span></div>
             <div>
                 <div class="admin-detail-name">${escapeHtml(safeName)}</div>
                 <div class="admin-detail-subtitle">${escapeHtml(subtitle || '')}</div>
             </div>
         </div>
         <div class="admin-detail-list">
-            ${fields.map(([label, value, wide]) => renderUserDetailItem(label, value, wide)).join('')}
+            ${fields.map(([label, value, wide, type]) => renderUserDetailItem(label, value, wide, type)).join('')}
         </div>
     `;
 
@@ -696,6 +873,7 @@ function renderTeamRows(teams) {
                 className: 'admin-row-actions',
                 html: `
                     <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openTeamDetailModal(${team.id})">详情</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="openTeamEditModal(${team.id})">编辑</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteTeam(${team.id})">删除</button>
                 `
             }
@@ -717,10 +895,82 @@ function openTeamDetailModal(teamId) {
         ['发布者ID', team.creatorId],
         ['状态', getStatusDisplayName(team.status, 'team')],
         ['竞赛ID', team.competitionId],
+        ['所需人数', team.requiredMemberCount],
+        ['截止日期', team.deadline ? formatTime(team.deadline) : ''],
         ['发布时间', formatTime(team.createdAt)],
         ['所需技能', team.requiredSkills, true],
         ['需求描述', team.description, true]
     ]);
+}
+
+function formatDateInput(value) {
+    if (value == null || value === '') return '';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function openTeamEditModal(teamId) {
+    const team = AdminState.teamsById.get(String(teamId));
+    if (!team) {
+        showMessage('未找到组队需求', 'error');
+        return;
+    }
+    document.getElementById('adminEditTeamId').value = String(team.id || '');
+    document.getElementById('adminEditTeamTitle').value = team.title || '';
+    document.getElementById('adminEditTeamStatus').value = team.status || 'OPEN';
+    document.getElementById('adminEditTeamSkills').value = team.requiredSkills || '';
+    const memberCountEl = document.getElementById('adminEditTeamMemberCount');
+    if (memberCountEl) memberCountEl.value = team.requiredMemberCount != null ? String(team.requiredMemberCount) : '';
+    const compIdEl = document.getElementById('adminEditTeamCompetitionId');
+    if (compIdEl) compIdEl.value = team.competitionId != null ? String(team.competitionId) : '';
+    document.getElementById('adminEditTeamDeadline').value = formatDateInput(team.deadline);
+    document.getElementById('adminEditTeamDescription').value = team.description || '';
+    AdminState.teamEditModal?.show();
+}
+
+async function saveTeamEditFromModal() {
+    const idEl = document.getElementById('adminEditTeamId');
+    if (!idEl || !idEl.value) {
+        showMessage('缺少组队ID', 'error');
+        return;
+    }
+    const teamId = idEl.value;
+    const payload = {
+        title: (document.getElementById('adminEditTeamTitle')?.value || '').trim(),
+        status: (document.getElementById('adminEditTeamStatus')?.value || '').trim(),
+        requiredSkills: (document.getElementById('adminEditTeamSkills')?.value || '').trim(),
+        description: (document.getElementById('adminEditTeamDescription')?.value || '').trim(),
+        requiredMemberCount: (document.getElementById('adminEditTeamMemberCount')?.value || '').trim(),
+        competitionId: (document.getElementById('adminEditTeamCompetitionId')?.value || '').trim(),
+        deadline: (document.getElementById('adminEditTeamDeadline')?.value || '').trim()
+    };
+    if (!payload.title) {
+        showMessage('标题不能为空', 'warning');
+        return;
+    }
+    try {
+        const response = await apiFetch(`/api/admin/team/${encodeURIComponent(String(teamId))}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            showMessage('组队需求更新成功', 'success');
+            AdminState.teamEditModal?.hide();
+            loadTeams();
+        } else {
+            showMessage(result.message || '更新失败', 'error');
+        }
+    } catch (error) {
+        console.error('更新组队需求异常:', error);
+        showMessage('更新失败，请稍后重试', 'error');
+    }
 }
 
 async function deleteTeam(teamId) {
@@ -811,6 +1061,7 @@ function renderTeacherRows(teachers) {
                 className: 'admin-row-actions',
                 html: `
                     <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openTeacherDetailModal(${teacher.id})">详情</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="openTeacherEditModal(${teacher.id})">编辑</button>
                     ${approveButton}
                     <button class="btn btn-danger btn-sm" onclick="deleteTeacher(${teacher.id})">删除</button>
                 `
@@ -833,10 +1084,86 @@ function openTeacherDetailModal(teacherId) {
         ['申请人ID', teacher.userId],
         ['状态', getStatusDisplayName(teacher.status, 'teacher')],
         ['申请时间', formatTime(teacher.createdAt)],
+        ['职称', teacher.professionalTitle, true],
         ['研究方向', teacher.researchDirection, true],
         ['个人简介', teacher.introduction, true],
         ['项目经历', teacher.projects, true]
     ]);
+}
+
+function openTeacherEditModal(teacherId) {
+    const teacher = AdminState.teachersById.get(String(teacherId));
+    if (!teacher) {
+        showMessage('未找到导师申请', 'error');
+        return;
+    }
+    document.getElementById('adminEditTeacherId').value = String(teacher.id || '');
+    document.getElementById('adminEditTeacherTitle').value = teacher.professionalTitle || '';
+    document.getElementById('adminEditTeacherDirection').value = teacher.researchDirection || '';
+    document.getElementById('adminEditTeacherIntro').value = teacher.introduction || '';
+    document.getElementById('adminEditTeacherProjects').value = teacher.projects || '';
+    document.getElementById('adminEditTeacherStatus').value = teacher.status || 'PENDING';
+    displayTeacherEditHint();
+    AdminState.teacherEditModal?.show();
+}
+
+function displayTeacherEditHint() {
+    // 从已加载的用户数据中取教师用户的姓名/学校/专业，提示还缺哪些字段
+    const teacherId = document.getElementById('adminEditTeacherId')?.value;
+    const teacher = teacherId ? AdminState.teachersById.get(String(teacherId)) : null;
+    const user = teacher ? AdminState.usersById.get(String(teacher.userId)) : null;
+    const missing = [];
+    const teacherTitle = (document.getElementById('adminEditTeacherTitle')?.value || '').trim();
+    const direction = (document.getElementById('adminEditTeacherDirection')?.value || '').trim();
+    const intro = (document.getElementById('adminEditTeacherIntro')?.value || '').trim();
+    if (!(user && (user.realName || '')).trim()) missing.push('姓名');
+    if (!(user && (user.school || '')).trim()) missing.push('学校');
+    if (!(user && (user.major || '')).trim()) missing.push('专业');
+    if (!teacherTitle) missing.push('职称');
+    if (!direction) missing.push('研究方向');
+    if (!intro) missing.push('简介');
+    const hint = document.getElementById('adminTeacherEditRequiredHint');
+    if (hint) {
+        hint.textContent = missing.length
+            ? '设为「已批准」前仍需补全：' + missing.join('、') + '（姓名/学校/专业请在"用户管理"中编辑）'
+            : '资料已完整，可设为「已批准」。';
+    }
+}
+
+async function saveTeacherEditFromModal() {
+    const idEl = document.getElementById('adminEditTeacherId');
+    if (!idEl || !idEl.value) {
+        showMessage('缺少导师ID', 'error');
+        return;
+    }
+    const teacherId = idEl.value;
+    const payload = {
+        professionalTitle: (document.getElementById('adminEditTeacherTitle')?.value || '').trim(),
+        researchDirection: (document.getElementById('adminEditTeacherDirection')?.value || '').trim(),
+        introduction: (document.getElementById('adminEditTeacherIntro')?.value || '').trim(),
+        projects: (document.getElementById('adminEditTeacherProjects')?.value || '').trim(),
+        status: (document.getElementById('adminEditTeacherStatus')?.value || '').trim()
+    };
+    try {
+        const response = await apiFetch(`/api/admin/teacher/${encodeURIComponent(String(teacherId))}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            showMessage('导师资料更新成功', 'success');
+            AdminState.teacherEditModal?.hide();
+            loadTeachers();
+            loadDashboardData();
+        } else {
+            showMessage(result.message || '更新失败', 'error');
+        }
+    } catch (error) {
+        console.error('更新导师资料异常:', error);
+        showMessage('更新失败，请稍后重试', 'error');
+    }
 }
 
 async function approveTeacher(teacherId) {
@@ -943,6 +1270,7 @@ function renderAssetRows(assets) {
                 className: 'admin-row-actions',
                 html: `
                     <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openAssetDetailModal(${asset.id})">详情</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="openAssetEditModal(${asset.id})">编辑</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteAsset(${asset.id})">删除</button>
                 `
             }
@@ -962,11 +1290,64 @@ function openAssetDetailModal(assetId) {
         ['标题', asset.title],
         ['作者', getUserLabelById(asset.userId)],
         ['作者ID', asset.userId],
+        ['分类', asset.category],
         ['浏览量', asset.viewCount != null ? asset.viewCount : 0],
         ['发布时间', formatTime(asset.createdAt)],
         ['文件地址', asset.fileUrl, true],
-        ['成果描述', asset.description, true]
+        ['成果描述', asset.description, true, 'richtext']
     ]);
+}
+
+function openAssetEditModal(assetId) {
+    const asset = AdminState.assetsById.get(String(assetId));
+    if (!asset) {
+        showMessage('未找到成果信息', 'error');
+        return;
+    }
+    document.getElementById('adminEditAssetId').value = String(asset.id || '');
+    document.getElementById('adminEditAssetTitle').value = asset.title || '';
+    document.getElementById('adminEditAssetCategory').value = asset.category || '';
+    // 解码 <!--md:base64--> 存储格式，回填可读的 markdown/纯文本，避免编辑框出现 base64 乱码
+    document.getElementById('adminEditAssetDescription').value = editableRichText(asset.description);
+    AdminState.assetEditModal?.show();
+}
+
+async function saveAssetEditFromModal() {
+    const idEl = document.getElementById('adminEditAssetId');
+    if (!idEl || !idEl.value) {
+        showMessage('缺少成果ID', 'error');
+        return;
+    }
+    const assetId = idEl.value;
+    const payload = {
+        title: (document.getElementById('adminEditAssetTitle')?.value || '').trim(),
+        category: (document.getElementById('adminEditAssetCategory')?.value || '').trim(),
+        // 重新包装为平台统一的 <!--md:base64(lead)|--> 格式，保证公开成果页正常渲染
+        description: wrapRichTextForSave(document.getElementById('adminEditAssetDescription')?.value || '', 'asset')
+    };
+    if (!payload.title) {
+        showMessage('标题不能为空', 'warning');
+        return;
+    }
+    try {
+        const response = await apiFetch(`/api/admin/asset/${encodeURIComponent(String(assetId))}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            showMessage('成果更新成功', 'success');
+            AdminState.assetEditModal?.hide();
+            loadAssets();
+        } else {
+            showMessage(result.message || '更新失败', 'error');
+        }
+    } catch (error) {
+        console.error('更新成果异常:', error);
+        showMessage('更新失败，请稍后重试', 'error');
+    }
 }
 
 async function deleteAsset(assetId) {
@@ -1068,6 +1449,7 @@ function renderCommunityPostRows(posts) {
                 className: 'admin-row-actions',
                 html: `
                     <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openCommunityPostDetailModal(${post.id})">详情</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="openCommunityPostEditModal(${post.id})">编辑</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteCommunityPost(${post.id})">删除</button>
                 `
             }
@@ -1092,9 +1474,79 @@ function openCommunityPostDetailModal(postId) {
         ['收藏数', post.favoriteCount != null ? post.favoriteCount : 0],
         ['发布时间', formatTime(post.createdAt)],
         ['标题', post.title, true],
-        ['正文内容', post.content, true],
-        ['附件', post.attachments, true]
+        ['正文内容', post.content, true, 'richtext'],
+        ['附件', formatPostAttachments(post.attachments), true]
     ]);
+}
+
+// 附件 JSON 可读化，避免详情页显示一长串 JSON 原文
+function formatPostAttachments(attachments) {
+    if (attachments == null || String(attachments).trim() === '') return '';
+    const raw = String(attachments).trim();
+    try {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list) && list.length) {
+            return list.map(function(item) {
+                const name = item && item.name ? String(item.name) : '附件';
+                const url = item && item.url ? String(item.url) : '';
+                return url ? `${name}（${url}）` : name;
+            }).join('\n');
+        }
+    } catch (e) {
+        // 不是标准 JSON，原样展示
+    }
+    return raw;
+}
+
+function openCommunityPostEditModal(postId) {
+    const post = AdminState.communityPostsById.get(String(postId));
+    if (!post) {
+        showMessage('未找到帖子信息', 'error');
+        return;
+    }
+    document.getElementById('adminEditPostId').value = String(post.id || '');
+    document.getElementById('adminEditPostTitle').value = post.title || '';
+    document.getElementById('adminEditPostCategory').value = post.category || 'general';
+    document.getElementById('adminEditPostContent').value = post.content || '';
+    AdminState.communityPostEditModal?.show();
+}
+
+async function saveCommunityPostEditFromModal() {
+    const idEl = document.getElementById('adminEditPostId');
+    if (!idEl || !idEl.value) {
+        showMessage('缺少帖子ID', 'error');
+        return;
+    }
+    const postId = idEl.value;
+    const payload = {
+        title: (document.getElementById('adminEditPostTitle')?.value || '').trim(),
+        category: (document.getElementById('adminEditPostCategory')?.value || '').trim(),
+        // 重新包装为平台统一的 <!--md:base64--> 格式，保证公开帖子页正常渲染
+        content: wrapRichTextForSave(document.getElementById('adminEditPostContent')?.value || '', 'post')
+    };
+    if (!payload.title) {
+        showMessage('标题不能为空', 'warning');
+        return;
+    }
+    try {
+        const response = await apiFetch(`/api/admin/community-post/${encodeURIComponent(String(postId))}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            showMessage('帖子更新成功', 'success');
+            AdminState.communityPostEditModal?.hide();
+            loadCommunityPosts();
+        } else {
+            showMessage(result.message || '更新失败', 'error');
+        }
+    } catch (error) {
+        console.error('更新帖子异常:', error);
+        showMessage('更新失败，请稍后重试', 'error');
+    }
 }
 
 async function deleteCommunityPost(postId) {
@@ -1116,5 +1568,162 @@ async function deleteCommunityPost(postId) {
     } catch (error) {
         console.error('删除社区帖子异常:', error);
         showMessage('删除失败，请稍后重试', 'error');
+    }
+}
+
+const ADMIN_COMPETITION_TRACKS = {
+    cs: '计算机软件',
+    ee: '电子信息',
+    innovation: '创新创业',
+    stem: '数理建模',
+    robot: '机器人 / 智能车',
+    general: '综合 / 语言'
+};
+
+async function loadCompetitionsAdmin() {
+    try {
+        const response = await apiFetch('/api/admin/competitions');
+        const result = await response.json();
+        if (result.code !== 200) throw new Error(result.message || '获取竞赛目录失败');
+        AdminState.allCompetitions = Array.isArray(result.data) ? result.data.slice() : [];
+        AdminState.competitionsById = new Map(
+            AdminState.allCompetitions.map(item => [String(item.id), item])
+        );
+        applyCompetitionSearchAndRender();
+    } catch (error) {
+        console.error('获取竞赛目录异常:', error);
+        const tbody = document.getElementById('competitionTableBody');
+        if (tbody) renderEmptyRow(tbody, 5, '竞赛目录加载失败');
+    }
+}
+
+function applyCompetitionSearchAndRender() {
+    const keyword = document.getElementById('competitionSearchInput')?.value || '';
+    AdminState.filteredCompetitions = AdminState.allCompetitions.filter(item => matchesKeyword([
+        item.name,
+        item.organizer,
+        item.track,
+        ADMIN_COMPETITION_TRACKS[item.track],
+        item.levelClass,
+        item.scope,
+        item.status === 'ACTIVE' ? '已发布' : '已停用',
+        ...(Array.isArray(item.tags) ? item.tags : [])
+    ], keyword));
+    renderCompetitionAdminRows(AdminState.filteredCompetitions);
+    updateAdminListHint('competitionListHint', AdminState.filteredCompetitions.length);
+}
+
+function renderCompetitionAdminRows(items) {
+    const tbody = document.getElementById('competitionTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!items.length) {
+        renderEmptyRow(tbody, 5, '暂无匹配竞赛');
+        return;
+    }
+    items.forEach(item => {
+        const tr = document.createElement('tr');
+        const status = item.status === 'ACTIVE'
+            ? '<span class="status-badge approved">已发布</span>'
+            : '<span class="status-badge teaming">已停用</span>';
+        setTableRowCells(tr, [
+            { label: '竞赛名称', html: renderUserCell(item.name) },
+            { label: '赛道', html: escapeHtml(ADMIN_COMPETITION_TRACKS[item.track] || item.track || '') },
+            { label: '类别/级别', html: escapeHtml((item.levelClass || '') + ' · ' + (item.scope || '')) },
+            { label: '状态', html: status },
+            {
+                label: '操作',
+                className: 'admin-row-actions',
+                html: '<button class="btn btn-outline-secondary btn-sm" onclick="openCompetitionEditModal(' +
+                    item.id + ')">编辑</button> ' +
+                    '<button class="btn btn-danger btn-sm" onclick="deleteCompetitionAdmin(' +
+                    item.id + ')">删除</button>'
+            }
+        ]);
+        tbody.appendChild(tr);
+    });
+}
+
+function setCompetitionField(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.value = value == null ? '' : String(value);
+}
+
+function openCompetitionEditModal(competitionId) {
+    const item = competitionId == null
+        ? null
+        : AdminState.competitionsById.get(String(competitionId));
+    if (competitionId != null && !item) {
+        showMessage('未找到竞赛信息', 'error');
+        return;
+    }
+    setCompetitionField('competitionEditId', item?.id || '');
+    setCompetitionField('competitionEditName', item?.name || '');
+    setCompetitionField('competitionEditTrack', item?.track || 'cs');
+    setCompetitionField('competitionEditOrganizer', item?.organizer || '');
+    setCompetitionField('competitionEditLevel', item?.levelClass || '一类B');
+    setCompetitionField('competitionEditScope', item?.scope || '国赛');
+    setCompetitionField('competitionEditSeason', item?.season || '');
+    setCompetitionField('competitionEditDeadline', item?.registrationDeadline || '');
+    setCompetitionField('competitionEditUrl', item?.officialUrl || '');
+    setCompetitionField('competitionEditStatus', item?.status || 'ACTIVE');
+    setCompetitionField('competitionEditTags', Array.isArray(item?.tags) ? item.tags.join('，') : '');
+    setCompetitionField('competitionEditDescription', item?.description || '');
+    const title = document.getElementById('adminCompetitionEditTitle');
+    if (title) title.textContent = item ? '编辑竞赛' : '新增竞赛';
+    AdminState.competitionEditModal?.show();
+}
+
+async function saveCompetitionFromModal() {
+    const id = document.getElementById('competitionEditId')?.value || '';
+    const payload = {
+        name: document.getElementById('competitionEditName')?.value.trim() || '',
+        track: document.getElementById('competitionEditTrack')?.value || '',
+        organizer: document.getElementById('competitionEditOrganizer')?.value.trim() || '',
+        levelClass: document.getElementById('competitionEditLevel')?.value || '',
+        scope: document.getElementById('competitionEditScope')?.value || '',
+        season: document.getElementById('competitionEditSeason')?.value.trim() || '',
+        registrationDeadline: document.getElementById('competitionEditDeadline')?.value || null,
+        officialUrl: document.getElementById('competitionEditUrl')?.value.trim() || '',
+        status: document.getElementById('competitionEditStatus')?.value || 'ACTIVE',
+        tags: (document.getElementById('competitionEditTags')?.value || '')
+            .split(/[，,]/).map(tag => tag.trim()).filter(Boolean),
+        description: document.getElementById('competitionEditDescription')?.value.trim() || ''
+    };
+    if (!payload.name || !payload.organizer) {
+        showMessage('请填写竞赛名称和主办单位', 'warning');
+        return;
+    }
+    try {
+        const response = await apiFetch(
+            id ? '/api/admin/competitions/' + encodeURIComponent(id) : '/api/admin/competitions',
+            {
+                method: id ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }
+        );
+        const result = await response.json();
+        if (!response.ok || result.code !== 200) throw new Error(result.message || '保存失败');
+        showMessage(id ? '竞赛更新成功' : '竞赛创建成功', 'success');
+        AdminState.competitionEditModal?.hide();
+        await loadCompetitionsAdmin();
+    } catch (error) {
+        showMessage(error.message || '保存失败，请稍后重试', 'error');
+    }
+}
+
+async function deleteCompetitionAdmin(competitionId) {
+    if (!confirm('确定删除这条竞赛目录记录吗？')) return;
+    try {
+        const response = await apiFetch('/api/admin/competitions/' + encodeURIComponent(String(competitionId)), {
+            method: 'DELETE'
+        });
+        const result = await response.json();
+        if (!response.ok || result.code !== 200) throw new Error(result.message || '删除失败');
+        showMessage('竞赛删除成功', 'success');
+        await loadCompetitionsAdmin();
+    } catch (error) {
+        showMessage(error.message || '删除失败，请稍后重试', 'error');
     }
 }

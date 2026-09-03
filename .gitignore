@@ -3,13 +3,13 @@
 .zcode/
 .claude/
 
-# === Playwright 浏览器 ===
+# === Playwright 浏览�?===
 .pw-browsers/
 
 # === Maven 构建输出 ===
 target/
 
-# === 临时/生成的文档 ===
+# === 临时/生成的文�?===
 AUDIT_REPORT.md
 e2e_test.py
 test_screenshots/
@@ -23,3 +23,16 @@ Thumbs.db
 *.tmp
 *.log
 *.stackdump
+
+# === Local private override (secrets, never commit) ===
+src/main/resources/application-local.yml
+
+# === Analysis / audit reports ===
+PRODUCT.md
+audit_results.json
+corruption_report.txt
+
+# === Screenshots & scripts (generated, not source) ===
+screenshots/
+scripts/
+策划.txt

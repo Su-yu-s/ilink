@@ -6,86 +6,14 @@
     <title>个人中心 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
-    <link href="/css/profile-redesign.css?v=1.0" rel="stylesheet">
+    <link href="/css/profile.css?v=10.4" rel="stylesheet">
 </head>
 <body data-profile-page="overview" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
 
     <div class="il-page-wrapper">
         <div class="il-profile-layout">
-            <!-- Sidebar -->
-            <aside class="il-profile-sidebar">
-                <h3 class="il-profile-sidebar-title">个人中心</h3>
-                <p class="il-profile-sidebar-subtitle">资料与协作设置</p>
-                <nav class="il-profile-nav">
-                    <a th:href="@{/profile.html}" href="/profile.html"
-                       class="il-profile-nav-item"
-                       th:classappend="${active == 'overview'} ? ' active' : ''">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                        </svg>
-                        <span>个人概览</span>
-                    </a>
-                    <a th:href="@{/profile.html#teams}" href="/profile.html#teams"
-                       class="il-profile-nav-item"
-                       th:classappend="${active == 'teams'} ? ' active' : ''">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                        </svg>
-                        <span>我的团队</span>
-                    </a>
-                    <a th:href="@{/profile-edit.html}" href="/profile-edit.html"
-                       class="il-profile-nav-item"
-                       th:classappend="${active == 'edit'} ? ' active' : ''">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
-                        <span>编辑资料</span>
-                    </a>
-                    <a th:href="@{/profile-honors.html}" href="/profile-honors.html"
-                       class="il-profile-nav-item"
-                       th:classappend="${active == 'honors'} ? ' active' : ''">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                        </svg>
-                        <span>个人成果</span>
-                    </a>
-                    <a th:href="@{/profile-posts.html}" href="/profile-posts.html"
-                       class="il-profile-nav-item"
-                       th:classappend="${active == 'posts'} ? ' active' : ''">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
-                        </svg>
-                        <span>我的文章</span>
-                    </a>
-                    <a th:href="@{/profile-favorites.html}" href="/profile-favorites.html"
-                       class="il-profile-nav-item"
-                       th:classappend="${active == 'favorites'} ? ' active' : ''">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                        </svg>
-                        <span>我的收藏</span>
-                    </a>
-                    <a th:href="@{/profile-password.html}" href="/profile-password.html"
-                       class="il-profile-nav-item"
-                       th:classappend="${active == 'password'} ? ' active' : ''">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
-                        <span>修改密码</span>
-                    </a>
-                </nav>
-            </aside>
+            <div th:replace="~{fragments/profile-sidebar :: sidebar (active='overview')}"></div>
 
             <!-- Content -->
             <div class="il-profile-content">
@@ -203,7 +131,7 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=8.2"></script>
+    <script src="/js/common.js?v=9.1"></script>
     <script src="/js/profile.js?v=5.2"></script>
     <script>
 (function() {

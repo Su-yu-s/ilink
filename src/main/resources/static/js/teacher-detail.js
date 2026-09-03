@@ -64,7 +64,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('teacherDetailRetryBtn')?.addEventListener('click', loadTeacherDetail);
     const applyBtn = document.getElementById('projectApplyBtn');
     if (applyBtn) {
-        applyBtn.addEventListener('click', () => submitProjectApply(teacherId));
+        applyBtn.addEventListener('click', () => {
+            if (applyBtn.dataset.loginRequired === 'true') {
+                redirectToLogin(0);
+                return;
+            }
+            submitProjectApply(teacherId);
+        });
     }
 
     if (!teacherId) {
@@ -124,6 +130,10 @@ function renderTeacherDetail(teacher) {
     
     const timeElem = document.getElementById('applicationTime');
     if (timeElem) timeElem.textContent = formatTime(teacher.createdAt);
+    const projectCountElem = document.getElementById('teacherApprovedProjects');
+    if (projectCountElem) projectCountElem.textContent = String(Number(teacher.approvedProjectCount || 0));
+    const assetCountElem = document.getElementById('teacherPublicAssets');
+    if (assetCountElem) assetCountElem.textContent = String(Number(teacher.publicAssetCount || 0));
 }
 
 async function initProjectApplySection(teacher) {
@@ -138,7 +148,11 @@ async function initProjectApplySection(teacher) {
         if (profJson.code !== 200) {
             if (hint) hint.textContent = '请先登录后再提交申请。';
             if (textarea) textarea.disabled = true;
-            if (btn) btn.disabled = true;
+            if (btn) {
+                btn.disabled = false;
+                btn.dataset.loginRequired = 'true';
+                btn.textContent = '登录后申请';
+            }
             return;
         }
         const currentUser = profJson.data || {};
@@ -151,6 +165,7 @@ async function initProjectApplySection(teacher) {
             return;
         }
         if (hint) hint.textContent = '';
+        if (btn) delete btn.dataset.loginRequired;
 
         const st = await apiFetch(`/api/teacher/project-application-status?teacherId=${encodeURIComponent(teacher.id)}`);
         const stJson = await st.json();
@@ -198,7 +213,7 @@ async function submitProjectApply(teacherId) {
             if (btn) btn.disabled = true;
         } else if (result.code === 401) {
             showMessage('请先登录', 'warning');
-            setTimeout(() => { window.location.href = '/login'; }, 1200);
+            redirectToLogin(1200);
         } else {
             showMessage(result.message || '提交失败', 'error');
         }

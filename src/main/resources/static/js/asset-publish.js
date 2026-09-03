@@ -203,8 +203,7 @@
 
         var raw = ta.value || '';
         if (typeof marked !== 'undefined') {
-            try { preview.innerHTML = marked.parse(raw); }
-            catch (e) { preview.innerHTML = '<p style="color:var(--ui-danger)">渲染错误</p>'; }
+            renderMarkdownSafe(preview, raw);
         } else {
             preview.innerHTML = '<pre style="white-space:pre-wrap;font-family:inherit;">' + escapeHtml(raw) + '</pre>';
         }
@@ -304,6 +303,7 @@
         var fd = new FormData();
         fd.append('title', String(title).trim());
         fd.append('description', description);
+        fd.append('category', category || '其他');
         var fileInput = $('pubFile');
         if (fileInput && fileInput.files && fileInput.files[0]) {
             fd.append('file', fileInput.files[0]);

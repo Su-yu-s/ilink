@@ -302,12 +302,12 @@ function renderTeacherList(teachers) {
             '<div class="mentor-footer">' +
                 '<div class="mentor-stats">' +
                     '<div class="mentor-stat">' +
-                        '<span class="mentor-stat-value">—</span>' +
-                        '<span class="mentor-stat-label">指导队伍</span>' +
+                        '<span class="mentor-stat-value">' + Number(teacher.approvedProjectCount || 0) + '</span>' +
+                        '<span class="mentor-stat-label">已通过合作</span>' +
                     '</div>' +
                     '<div class="mentor-stat">' +
-                        '<span class="mentor-stat-value">—</span>' +
-                        '<span class="mentor-stat-label">获奖数量</span>' +
+                        '<span class="mentor-stat-value">' + Number(teacher.publicAssetCount || 0) + '</span>' +
+                        '<span class="mentor-stat-label">公开成果</span>' +
                     '</div>' +
                 '</div>' +
                 '<a href="' + detailUrl + '" class="mentor-btn" onclick="event.stopPropagation();">' +

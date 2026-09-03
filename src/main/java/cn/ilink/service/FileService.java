@@ -14,10 +14,15 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 @Service
 public class FileService {
@@ -25,13 +30,39 @@ public class FileService {
     private static final ZoneId DEFAULT_ZONE = ZoneId.of("Asia/Shanghai");
     private static final long MB = 1024L * 1024L;
 
+    private static final Set<String> DOCUMENT_EXTENSIONS = Set.of(
+        ".pdf", ".zip", ".rar", ".7z",
+        ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+        ".txt", ".md", ".csv"
+    );
+
+    private static final Set<String> IMAGE_EXTENSIONS = Set.of(
+        ".jpg", ".jpeg", ".png", ".gif", ".webp"
+    );
+
+    private static final Set<String> ATTACHMENT_EXTENSIONS;
+
+    static {
+        Set<String> extensions = new HashSet<>(IMAGE_EXTENSIONS);
+        extensions.addAll(DOCUMENT_EXTENSIONS);
+        ATTACHMENT_EXTENSIONS = Set.copyOf(extensions);
+    }
+
     private static final Map<String, UploadRule> RULES = Map.of(
-        "avatars", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp"), 1 * MB,
+        "avatars", new UploadRule(IMAGE_EXTENSIONS, 1 * MB,
             "\u5934\u50cf", "jpg\u3001png\u3001gif\u3001webp", "1MB"),
         "certificates", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".pdf"), 2 * MB,
             "\u8bc1\u4e66", "jpg\u3001png\u3001pdf", "2MB"),
-        "images", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp"), 512 * 1024,
-            "\u56fe\u7247", "jpg\u3001png\u3001gif\u3001webp", "500KB")
+        "images", new UploadRule(IMAGE_EXTENSIONS, 2 * MB,
+            "\u56fe\u7247", "jpg\u3001png\u3001gif\u3001webp", "2MB"),
+        "proofs", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf"), 5 * MB,
+            "\u8bc1\u660e\u9644\u4ef6", "jpg\u3001png\u3001gif\u3001webp\u3001pdf", "5MB"),
+        "community", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
+            "\u793e\u533a\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB"),
+        "tasks", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
+            "\u4efb\u52a1\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB"),
+        "assets", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
+            "\u6210\u679c\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB")
     );
 
     @Value("${file.upload-dir:/data/uploads/}")
@@ -49,11 +80,14 @@ public class FileService {
             throw new IllegalArgumentException(rule.displayName + "\u4ec5\u652f\u6301 "
                 + rule.allowedText + " \u683c\u5f0f");
         }
-        String actualExtension = detectFileExtension(file);
+        String actualExtension = detectFileExtension(file, extension);
         if (actualExtension == null || !rule.allowedExtensions.contains(actualExtension)) {
             throw new IllegalArgumentException("\u6587\u4ef6\u5185\u5bb9\u4e0e\u6269\u5c55\u540d\u4e0d\u5339\u914d");
         }
-        extension = normalizeStoredExtension(actualExtension);
+        if (!isCompatibleExtension(extension, actualExtension)) {
+            throw new IllegalArgumentException("\u6587\u4ef6\u5185\u5bb9\u4e0e\u6269\u5c55\u540d\u4e0d\u5339\u914d");
+        }
+        extension = normalizeStoredExtension(actualExtension, extension);
 
         LocalDate now = LocalDate.now(DEFAULT_ZONE);
         String year = String.format("%04d", now.getYear());
@@ -76,10 +110,45 @@ public class FileService {
 
         try (InputStream inputStream = file.getInputStream()) {
             Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            Files.deleteIfExists(target);
+            throw e;
         }
 
         return normalizeAccessPrefix(accessUrlPrefix)
             + bizType + "/" + year + "/" + month + "/" + day + "/" + filename;
+    }
+
+    /**
+     * Resolve a previously returned public URL to a managed local file.
+     * The resolved path is always constrained to the configured upload root.
+     */
+    public Path resolveStoredPath(String fileUrl) {
+        if (!StringUtils.hasText(fileUrl)) {
+            throw new IllegalArgumentException("\u6587\u4ef6\u5730\u5740\u4e0d\u80fd\u4e3a\u7a7a");
+        }
+        String value = fileUrl.trim().replace('\\', '/');
+        String normalizedPrefix = normalizeAccessPrefix(accessUrlPrefix);
+        String relative = value.startsWith(normalizedPrefix)
+            ? value.substring(normalizedPrefix.length())
+            : extractRelativeUploadPath(value);
+
+        if (!StringUtils.hasText(relative) || relative.startsWith("/") || hasPathTraversalSegment(relative)) {
+            throw new IllegalArgumentException("\u6587\u4ef6\u5730\u5740\u975e\u6cd5");
+        }
+        Path root = resolveUploadRoot();
+        Path resolved = root.resolve(relative).normalize();
+        if (!resolved.startsWith(root)) {
+            throw new IllegalArgumentException("\u6587\u4ef6\u5730\u5740\u975e\u6cd5");
+        }
+        return resolved;
+    }
+
+    public boolean delete(String fileUrl) throws IOException {
+        if (!StringUtils.hasText(fileUrl)) {
+            return false;
+        }
+        return Files.deleteIfExists(resolveStoredPath(fileUrl));
     }
 
     private UploadRule validateBizType(String bizType) {
@@ -88,7 +157,7 @@ public class FileService {
         }
         UploadRule rule = RULES.get(bizType.trim());
         if (rule == null) {
-            throw new IllegalArgumentException("\u4e1a\u52a1\u7c7b\u578b\u4ec5\u652f\u6301 avatars\u3001certificates\u3001images");
+            throw new IllegalArgumentException("\u4e1a\u52a1\u7c7b\u578b\u4e0d\u53d7\u652f\u6301");
         }
         return rule;
     }
@@ -140,7 +209,25 @@ public class FileService {
         return value.endsWith("/") ? value : value + "/";
     }
 
-    private String detectFileExtension(MultipartFile file) throws IOException {
+    private String extractRelativeUploadPath(String fileUrl) {
+        String path = fileUrl;
+        try {
+            URI uri = new URI(fileUrl);
+            if (uri.getScheme() != null || uri.getHost() != null) {
+                path = uri.getPath();
+            }
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("\u6587\u4ef6\u5730\u5740\u975e\u6cd5", e);
+        }
+        String marker = "/uploads/";
+        int markerIndex = path.indexOf(marker);
+        if (markerIndex < 0) {
+            throw new IllegalArgumentException("\u6587\u4ef6\u5730\u5740\u4e0d\u5c5e\u4e8e\u53d7\u7ba1\u4e0a\u4f20\u76ee\u5f55");
+        }
+        return path.substring(markerIndex + marker.length());
+    }
+
+    private String detectFileExtension(MultipartFile file, String declaredExtension) throws IOException {
         byte[] header = readHeader(file, 12);
         if (header.length >= 3
             && (header[0] & 0xFF) == 0xFF
@@ -173,11 +260,85 @@ public class FileService {
         if (startsWithAscii(header, "%PDF")) {
             return ".pdf";
         }
+        if (header.length >= 8
+            && header[0] == 0x50 && header[1] == 0x4B
+            && (header[2] == 0x03 || header[2] == 0x05 || header[2] == 0x07)
+            && (header[3] == 0x04 || header[3] == 0x06 || header[3] == 0x08)) {
+            return detectZipContainer(file);
+        }
+        if (header.length >= 8
+            && (header[0] & 0xFF) == 0xD0 && (header[1] & 0xFF) == 0xCF
+            && header[2] == 0x11 && (header[3] & 0xFF) == 0xE0
+            && (header[4] & 0xFF) == 0xA1 && (header[5] & 0xFF) == 0xB1
+            && header[6] == 0x1A && (header[7] & 0xFF) == 0xE1) {
+            return ".ole";
+        }
+        if (startsWithAscii(header, "Rar!")) {
+            return ".rar";
+        }
+        if (header.length >= 6
+            && header[0] == 0x37 && header[1] == 0x7A
+            && (header[2] & 0xFF) == 0xBC && (header[3] & 0xFF) == 0xAF
+            && header[4] == 0x27 && header[5] == 0x1C) {
+            return ".7z";
+        }
+        if (Set.of(".txt", ".md", ".csv").contains(declaredExtension) && looksLikeText(file)) {
+            return ".text";
+        }
         return null;
     }
 
-    private String normalizeStoredExtension(String extension) {
-        return ".jpeg".equals(extension) ? ".jpg" : extension;
+    private String detectZipContainer(MultipartFile file) throws IOException {
+        boolean hasContentTypes = false;
+        boolean hasWord = false;
+        boolean hasExcel = false;
+        boolean hasPowerPoint = false;
+        int inspected = 0;
+        try (ZipInputStream zip = new ZipInputStream(file.getInputStream())) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null && inspected++ < 256) {
+                String name = entry.getName().replace('\\', '/');
+                if ("[Content_Types].xml".equals(name)) hasContentTypes = true;
+                if (name.startsWith("word/")) hasWord = true;
+                if (name.startsWith("xl/")) hasExcel = true;
+                if (name.startsWith("ppt/")) hasPowerPoint = true;
+            }
+        }
+        if (hasContentTypes && hasWord) return ".docx";
+        if (hasContentTypes && hasExcel) return ".xlsx";
+        if (hasContentTypes && hasPowerPoint) return ".pptx";
+        return ".zip";
+    }
+
+    private boolean looksLikeText(MultipartFile file) throws IOException {
+        int inspected = 0;
+        try (InputStream input = new BufferedInputStream(file.getInputStream())) {
+            int value;
+            while ((value = input.read()) != -1 && inspected++ < 8192) {
+                if (value == 0) return false;
+                if (value < 0x09 || (value > 0x0D && value < 0x20)) return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isCompatibleExtension(String declared, String actual) {
+        if (Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp").contains(actual)) {
+            return IMAGE_EXTENSIONS.contains(declared);
+        }
+        if (".ole".equals(actual)) {
+            return Set.of(".doc", ".xls", ".ppt").contains(declared);
+        }
+        if (".text".equals(actual)) {
+            return Set.of(".txt", ".md", ".csv").contains(declared);
+        }
+        return declared.equals(actual);
+    }
+
+    private String normalizeStoredExtension(String actual, String declared) {
+        if (".jpeg".equals(actual)) return ".jpg";
+        if (".ole".equals(actual) || ".text".equals(actual)) return declared;
+        return actual;
     }
 
     private byte[] readHeader(MultipartFile file, int size) throws IOException {
