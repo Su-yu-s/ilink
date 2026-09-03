@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +6,7 @@
     <title>团队空间 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link rel="stylesheet" href="/css/team-space.css?v=37">
+    <link rel="stylesheet" href="/css/team-space.css?v=38">
 </head>
 <body data-app-page="team-space" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -405,9 +405,6 @@
                 </div>
                 <div class="modal-body">
                     <div id="aiBreakdownPreview">
-                        <div class="ai-privacy-note">
-                            点击「确认发送给 AI」后，<strong>仅以下任务内容</strong>会发送给 AI 服务（不包含聊天记录与成员信息）：
-                        </div>
                         <dl class="ai-preview-fields">
                             <dt>任务标题</dt>
                             <dd id="aiPreviewTitle"></dd>
@@ -425,7 +422,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
                     <button type="button" class="btn btn-outline-secondary" id="aiBreakdownRegenBtn" hidden onclick="teamSpace.resetAiBreakdownPreview()">重新预览</button>
-                    <button type="button" class="btn btn-primary" id="aiBreakdownConfirmBtn" onclick="teamSpace.confirmAiBreakdown()">确认发送给 AI</button>
+                    <button type="button" class="btn btn-primary" id="aiBreakdownConfirmBtn" onclick="teamSpace.confirmAiBreakdown()">确认拆解</button>
                     <button type="button" class="btn btn-primary" id="aiCreateSubtasksBtn" hidden onclick="teamSpace.createSelectedSubtasks()">创建选中任务</button>
                 </div>
             </div>
@@ -455,6 +452,6 @@
     <script defer src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
     <script src="/js/common.js?v=9.1"></script>
-    <script src="/js/team-space.js?v=41"></script>
+    <script src="/js/team-space.js?v=42"></script>
 </body>
 </html>
