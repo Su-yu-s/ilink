@@ -37,6 +37,14 @@ iLink 面向高校学生、教师和平台管理员，串联“找队伍、找�
 - 在线状态：按 WebSocket 连接计数维护实时在线状态，并持久化最近活跃时间；聊天明确不提供已读回执。
 - 通知中心：数据库持久化、未读计数缓存和用户级 WebSocket 推送。
 
+### AI 协作
+
+- 竞赛答疑：团队空间内嵌 AI 助手，接入 Bing 搜索增强回答准确性，支持流式渲染；仅发送问题与公开竞赛信息，不泄露聊天记录。
+- 任务拆解：AI 将团队任务拆为子任务建议，用户确认后才落库，token 用量计入配额审计。
+- 用量配额：每日调用上限由 `AiQuotaService` 控制，失败时静默降级不影响团队空间正常功能。
+- 周报聚合：按任务看板数据生成周报文本，纯本地聚合不调用外部 AI。
+- 隐私边界：群聊内容与成员个人信息绝不外发；AI 助手仅可访问用户明确预览过的任务字段与竞赛公开信息。
+
 ### 内容与个人中心
 
 - 社区文章提交前通过 Jsoup 清理 HTML；作者或管理员可以编辑、删除。
@@ -88,6 +96,7 @@ iLink 面向高校学生、教师和平台管理员，串联“找队伍、找�
 | 成果 | `/api/asset/**` | 列表与详情公开；发布、编辑和下载需登录 |
 | 竞赛 | `GET /api/competitions`、`/api/admin/competitions/**` | 公开分页查询；管理员维护目录 |
 | 推荐 | `/api/recommendations/**` | 登录用户；组队大厅和团队空间已接入，失败时回退普通列表 |
+| AI 协作 | `POST /api/team/{teamId}/ai/task-breakdown`、`POST /api/ai/competition-qa`、`GET /api/team/{teamId}/weekly-report` | 团队成员；受配额限制 |
 | 通知 | `/api/notifications/**` | 仅当前用户自己的通知 |
 | 管理 | `/api/admin/**` | 仅 `ADMIN` |
 | 文件 | `POST /api/files/upload`、`POST /api/upload/attachment` | 需登录 |
@@ -196,7 +205,7 @@ java -jar target/iLink-1.0.jar
 
 ## 数据库迁移
 
-`src/main/resources/db/migration/` 是数据库结构的唯一事实来源。当前包含 23 个 SQL 迁移（`V0_5` 至 `V23`，版本号 `V3` 由 Java 迁移占用）和 1 个 Java 迁移，共 24 个迁移。迁移链已在现有 MySQL 5.7 数据库升级和全新空库安装两种路径验证。
+`src/main/resources/db/migration/` 是数据库结构的唯一事实来源。当前包含 25 个 SQL 迁移（`V0_5` 至 `V24`，版本号 `V3` 由 Java 迁移占用）和 1 个 Java 迁移，共 26 个迁移。迁移链已在现有 MySQL 5.7 数据库升级和全新空库安装两种路径验证。
 
 `sql/` 中的脚本仅用于历史参考、人工修复或演示数据，不会被应用启动时的 Flyway 自动执行。使用前请阅读 [sql/README.md](sql/README.md)，并先确认目标库的 `flyway_schema_history`。
 
@@ -214,6 +223,7 @@ src/
 │   │   ├── dto/          # 请求 DTO
 │   │   ├── vo/           # 响应 VO
 │   │   ├── security/     # 登录和 WebSocket 安全组件
+│   │   ├── service/ai/   # AI 协作（AiAssistantService、AiQuotaService、WebSearchService）
 │   │   └── util/         # 密码、HTML、缓存、用户预览工具
 │   └── resources/
 │       ├── db/migration/ # Flyway 版本化迁移
