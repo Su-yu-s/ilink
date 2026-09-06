@@ -71,6 +71,8 @@ public class RememberMeService {
             clearCookie(response, request.isSecure());
             return null;
         }
+        // 老用户首次自动登录时补一个随机内置头像（只补一次，已有头像不动）
+        user = userService.ensureAvatarAssigned(user);
         String nextValidator = SecureTokenSupport.randomToken(32);
         token.setValidatorHash(SecureTokenSupport.hash(nextValidator));
         token.setLastUsedAt(now);

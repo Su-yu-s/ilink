@@ -59,8 +59,8 @@
                     </div>
                     <a th:href="@{/profile.html}" class="il-header__user-link">
                         <div class="il-header__avatar-container"
-                             th:with="avatarRenderable=${currentUser.avatar != null && !currentUser.avatar.isEmpty() && (#strings.startsWith(currentUser.avatar, '/uploads/') || (#strings.startsWith(currentUser.avatar, 'http') && #strings.contains(currentUser.avatar, '/uploads/')))}">
-                            <!-- Avatar Image：仅渲染站内受管上传地址，避免存量外链假地址产生加载错误 -->
+                             th:with="avatarRenderable=${currentUser.avatar != null && !currentUser.avatar.isEmpty() && (#strings.startsWith(currentUser.avatar, '/uploads/') || #strings.startsWith(currentUser.avatar, '/images/avatars/') || (#strings.startsWith(currentUser.avatar, 'http') && #strings.contains(currentUser.avatar, '/uploads/')))}">
+                            <!-- Avatar Image：仅渲染站内受管上传地址与内置头像，避免存量外链假地址产生加载错误 -->
                             <img class="il-header__avatar"
                                  th:if="${avatarRenderable}"
                                  th:src="${currentUser.avatar}"

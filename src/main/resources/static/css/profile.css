@@ -3784,3 +3784,141 @@ html.ilink-app body[data-profile-page] .modal-title {
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* ===== 内置头像选择（学生/教师分组，仅本人角色可见） ===== */
+.ilink-app body[data-profile-page] .il-builtin-avatar-entry {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 6px 14px;
+    margin-left: 12px;
+    font-size: var(--font-size-sm);
+    color: var(--pf-text-secondary);
+    background: var(--pf-card);
+    border: 1px solid var(--pf-border);
+    border-radius: var(--pf-radius);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.ilink-app body.profile-details-editing .il-builtin-avatar-entry {
+    display: inline-flex;
+}
+.ilink-app body[data-profile-page] .il-builtin-avatar-entry:hover {
+    color: var(--pf-text);
+    border-color: var(--pf-text-secondary);
+    background: var(--pf-border-light);
+}
+.ilink-app body[data-profile-page] .il-builtin-avatar-entry:focus-visible {
+    outline: 2px solid var(--pf-accent);
+    outline-offset: 2px;
+}
+
+#builtinAvatarModal.il-builtin-avatar-modal.show {
+    /* body 带 identity transform 会成为 fixed 的包含块，这里强制视口尺寸并 flex 居中；
+       仅在 .show 时生效，避免隐藏态弹窗遮挡页面 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+}
+.il-builtin-avatar-dialog {
+    max-width: 460px;
+    width: 100%;
+    margin: 0 !important;
+    /* 覆盖全局 .modal-dialog-centered 的 min-height:calc(100vh-2rem)，避免弹窗被撑高、定位偏移 */
+    min-height: 0 !important;
+    max-height: calc(100vh - 48px);
+    height: fit-content;
+    display: block !important;
+    overflow-y: auto !important;
+}
+.il-builtin-avatar-content {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+}
+.il-builtin-avatar-header {
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid var(--pf-border);
+}
+.il-builtin-avatar-header .modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pf-text);
+}
+.il-builtin-avatar-body {
+    padding: 16px 20px 20px;
+}
+.il-builtin-avatar-tip {
+    margin: 0 0 14px;
+    font-size: var(--font-size-xs);
+    color: var(--pf-text-muted);
+    line-height: 1.5;
+}
+.il-builtin-avatar-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 12px;
+}
+.il-builtin-avatar-item {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--pf-border-light);
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.il-builtin-avatar-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.il-builtin-avatar-item:hover {
+    transform: translateY(-2px);
+    border-color: var(--pf-text-secondary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.il-builtin-avatar-item:focus-visible {
+    outline: 2px solid var(--pf-accent);
+    outline-offset: 2px;
+}
+.il-builtin-avatar-item.is-selected {
+    border-color: var(--pf-accent, #2563eb);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+}
+.il-builtin-avatar-check {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #fff;
+    background: var(--pf-accent, #2563eb);
+    border-radius: 50%;
+}
+.il-builtin-avatar-empty,
+.il-builtin-avatar-loading {
+    margin: 8px 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--pf-text-muted);
+    text-align: center;
+}
+@media (max-width: 480px) {
+    .il-builtin-avatar-grid {
+        grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+        gap: 10px;
+    }
+}

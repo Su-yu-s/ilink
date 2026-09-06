@@ -34,6 +34,7 @@ function initApplyModal() {
 document.addEventListener('DOMContentLoaded', function() {
     initApplyModal();
     initTeacherProfileShortcut();
+    checkTeacherProfileBanner();
 
     // 绑定搜索按钮
     var searchBtn = document.getElementById('searchBtn');
@@ -93,6 +94,44 @@ async function initTeacherProfileShortcut() {
         console.warn('Unable to load current teacher profile:', error);
     }
     link.href = '/profile.html';
+}
+
+// 导师档案未完善时显示提示条：动态列出还缺哪些资料，补全后自动公开展示
+async function checkTeacherProfileBanner() {
+    var banner = document.getElementById('teacherIncompleteBanner');
+    if (!banner) return;
+    var titleEl = document.getElementById('teacherIncompleteTitle');
+    var textEl = document.getElementById('teacherIncompleteText');
+    try {
+        var response = await apiFetch('/api/teacher/me', { credentials: 'same-origin' });
+        var result = await response.json();
+        if (!response.ok || !result || result.code !== 200 || !result.data) return; // 无档案等场景保持隐藏
+        var t = result.data;
+        if (t.profileComplete === true) return; // 资料完整，已在公开展示
+        if (t.status === 'PENDING') {
+            if (titleEl) titleEl.textContent = '导师申请审核中';
+            if (textEl) textEl.textContent = '你的导师申请已提交，管理员审核通过后将自动公开展示在导师招贤。';
+        } else if (t.status === 'REJECTED') {
+            if (titleEl) titleEl.textContent = '导师申请未通过审核';
+            if (textEl) textEl.textContent = '申请已被驳回，请完善资料后重新申请，或联系管理员了解原因。';
+        } else {
+            if (titleEl) titleEl.textContent = '完善导师资料，即可公开展示';
+            var missing = [];
+            var prev = t.userPreview || {};
+            if (!(prev.realName && String(prev.realName).trim())) missing.push('姓名');
+            if (!(t.institution && String(t.institution).trim())) missing.push('任职单位');
+            if (!(t.expertise && String(t.expertise).trim())) missing.push('专业领域');
+            if (!(t.professionalTitle && String(t.professionalTitle).trim())) missing.push('职称');
+            if (!(t.researchDirection && String(t.researchDirection).trim())) missing.push('研究方向');
+            if (!(t.introduction && String(t.introduction).trim())) missing.push('导师简介');
+            if (textEl) textEl.textContent = missing.length
+                ? '还差：' + missing.join('、') + '。补全后，你的导师主页将自动公开展示在导师招贤，无需管理员审批。'
+                : '请补全导师资料（姓名、任职单位、专业领域、职称、研究方向、导师简介），补全后自动公开展示。';
+        }
+        banner.hidden = false;
+    } catch (e) {
+        console.warn('检查导师资料提示失败:', e);
+    }
 }
 
 // 加载导师列表
@@ -260,8 +299,8 @@ function renderTeacherList(teachers) {
         if (avatarUrl) {
             avatarHtml = '<div class="mentor-avatar">' +
                 '<img src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(name) + '"' +
-                ' onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.avatar-fallback\').style.display=\'flex\';">' +
-                '<span class="avatar-fallback" style="display:none;">' + escapeHtml(char) + '</span>' +
+                ' onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.avatar-fallback\').classList.remove(\'avatar-fallback--hidden\');">' +
+                '<span class="avatar-fallback avatar-fallback--hidden">' + escapeHtml(char) + '</span>' +
                 '</div>';
         } else {
             avatarHtml = '<div class="mentor-avatar">' +

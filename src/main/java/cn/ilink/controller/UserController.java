@@ -1,5 +1,6 @@
 package cn.ilink.controller;
 
+import cn.ilink.common.BuiltinAvatarCatalog;
 import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import cn.ilink.dto.ChangePasswordRequest;
@@ -113,6 +114,17 @@ public class UserController {
         }
     }
 
+    /** 当前登录用户可选择的内置头像（仅返回本人角色分组） */
+    @GetMapping("/builtin-avatars")
+    @ResponseBody
+    public ResponseEntity<Result<?>> builtinAvatars(HttpSession session) {
+        User current = ControllerUtils.requireUser(session);
+        if (current == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
+        return Result.ok(BuiltinAvatarCatalog.listForRole(current.getRole())).toResponseEntity();
+    }
+
     @PostMapping("/profile")
     @ResponseBody
     public ResponseEntity<Result<?>> updateProfile(@RequestBody ProfileRequest profileRequest, HttpSession session) {
@@ -124,6 +136,12 @@ public class UserController {
         if (profileRequest.getAvatar() != null
                 && !ControllerUtils.isManagedUploadUrl(profileRequest.getAvatar(), accessUrlPrefix)) {
             return Result.badRequest("头像地址仅支持站内上传文件").toResponseEntity();
+        }
+        // 内置头像只能选择本人角色分组，防止学生选教师头像（反之亦然）
+        String requestedAvatar = profileRequest.getAvatar();
+        if (requestedAvatar != null && BuiltinAvatarCatalog.isBuiltin(requestedAvatar.trim())
+                && !BuiltinAvatarCatalog.belongsToRole(requestedAvatar.trim(), user.getRole())) {
+            return Result.badRequest("只能选择与本人身份匹配的内置头像").toResponseEntity();
         }
 
         boolean success = userService.updateProfile(user.getId(), profileRequest);

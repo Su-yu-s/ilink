@@ -1002,3 +1002,81 @@ body[data-app-page="teacher-detail"] .teacher-detail__apply-status {
     width: 100%;
   }
 }
+
+
+/* 有可用头像时隐藏字母兜底层：特异性(0,5,2)需高于 portal-redesign.css 中
+   body[data-app-page="teacher-wall"] .mentor-avatar .avatar-fallback{display:grid!important}(0,4,2)，
+   否则同 !important 下后加载的 portal 规则会让字母层永久盖住头像 */
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell .mentor-avatar .avatar-fallback.avatar-fallback--hidden {
+    display: none !important;
+}
+
+
+/* === 导师资料未完善提示条 === */
+.banner-section {
+    padding: 0 24px 4px;
+    background: transparent;
+}
+.banner-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+.teacher-incomplete-banner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #fff8e8, #fffdf5);
+    border: 1px solid #f0d9a8;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.teacher-incomplete-banner[hidden] {
+    display: none;
+}
+.teacher-incomplete-banner__icon {
+    flex-shrink: 0;
+    color: #d99a1f;
+}
+.teacher-incomplete-banner__body {
+    flex: 1;
+    min-width: 0;
+}
+.teacher-incomplete-banner__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #7a5a12;
+    line-height: 1.4;
+}
+.teacher-incomplete-banner__text {
+    margin-top: 3px;
+    font-size: 13px;
+    color: #8a6d2a;
+    line-height: 1.5;
+}
+.teacher-incomplete-banner__action {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: #d99a1f;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+.teacher-incomplete-banner__action:hover {
+    background: #c2881a;
+    color: #fff;
+}
+@media (max-width: 767.98px) {
+    .teacher-incomplete-banner {
+        flex-wrap: wrap;
+    }
+    .teacher-incomplete-banner__action {
+        margin-left: auto;
+    }
+}

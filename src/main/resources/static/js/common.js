@@ -63,9 +63,11 @@ function isRenderableAvatarUrl(avatar) {
     const v = avatar == null ? '' : String(avatar).trim();
     if (!v) return false;
     if (v.startsWith('/uploads/')) return true;
+    if (v.startsWith('/images/avatars/')) return true;
     try {
         const url = new URL(v, window.location.origin);
-        return url.origin === window.location.origin && url.pathname.startsWith('/uploads/');
+        return url.origin === window.location.origin
+            && (url.pathname.startsWith('/uploads/') || url.pathname.startsWith('/images/avatars/'));
     } catch (e) {
         return false;
     }

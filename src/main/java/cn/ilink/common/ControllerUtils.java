@@ -126,6 +126,10 @@ public final class ControllerUtils {
         if (v.startsWith("/uploads/")) {
             return true;
         }
+        // 内置头像为随包发布的静态资源，路径固定且在清单内，允许写入资料
+        if (BuiltinAvatarCatalog.isBuiltin(v)) {
+            return true;
+        }
         String prefix = accessUrlPrefix == null ? "" : accessUrlPrefix.trim();
         if (prefix.isEmpty()) {
             return false;

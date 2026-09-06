@@ -253,6 +253,12 @@ class AvatarUploader {
         this.fallback = document.getElementById('avatarFallback');
         this.hiddenInput = document.getElementById('avatar');
         this.hint = document.getElementById('avatarUploadHint');
+        this.builtinBtn = document.getElementById('builtinAvatarBtn');
+        this.builtinModalEl = document.getElementById('builtinAvatarModal');
+        this.builtinGrid = document.getElementById('builtinAvatarGrid');
+        this.builtinEmpty = document.getElementById('builtinAvatarEmpty');
+        this.builtinLoading = document.getElementById('builtinAvatarLoading');
+        this.builtinAvatars = null;
         this._imgLoadHandler = null;
         this.init();
     }
@@ -271,6 +277,13 @@ class AvatarUploader {
                 this.upload(file);
             }
         });
+
+        if (this.builtinBtn) {
+            this.builtinBtn.addEventListener('click', () => {
+                if (!document.body.classList.contains('profile-details-editing')) return;
+                this.openBuiltinPicker();
+            });
+        }
 
         const realNameEl = document.getElementById('realName');
         const usernameEl = document.getElementById('username');
@@ -441,6 +454,90 @@ class AvatarUploader {
         if (this.fileInput) {
             this.fileInput.value = '';
         }
+    }
+
+    async openBuiltinPicker() {
+        if (!this.builtinModalEl || !this.builtinGrid) return;
+        // body 带 transform 时 fixed 弹窗相对 body 定位，先归零滚动保证视口居中，关闭后恢复
+        this._savedScrollY = window.scrollY || 0;
+        window.scrollTo(0, 0);
+        if (!this._restoreBound) {
+            this._restoreBound = true;
+            this.builtinModalEl.addEventListener('hidden.bs.modal', () => {
+                // 延后到 Bootstrap 自身滚动恢复之后，回到打开弹窗前的浏览位置
+                const y = this._savedScrollY || 0;
+                setTimeout(() => window.scrollTo(0, y), 60);
+            });
+        }
+        const modal = window.bootstrap && window.bootstrap.Modal
+            ? window.bootstrap.Modal.getOrCreateInstance(this.builtinModalEl)
+            : null;
+        if (this.builtinAvatars == null) {
+            if (this.builtinLoading) this.builtinLoading.hidden = false;
+            this.builtinGrid.innerHTML = '';
+            try {
+                const response = await apiFetch('/api/user/builtin-avatars', { credentials: 'same-origin' });
+                const result = await response.json();
+                this.builtinAvatars = result.code === 200 && Array.isArray(result.data) ? result.data : [];
+            } catch (error) {
+                console.error('加载内置头像失败:', error);
+                this.builtinAvatars = [];
+            }
+            if (this.builtinLoading) this.builtinLoading.hidden = true;
+        }
+        this.renderBuiltinGrid();
+        if (modal) modal.show();
+    }
+
+    renderBuiltinGrid() {
+        if (!this.builtinGrid) return;
+        const list = this.builtinAvatars || [];
+        if (this.builtinEmpty) this.builtinEmpty.hidden = list.length > 0;
+        const current = this.hiddenInput ? this.hiddenInput.value.trim() : '';
+        this.builtinGrid.innerHTML = list.map(url => {
+            const safeUrl = this.escapeAttr(url);
+            const selected = url === current ? ' is-selected' : '';
+            return '<button type="button" class="il-builtin-avatar-item' + selected + '" '
+                + 'data-avatar="' + safeUrl + '" aria-label="使用该内置头像">'
+                + '<img src="' + safeUrl + '" alt="" loading="lazy">'
+                + (url === current ? '<span class="il-builtin-avatar-check" aria-hidden="true">&#10003;</span>' : '')
+                + '</button>';
+        }).join('');
+        this.builtinGrid.querySelectorAll('.il-builtin-avatar-item').forEach(btn => {
+            btn.addEventListener('click', () => this.selectBuiltin(btn.getAttribute('data-avatar')));
+        });
+    }
+
+    selectBuiltin(url) {
+        if (!url) return;
+        this.setAvatar(url, resolveAvatarInitial({
+            username: document.getElementById('username')?.value,
+            realName: document.getElementById('realName')?.value
+        }));
+        if (this.hiddenInput) this.hiddenInput.value = url;
+        this.showHint('已选择内置头像，保存后生效', 'success');
+        this.renderBuiltinGrid();
+        if (typeof applyAccountMenuFromUser === 'function') {
+            const uEl = document.getElementById('username');
+            const rEl = document.getElementById('realName');
+            applyAccountMenuFromUser({
+                username: uEl ? uEl.value : '',
+                realName: rEl ? rEl.value : '',
+                avatar: url,
+                role: ''
+            });
+        }
+        if (window.bootstrap && window.bootstrap.Modal && this.builtinModalEl) {
+            window.bootstrap.Modal.getInstance(this.builtinModalEl)?.hide();
+        }
+    }
+
+    escapeAttr(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
     }
 
     showHint(text, type) {

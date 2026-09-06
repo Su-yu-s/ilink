@@ -101,6 +101,8 @@ public class AuthController {
                 loginAttemptService.loginFailed(clientKey);
                 return json(Result.fail(401, "用户名或密码错误"));
             }
+            // 老用户首次登录时补一个随机内置头像（只补一次，已有头像不动）
+            user = userService.ensureAvatarAssigned(user);
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                 user.getUsername(),

@@ -36,7 +36,7 @@ public class SecurityConfig {
                     "/api/login", "/api/register", "/api/logout", "/login", "/login.html", "/register", "/register.html",
                     "/forgot-password.html", "/api/password-reset/**", "/terms.html", "/privacy.html").permitAll()
                 .antMatchers("/actuator/health", "/actuator/info").permitAll()
-                .antMatchers("/css/**", "/js/**", "/lib/**", "/img/**", "/uploads/**").permitAll()
+                .antMatchers("/css/**", "/js/**", "/lib/**", "/img/**", "/images/**", "/uploads/**").permitAll()
 
                 .antMatchers(HttpMethod.GET, "/api/community/posts").permitAll()
                 .antMatchers(HttpMethod.GET, "/api/community/posts/*").permitAll()

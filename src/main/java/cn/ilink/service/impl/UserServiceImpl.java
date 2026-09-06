@@ -1,5 +1,6 @@
 package cn.ilink.service.impl;
 
+import cn.ilink.common.BuiltinAvatarCatalog;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.UserMapper;
 import cn.ilink.dto.LoginRequest;
@@ -85,7 +86,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setStudentId(registerRequest.getStudentId());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setEmail(registerRequest.getEmail());
-        user.setRole(registerRequest.getRole() != null ? registerRequest.getRole() : "STUDENT");
+        String resolvedRole = registerRequest.getRole() != null ? registerRequest.getRole() : "STUDENT";
+        user.setRole(resolvedRole);
+        // 注册即按角色随机分配一个内置头像
+        user.setAvatar(BuiltinAvatarCatalog.randomForRole(resolvedRole));
         user.setRealName(username);
         user.setGender(registerRequest.getGender());
 
@@ -104,6 +108,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
         }
         return true;
+    }
+
+    @Override
+    public User ensureAvatarAssigned(User user) {
+        if (user == null) {
+            return null;
+        }
+        // 已有头像（含历史随机分配与用户自定义上传）一律不动，保证只补一次
+        if (user.getAvatar() != null && !user.getAvatar().isBlank()) {
+            return user;
+        }
+        String avatar = BuiltinAvatarCatalog.randomForRole(user.getRole());
+        if (avatar == null) {
+            return user;
+        }
+        User patch = new User();
+        patch.setId(user.getId());
+        patch.setAvatar(avatar);
+        if (userMapper.updateById(patch) > 0) {
+            user.setAvatar(avatar);
+        }
+        return user;
     }
 
     @Override
