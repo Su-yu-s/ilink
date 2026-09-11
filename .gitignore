@@ -1,0 +1,60 @@
+# ============================================================
+# iLink .gitignore
+# ============================================================
+
+# === IDE / 编辑器配置 ===
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.zcode/
+.claude/
+
+# === 构建产物 ===
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+!**/src/**/*.jar
+
+# === 运行时数据 ===
+uploads/
+.pw-browsers/
+
+# === 本地敏感配置（绝不提交） ===
+src/main/resources/application-local.yml
+src/main/resources/application-local.properties
+
+# === 日志与崩溃转储 ===
+*.log
+logs/
+日志.txt
+*.stackdump
+
+# === 内部文档与审计产物 ===
+docs/
+PRODUCT.md
+audit_results.json
+corruption_report.txt
+
+# === 开发脚本与草稿 ===
+scripts/
+searchbar-demos/
+screenshots/
+
+# === 测试与覆盖率 ===
+*.exec
+coverage/
+.nyc_output/
+test_screenshots/
+
+# === 系统文件 ===
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+*~
