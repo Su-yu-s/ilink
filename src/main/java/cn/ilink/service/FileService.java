@@ -283,7 +283,11 @@ public class FileService {
             return ".7z";
         }
         if (Set.of(".txt", ".md", ".csv").contains(declaredExtension) && looksLikeText(file)) {
-            return ".text";
+            // When the file content looks like text and the declared extension is a text type,
+            // return the declared extension directly so downstream checks (which validate
+            // allowed extensions) will accept the file (instead of returning a generic
+            // marker like ".text" that wouldn't be present in the allowed set).
+            return declaredExtension;
         }
         return null;
     }
@@ -329,15 +333,17 @@ public class FileService {
         if (".ole".equals(actual)) {
             return Set.of(".doc", ".xls", ".ppt").contains(declared);
         }
-        if (".text".equals(actual)) {
-            return Set.of(".txt", ".md", ".csv").contains(declared);
-        }
+        // No special-case for a generic ".text" marker — detectFileExtension now returns
+        // the concrete declared extension for text types, so treat compatibility as exact
+        // match otherwise.
         return declared.equals(actual);
     }
 
     private String normalizeStoredExtension(String actual, String declared) {
         if (".jpeg".equals(actual)) return ".jpg";
-        if (".ole".equals(actual) || ".text".equals(actual)) return declared;
+        // If we detected an OLE container (old doc/xls/ppt), store the declared short
+        // extension (e.g. ".doc") rather than ".ole".
+        if (".ole".equals(actual)) return declared;
         return actual;
     }
 
