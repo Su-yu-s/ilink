@@ -1,37 +1,8 @@
 // 竞赛目录：数据来自后台维护的竞赛目录 API。
-const COMP_TRACKS = [
-    { key: '', label: '全部' },
-    { key: 'cs', label: '计算机软件' },
-    { key: 'ee', label: '电子信息' },
-    { key: 'innovation', label: '创新创业' },
-    { key: 'stem', label: '数理建模' },
-    { key: 'robot', label: '机器人 / 智能车' },
-    { key: 'general', label: '综合 / 语言' }
-];
-
 let currentTrack = '';
 let searchKeyword = '';
 let currentPage = 1;
 const PAGE_SIZE = 6;
-
-function buildTrackTabs() {
-    const nav = document.getElementById('competitionTrackTabs');
-    if (!nav) return;
-    nav.innerHTML = COMP_TRACKS.map(track =>
-        '<button type="button" class="btn btn-sm competition-track-tab' +
-        (track.key === currentTrack ? ' active' : '') +
-        '" data-track="' + escapeHtml(track.key) + '">' +
-        escapeHtml(track.label) + '</button>'
-    ).join('');
-    nav.querySelectorAll('[data-track]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentTrack = btn.dataset.track || '';
-            currentPage = 1;
-            buildTrackTabs();
-            loadCompetitions();
-        });
-    });
-}
 
 function renderPager(totalItems) {
     const pager = document.getElementById('competitionPager');
@@ -159,7 +130,12 @@ async function loadCompetitions() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    buildTrackTabs();
+    const trackSelect = document.getElementById('compTrackSelect');
+    trackSelect?.addEventListener('change', () => {
+        currentTrack = trackSelect.value || '';
+        currentPage = 1;
+        loadCompetitions();
+    });
     const input = document.getElementById('compSearchInput');
     const button = document.getElementById('compSearchBtn');
     const applySearch = () => {

@@ -150,6 +150,12 @@ async function checkCreatorAccess(teamData) {
         // 判断是否为队员
         const members = Array.isArray(teamData.members) ? teamData.members : [];
         const isMember = members.some(m => Number(m.userId || m.id) === teamDetailCurrentUserId);
+        // 队长双保险：创建者，或成员列表中被标记为 LEADER/队长 的人（避免 creatorId 与成员角色不一致）
+        const isLeaderMember = members.some(m =>
+            Number(m.userId || m.id) === teamDetailCurrentUserId &&
+            (String(m.role || '').toUpperCase() === 'LEADER' || m.role === '队长')
+        );
+        isCurrentUserCreator = isCurrentUserCreator || isLeaderMember;
 
         if (isCurrentUserCreator) {
             // 队长：隐藏"申请加入"，显示管理按钮（根据状态控制）

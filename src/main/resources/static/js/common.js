@@ -28,6 +28,72 @@ function escapeHtml(value) {
 }
 
 /**
+ * Shared helpers for every upload entry point. New upload APIs return metadata;
+ * normalizeUploadResult also accepts the former string response during rollout.
+ */
+window.ILinkFiles = window.ILinkFiles || {
+    normalizeUploadResult: function (data, fallbackFile) {
+        var raw = data && typeof data === 'object' ? data : { url: data };
+        var fallbackName = fallbackFile && fallbackFile.name ? String(fallbackFile.name) : '附件';
+        return {
+            url: raw && raw.url ? String(raw.url) : '',
+            name: raw && (raw.originalName || raw.name)
+                ? String(raw.originalName || raw.name)
+                : fallbackName,
+            size: Number(raw && raw.size != null ? raw.size : (fallbackFile && fallbackFile.size)) || 0,
+            contentType: raw && raw.contentType
+                ? String(raw.contentType)
+                : String((fallbackFile && fallbackFile.type) || 'application/octet-stream')
+        };
+    },
+
+    formatSize: function (bytes) {
+        var size = Number(bytes) || 0;
+        if (size <= 0) return '';
+        if (size < 1024) return size + ' B';
+        if (size < 1024 * 1024) return (size / 1024).toFixed(size < 10 * 1024 ? 1 : 0) + ' KB';
+        return (size / (1024 * 1024)).toFixed(size < 10 * 1024 * 1024 ? 1 : 0) + ' MB';
+    },
+
+    extension: function (name) {
+        var clean = String(name || '').split(/[?#]/)[0];
+        var match = clean.match(/\.([^.\\/]+)$/);
+        return match ? match[1].slice(0, 5).toUpperCase() : 'FILE';
+    },
+
+    comparableName: function (name) {
+        var value = String(name || '').trim();
+        if (typeof value.normalize === 'function') value = value.normalize('NFC');
+        return value.toLocaleLowerCase('zh-CN');
+    },
+
+    findDuplicate: function (items, name) {
+        var expected = this.comparableName(name);
+        if (!expected || !Array.isArray(items)) return null;
+        return items.find(function (item) {
+            return item && window.ILinkFiles.comparableName(item.name) === expected;
+        }) || null;
+    },
+
+    friendlyDownloadName: function (name, url, fallbackTitle) {
+        var value = String(name || '').trim();
+        if (value && value !== '附件') return value;
+        var cleanUrl = String(url || '').split(/[?#]/)[0];
+        var match = cleanUrl.match(/\.([^.\\/]+)$/);
+        var suffix = match ? '.' + match[1].toLowerCase() : '';
+        return String(fallbackTitle || '附件').trim() + suffix;
+    },
+
+    iconMarkup: function (name) {
+        return '<span class="il-upload-file-icon" aria-hidden="true">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+            '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
+            '<path d="M14 2v6h6"/>' +
+            '</svg><small>' + escapeHtml(this.extension(name)) + '</small></span>';
+    }
+};
+
+/**
  * 将 Markdown 渲染结果写入元素，统一经过 DOMPurify 净化，
  * 防止编辑预览与成果/文章展示场景的 XSS（marked 默认透传原始 HTML）。
  * 无 DOMPurify 或渲染失败时降级为纯文本展示。
@@ -979,3 +1045,129 @@ const ilinkPublicApi = {
 
 window.ILink = Object.assign(window.ILink || {}, ilinkPublicApi);
 Object.assign(window, ilinkPublicApi);
+
+
+/* ====== Plan A: custom select for unified search bar ====== */
+(function () {
+  function initCustomSelects() {
+    var wraps = document.querySelectorAll('.il-search-bar__select:not(.cs-inited)');
+    if (!wraps.length) return;
+
+    var chevronSvg = '<svg class="cs-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+
+    function closeAll() {
+      var open = document.querySelectorAll('.il-search-bar__select.open');
+      for (var i = 0; i < open.length; i++) open[i].classList.remove('open');
+    }
+
+    for (var w = 0; w < wraps.length; w++) {
+      (function (wrap) {
+        var select = wrap.querySelector('select');
+        if (!select) return;
+        wrap.classList.add('cs-inited');
+
+        var label = select.getAttribute('aria-label') || '';
+        var trigger = document.createElement('div');
+        trigger.className = 'cs-trigger';
+        trigger.innerHTML =
+          (label ? '<span class="cs-label">' + label + '</span>' : '') +
+          '<span class="cs-value"></span>' + chevronSvg;
+
+        var dropdown = document.createElement('div');
+        dropdown.className = 'cs-dropdown';
+        var options = Array.prototype.slice.call(select.options);
+
+        function updateDisplay() {
+          var opt = select.options[select.selectedIndex];
+          trigger.querySelector('.cs-value').textContent = opt ? opt.textContent : '';
+          var items = dropdown.querySelectorAll('.cs-item');
+          for (var i = 0; i < items.length; i++) {
+            items[i].classList.toggle('active', options[i] && options[i].value === select.value);
+          }
+        }
+
+        for (var i = 0; i < options.length; i++) {
+          (function (opt) {
+            var item = document.createElement('div');
+            item.className = 'cs-item' + (opt.selected ? ' active' : '');
+            item.textContent = opt.textContent;
+            item.setAttribute('data-value', opt.value);
+            item.addEventListener('click', function (e) {
+              e.stopPropagation();
+              select.value = opt.value;
+              select.dispatchEvent(new Event('change', { bubbles: true }));
+              updateDisplay();
+              closeAll();
+            });
+            dropdown.appendChild(item);
+          })(options[i]);
+        }
+
+        trigger.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var wasOpen = wrap.classList.contains('open');
+          closeAll();
+          if (!wasOpen) wrap.classList.add('open');
+        });
+
+        wrap.appendChild(trigger);
+        wrap.appendChild(dropdown);
+        updateDisplay();
+      })(wraps[w]);
+    }
+
+    document.addEventListener('click', closeAll);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCustomSelects);
+  } else {
+    initCustomSelects();
+  }
+})();
+
+/* ====== 搜索框放大镜按钮点击触发搜索 ====== */
+(function() {
+  function setupIconSearch() {
+    var icons = document.querySelectorAll('.il-search-bar .il-search-field__icon, .il-search-field--combo .il-search-field__icon');
+    for (var i = 0; i < icons.length; i++) {
+      var icon = icons[i];
+      if (icon.dataset.iconSearchBound) continue;
+      icon.dataset.iconSearchBound = '1';
+      if (icon.parentElement && icon.parentElement.classList.contains('il-icon-search-btn')) continue;
+
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'il-icon-search-btn';
+      btn.setAttribute('aria-label', '搜索');
+      icon.parentNode.insertBefore(btn, icon);
+      btn.appendChild(icon);
+
+      (function(button) {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var bar = button.closest('.il-search-bar');
+          var combo = button.closest('.il-search-field--combo');
+          var searchBtn = bar ? bar.querySelector('.il-search-bar__btn--primary') : null;
+          if (searchBtn) { searchBtn.click(); return; }
+          var actionBtn = combo ? combo.querySelector('.il-search-field__action') : null;
+          if (actionBtn) { actionBtn.click(); return; }
+          var scope = bar || combo;
+          var inp = scope ? scope.querySelector('input') : null;
+          if (inp) {
+            inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+          }
+        });
+      })(btn);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupIconSearch);
+  } else {
+    setupIconSearch();
+  }
+  setTimeout(setupIconSearch, 300);
+  setTimeout(setupIconSearch, 1000);
+})();

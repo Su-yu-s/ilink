@@ -30,8 +30,8 @@ public class FileController {
     public ResponseEntity<Result<?>> upload(@RequestParam("file") MultipartFile file,
                                                  @RequestParam("bizType") String bizType) {
         try {
-            String url = fileService.upload(file, bizType);
-            return Result.ok("\u4e0a\u4f20\u6210\u529f", url).toResponseEntity();
+            return Result.ok("\u4e0a\u4f20\u6210\u529f", fileService.uploadWithMetadata(file, bizType))
+                .toResponseEntity();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Result.badRequest(e.getMessage()));
         } catch (IOException e) {

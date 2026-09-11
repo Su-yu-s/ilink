@@ -168,7 +168,7 @@ body[data-app-page="team-market"] .team-card {
 }
 
 body[data-app-page="team-market"] .team-card {
-  padding: 28px;
+  padding: 22px;
 }
 
 body[data-app-page="team-market"] .team-card::before {
@@ -184,7 +184,7 @@ body[data-app-page="team-market"] .team-card:hover {
 
 body[data-app-page="team-market"] #teamList {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
   gap: 20px;
   align-items: stretch;
 }
@@ -509,4 +509,38 @@ body[data-app-page="team-market"] .team-card .il-author-avatar-fallback {
     font-size: 13px;
     font-weight: 700;
     line-height: 1;
+}
+
+/* === team-market-ui-refresh：紧凑搜索栏（页面级，确认后再推广全局） === */
+body[data-app-page="team-market"] .il-search-bar {
+    min-height: 60px;
+    padding: 10px 16px;
+    gap: 10px;
+}
+/* 去掉与搜索框平分宽度的空白 spacer，让搜索框占满、操作按钮靠右 */
+body[data-app-page="team-market"] .il-search-bar__spacer {
+    display: none;
+}
+body[data-app-page="team-market"] .il-search-bar__input-wrap {
+    flex: 1 1 auto;
+}
+body[data-app-page="team-market"] .il-search-bar__select select {
+    min-width: 112px;
+}
+
+/* 中屏空间不足、发布按钮换行时贴右对齐，避免孤悬左侧 */
+@media (min-width: 768px) and (max-width: 1280px) {
+    body[data-app-page="team-market"] .il-search-bar__btn--ghost {
+        margin-left: auto;
+    }
+}
+
+/* 栅格窄屏兜底：手机单列 */
+@media (max-width: 640px) {
+    body[data-app-page="team-market"] #teamList {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    body[data-app-page="team-market"] .team-card {
+        padding: 18px;
+    }
 }

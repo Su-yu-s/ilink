@@ -352,3 +352,147 @@
     background: var(--ui-surface-selected, #f3f4f6);
   }
 }
+
+/* Reusable upload feedback cards for community create/edit flows. */
+.il-upload-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.il-upload-file {
+  position: relative;
+  display: grid;
+  flex: 0 1 300px;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 11px;
+  width: min(100%, 300px);
+  max-width: 100%;
+  min-height: 58px;
+  padding: 8px 34px 8px 9px;
+  border: 1px solid var(--ui-border, #e3e4e0);
+  border-radius: 11px;
+  background: var(--ui-surface, #fff);
+}
+
+.il-upload-file.is-uploading { background: var(--ui-surface-subtle, #f8f8f6); }
+.il-upload-file.is-error { border-color: rgba(185, 28, 28, .28); }
+
+.il-upload-file-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 42px;
+  color: var(--ui-text-muted, #6b7280);
+  border: 1px solid var(--ui-border, #e3e4e0);
+  border-radius: 8px;
+  background: var(--ui-surface-subtle, #f8f8f6);
+}
+
+.il-upload-file-icon svg { width: 23px; height: 23px; }
+.il-upload-file-icon small {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  max-width: 33px;
+  padding: 0 2px;
+  overflow: hidden;
+  color: var(--ui-text-strong, #1f2937);
+  background: var(--ui-surface-subtle, #f8f8f6);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+
+.il-upload-file__body { min-width: 0; }
+.il-upload-file__name {
+  display: block;
+  overflow: hidden;
+  color: var(--ui-text-strong, #1f2937);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.il-upload-file__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+  margin-top: 2px;
+  color: var(--ui-text-muted, #9ca3af);
+  font-size: 12px;
+}
+.il-upload-file__status.is-success { color: #15803d; }
+.il-upload-file__status.is-error { color: #b91c1c; }
+.il-upload-file__spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #d1d5db;
+  border-top-color: #4b5563;
+  border-radius: 50%;
+  animation: il-upload-spin .7s linear infinite;
+}
+@keyframes il-upload-spin { to { transform: rotate(360deg); } }
+
+.il-upload-file__actions {
+  display: flex;
+  grid-column: 2;
+  align-items: center;
+  gap: 4px;
+}
+.il-upload-file__action {
+  min-width: 44px;
+  min-height: 34px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ui-text-muted, #6b7280);
+  background: transparent;
+  font-size: 12px;
+  cursor: pointer;
+}
+.il-upload-file__action:hover { color: var(--ui-text-strong, #1f2937); background: var(--ui-surface-selected, #f3f4f6); }
+.il-upload-file__action--danger:hover { color: #b91c1c; background: #fef2f2; }
+
+.il-upload-file__remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  color: var(--ui-text-muted, #6b7280);
+  background: transparent;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.il-upload-file__remove:hover {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+.il-upload-file__remove:focus-visible {
+  outline: 2px solid var(--ui-focus, #52525b);
+  outline-offset: 1px;
+}
+
+@media (max-width: 520px) {
+  .il-upload-file { flex-basis: 100%; width: 100%; }
+  .il-upload-file__actions { grid-column: 2; justify-content: flex-start; }
+}

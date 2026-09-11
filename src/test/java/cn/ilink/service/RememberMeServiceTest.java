@@ -68,6 +68,7 @@ class RememberMeServiceTest {
         user.setId(9L);
         user.setPassword("secret");
         when(userService.getById(9L)).thenReturn(user);
+        when(userService.ensureAvatarAssigned(user)).thenReturn(user);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setCookies(new Cookie(RememberMeService.COOKIE_NAME, selector + "." + validator));
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -76,6 +77,7 @@ class RememberMeServiceTest {
 
         org.junit.jupiter.api.Assertions.assertEquals(9L, authenticated.getId());
         assertNull(authenticated.getPassword());
+        verify(userService).ensureAvatarAssigned(user);
         verify(mapper).updateById(token);
         assertTrue(response.getHeader("Set-Cookie").contains(selector + "."));
     }

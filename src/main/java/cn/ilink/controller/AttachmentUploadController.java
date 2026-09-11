@@ -19,7 +19,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * 与 {@link AssetController#getAsset} 的 <code>GET /api/asset/{id}</code> 分离，
@@ -48,8 +47,8 @@ public class AttachmentUploadController {
             return Result.unauthorized().toResponseEntity();
         }
         try {
-            String url = fileService.upload(file, resolveBizType(kind));
-            return Result.ok("上传成功", Map.of("url", url)).toResponseEntity();
+            return Result.ok("上传成功", fileService.uploadWithMetadata(file, resolveBizType(kind)))
+                .toResponseEntity();
         } catch (IllegalArgumentException e) {
             return Result.badRequest(e.getMessage()).toResponseEntity();
         } catch (IOException e) {
@@ -61,6 +60,7 @@ public class AttachmentUploadController {
         if ("avatar".equalsIgnoreCase(kind)) return "avatars";
         if ("community".equalsIgnoreCase(kind)) return "community";
         if ("task".equalsIgnoreCase(kind)) return "tasks";
+        if ("chat".equalsIgnoreCase(kind)) return "chat";
         if (kind == null || kind.trim().isEmpty() || "proof".equalsIgnoreCase(kind)) return "proofs";
         throw new IllegalArgumentException("不支持的附件用途");
     }

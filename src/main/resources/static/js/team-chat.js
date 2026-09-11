@@ -67,16 +67,24 @@ class ChatManager {
     normalizeMessage(raw) {
         const type = (raw.messageType || raw.type || 'TEXT').toLowerCase();
         const ts = raw.createdAt || raw.timestamp;
+        const content = raw.content || '';
+        let fileUrl = raw.fileUrl || '';
+        let fileName = raw.fileName || '';
+        if (type === 'file' && !fileUrl) {
+            const separator = String(content).indexOf('|');
+            fileUrl = separator >= 0 ? String(content).slice(0, separator) : String(content);
+            fileName = separator >= 0 ? String(content).slice(separator + 1) : '附件';
+        }
         return {
             id: raw.id,
             teamId: raw.teamId,
             senderId: raw.senderId,
             senderName: raw.senderName || '未知用户',
-            content: raw.content || '',
+            content: content,
             timestamp: ts ? (typeof ts === 'number' ? new Date(ts).toISOString() : ts) : new Date().toISOString(),
             type: type === 'file' ? 'file' : 'text',
-            fileName: raw.fileName,
-            fileUrl: raw.fileUrl
+            fileName: fileName,
+            fileUrl: fileUrl
         };
     }
 
@@ -438,11 +446,66 @@ class ChatManager {
     }
 
     async handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        showMessage('文件消息暂不支持，请使用文字沟通', 'info');
+        const file = event.target.files && event.target.files[0];
         event.target.value = '';
+        if (!file) return;
+        showMessage('正在上传 ' + file.name + '…', 'info');
+        const form = new FormData();
+        form.append('file', file);
+        try {
+            const response = await apiFetch('/api/upload/attachment?kind=chat', {
+                method: 'POST',
+                body: form,
+                credentials: 'same-origin'
+            });
+            const result = await response.json();
+            if (Number(result.code) !== 200 || !result.data) {
+                throw new Error(result.message || '上传失败');
+            }
+            const uploaded = window.ILinkFiles.normalizeUploadResult(result.data, file);
+            if (!uploaded.url) throw new Error('上传结果缺少文件地址');
+            await this.sendFileMessage(uploaded);
+            showMessage('文件已发送', 'success');
+        } catch (error) {
+            console.error('文件上传失败:', error);
+            showMessage(error.message || '文件上传失败', 'error');
+        }
+    }
+
+    async sendFileMessage(uploaded) {
+        const content = uploaded.url + '|' + uploaded.name;
+        const tempId = Date.now();
+        this.messages.push({
+            id: tempId,
+            teamId: this.teamId,
+            senderId: this.currentUser.id,
+            senderName: this.currentUser.displayName,
+            content: content,
+            timestamp: new Date().toISOString(),
+            type: 'file',
+            fileName: uploaded.name,
+            fileUrl: uploaded.url
+        });
+        this.renderMessages();
+        const payload = { content: content, type: 'FILE' };
+        if (this.isConnected && this.stompClient) {
+            this.stompClient.send(`/app/chat/${this.teamId}`, {}, JSON.stringify(payload));
+            return;
+        }
+        try {
+            const saved = await request(`/team/${this.teamId}/messages`, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            const normalized = this.normalizeMessage(saved);
+            const index = this.messages.findIndex(message => message.id === tempId);
+            if (index >= 0) this.messages[index] = normalized;
+            this.renderMessages();
+        } catch (error) {
+            this.messages = this.messages.filter(message => message.id !== tempId);
+            this.renderMessages();
+            throw error;
+        }
     }
 
     handleKeyDown(event) {

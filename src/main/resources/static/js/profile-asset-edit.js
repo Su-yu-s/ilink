@@ -73,7 +73,8 @@ function initImageDrop(ta) {
             var r = await apiFetch('/api/upload/attachment?kind=community', { method: 'POST', body: fd, credentials: 'same-origin' });
             var j = await r.json();
             if (j.code === 200 && j.data && j.data.url) {
-                insertAtCursor(j.data.url, (file.name || '').replace(/\.[^.]+$/, ''));
+                var uploaded = window.ILinkFiles.normalizeUploadResult(j.data, file);
+                insertAtCursor(uploaded.url, (uploaded.name || '').replace(/\.[^.]+$/, ''));
                 showMessage('图片已插入', 'success');
             } else {
                 showMessage(j.message || '上传失败', 'error');
@@ -382,7 +383,8 @@ function fillForm(asset) {
 
     if (asset.fileUrl) {
         currentFileUrl = asset.fileUrl;
-        var name = String(asset.fileUrl).split('/').pop() || '已上传附件';
+        var name = (asset.originalFileName && String(asset.originalFileName).trim())
+            || String(asset.fileUrl).split('/').pop() || '已上传附件';
         document.getElementById('editFileHint').textContent = '当前附件：' + name + '。不选择新文件则保留原附件。';
     }
 
@@ -405,7 +407,8 @@ function initFileButton() {
     document.getElementById('editFileInput').addEventListener('change', function () {
         currentFile = this.files && this.files[0];
         if (currentFile) {
-            document.getElementById('editFileHint').textContent = '已选择：' + currentFile.name;
+            var sizeText = window.ILinkFiles.formatSize(currentFile.size);
+            document.getElementById('editFileHint').textContent = '已选择：' + currentFile.name + (sizeText ? ' · ' + sizeText : '');
         }
     });
 }
@@ -435,6 +438,8 @@ async function saveAsset() {
     fd.append('category', category || '其他');
     if (currentFile) fd.append('file', currentFile);
 
+    var saveButton = document.getElementById('editSaveBtn');
+    if (saveButton) { saveButton.disabled = true; saveButton.textContent = '保存中…'; }
     try {
         var r = await apiFetch('/api/asset/' + assetId, {
             method: 'PUT',
@@ -451,5 +456,7 @@ async function saveAsset() {
     } catch (e) {
         console.error(e);
         showMessage('网络错误', 'error');
+    } finally {
+        if (saveButton) { saveButton.disabled = false; saveButton.textContent = '保存成果'; }
     }
 }

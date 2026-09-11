@@ -91,10 +91,11 @@
                 var fd = new FormData();
                 fd.append('file', file);
                 var r = await apiFetch('/api/upload/attachment?kind=community', { method: 'POST', body: fd, credentials: 'same-origin' });
-                var j = await r.json();
-                if (j.code === 200 && j.data && j.data.url) {
-                    insertAtCursor(j.data.url, (file.name || '').replace(/\.[^.]+$/, ''));
-                    showMessage('图片已插入', 'success');
+            var j = await r.json();
+            if (j.code === 200 && j.data && j.data.url) {
+                    var uploaded = window.ILinkFiles.normalizeUploadResult(j.data, file);
+                    insertAtCursor(uploaded.url, (uploaded.name || '').replace(/\.[^.]+$/, ''));
+                showMessage('图片已插入', 'success');
                 } else {
                     showMessage(j.message || '上传失败', 'error');
                 }
@@ -254,7 +255,8 @@
         }
         if (hint) {
             if (asset.fileUrl) {
-                var name = String(asset.fileUrl).split('/').pop() || '已上传附件';
+                var name = (asset.originalFileName && String(asset.originalFileName).trim())
+                    || String(asset.fileUrl).split('/').pop() || '已上传附件';
                 hint.textContent = '当前附件：' + name + '。不选择新文件则保留原附件。';
             } else {
                 hint.textContent = '当前无附件，可选择文件上传。';
@@ -314,6 +316,8 @@
             : '/api/asset/upload';
         var method = state.mode === 'edit' ? 'PUT' : 'POST';
 
+        var submitBtn = $('assetPublishSubmitBtn');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = state.mode === 'edit' ? '保存中…' : '发布中…'; }
         try {
             var fetchFn = (global.ILink && typeof global.ILink.apiFetch === 'function')
                 ? global.ILink.apiFetch
@@ -333,6 +337,9 @@
         } catch (e) {
             console.error(e);
             showMessage('网络异常', 'error');
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+            setModalLabels(state.mode);
         }
     }
 
@@ -343,6 +350,19 @@
         if (btn && !btn.dataset.bound) {
             btn.dataset.bound = '1';
             btn.addEventListener('click', submit);
+        }
+        var fileInput = $('pubFile');
+        if (fileInput && !fileInput.dataset.feedbackBound) {
+            fileInput.dataset.feedbackBound = '1';
+            fileInput.addEventListener('change', function () {
+                var file = this.files && this.files[0];
+                var hint = $('pubFileHint');
+                if (!hint) return;
+                var sizeText = file ? window.ILinkFiles.formatSize(file.size) : '';
+                hint.textContent = file
+                    ? ('已选择：' + file.name + (sizeText ? ' · ' + sizeText : ''))
+                    : '支持 PDF、ZIP、图片等，便于他人下载参考。';
+            });
         }
         initMdPanes();
     }

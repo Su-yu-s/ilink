@@ -36,11 +36,17 @@ function parseAssetDescription(raw) {
 }
 
 function fileNameFromUrl(url, title) {
-    if (!url) return (title || '成果附件') + '.file';
-    const path = String(url).split('?')[0].split('#')[0];
-    const seg = path.split('/').pop();
-    if (seg && seg.indexOf('.') !== -1) return decodeURIComponent(seg);
-    return (title || '成果附件') + '_附件';
+    const fallbackTitle = String(title || '成果附件').trim() || '成果附件';
+    const path = String(url || '').split('?')[0].split('#')[0];
+    const extMatch = path.match(/(\.[A-Za-z0-9]{1,10})$/);
+    return fallbackTitle + (extMatch ? extMatch[1].toLowerCase() : '.file');
+}
+
+/** 优先使用用户上传时的原始文件名（后端存储于 originalFileName） */
+function originalDisplayName(asset) {
+    const name = asset && asset.originalFileName;
+    if (name && String(name).trim()) return String(name).trim();
+    return null;
 }
 
 function fileIconClass(name) {
@@ -344,7 +350,7 @@ function renderAssetDetail(asset) {
     const attachSection = document.getElementById('assetAttachmentSection');
     const filesEl = document.getElementById('assetFiles');
     if (asset.fileUrl && filesEl) {
-        const fname = fileNameFromUrl(asset.fileUrl, title);
+        const fname = originalDisplayName(asset) || fileNameFromUrl(asset.fileUrl, title);
         const icon = fileIconClass(fname);
         if (attachSection) attachSection.hidden = false;
         filesEl.innerHTML =

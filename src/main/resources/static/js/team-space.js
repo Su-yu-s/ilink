@@ -998,7 +998,7 @@
         form.append('file', file);
         notify('上传中...', 'info');
         try {
-            var response = await apiFetch('/api/upload', {
+            var response = await apiFetch('/api/upload/attachment?kind=chat', {
                 method: 'POST',
                 body: form
             });
@@ -1007,10 +1007,11 @@
                 throw new Error(result.message || '上传失败');
             }
             var data = result.data || {};
-            var url = typeof data === 'string' ? data : (data.url || data.path || '');
+            var uploaded = window.ILinkFiles.normalizeUploadResult(data, file);
+            var url = uploaded.url;
             if (!url) throw new Error('上传结果缺少文件地址');
             var type = imageOnly ? 'IMAGE' : 'FILE';
-            var content = imageOnly ? url : url + '|' + file.name;
+            var content = imageOnly ? url : url + '|' + uploaded.name;
             appendChatMessage({
                 senderId: currentUserId,
                 senderName: currentUserName || '我',

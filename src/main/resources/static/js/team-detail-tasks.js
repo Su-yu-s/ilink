@@ -252,6 +252,7 @@ function openSubmitModal(taskId) {
     currentTaskIdForSubmit = taskId;
     document.getElementById('submitRemark').value = '';
     document.getElementById('submitFile').value = '';
+    renderTaskSelectedFile(null);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('submitMaterialModal')).show();
 }
 
@@ -267,7 +268,28 @@ async function uploadTaskAttachment(file) {
     if (Number(result.code) !== 200 || !result.data || !result.data.url) {
         throw new Error(result.message || '附件上传失败');
     }
-    return { name: file.name, url: result.data.url };
+    const uploaded = window.ILinkFiles.normalizeUploadResult(result.data, file);
+    return { name: uploaded.name, url: uploaded.url };
+}
+
+function renderTaskSelectedFile(file) {
+    const container = document.getElementById('submitFilePreview');
+    if (!container) return;
+    if (!file) {
+        container.innerHTML = '';
+        container.hidden = true;
+        return;
+    }
+    container.hidden = false;
+    container.innerHTML = window.ILinkFiles.iconMarkup(file.name) +
+        `<span class="task-submit-file__body"><strong title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</strong>` +
+        `<small>${escapeHtml(window.ILinkFiles.formatSize(file.size) || '等待上传')}</small></span>` +
+        '<button type="button" class="task-submit-file__remove" aria-label="移除所选文件">移除</button>';
+    container.querySelector('.task-submit-file__remove')?.addEventListener('click', function () {
+        const input = document.getElementById('submitFile');
+        if (input) input.value = '';
+        renderTaskSelectedFile(null);
+    });
 }
 
 async function submitTaskMaterial() {
@@ -329,6 +351,9 @@ async function loadTaskSection() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('submitFile')?.addEventListener('change', function () {
+        renderTaskSelectedFile(this.files && this.files[0]);
+    });
     document.getElementById('submitMaterialBtn')?.addEventListener('click', submitTaskMaterial);
     document.getElementById('submitAssignBtn')?.addEventListener('click', function() {
         submitTaskForm().catch(function(error) {

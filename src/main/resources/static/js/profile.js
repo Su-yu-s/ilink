@@ -83,6 +83,7 @@ function normalizeHonor(x) {
         period: x.period || '',
         detail: x.detail || '',
         proofUrl: x.proofUrl || '',
+        proofName: x.proofName || '',
         awardRank: x.awardRank || '',
         teamScope: x.teamScope || '',
         amount: x.amount || '',
@@ -270,9 +271,13 @@ function fillOffcanvas(h) {
     document.getElementById('oc-valid').value = x.validUntil || '';
     document.getElementById('oc-issuer').value = x.issuer || '';
     document.getElementById('oc-detail').value = x.detail || '';
-    document.getElementById('oc-proof-url').value = x.proofUrl || '';
+    const proofUrlInput = document.getElementById('oc-proof-url');
+    proofUrlInput.value = x.proofUrl || '';
+    proofUrlInput.dataset.originalName = x.proofName || '';
     const st = document.getElementById('oc-proof-status');
-    if (st) st.textContent = x.proofUrl ? '已填写链接' : '';
+    if (st) st.textContent = x.proofUrl
+        ? (x.proofName ? '已上传：' + x.proofName : '已填写链接')
+        : '';
     const p = (x.period || '').trim();
     if (/^\d{4}-\d{2}$/.test(p)) {
         document.getElementById('oc-month').value = p;
@@ -301,6 +306,7 @@ function readOffcanvas() {
         period: period,
         detail: document.getElementById('oc-detail').value.trim(),
         proofUrl: document.getElementById('oc-proof-url').value.trim(),
+        proofName: document.getElementById('oc-proof-url').dataset.originalName || '',
         awardRank: document.getElementById('oc-award-rank').value || '',
         teamScope: document.getElementById('oc-team').value || '',
         amount: document.getElementById('oc-amount').value.trim(),
@@ -341,6 +347,7 @@ function openHonorModal(opts) {
         document.getElementById('oc-period-text').value = '';
         const st = document.getElementById('oc-proof-status');
         if (st) st.textContent = '';
+        document.getElementById('oc-proof-url').dataset.originalName = '';
         syncOffcanvasSections(pt);
     }
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -382,6 +389,7 @@ function commitHonorModal(closeAfter) {
         document.getElementById('oc-period-text').value = '';
         const st = document.getElementById('oc-proof-status');
         if (st) st.textContent = '';
+        document.getElementById('oc-proof-url').dataset.originalName = '';
         syncOffcanvasSections(t);
         const titleEl = document.getElementById('honorModalLabel');
         if (titleEl) titleEl.textContent = '添加成果';
@@ -447,12 +455,13 @@ function honorProofImageOnError(img) {
 }
 
 /** 成果卡片右侧：证明材料预览（图片 / PDF 占位 / 通用链接） */
-function honorProofAsideHtml(proofUrl) {
+function honorProofAsideHtml(proofUrl, proofName) {
     const u = String(proofUrl || '').trim();
     if (!u) return '';
     const safe = escapeHtml(u);
     const safeSrc = escapeHtml(honorProofSafeUrl(u));
     const kind = honorProofMediaKind(u);
+    const displayName = escapeHtml(String(proofName || '证明材料'));
     if (kind === 'image') {
         const proofLinkStyle =
             'display:block;width:88px;height:88px;max-width:88px;max-height:88px;overflow:hidden;border-radius:8px;flex-shrink:0;';
@@ -464,7 +473,7 @@ function honorProofAsideHtml(proofUrl) {
             proofLinkStyle +
             '" href="' +
             safe +
-            '" target="_blank" rel="noopener" title="查看证明材料">' +
+            '" target="_blank" rel="noopener" title="查看 ' + displayName + '">' +
             '<img class="honors-preview-proof__img" style="' +
             proofImgStyle +
             '" src="' +
@@ -480,7 +489,7 @@ function honorProofAsideHtml(proofUrl) {
             '<div class="honors-preview-card__proof">' +
             '<a class="honors-preview-proof honors-preview-proof--pdf" href="' +
             safe +
-            '" target="_blank" rel="noopener">' +
+            '" target="_blank" rel="noopener" title="查看 ' + displayName + '">' +
             '<span class="honors-preview-proof__pdf-badge" aria-hidden="true">PDF</span>' +
             '<span class="honors-preview-proof__pdf-label">证明文件</span>' +
             '</a></div>'
@@ -490,7 +499,7 @@ function honorProofAsideHtml(proofUrl) {
         '<div class="honors-preview-card__proof">' +
         '<a class="honors-preview-proof honors-preview-proof--link" href="' +
         safe +
-        '" target="_blank" rel="noopener">' +
+        '" target="_blank" rel="noopener" title="查看 ' + displayName + '">' +
         '<span class="honors-preview-proof__link-label">证明材料</span>' +
         '</a></div>'
     );
@@ -548,7 +557,7 @@ function refreshHonorsPreview() {
                 const lv = x.level ? honorLevelLabel(x.level) : '';
                 const meta = honorMetaParts(x);
                 const proof = String(x.proofUrl || '').trim();
-                const proofAside = honorProofAsideHtml(proof);
+                const proofAside = honorProofAsideHtml(proof, x.proofName);
                 const withProofClass = proof ? ' honors-preview-mount__item--with-proof' : '';
                 return `<li class="honors-preview-mount__item honor-level-item ${tier}${withProofClass}">
                 <div class="honors-preview-card__layout">
@@ -714,7 +723,7 @@ function renderOverview(user, honorsList, activity) {
                                 const tier = honorLevelTierClass(x.level);
                                 const meta = honorMetaParts(x);
                                 const proof = String(x.proofUrl || '').trim();
-                                const proofAside = honorProofAsideHtml(proof);
+                                const proofAside = honorProofAsideHtml(proof, x.proofName);
                                 const lvHtml = lv
                                     ? `<span class="honor-level-pill ${tier}">${escapeHtml(lv)}</span>`
                                     : '';
@@ -900,7 +909,7 @@ function renderPublicOverview(vo, honorsList) {
                                 const tier = honorLevelTierClass(x.level);
                                 const meta = honorMetaParts(x);
                                 const proof = String(x.proofUrl || '').trim();
-                                const proofAside = honorProofAsideHtml(proof);
+                                const proofAside = honorProofAsideHtml(proof, x.proofName);
                                 const lvHtml = lv
                                     ? `<span class="honor-level-pill ${tier}">${escapeHtml(lv)}</span>`
                                     : '';
@@ -1900,8 +1909,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 .then((result) => {
                     const u = result.data && (result.data.url || result.data.URL);
                     if (Number(result.code) === 200 && u && urlInp) {
+                        const uploaded = window.ILinkFiles.normalizeUploadResult(result.data, file);
                         urlInp.value = u;
-                        if (st) st.textContent = '已上传';
+                        urlInp.dataset.originalName = uploaded.name;
+                        if (st) st.textContent = '已上传：' + uploaded.name;
                         showMessage('证明材料已上传', 'success');
                     } else {
                         showMessage(result.message || '上传失败', 'error');
@@ -1945,6 +1956,16 @@ document.addEventListener('DOMContentLoaded', async function () {
                 dz.classList.remove('honor-dropzone--active');
                 const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
                 handleProofFile(f);
+            });
+        }
+
+        const proofUrl = document.getElementById('oc-proof-url');
+        if (proofUrl && proofUrl.dataset.originalNameBound !== '1') {
+            proofUrl.dataset.originalNameBound = '1';
+            proofUrl.addEventListener('input', function () {
+                proofUrl.dataset.originalName = '';
+                const st = document.getElementById('oc-proof-status');
+                if (st) st.textContent = proofUrl.value.trim() ? '已填写链接' : '';
             });
         }
 

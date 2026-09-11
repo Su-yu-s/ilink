@@ -1,5 +1,7 @@
 package cn.ilink.service;
 
+import cn.ilink.dto.UploadedFileInfo;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -61,6 +63,8 @@ public class FileService {
             "\u793e\u533a\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB"),
         "tasks", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
             "\u4efb\u52a1\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB"),
+        "chat", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
+            "\u804a\u5929\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB"),
         "assets", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
             "\u6210\u679c\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB")
     );
@@ -72,22 +76,30 @@ public class FileService {
     private String accessUrlPrefix;
 
     public String upload(MultipartFile file, String bizType) throws IOException {
+        return uploadWithMetadata(file, bizType).getUrl();
+    }
+
+    public UploadedFileInfo uploadWithMetadata(MultipartFile file, String bizType) throws IOException {
         UploadRule rule = validateBizType(bizType);
         validateFile(file, rule);
 
         String extension = extractExtension(file.getOriginalFilename());
+        String originalName = sanitizeOriginalFilename(file.getOriginalFilename(), extension);
         if (!rule.allowedExtensions.contains(extension)) {
             throw new IllegalArgumentException(rule.displayName + "\u4ec5\u652f\u6301 "
                 + rule.allowedText + " \u683c\u5f0f");
         }
         String actualExtension = detectFileExtension(file, extension);
-        if (actualExtension == null || !rule.allowedExtensions.contains(actualExtension)) {
+        if (actualExtension == null) {
             throw new IllegalArgumentException("\u6587\u4ef6\u5185\u5bb9\u4e0e\u6269\u5c55\u540d\u4e0d\u5339\u914d");
         }
         if (!isCompatibleExtension(extension, actualExtension)) {
             throw new IllegalArgumentException("\u6587\u4ef6\u5185\u5bb9\u4e0e\u6269\u5c55\u540d\u4e0d\u5339\u914d");
         }
         extension = normalizeStoredExtension(actualExtension, extension);
+        if (!rule.allowedExtensions.contains(extension)) {
+            throw new IllegalArgumentException("\u6587\u4ef6\u5185\u5bb9\u4e0e\u6269\u5c55\u540d\u4e0d\u5339\u914d");
+        }
 
         LocalDate now = LocalDate.now(DEFAULT_ZONE);
         String year = String.format("%04d", now.getYear());
@@ -115,8 +127,12 @@ public class FileService {
             throw e;
         }
 
-        return normalizeAccessPrefix(accessUrlPrefix)
+        String url = normalizeAccessPrefix(accessUrlPrefix)
             + bizType + "/" + year + "/" + month + "/" + day + "/" + filename;
+        String contentType = StringUtils.hasText(file.getContentType())
+            ? file.getContentType().trim()
+            : "application/octet-stream";
+        return new UploadedFileInfo(url, originalName, file.getSize(), contentType);
     }
 
     /**
@@ -188,6 +204,26 @@ public class FileService {
             throw new IllegalArgumentException("\u6587\u4ef6\u7f3a\u5c11\u6269\u5c55\u540d");
         }
         return filename.substring(dotIndex).toLowerCase(Locale.ROOT);
+    }
+
+    private String sanitizeOriginalFilename(String originalFilename, String extension) {
+        String normalizedName = originalFilename.trim().replace('\\', '/');
+        String filename = StringUtils.getFilename(normalizedName);
+        String cleaned = filename == null ? "" : filename.replaceAll("[\\x00-\\x1F\\x7F]", "").trim();
+        if (!StringUtils.hasText(cleaned)) {
+            cleaned = "file" + extension;
+        }
+        int maxLength = 255;
+        if (cleaned.length() <= maxLength) {
+            return cleaned;
+        }
+        String visibleExtension = "";
+        int dotIndex = cleaned.lastIndexOf('.');
+        if (dotIndex > 0 && dotIndex < cleaned.length() - 1) {
+            visibleExtension = cleaned.substring(dotIndex);
+        }
+        int stemLength = Math.max(1, maxLength - visibleExtension.length());
+        return cleaned.substring(0, Math.min(stemLength, cleaned.length())) + visibleExtension;
     }
 
     private boolean hasPathTraversalSegment(String filename) {

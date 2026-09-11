@@ -695,8 +695,10 @@ public class CommunityController {
             }
             out.add(Map.of("name", name, "url", url));
         }
+        // 空数组必须写成非 null 的 JSON，才能覆盖数据库中的旧附件；
+        // MyBatis-Plus 默认会跳过值为 null 的更新字段。
         if (out.isEmpty()) {
-            return null;
+            return "[]";
         }
         try {
             return objectMapper.writeValueAsString(out);

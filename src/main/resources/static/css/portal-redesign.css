@@ -13,9 +13,40 @@ body[data-app-page="gallery"] .il-page-wrapper {
   padding-top: 0 !important;
 }
 
+/* ui-refresh：四个列表页容器放宽至 1400（覆盖 app-redesign 的全局 1200 壳） */
+html.ilink-app body[data-app-page="team-market"] .il-page-wrapper,
+html.ilink-app body[data-app-page="teacher-wall"] .il-page-wrapper,
+html.ilink-app body[data-app-page="gallery"] .il-page-wrapper,
+html.ilink-app body[data-app-page="competitions"] .main-content,
+html.ilink-app body[data-app-page="competitions"] .container.main-content {
+  width: min(100% - 48px, 1400px) !important;
+  max-width: 1400px !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .hero-section,
+html.ilink-app body[data-app-page="teacher-wall"] .hero-section,
+html.ilink-app body[data-app-page="gallery"] .il-hero,
+html.ilink-app body[data-app-page="competitions"] .il-hero {
+  width: min(100% - 48px, 1400px) !important;
+}
+
+/* ui-refresh：搜索栏占满父容器，与下方卡片列表同宽；覆盖 app-redesign 的 1200px 全局锁 */
+html.ilink-app body[data-app-page="team-market"] .il-search-bar,
+html.ilink-app body[data-app-page="teacher-wall"] .il-search-bar,
+html.ilink-app body[data-app-page="gallery"] .il-search-bar,
+html.ilink-app body[data-app-page="competitions"] .il-search-bar {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 60px !important;
+  padding: 10px 16px !important;
+  gap: 10px !important;
+}
+
+
 body[data-app-page="competitions"] .container.main-content,
 body[data-app-page="competitions"] .main-content {
   padding-top: 0 !important;
+  max-width: 1400px !important;
 }
 
 body[data-app-page="team-market"] .hero-section,
@@ -102,7 +133,8 @@ html.ilink-app body[data-app-page="team-market"] .content-section,
 html.ilink-app body[data-app-page="teacher-wall"] .content-section,
 html.ilink-app body[data-app-page="team-market"] .toolbar-section,
 html.ilink-app body[data-app-page="teacher-wall"] .toolbar-section {
-  width: min(100% - 48px, 1200px) !important;
+  width: min(100% - 48px, 1400px) !important;
+  max-width: 1400px !important;
   margin: 0 auto !important;
   padding: 0 !important;
   background: transparent !important;
@@ -117,8 +149,8 @@ html.ilink-app body[data-app-page="teacher-wall"] .content-inner {
 /* Team discovery: two readable records rather than a decorative tile wall. */
 html.ilink-app body[data-app-page="team-market"] #teamList {
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 16px !important;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)) !important;
+  gap: 20px !important;
 }
 
 html.ilink-app body[data-app-page="team-market"] .il-team-card-shell {
@@ -272,8 +304,8 @@ html.ilink-app .il-post-avatar .il-post-avatar-fallback:not(.avatar-fallback--hi
 /* Mentor discovery uses compact professional records; the old corner ornament is retired. */
 html.ilink-app body[data-app-page="teacher-wall"] #teacherList {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 16px !important;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
+  gap: 20px !important;
 }
 
 html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell {
@@ -526,8 +558,8 @@ html.ilink-app body[data-app-page="community"] .article-card .read-more-btn {
 /* Results use an even image rhythm and neutral metadata. */
 html.ilink-app body[data-app-page="gallery"] .gc-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 16px !important;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+  gap: 20px !important;
 }
 
 html.ilink-app body[data-app-page="gallery"] .gc-card {
@@ -600,8 +632,8 @@ html.ilink-app body[data-app-page="gallery"] .gc-stats {
 /* Competition catalogue keeps information dense and comparable. */
 html.ilink-app body[data-app-page="competitions"] .competition-grid {
   display: grid !important;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  gap: 16px !important;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)) !important;
+  gap: 20px !important;
   margin: 0 !important;
 }
 
@@ -1094,4 +1126,1022 @@ html.ilink-app body[data-app-page="team-detail"] .modal.show {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+}
+
+
+
+/* ====== Plan A: modern unified search bar (team-market, teacher-wall, gallery) ====== */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 56px !important;
+  padding: 6px !important;
+  background: #ffffff !important;
+  border: 1px solid #e8e8e6 !important;
+  border-radius: 28px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02) !important;
+  transition: box-shadow .25s ease, border-color .25s ease;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar:focus-within {
+  border-color: #c7d2fe !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
+}
+
+/* input wrap */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: auto !important;
+  height: 44px !important;
+  padding: 0 14px 0 6px !important;
+  border: none !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: background .2s ease;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap:focus-within {
+  background: #f8fafc !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap svg {
+  position: static !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #6b7280 !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-icon-search-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  margin: 0 6px 0 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: background .2s ease !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-icon-search-btn:hover {
+  background: #f3f4f6 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-icon-search-btn:hover svg {
+  color: #1f2937 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap input,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap .il-search-field__input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  height: auto !important;
+  padding: 0 12px 0 0 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap input::placeholder {
+  color: #9ca3af !important;
+}
+
+/* custom select */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select {
+  position: relative !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: background .2s ease;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select:hover {
+  background: #f3f4f6 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.cs-inited select {
+  position: absolute !important;
+  inset: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+/* hide legacy native-select triangle arrow (search-bar.css ::after), replaced by injected .cs-chevron */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.cs-inited::after {
+  display: none !important;
+}
+
+/* vertical dividers */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap + .il-search-bar__select::before,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select + .il-search-bar__select::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 1px !important;
+  height: 24px !important;
+  background: #ededeb !important;
+  z-index: 1 !important;
+}
+
+/* custom select trigger (injected by JS) */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-trigger {
+  display: flex !important;
+  align-items: center !important;
+  flex: 0 0 auto !important;
+  height: 44px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-label {
+  font-size: 13px !important;
+  color: #9ca3af !important;
+  margin-right: 6px !important;
+  font-weight: 400 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-value {
+  flex: 0 0 auto !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-chevron {
+  margin-left: 10px !important;
+  width: 14px !important;
+  height: 14px !important;
+  color: #9ca3af !important;
+  flex-shrink: 0 !important;
+  transition: transform .25s ease !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.open .cs-chevron {
+  transform: rotate(180deg) !important;
+}
+
+/* dropdown panel */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-dropdown {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  left: 0 !important;
+  min-width: 100% !important;
+  background: #ffffff !important;
+  border: 1px solid #e8e8e6 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06) !important;
+  padding: 6px !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateY(-6px) !important;
+  transition: opacity .22s ease, visibility .22s ease, transform .22s cubic-bezier(.4,0,.2,1) !important;
+  z-index: 30 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.open .cs-dropdown {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateY(0) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-item {
+  padding: 9px 12px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  color: #374151 !important;
+  transition: background .15s ease !important;
+  white-space: nowrap !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-item:hover {
+  background: #f3f4f6 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-item.active {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+  font-weight: 600 !important;
+}
+
+/* buttons */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  height: 44px !important;
+  padding: 0 22px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  border: none !important;
+  transition: all .2s ease !important;
+  white-space: nowrap !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary {
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  margin-left: 8px !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  font-size: 0 !important;
+  flex-shrink: 0 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary svg {
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary:hover {
+  background: #374151 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(31,41,55,0.25) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary:active {
+  transform: translateY(0) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--ghost {
+  background: transparent !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+  margin-left: 8px !important;
+  border-radius: 22px !important;
+  height: 44px !important;
+  padding: 0 18px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--ghost:hover {
+  background: #f9fafb !important;
+  border-color: #9ca3af !important;
+  color: #1f2937 !important;
+}
+
+/* hide spacer */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__spacer {
+  display: none !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary {
+  display: none !important;
+}
+
+
+
+/* ====== Plan A: competitions page (track tabs above + combo search) ====== */
+html.ilink-app body[data-app-page="competitions"] .il-search-bar.competition-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 56px !important;
+  padding: 6px !important;
+  background: #ffffff !important;
+  border: 1px solid #e8e8e6 !important;
+  border-radius: 28px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02) !important;
+  transition: box-shadow .25s ease, border-color .25s ease;
+  margin-bottom: 24px !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-bar.competition-toolbar:focus-within {
+  border-color: #c7d2fe !important;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-toolbar__search {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-field--combo {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  width: auto !important;
+  height: 44px !important;
+  padding: 0 14px 0 6px !important;
+  border: none !important;
+  border-radius: 10px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transition: background .2s ease;
+  gap: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-field--combo:focus-within {
+  background: #f8fafc !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__icon {
+  position: static !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #6b7280 !important;
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-icon-search-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  margin: 0 6px 0 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: background .2s ease !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-icon-search-btn:hover {
+  background: #f3f4f6 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-icon-search-btn:hover svg {
+  color: #1f2937 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  font-size: 14px !important;
+  color: #1f2937 !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  padding: 0 12px 0 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__input::placeholder {
+  color: #9ca3af !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  margin: 0 4px 0 12px !important;
+  border-radius: 50% !important;
+  font-size: 0 !important;
+  cursor: pointer !important;
+  border: none !important;
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  transition: all .2s ease !important;
+  box-shadow: none !important;
+  flex-shrink: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__action:hover {
+  background: #374151 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(31,41,55,0.25) !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-track-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  margin-bottom: 14px !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-track-tabs {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-track-tab {
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  border: 1px solid #e8e8e6 !important;
+  background: #ffffff !important;
+  color: #6b7280 !important;
+  transition: all .2s ease !important;
+  box-shadow: none !important;
+  line-height: 1.4 !important;
+  height: auto !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-track-tab:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+  color: #1f2937 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-track-tab.active {
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  border-color: #1f2937 !important;
+  font-weight: 600 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__action {
+  display: none !important;
+}
+
+
+
+/* ====== Plan A: community channel pills + solid action button ====== */
+html.ilink-app body[data-app-page="community"] .community-channel-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  margin-bottom: 14px !important;
+}
+html.ilink-app body[data-app-page="community"] #channelTabs.il-search-bar__tags {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+html.ilink-app body[data-app-page="community"] .il-search-bar__tag {
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  border: 1px solid #e8e8e6 !important;
+  background: #ffffff !important;
+  color: #6b7280 !important;
+  transition: all .2s ease !important;
+  box-shadow: none !important;
+  height: auto !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+}
+html.ilink-app body[data-app-page="community"] .il-search-bar__tag:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+  color: #1f2937 !important;
+}
+html.ilink-app body[data-app-page="community"] .il-search-bar__tag.active {
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  border-color: #1f2937 !important;
+  font-weight: 600 !important;
+}
+/* solid 实心主操作按钮（写文章等，区别于被隐藏的搜索primary） */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--solid {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  height: 44px !important;
+  padding: 0 20px !important;
+  border-radius: 22px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  border: none !important;
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  margin-left: 8px !important;
+  white-space: nowrap !important;
+  transition: all .2s ease !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--solid svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--solid:hover {
+  background: #374151 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(31,41,55,0.25) !important;
+}
+/* community 刷新按钮(secondary改ghost)统一描边胶囊 */
+html.ilink-app body[data-app-page="community"] .il-search-bar .il-search-bar__btn--secondary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 44px !important;
+  padding: 0 18px !important;
+  border-radius: 22px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  color: #374151 !important;
+  border: 1px solid #d1d5db !important;
+  margin-left: 8px !important;
+  white-space: nowrap !important;
+  transition: all .2s ease !important;
+}
+html.ilink-app body[data-app-page="community"] .il-search-bar .il-search-bar__btn--secondary:hover {
+  background: #f9fafb !important;
+  border-color: #9ca3af !important;
+  color: #1f2937 !important;
+}
+
+/* ====== Plan A: 分类pill收进单行扁胶囊（与组队大厅一致，一行） ====== */
+html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .competition-track-row,
+html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .community-channel-row {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+  margin: 0 !important;
+  padding: 0 12px !important;
+  border-left: 1px solid #e8e8e6 !important;
+  border-bottom: none !important;
+  flex-shrink: 0 !important;
+  height: 44px !important;
+  max-width: 64% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .competition-track-row::-webkit-scrollbar,
+html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .community-channel-row::-webkit-scrollbar {
+  display: none !important;
+}
+html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .competition-track-tabs,
+html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) #channelTabs.il-search-bar__tags {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  flex-shrink: 0 !important;
+}
+html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .competition-track-tab,
+html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .il-search-bar__tag {
+  padding: 6px 12px !important;
+  border-radius: 16px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+  height: auto !important;
+  line-height: 1.4 !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-toolbar__search {
+  flex: 1 1 auto !important;
+  min-width: 160px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* ============================================================
+   详情/表单页排版优化（发布表单 + 组队/导师详情）
+   ============================================================ */
+
+/* ---------- A. 发布组队需求表单 ---------- */
+html.ilink-app body[data-app-page="team-publish"] .il-surface {
+  width: min(100%, 820px) !important;
+  padding: 36px 40px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
+}
+html.ilink-app body[data-app-page="team-publish"] form .mb-4 { margin-bottom: 22px !important; }
+html.ilink-app body[data-app-page="team-publish"] .il-form-label {
+  display: block !important;
+  margin-bottom: 9px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .il-form-input,
+html.ilink-app body[data-app-page="team-publish"] .il-form-select {
+  width: 100% !important;
+  height: 46px !important;
+  padding: 0 15px !important;
+  border: 1px solid #e3e4e0 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  font-size: 14.5px !important;
+  color: #1f2937 !important;
+  box-shadow: none !important;
+  transition: border-color .18s ease, box-shadow .18s ease !important;
+  box-sizing: border-box !important;
+}
+html.ilink-app body[data-app-page="team-publish"] textarea.il-form-input {
+  height: auto !important;
+  min-height: 150px !important;
+  padding: 13px 15px !important;
+  line-height: 1.7 !important;
+  resize: vertical !important;
+}
+html.ilink-app body[data-app-page="team-publish"] select.il-form-select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  padding-right: 40px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .il-form-input::placeholder { color: #b4b5b0 !important; }
+html.ilink-app body[data-app-page="team-publish"] .il-form-input:focus,
+html.ilink-app body[data-app-page="team-publish"] .il-form-select:focus {
+  outline: none !important;
+  border-color: #1f2937 !important;
+  box-shadow: 0 0 0 3px rgba(31,41,55,0.08) !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .form-text {
+  display: block !important;
+  margin-top: 7px !important;
+  font-size: 12.5px !important;
+  color: #9ca3af !important;
+}
+html.ilink-app body[data-app-page="team-publish"] form .row { --bs-gutter-x: 20px; }
+html.ilink-app body[data-app-page="team-publish"] form .row > [class*=col-] { margin-bottom: 20px !important; }
+html.ilink-app body[data-app-page="team-publish"] .d-flex.gap-3 {
+  margin-top: 8px !important;
+  padding-top: 22px !important;
+  border-top: 1px solid #f0efec !important;
+  gap: 12px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .il-btn {
+  height: 46px !important;
+  padding: 0 24px !important;
+  border-radius: 12px !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+/* ---------- B. 组队/导师详情：信息网格卡片 ---------- */
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-card {
+  border-radius: 20px !important;
+  box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
+  overflow: hidden !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__header,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__header {
+  padding: 28px 32px 22px !important;
+  border-bottom: 1px solid #f0efec !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__eyebrow,
+html.ilink-app body[data-app-page="teacher-detail"] .detail-view__eyebrow {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: .04em !important;
+  color: #9ca3af !important;
+  text-transform: uppercase !important;
+  margin-bottom: 8px !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__title {
+  font-size: 26px !important;
+  line-height: 1.3 !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__body,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__body { padding: 28px 32px 32px !important; }
+
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__meta {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  gap: 12px !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 7px !important;
+  padding: 14px 16px !important;
+  background: #f8f8f6 !important;
+  border: 1px solid #f0efec !important;
+  border-bottom: 1px solid #f0efec !important;
+  border-radius: 14px !important;
+  grid-template-columns: 1fr !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row--block {
+  grid-column: 1 / -1 !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row dt {
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: #9ca3af !important;
+  margin: 0 !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row dd {
+  margin: 0 !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #1f2937 !important;
+  line-height: 1.5 !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row--block dd { font-weight: 400 !important; }
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__text {
+  font-size: 14.5px !important;
+  line-height: 1.75 !important;
+  color: #4b5563 !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__actions {
+  margin-top: 22px !important;
+  padding-top: 22px !important;
+  border-top: 1px solid #f0efec !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  justify-content: flex-end !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__actions .il-btn {
+  height: 44px !important;
+  padding: 0 22px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+@media (max-width: 700px) {
+  html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__meta {
+    grid-template-columns: 1fr !important;
+  }
+  html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__header,
+  html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__header,
+  html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__body,
+  html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__body { padding-left: 20px !important; padding-right: 20px !important; }
+}
+
+/* ---------- C. 导师详情头部 + 申请区 ---------- */
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__identity {
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot {
+  width: 76px !important;
+  height: 76px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  background: #eef0ef !important;
+  box-shadow: 0 4px 14px rgba(17,24,39,0.10) !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot img {
+  width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__title-wrap .detail-view__title { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply {
+  margin-top: 16px !important;
+  padding: 22px !important;
+  background: #f8f8f6 !important;
+  border: 1px solid #f0efec !important;
+  border-radius: 16px !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__section-label {
+  font-size: 16px !important;
+  font-weight: 650 !important;
+  color: #1f2937 !important;
+  margin-bottom: 6px !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-hint {
+  font-size: 13px !important;
+  color: #9ca3af !important;
+  margin-bottom: 14px !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea {
+  width: 100% !important;
+  min-height: 116px !important;
+  padding: 13px 15px !important;
+  border: 1px solid #e3e4e0 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+  resize: vertical !important;
+  box-sizing: border-box !important;
+  transition: border-color .18s ease, box-shadow .18s ease !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea:focus {
+  outline: none !important;
+  border-color: #1f2937 !important;
+  box-shadow: 0 0 0 3px rgba(31,41,55,0.08) !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actions { margin-top: 14px !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actions .btn {
+  height: 44px !important;
+  padding: 0 24px !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  border: none !important;
+  background: #1f2937 !important;
+  color: #fff !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit:hover { background: #374151 !important; }
+
+/* ============================================================
+   社区文章详情页排版优化
+   ============================================================ */
+html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb {
+  margin-bottom: 18px !important;
+  font-size: 13.5px !important;
+  color: #9ca3af !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb a {
+  color: #6b7280 !important;
+  text-decoration: none !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb a:hover { color: #1f2937 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb__current { color: #1f2937 !important; font-weight: 600 !important; }
+
+html.ilink-app body[data-app-page="community-article"] .community-article-card,
+html.ilink-app body[data-app-page="community-article"] .community-article-comments {
+  border: 1px solid #f0efec !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
+  overflow: hidden !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-comments { margin-top: 20px !important; }
+
+html.ilink-app body[data-app-page="community-article"] .community-article-card__header { padding: 30px 34px 20px !important; border-bottom: 1px solid #f0efec !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-card__header-top {
+  display: flex !important; align-items: flex-start !important; justify-content: space-between !important; gap: 18px !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__title {
+  font-size: 28px !important; line-height: 1.35 !important; font-weight: 700 !important;
+  color: #1f2937 !important; letter-spacing: -0.02em !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions {
+  display: flex !important; align-items: center !important; gap: 10px !important; flex-shrink: 0 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn {
+  min-height: 40px !important; border-radius: 11px !important; border: 1px solid #e8e8e6 !important;
+  background: #fff !important; color: #4b5563 !important; font-size: 13px !important; padding: 8px 13px !important;
+  transition: all .18s ease !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn:hover {
+  background: #f8f8f6 !important; border-color: #d1d5db !important; color: #1f2937 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleLikeBtn.community-article__action-btn--active,
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleLikeBtn[aria-pressed="true"] {
+  background: #fff !important; border-color: #d1d5db !important; color: #4b5563 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleFavBtn.community-article__action-btn--active,
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleFavBtn[aria-pressed="true"] {
+  background: #fff !important; border-color: #d1d5db !important; color: #4b5563 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleLikeBtn:is(.community-article__action-btn--active, [aria-pressed="true"]) svg {
+  color: #2563eb !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleFavBtn:is(.community-article__action-btn--active, [aria-pressed="true"]) svg {
+  color: #d97706 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn:is(.community-article__action-btn--active, [aria-pressed="true"]) .community-article__action-num {
+  background: rgba(17, 24, 39, 0.08) !important;
+  color: #4b5563 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-back {
+  min-height: 40px !important; border-radius: 11px !important; display: inline-flex !important; align-items: center !important;
+  border: 1px solid #e8e8e6 !important; background: #fff !important; color: #4b5563 !important;
+  padding: 8px 16px !important; font-size: 13px !important; font-weight: 500 !important; text-decoration: none !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-back:hover { background: #f8f8f6 !important; color:#1f2937 !important; }
+
+html.ilink-app body[data-app-page="community-article"] .community-article__meta-stats {
+  margin-top: 18px !important; padding-top: 16px !important; border-top: 1px solid #f0efec !important;
+  font-size: 13.5px !important; color: #9ca3af !important; gap: 6px 10px !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__meta-author { display:inline-flex !important; align-items:center !important; gap:7px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot {
+  width:auto !important; height:auto !important; min-width:0 !important; max-width:none !important;
+  flex:0 0 auto !important; overflow:visible !important; border-radius:0 !important;
+  background:transparent !important; display:inline-flex !important; align-items:center !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot .il-publisher-avatar,
+html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot .il-avatar-wrap,
+html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot .il-publisher-avatar__img,
+html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot img {
+  width:30px !important; height:30px !important;
+  min-width:30px !important; max-width:30px !important; min-height:30px !important; max-height:30px !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot .il-avatar-fallback { font-size:13px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__meta-item { color: #6b7280 !important; }
+
+html.ilink-app body[data-app-page="community-article"] .community-article-card__body { padding: 28px 34px 32px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content {
+  max-width: 100% !important; color: #374151 !important; font-size: 16px !important; line-height: 1.9 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__content p { margin-bottom: 14px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content h1,
+html.ilink-app body[data-app-page="community-article"] .community-article__content h2,
+html.ilink-app body[data-app-page="community-article"] .community-article__content h3,
+html.ilink-app body[data-app-page="community-article"] .community-article__content h4 {
+  color: #1f2937 !important; font-weight: 700 !important; line-height: 1.4 !important; margin: 24px 0 12px !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__content h2 { font-size: 21px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content h3 { font-size: 18px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content ul,
+html.ilink-app body[data-app-page="community-article"] .community-article__content ol { margin: 0 0 14px !important; padding-left: 24px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content li { margin-bottom: 7px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content strong { color: #1f2937 !important; font-weight: 700 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content a { color: #2563eb !important; text-decoration: none !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content a:hover { text-decoration: underline !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content blockquote {
+  margin: 14px 0 !important; padding: 10px 16px !important; border-left: 3px solid #1f2937 !important;
+  background: #f8f8f6 !important; border-radius: 0 10px 10px 0 !important; color: #4b5563 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__content code {
+  background: #f3f4f6 !important; padding: 2px 6px !important; border-radius: 6px !important;
+  font-size: 14px !important; color: #db2777 !important; font-family: ui-monospace, Consolas, monospace !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__content pre {
+  background: #1f2937 !important; color: #f3f4f6 !important; padding: 16px 18px !important;
+  border-radius: 12px !important; overflow-x: auto !important; margin: 14px 0 !important; line-height: 1.6 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article__content pre code { background: transparent !important; color: inherit !important; padding: 0 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content img { border-radius: 12px !important; margin: 10px 0 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__content hr { border: none !important; border-top: 1px solid #f0efec !important; margin: 22px 0 !important; }
+
+/* 评论区 */
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__header {
+  padding: 22px 34px 0 !important; display:flex !important; align-items:baseline !important; gap:10px !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__title { font-size: 18px !important; font-weight: 700 !important; color:#1f2937 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__hint { font-size: 13px !important; color:#9ca3af !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding: 18px 34px 28px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-compose__label {
+  display:block !important; font-size: 13.5px !important; font-weight: 600 !important; color:#374151 !important; margin-bottom:9px !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-compose__textarea {
+  min-height: 108px !important; padding: 13px 15px !important; border: 1px solid #e3e4e0 !important; border-radius: 12px !important;
+  background:#fff !important; font-size: 14.5px !important; line-height:1.65 !important; transition: border-color .18s ease, box-shadow .18s ease !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-compose__textarea:focus {
+  outline:none !important; border-color:#1f2937 !important; box-shadow:0 0 0 3px rgba(31,41,55,0.08) !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-compose__actions {
+  display:flex !important; justify-content:flex-end !important; margin-top: 12px !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-compose__actions .il-btn {
+  height:42px !important; padding:0 22px !important; border-radius:11px !important; font-weight:600 !important;
+}
+html.ilink-app body[data-app-page="community-article"] .community-article-comment-list { margin-top: 22px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comment-list__empty {
+  padding: 26px !important; text-align:center !important; color:#9ca3af !important; font-size:14px !important;
+  background:#f8f8f6 !important; border-radius:12px !important;
+}
+@media (max-width: 700px) {
+  html.ilink-app body[data-app-page="community-article"] .community-article-card__header,
+  html.ilink-app body[data-app-page="community-article"] .community-article-card__body,
+  html.ilink-app body[data-app-page="community-article"] .community-article-comments__header,
+  html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding-left:20px !important; padding-right:20px !important; }
+  html.ilink-app body[data-app-page="community-article"] .community-article__title { font-size:23px !important; }
+}
+
+/* ====== 组队详情：成员横向同一行排列 ====== */
+html.ilink-app body[data-app-page="team-detail"] #teamMembers {
+  flex-direction: row !important; flex-wrap: wrap !important; gap: 12px !important;
+}
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member {
+  width: auto !important; flex: 0 0 auto !important; min-width: 208px !important;
+}
+
+/* ====== 修复：详情/表单页高优先级 display 不得压过 Bootstrap .d-none（权限按钮显隐依赖它） ====== */
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__actions .il-btn.d-none,
+html.ilink-app body[data-app-page="team-publish"] .il-btn.d-none,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply .il-btn.d-none {
+  display: none !important;
 }

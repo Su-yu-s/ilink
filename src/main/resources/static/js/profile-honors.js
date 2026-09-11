@@ -10,7 +10,7 @@
     function $(id) { return document.getElementById(id); }
 
     function newId() { return 'h_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-    function norm(h) { if(!h) h={}; return { id:String(h.id||newId()), type:h.type||'other', title:h.title||'', level:h.level||'', issuer:h.issuer||'', period:h.period||'', detail:h.detail||'', proofUrl:h.proofUrl||'', awardRank:h.awardRank||'', teamScope:h.teamScope||'' }; }
+    function norm(h) { if(!h) h={}; return { id:String(h.id||newId()), type:h.type||'other', title:h.title||'', level:h.level||'', issuer:h.issuer||'', period:h.period||'', detail:h.detail||'', proofUrl:h.proofUrl||'', proofName:h.proofName||'', awardRank:h.awardRank||'', teamScope:h.teamScope||'' }; }
     function parseList(raw) { if(!raw||!String(raw).trim()) return []; try { var a=JSON.parse(raw); return Array.isArray(a)?a:[]; } catch(e){ return []; } }
     function loadDraft() { try { var r=localStorage.getItem(DRAFT_KEY); return r?JSON.parse(r):null; } catch(e){ return null; } }
     function saveDraft() { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(honors)); } catch(e){} }
@@ -89,27 +89,28 @@
     window.ilinkHonorProofImageOnError = honorProofImageOnError;
 
     /** 证明材料预览（图片缩略图 / PDF 图标 / 通用链接） */
-    function honorProofAsideHtml(proofUrl) {
+    function honorProofAsideHtml(proofUrl, proofName) {
         var u = String(proofUrl || '').trim();
         if (!u) return '';
         var safe = escapeHtml(u);
+        var displayName = escapeHtml(String(proofName || '证明材料'));
         var kind = honorProofMediaKind(u);
         if (kind === 'image') {
             var imgSrc = escapeHtml(honorProofSafeUrl(u));
             return '<div class="honors-preview-card__proof il-honor-item__proof">' +
-                '<a class="honors-preview-proof honors-preview-proof--image" href="' + safe + '" target="_blank" rel="noopener" title="查看证明材料">' +
+                '<a class="honors-preview-proof honors-preview-proof--image" href="' + safe + '" target="_blank" rel="noopener" title="查看 ' + displayName + '">' +
                 '<img class="honors-preview-proof__img" src="' + imgSrc + '" data-raw-src="' + safe + '" alt="证明材料缩略图" loading="lazy" onerror="ilinkHonorProofImageOnError(this)">' +
                 '</a></div>';
         }
         if (kind === 'pdf') {
             return '<div class="honors-preview-card__proof il-honor-item__proof">' +
-                '<a class="honors-preview-proof honors-preview-proof--pdf" href="' + safe + '" target="_blank" rel="noopener">' +
+                '<a class="honors-preview-proof honors-preview-proof--pdf" href="' + safe + '" target="_blank" rel="noopener" title="查看 ' + displayName + '">' +
                 '<span class="honors-preview-proof__pdf-badge" aria-hidden="true">PDF</span>' +
                 '<span class="honors-preview-proof__pdf-label">证明文件</span>' +
                 '</a></div>';
         }
         return '<div class="honors-preview-card__proof il-honor-item__proof">' +
-            '<a class="honors-preview-proof honors-preview-proof--link" href="' + safe + '" target="_blank" rel="noopener">' +
+            '<a class="honors-preview-proof honors-preview-proof--link" href="' + safe + '" target="_blank" rel="noopener" title="查看 ' + displayName + '">' +
             '<span class="honors-preview-proof__link-label">证明材料</span>' +
             '</a></div>';
     }
@@ -135,7 +136,7 @@
             if(h.issuer) parts.push(h.issuer);
             if(h.period) parts.push(h.period);
             var meta = parts.join(' · ');
-            var proofAside = honorProofAsideHtml(h.proofUrl);
+            var proofAside = honorProofAsideHtml(h.proofUrl, h.proofName);
 
             html += '<div class="honor-list-card honors-editor-block" data-honor-id="' + escapeHtml(h.id) + '">' +
                 '<div class="il-honor-item' + (proofAside ? ' il-honor-item--with-proof' : '') + '">' +
@@ -180,7 +181,7 @@
     }
 
     function openModal(honorId) {
-        var ids = ['hid','txtTitle','txtIssuer','txtDetail','txtProofUrl','txtPeriod'];
+        var ids = ['hid','txtTitle','txtIssuer','txtDetail','txtProofUrl','txtProofName','txtPeriod'];
         for(var i = 0; i < ids.length; i++) { var el = $(ids[i]); if(el) el.value = ''; }
         if($('selType')) $('selType').value = 'competition';
         if($('selLevel')) $('selLevel').value = '';
@@ -199,8 +200,8 @@
                 var sv = function(id, val) { var el = $(id); if(el) el.value = val || ''; };
                 sv('hid', found.id); sv('selType', found.type); sv('txtTitle', found.title);
                 sv('selRank', found.awardRank); sv('selTeam', found.teamScope); sv('selLevel', found.level);
-                sv('txtIssuer', found.issuer); sv('txtDetail', found.detail); sv('txtProofUrl', found.proofUrl);
-                updateProofPreview(found.proofUrl);
+                sv('txtIssuer', found.issuer); sv('txtDetail', found.detail); sv('txtProofUrl', found.proofUrl); sv('txtProofName', found.proofName);
+                updateProofPreview(found.proofUrl, found.proofName);
                 var p = (found.period || '').trim();
                 if(/^\d{4}-\d{2}$/.test(p)) { sv('txtMonth', p); sv('txtPeriod', ''); }
                 else { sv('txtMonth', ''); sv('txtPeriod', p); }
@@ -220,7 +221,7 @@
             id: gv('hid') || newId(), type: ($('selType') && $('selType').value) || 'other',
             title: gv('txtTitle'), level: ($('selLevel') && $('selLevel').value) || '',
             issuer: gv('txtIssuer'), period: gv('txtMonth') || gv('txtPeriod'),
-            detail: gv('txtDetail'), proofUrl: gv('txtProofUrl'),
+            detail: gv('txtDetail'), proofUrl: gv('txtProofUrl'), proofName: gv('txtProofName'),
             awardRank: ($('selRank') && $('selRank').value) || '',
             teamScope: ($('selTeam') && $('selTeam').value) || ''
         });
@@ -238,7 +239,7 @@
             if(mel && typeof bootstrap !== 'undefined') { var inst = bootstrap.Modal.getInstance(mel); if(inst) inst.hide(); }
         } else {
             var curType = ($('selType') && $('selType').value) || 'competition';
-            ['hid','txtTitle','txtIssuer','txtDetail','txtProofUrl','txtPeriod'].forEach(function(id) { var el = $(id); if(el) el.value = ''; });
+            ['hid','txtTitle','txtIssuer','txtDetail','txtProofUrl','txtProofName','txtPeriod'].forEach(function(id) { var el = $(id); if(el) el.value = ''; });
             if($('fileProof')) $('fileProof').value = '';
             if($('proofStatus')) $('proofStatus').textContent = '';
             if($('selRank')) $('selRank').value = '';
@@ -260,10 +261,12 @@
             .then(function(r) { return r.json(); })
             .then(function(result) {
                 if(Number(result.code) === 200 && result.data && (result.data.url || result.data.URL)) {
-                    var url = result.data.url || result.data.URL;
+                    var uploaded = window.ILinkFiles.normalizeUploadResult(result.data, file);
+                    var url = uploaded.url;
                     var pfu = $('txtProofUrl'); if(pfu) pfu.value = url;
-                    updateProofPreview(url);
-                    if(st) st.textContent = '已上传'; showMessage('上传成功', 'success');
+                    var pfn = $('txtProofName'); if(pfn) pfn.value = uploaded.name;
+                    updateProofPreview(url, uploaded.name);
+                    if(st) st.textContent = '已上传：' + uploaded.name; showMessage('上传成功', 'success');
                 } else { if(st) st.textContent = ''; showMessage(result.message || '上传失败', 'error'); }
             })
             .catch(function() { if(st) st.textContent = ''; showMessage('上传异常', 'error'); });
@@ -406,14 +409,14 @@
         var txtProof = $('txtProofUrl');
         if(txtProof && txtProof.dataset.honorsProofBound !== '1') {
             txtProof.dataset.honorsProofBound = '1';
-            txtProof.addEventListener('input', function() { updateProofPreview(this.value); });
+            txtProof.addEventListener('input', function() { var nameEl=$('txtProofName'); if(nameEl) nameEl.value=''; updateProofPreview(this.value, ''); });
         }
 
         var btnSave = $('btnSave'); if(btnSave) btnSave.onclick = saveToServer;
     }
 
     /** 根据 URL 实时预览证明材料（图片/PDF/无） */
-    function updateProofPreview(url) {
+    function updateProofPreview(url, proofName) {
         var box = $('proofPreviewBox'), img = $('proofPreviewImg'), link = $('proofPreviewLink');
         var pdfInd = $('proofPdfIndicator');
         var pst = $('proofStatus');
@@ -425,7 +428,7 @@
             if(pst) pst.textContent = '';
             return;
         }
-        if(pst) pst.textContent = '已有关联链接';
+        if(pst) pst.textContent = proofName ? ('已上传：' + proofName) : '已有关联链接';
         var kind = honorProofMediaKind(u);
         if(kind === 'image') {
             if(img) { img.src = honorProofSafeUrl(u); img.setAttribute('data-raw-src', u); }

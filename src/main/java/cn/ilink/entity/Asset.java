@@ -15,6 +15,7 @@ public class Asset {
     private String description;
     private String category;
     private String fileUrl;
+    private String originalFileName;
     private Long userId;
     private Integer viewCount;
     private Integer downloadCount;

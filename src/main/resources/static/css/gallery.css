@@ -315,8 +315,8 @@ body[data-app-page="gallery"] .result-card.no-image .gc-content {
 }
 
 body[data-app-page="gallery"] .gc-grid {
-  width: min(100%, 1120px) !important;
-  max-width: 1120px !important;
+  width: min(100%, 1400px) !important;
+  max-width: 1400px !important;
   margin: 0 auto !important;
   padding: 0 0 48px !important;
   display: grid !important;
@@ -465,4 +465,21 @@ body[data-app-page="gallery"] .gc-empty h3 {
 body[data-app-page="gallery"] .gc-empty p {
     font-size: 14px;
     color: var(--text-muted, #9a9a9a);
+}
+
+/* === ui-refresh：紧凑搜索栏（与组队大厅统一风格） ===
+body[data-app-page="gallery"] .il-search-bar {
+    min-height: 60px;
+    padding: 10px 16px;
+    gap: 10px;
+}
+/* 去掉与搜索框平分宽度的空白 spacer，让搜索框占满、操作按钮靠右 */
+body[data-app-page="gallery"] .il-search-bar__spacer {
+    display: none;
+}
+/* 中屏空间不足、ghost 按钮换行时贴右对齐 */
+@media (min-width: 768px) and (max-width: 1280px) {
+    body[data-app-page="gallery"] .il-search-bar__btn--ghost {
+        margin-left: auto;
+    }
 }

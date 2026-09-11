@@ -13,15 +13,14 @@ let currentCategory = '';
 let currentPage = 1;
 
 let pendingAttachments = [];
+let communityAttachmentSequence = 0;
 let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', async function() {
     await loadCurrentUser();
-    document.querySelectorAll('#channelTabs .il-search-bar__tag').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const cat = this.getAttribute('data-category') || '';
-            selectCategory(cat);
-        });
+    const channelSelect = document.getElementById('channelSelect');
+    channelSelect?.addEventListener('change', function() {
+        selectCategory(channelSelect.value || '');
     });
 
     document.getElementById('refreshBtn')?.addEventListener('click', () => loadPosts(currentPage));
@@ -43,15 +42,39 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('composeAttachmentInput')?.click();
     });
     document.getElementById('composeAttachmentInput')?.addEventListener('change', async function() {
-        const files = this.files;
+        const files = Array.from(this.files || []);
         this.value = '';
-        if (!files || !files.length) return;
-        for (let i = 0; i < files.length; i++) {
+        if (!files.length) return;
+        for (const file of files) {
+            const duplicate = window.ILinkFiles.findDuplicate(pendingAttachments, file.name);
+            if (duplicate) {
+                const shouldReplace = window.confirm(`已存在同名附件“${file.name}”，是否替换？`);
+                if (!shouldReplace) continue;
+                const previous = { ...duplicate };
+                duplicate.name = file.name || '附件';
+                duplicate.size = Number(file.size) || 0;
+                duplicate.contentType = file.type || 'application/octet-stream';
+                duplicate.file = file;
+                duplicate.status = 'uploading';
+                duplicate.error = '';
+                renderComposeAttachments();
+                await uploadCommunityAttachment(duplicate, previous);
+                continue;
+            }
             if (pendingAttachments.length >= 10) {
                 showMessage('附件最多 10 个', 'warning');
                 break;
             }
-            await uploadCommunityAttachment(files[i]);
+            const item = {
+                id: `compose-${Date.now()}-${communityAttachmentSequence++}`,
+                name: file.name || '附件',
+                size: Number(file.size) || 0,
+                contentType: file.type || 'application/octet-stream',
+                url: '', file, status: 'uploading', error: ''
+            };
+            pendingAttachments.push(item);
+            renderComposeAttachments();
+            await uploadCommunityAttachment(item);
         }
     });
 
@@ -193,9 +216,13 @@ function applyMdAction(ta, action) {
     ta.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-async function uploadCommunityAttachment(file) {
+async function uploadCommunityAttachment(item, previous) {
+    if (!item || !item.file) return;
+    item.status = 'uploading';
+    item.error = '';
+    renderComposeAttachments();
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('file', item.file);
     try {
         const r = await apiFetch('/api/upload/attachment?kind=community', {
             method: 'POST',
@@ -204,14 +231,36 @@ async function uploadCommunityAttachment(file) {
         });
         const j = await r.json();
         if (j.code !== 200 || !j.data || !j.data.url) {
-            showMessage(j.message || '上传失败', 'error');
-            return;
+            const message = j.message || '上传失败';
+            if (previous) Object.assign(item, previous);
+            else {
+                item.status = 'error';
+                item.error = message;
+            }
+            renderComposeAttachments();
+            showMessage(previous ? `替换失败，已保留原文件：${message}` : message, 'error');
+            return false;
         }
-        pendingAttachments.push({ name: file.name, url: j.data.url });
+        const uploaded = window.ILinkFiles.normalizeUploadResult(j.data, item.file);
+        item.name = uploaded.name;
+        item.url = uploaded.url;
+        item.size = uploaded.size;
+        item.contentType = uploaded.contentType;
+        item.status = 'success';
+        item.error = '';
         renderComposeAttachments();
+        return true;
     } catch (e) {
         console.error(e);
-        showMessage('上传失败', 'error');
+        const message = e && e.name === 'AbortError' ? '上传超时，请重试' : '上传失败，请重试';
+        if (previous) Object.assign(item, previous);
+        else {
+            item.status = 'error';
+            item.error = message;
+        }
+        renderComposeAttachments();
+        showMessage(previous ? `替换失败，已保留原文件：${message}` : message, 'error');
+        return false;
     }
 }
 
@@ -219,27 +268,43 @@ function renderComposeAttachments() {
     const ul = document.getElementById('composeAttachmentList');
     if (!ul) return;
     ul.innerHTML = '';
-    pendingAttachments.forEach((item, idx) => {
+    pendingAttachments.forEach((item) => {
         const li = document.createElement('li');
-        li.style.cssText = 'display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb;';
+        const status = item.status || 'success';
+        li.className = `il-upload-file is-${status}`;
+        const sizeText = window.ILinkFiles.formatSize(item.size);
+        let statusMarkup = '<span class="il-upload-file__status is-success">已上传</span>';
+        if (status === 'uploading') {
+            statusMarkup = '<span class="il-upload-file__spinner" aria-hidden="true"></span><span class="il-upload-file__status">上传中…</span>';
+        } else if (status === 'error') {
+            statusMarkup = `<span class="il-upload-file__status is-error">${escapeHtml(item.error || '上传失败')}</span>`;
+        }
+        const retryButton = status === 'error'
+            ? '<button type="button" class="il-upload-file__action" data-action="retry">重试</button>'
+            : '';
         li.innerHTML =
-            '<span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; color: #4b5563;" title="' +
-            escapeHtml(item.name) +
-            '">' +
-            escapeHtml(item.name) +
-            '</span>' +
-            '<button type="button" class="il-remove-attachment" style="background: transparent; border: none; color: #000000; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 0.8125rem;" data-idx="' +
-            idx +
-            '">移除</button>';
-        li.querySelector('.il-remove-attachment')?.addEventListener('click', function() {
-            const i = parseInt(this.getAttribute('data-idx'), 10);
-            if (!isNaN(i)) {
-                pendingAttachments.splice(i, 1);
-                renderComposeAttachments();
-            }
+            window.ILinkFiles.iconMarkup(item.name) +
+            `<div class="il-upload-file__body"><span class="il-upload-file__name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>` +
+            `<div class="il-upload-file__meta">${sizeText ? `<span>${escapeHtml(sizeText)}</span>` : ''}${statusMarkup}</div></div>` +
+            `<div class="il-upload-file__actions">${retryButton}</div>` +
+            `<button type="button" class="il-upload-file__remove" data-action="remove" aria-label="移除附件 ${escapeHtml(item.name)}" title="移除"><span aria-hidden="true">×</span></button>`;
+        li.querySelector('[data-action="remove"]')?.addEventListener('click', function() {
+            pendingAttachments = pendingAttachments.filter(candidate => candidate.id !== item.id);
+            renderComposeAttachments();
+        });
+        li.querySelector('[data-action="retry"]')?.addEventListener('click', function() {
+            uploadCommunityAttachment(item);
         });
         ul.appendChild(li);
     });
+    const uploading = pendingAttachments.some(item => item.status === 'uploading');
+    const addButton = document.getElementById('composeAddAttachmentBtn');
+    const submitButton = document.getElementById('submitPostBtn');
+    if (addButton) {
+        addButton.disabled = uploading || pendingAttachments.length >= 10;
+        addButton.textContent = uploading ? '正在上传…' : '上传文件';
+    }
+    if (submitButton) submitButton.disabled = uploading;
 }
 
 function fillComposeCategorySelect() {
@@ -259,10 +324,8 @@ function selectCategory(cat) {
     currentCategory = cat == null ? '' : String(cat);
     currentPage = 1;
 
-    document.querySelectorAll('#channelTabs .il-search-bar__tag').forEach(btn => {
-        const bcat = btn.getAttribute('data-category') || '';
-        btn.classList.toggle('active', bcat === currentCategory);
-    });
+    const channelSelectBar = document.getElementById('channelSelect');
+    if (channelSelectBar) channelSelectBar.value = currentCategory;
 
     const sel = document.getElementById('composeCategory');
     if (sel) {
@@ -648,6 +711,14 @@ async function submitPost() {
         showMessage('请填写标题与正文', 'warning');
         return;
     }
+    if (pendingAttachments.some(item => item.status === 'uploading')) {
+        showMessage('附件仍在上传，请稍候', 'warning');
+        return;
+    }
+    if (pendingAttachments.some(item => item.status === 'error')) {
+        showMessage('请重试或移除上传失败的附件', 'warning');
+        return;
+    }
 
     let htmlContent = '';
     if (typeof marked !== 'undefined') {
@@ -668,6 +739,8 @@ async function submitPost() {
                 title,
                 content: wrappedHtml,
                 attachments: pendingAttachments
+                    .filter(item => item.status === 'success' && item.url)
+                    .map(item => ({ name: item.name, url: item.url }))
             })
         });
         const result = await response.json();

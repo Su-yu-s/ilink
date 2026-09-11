@@ -21,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -142,6 +144,7 @@ public class AssetController {
         m.put("description", asset.getDescription());
         m.put("category", resolveCategory(asset));
         m.put("fileUrl", asset.getFileUrl());
+        m.put("originalFileName", asset.getOriginalFileName());
         m.put("userId", asset.getUserId());
         m.put("viewCount", asset.getViewCount());
         m.put("downloadCount", asset.getDownloadCount());
@@ -211,6 +214,7 @@ public class AssetController {
             data.put("description", asset.getDescription());
             data.put("category", resolveCategory(asset));
             data.put("fileUrl", asset.getFileUrl());
+            data.put("originalFileName", asset.getOriginalFileName());
             data.put("userId", asset.getUserId());
             data.put("viewCount", asset.getViewCount());
             data.put("downloadCount", asset.getDownloadCount());
@@ -340,7 +344,7 @@ public class AssetController {
                 assetService.update(new UpdateWrapper<Asset>()
                     .eq("id", id)
                     .setSql("download_count = IFNULL(download_count, 0) + 1"));
-                String filename = filePath.getFileName().toString();
+                String filename = resolveDownloadFilename(asset, filePath);
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
@@ -364,6 +368,23 @@ public class AssetController {
         }
         String legacy = asset == null ? "" : extractCategoryFromDescription(asset.getDescription());
         return legacy.isEmpty() ? "其他" : legacy;
+    }
+
+    private String resolveDownloadFilename(Asset asset, Path filePath) {
+        if (asset != null && StringUtils.hasText(asset.getOriginalFileName())) {
+            return asset.getOriginalFileName().trim();
+        }
+        String storedName = filePath == null || filePath.getFileName() == null
+            ? "" : filePath.getFileName().toString();
+        int dotIndex = storedName.lastIndexOf('.');
+        String extension = dotIndex >= 0 ? storedName.substring(dotIndex).toLowerCase(Locale.ROOT) : ".file";
+        String title = asset != null && StringUtils.hasText(asset.getTitle())
+            ? asset.getTitle().trim() : "成果附件";
+        title = title.replaceAll("[\\x00-\\x1F\\x7F\\\\/:*?\"<>|]", "").trim();
+        if (!StringUtils.hasText(title)) title = "成果附件";
+        int maxStem = Math.max(1, 255 - extension.length());
+        if (title.length() > maxStem) title = title.substring(0, maxStem);
+        return title + extension;
     }
 
     private String normalizeCategory(String category, String description) {

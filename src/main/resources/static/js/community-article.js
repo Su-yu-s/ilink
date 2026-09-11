@@ -285,16 +285,27 @@ async function loadArticle() {
                     '<h2 class="community-article-attachments__title">附件</h2><ul class="list-unstyled mb-0 community-article-attachment-list"></ul>';
                 const ul = attEl.querySelector('ul');
                 list.forEach(a => {
-                    const name = a && a.name != null ? String(a.name) : '附件';
                     const url = a && a.url != null ? String(a.url) : '';
                     if (!url || !url.startsWith('/uploads/')) return;
+                    const name = window.ILinkFiles.friendlyDownloadName(
+                        a && a.name != null ? String(a.name) : '',
+                        url,
+                        articleData.title || '文章附件'
+                    );
                     const li = document.createElement('li');
-                    li.className = 'mb-1';
+                    li.className = 'community-article-attachment-item';
                     li.innerHTML =
                         '<a href="' +
                         escapeHtml(url) +
-                        '" download class="text-decoration-none" target="_blank" rel="noopener">' +
+                        '" download="' +
                         escapeHtml(name) +
+                        '" class="community-article-attachment-card" title="下载 ' +
+                        escapeHtml(name) +
+                        '">' +
+                        window.ILinkFiles.iconMarkup(name) +
+                        '<span class="community-article-attachment-card__body"><strong>' +
+                        escapeHtml(name) +
+                        '</strong><small>点击下载</small></span>' +
                         '</a>';
                     ul.appendChild(li);
                 });

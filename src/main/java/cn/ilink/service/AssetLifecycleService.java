@@ -1,6 +1,7 @@
 package cn.ilink.service;
 
 import cn.ilink.entity.Asset;
+import cn.ilink.dto.UploadedFileInfo;
 import cn.ilink.service.impl.AssetServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +37,15 @@ public class AssetLifecycleService {
     @Transactional(rollbackFor = Exception.class)
     public Asset createAsset(Long userId, String title, String description, String category,
                              MultipartFile file) throws IOException {
-        String newFileUrl = file == null ? null : fileService.upload(file, "assets");
+        UploadedFileInfo uploaded = file == null ? null : fileService.uploadWithMetadata(file, "assets");
+        String newFileUrl = uploaded == null ? null : uploaded.getUrl();
         try {
             Asset asset = new Asset();
             asset.setTitle(title);
             asset.setDescription(description);
             asset.setCategory(category);
             asset.setFileUrl(newFileUrl);
+            asset.setOriginalFileName(uploaded == null ? null : uploaded.getOriginalName());
             asset.setUserId(userId);
             asset.setViewCount(0);
             asset.setDownloadCount(0);
@@ -70,7 +73,8 @@ public class AssetLifecycleService {
         requireOwner(asset, userId);
 
         String oldFileUrl = asset.getFileUrl();
-        String newFileUrl = file == null ? null : fileService.upload(file, "assets");
+        UploadedFileInfo uploaded = file == null ? null : fileService.uploadWithMetadata(file, "assets");
+        String newFileUrl = uploaded == null ? null : uploaded.getUrl();
         try {
             asset.setTitle(title);
             asset.setDescription(description);
@@ -79,6 +83,7 @@ public class AssetLifecycleService {
             }
             if (newFileUrl != null) {
                 asset.setFileUrl(newFileUrl);
+                asset.setOriginalFileName(uploaded.getOriginalName());
             }
             if (!assetService.updateById(asset)) {
                 throw new IllegalStateException("\u6210\u679c\u4fdd\u5b58\u5931\u8d25");

@@ -6,9 +6,9 @@
     <title>导师招贤 - iLink</title>
 
     <th:block th:replace="~{fragments/head-assets :: core(bootstrap=true)}"></th:block>
-    <link href="/css/teacher-wall.css?v=2.8" rel="stylesheet">
+    <link href="/css/teacher-wall.css?v=2.9" rel="stylesheet">
     <link href="/css/search-bar.css?v=1.9" rel="stylesheet">
-    <link href="/css/portal-redesign.css?v=1.3" rel="stylesheet">
+    <link href="/css/portal-redesign.css?v=2.5" rel="stylesheet">
 </head>
 <body data-app-page="teacher-wall" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="~{fragments/header :: header(${currentUser}, 'teacher')}"></div>
@@ -147,7 +147,7 @@
     </div>
 
     <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=9.2"></script>
+    <script src="/js/common.js?v=9.5"></script>
     <script src="/js/teacher-wall.js?v=4.9"></script>
 </body>
 </html>

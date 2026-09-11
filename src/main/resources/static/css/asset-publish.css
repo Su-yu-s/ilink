@@ -1,8 +1,36 @@
 /**
  * 成果发布/编辑弹窗 v1.0 — 与详情分享页字段对齐
  */
+/* 长表单弹窗：内容超过视口时 header/footer 固定、body 内部滚动。
+   覆盖全局 .modal-dialog-centered 的 align-items:center + min-height:100vh，
+   避免 flex 居中把弹窗顶部（标题、首个字段）裁切且无法滚动到达。 */
+.il-asset-publish-modal {
+  align-items: flex-start;
+}
+
 .il-asset-publish-modal .modal-dialog {
   max-width: 640px;
+  width: 100%;
+  margin: 0 auto !important;
+  min-height: 0 !important;
+  max-height: calc(100vh - 48px);
+  height: fit-content;
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch !important;
+  overflow-y: visible !important;
+}
+
+.il-asset-publish-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 48px);
+}
+
+.il-asset-publish-modal .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .il-asset-publish-modal__intro {

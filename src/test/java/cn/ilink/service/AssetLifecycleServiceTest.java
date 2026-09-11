@@ -1,5 +1,6 @@
 package cn.ilink.service;
 
+import cn.ilink.dto.UploadedFileInfo;
 import cn.ilink.entity.Asset;
 import cn.ilink.service.impl.AssetServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,8 @@ class AssetLifecycleServiceTest {
     @Test
     void createDeletesNewFileWhenDatabaseSaveFails() throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", "work.pdf", "application/pdf", "%PDF".getBytes());
-        when(fileService.upload(file, "assets")).thenReturn("/uploads/assets/work.pdf");
+        when(fileService.uploadWithMetadata(file, "assets"))
+            .thenReturn(uploaded("/uploads/assets/work.pdf", "work.pdf", file));
         when(assetService.save(any(Asset.class))).thenReturn(false);
 
         assertThrows(IllegalStateException.class,
@@ -45,12 +47,14 @@ class AssetLifecycleServiceTest {
         Asset asset = asset(1L, 7L, "/uploads/assets/old.pdf");
         MockMultipartFile file = new MockMultipartFile("file", "new.pdf", "application/pdf", "%PDF".getBytes());
         when(assetService.getById(1L)).thenReturn(asset);
-        when(fileService.upload(file, "assets")).thenReturn("/uploads/assets/new.pdf");
+        when(fileService.uploadWithMetadata(file, "assets"))
+            .thenReturn(uploaded("/uploads/assets/new.pdf", "new.pdf", file));
         when(assetService.updateById(asset)).thenReturn(true);
 
         Asset updated = lifecycleService.updateOwnedAsset(1L, 7L, "新标题", "新说明", file);
 
         assertEquals("/uploads/assets/new.pdf", updated.getFileUrl());
+        assertEquals("new.pdf", updated.getOriginalFileName());
         verify(assetService).updateById(asset);
         verify(fileService).delete("/uploads/assets/old.pdf");
         verify(fileService, never()).delete("/uploads/assets/new.pdf");
@@ -85,5 +89,9 @@ class AssetLifecycleServiceTest {
         asset.setUserId(ownerId);
         asset.setFileUrl(fileUrl);
         return asset;
+    }
+
+    private UploadedFileInfo uploaded(String url, String originalName, MockMultipartFile file) {
+        return new UploadedFileInfo(url, originalName, file.getSize(), file.getContentType());
     }
 }
