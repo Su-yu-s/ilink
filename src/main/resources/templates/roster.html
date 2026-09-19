@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>师生通讯录 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link th:href="@{/css/profile.css}" rel="stylesheet">
+    <link th:href="@{/css/profile-refresh.css}" rel="stylesheet">
+    <link th:href="@{/css/roster.css}" rel="stylesheet">
+</head>
+<body data-profile-page="roster" class="ilink-page-bg"
+      th:attr="data-user-id=${currentUser != null ? currentUser.id : null},
+               data-default-side=${currentUser != null and currentUser.role == 'TEACHER' ? 'students' : 'mentors'}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="il-page-wrapper">
+        <div class="il-profile-layout">
+            <div th:replace="~{fragments/profile-sidebar :: sidebar (active=${currentUser != null and currentUser.role == 'TEACHER' ? 'students' : 'mentors'})}"></div>
+
+            <div class="il-profile-content">
+                <div class="il-section-card">
+                    <div class="il-section-header">
+                        <div>
+                            <h2 class="il-section-title" id="rosterTitle">师生通讯录</h2>
+                            <p class="il-section-subtitle" id="rosterSubtitle">
+                                已建立指导关系的人会出现在这里，可直接邀请进团队
+                            </p>
+                        </div>
+                        <div class="roster-switch" id="rosterSwitch" role="tablist" aria-label="通讯录切换">
+                            <button type="button" class="roster-switch__btn" data-side="mentors" role="tab">我的导师</button>
+                            <button type="button" class="roster-switch__btn" data-side="students" role="tab">我的学生</button>
+                        </div>
+                    </div>
+
+                    <div class="roster-toolbar">
+                        <div class="roster-toolbar__search">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+                            <input type="text" id="rosterSearchInput" class="roster-toolbar__input" placeholder="按姓名筛选">
+                        </div>
+                    </div>
+
+                    <div id="rosterList" class="roster-grid" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/roster.js}"></script>
+</body>
+</html>

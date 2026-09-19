@@ -1,0 +1,929 @@
+/* ============================================================
+   意见反馈 · 关于作者
+   ------------------------------------------------------------
+   命名空间 .fbk-*，自成一体：
+   - 只消费 design-tokens / app-redesign 的既有变量，不新增调色板
+   - 不覆写任何既有选择器（唯一的例外是在 .il-modal-overlay 上切换显隐，
+     因为该外壳自带 display:flex）
+   - 不使用 !important，不参与既有的样式覆盖层
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. 右下角双悬浮按钮
+   ------------------------------------------------------------ */
+.fbk-fabs {
+    position: fixed;
+    right: var(--space-6);
+    bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
+    z-index: var(--z-fixed);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    transition: opacity var(--transition-slow);
+}
+
+/* 沉浸式页面空闲时降低存在感，鼠标靠近或恢复操作后立刻还原 */
+.fbk-fabs--dim {
+    opacity: 0.3;
+}
+
+.fbk-fab {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
+    color: var(--ui-text-muted);
+    cursor: pointer;
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal),
+        color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.fbk-fab:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    color: var(--ui-text);
+    border-color: var(--ui-border-strong);
+}
+
+.fbk-fab:active {
+    transform: scale(0.94);
+}
+
+.fbk-fab:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-md), var(--ui-ring);
+}
+
+.fbk-fab svg {
+    width: 22px;
+    height: 22px;
+}
+
+.fbk-fab--loading {
+    pointer-events: none;
+}
+
+.fbk-fab--loading svg {
+    animation: fbk-spin 0.8s linear infinite;
+}
+
+@keyframes fbk-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .fbk-fabs {
+        right: var(--space-4);
+        bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .fbk-fab {
+        width: 46px;
+        height: 46px;
+    }
+}
+
+/* ------------------------------------------------------------
+   2. 意见反馈 Modal
+   ------------------------------------------------------------ */
+.fbk-modal {
+    display: none;
+    background: rgba(24, 26, 30, 0.45);
+}
+
+.fbk-modal.is-open {
+    display: flex;
+}
+
+.fbk-modal__panel {
+    width: 100%;
+    max-width: 640px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2xl);
+    overflow: hidden;
+}
+
+.fbk-modal__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-6) var(--space-4);
+}
+
+.fbk-modal__eyebrow {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--ui-text-muted);
+    margin: 0 0 var(--space-1);
+}
+
+.fbk-modal__title {
+    margin: 0;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--ui-text);
+    letter-spacing: -0.01em;
+}
+
+.fbk-modal__subtitle {
+    margin: var(--space-1) 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--ui-text-muted);
+    line-height: 1.6;
+}
+
+.fbk-modal__close {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--ui-text-muted);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.fbk-modal__close:hover {
+    background: var(--ui-surface-subtle);
+    color: var(--ui-text);
+}
+
+.fbk-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+    padding: 0 var(--space-6) var(--space-5);
+    overflow-y: auto;
+}
+
+.fbk-modal__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-6);
+    border-top: 1px solid var(--ui-border);
+    background: var(--ui-surface);
+}
+
+.fbk-note {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--font-size-tiny);
+    color: var(--ui-text-muted);
+    line-height: 1.5;
+}
+
+.fbk-note svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
+@media (max-width: 767.98px) {
+    .fbk-modal {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .fbk-modal__panel {
+        max-height: 92vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+
+    .fbk-modal__head,
+    .fbk-modal__body,
+    .fbk-modal__foot {
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+    }
+
+    .fbk-modal__foot {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+}
+
+/* ------------------------------------------------------------
+   3. 表单控件
+   ------------------------------------------------------------ */
+.fbk-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.fbk-field__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.fbk-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--ui-text);
+}
+
+.fbk-label__hint {
+    font-weight: var(--font-weight-normal);
+    font-size: var(--font-size-xs);
+    color: var(--ui-text-muted);
+}
+
+.fbk-required {
+    color: var(--ui-danger);
+}
+
+.fbk-counter {
+    font-size: var(--font-size-xs);
+    color: var(--ui-text-muted);
+}
+
+/* 接近字数上限时用语义色提醒；项目里 warning 与 danger 同色 */
+.fbk-counter--warn {
+    color: var(--ui-danger);
+    font-weight: var(--font-weight-medium);
+}
+
+.fbk-input,
+.fbk-textarea {
+    width: 100%;
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-3);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--ui-text);
+    outline: none;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+        background var(--transition-fast);
+}
+
+.fbk-textarea {
+    resize: none;
+    line-height: 1.7;
+}
+
+.fbk-input::placeholder,
+.fbk-textarea::placeholder {
+    color: var(--ui-text-muted);
+}
+
+.fbk-input:focus,
+.fbk-textarea:focus {
+    border-color: var(--ui-text);
+    background: var(--ui-surface);
+    box-shadow: var(--ui-ring);
+}
+
+/* 反馈类型：四张并排卡片 */
+.fbk-types {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+}
+
+@media (max-width: 639.98px) {
+    .fbk-types {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.fbk-type {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-2);
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-lg);
+    color: var(--ui-text-muted);
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background var(--transition-fast),
+        box-shadow var(--transition-fast), color var(--transition-fast);
+}
+
+.fbk-type svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    transition: transform var(--transition-fast);
+}
+
+.fbk-type:hover {
+    border-color: var(--ui-border-strong);
+    background: var(--ui-surface-subtle);
+}
+
+.fbk-type.is-active {
+    border-color: var(--ui-text);
+    background: var(--ui-surface-subtle);
+    color: var(--ui-text);
+    font-weight: var(--font-weight-semibold);
+    box-shadow: 0 0 0 2px rgba(40, 42, 47, 0.1);
+}
+
+.fbk-type.is-active svg {
+    transform: scale(1.1);
+}
+
+/* 截图上传 + 联系方式双列 */
+.fbk-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-5);
+}
+
+@media (max-width: 639.98px) {
+    .fbk-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.fbk-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.fbk-dropzone {
+    flex: 1;
+    min-height: 104px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: var(--space-4);
+    background: var(--ui-surface-subtle);
+    border: 2px dashed var(--ui-border);
+    border-radius: var(--radius-lg);
+    color: var(--ui-text-muted);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), background var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.fbk-dropzone:hover {
+    border-color: var(--ui-text-muted);
+    background: var(--ui-surface-selected);
+}
+
+.fbk-dropzone.is-drag {
+    border-color: var(--ui-text);
+    background: var(--ui-surface-selected);
+    color: var(--ui-text);
+}
+
+.fbk-dropzone svg {
+    width: 24px;
+    height: 24px;
+}
+
+.fbk-dropzone__label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.fbk-dropzone__hint {
+    font-size: var(--font-size-tiny);
+    color: var(--ui-text-muted);
+}
+
+.fbk-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+.fbk-previews:empty {
+    display: none;
+}
+
+.fbk-preview {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-md);
+    background: var(--ui-surface);
+    overflow: hidden;
+}
+
+.fbk-preview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fbk-preview__remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: rgba(40, 42, 47, 0.65);
+    border: none;
+    border-radius: var(--radius-full);
+    color: var(--ui-surface);
+    font-size: var(--font-size-tiny);
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--transition-fast), background var(--transition-fast);
+}
+
+.fbk-preview:hover .fbk-preview__remove,
+.fbk-preview__remove:focus-visible {
+    opacity: 1;
+}
+
+.fbk-preview__remove:hover {
+    background: var(--ui-text);
+}
+
+/* 触摸设备没有 hover，删除按钮必须常驻可见 */
+@media (hover: none) {
+    .fbk-preview__remove {
+        opacity: 1;
+    }
+}
+
+.fbk-input-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.fbk-input-wrap__icon {
+    position: absolute;
+    left: var(--space-3);
+    display: flex;
+    color: var(--ui-text-muted);
+    pointer-events: none;
+}
+
+.fbk-input-wrap__icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.fbk-input--icon {
+    padding-left: 40px;
+}
+
+.fbk-error {
+    margin: var(--space-2) 0 0;
+    font-size: var(--font-size-xs);
+    color: var(--ui-danger);
+    min-height: 1em;
+}
+
+.fbk-error:empty {
+    display: none;
+}
+
+/* 主提交按钮 */
+.fbk-submit {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: 0 var(--space-8);
+    background: var(--ui-text);
+    border: 1px solid var(--ui-text);
+    border-radius: var(--radius-lg);
+    color: var(--ui-surface);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.fbk-submit:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+
+.fbk-submit:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.fbk-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.fbk-submit svg {
+    width: 16px;
+    height: 16px;
+}
+
+.fbk-submit--loading svg {
+    animation: fbk-spin 0.8s linear infinite;
+}
+
+/* ------------------------------------------------------------
+   4. 反馈详情页（移动端优先，在微信内置浏览器打开）
+   ------------------------------------------------------------ */
+.fbk-detail {
+    min-height: 100vh;
+    background: var(--ui-canvas);
+    -webkit-font-smoothing: antialiased;
+}
+
+.fbk-detail__top {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    height: 56px;
+    padding: 0 var(--space-4);
+    background: rgba(252, 252, 253, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.fbk-detail__back {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: var(--radius-full);
+    color: var(--ui-text-secondary);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.fbk-detail__back:hover {
+    background: var(--ui-surface-subtle);
+}
+
+.fbk-detail__title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    color: var(--ui-text);
+}
+
+.fbk-detail__no {
+    margin-left: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--font-size-tiny);
+    color: var(--ui-text-muted);
+}
+
+.fbk-detail__main {
+    max-width: 672px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.fbk-card {
+    padding: var(--space-5);
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xs);
+}
+
+.fbk-card__title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-3);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--ui-text);
+}
+
+.fbk-card__title svg {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--ui-text-muted);
+}
+
+.fbk-card__title-hint {
+    font-weight: var(--font-weight-normal);
+    font-size: var(--font-size-xs);
+    color: var(--ui-text-muted);
+}
+
+.fbk-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.fbk-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 4px 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+}
+
+.fbk-badge svg {
+    width: 14px;
+    height: 14px;
+}
+
+.fbk-badge__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: currentColor;
+}
+
+.fbk-badge--bug {
+    background: var(--ui-danger-soft);
+    border-color: #fecaca;
+    color: var(--ui-danger);
+}
+
+.fbk-badge--feature {
+    background: var(--ui-success-soft);
+    border-color: #bbf7d0;
+    color: var(--ui-success);
+}
+
+.fbk-badge--ux,
+.fbk-badge--other {
+    background: var(--ui-surface-subtle);
+    border-color: var(--ui-border);
+    color: var(--ui-text-secondary);
+}
+
+.fbk-badge--done {
+    background: var(--ui-success-soft);
+    border-color: #bbf7d0;
+    color: var(--ui-success);
+}
+
+.fbk-badge--pending {
+    background: var(--ui-surface-subtle);
+    border-color: var(--ui-border);
+    color: var(--ui-text-muted);
+}
+
+.fbk-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--ui-border);
+    font-size: var(--font-size-xs);
+    color: var(--ui-text-muted);
+}
+
+.fbk-meta__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.fbk-meta__item svg {
+    width: 14px;
+    height: 14px;
+    color: var(--ui-text-muted);
+}
+
+.fbk-desc {
+    font-size: var(--font-size-sm);
+    line-height: 1.7;
+    color: var(--ui-text-secondary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.fbk-shots {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+}
+
+.fbk-shot {
+    display: block;
+    width: 100%;
+    padding: 0;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-lg);
+    background: var(--ui-surface-subtle);
+    overflow: hidden;
+    cursor: zoom-in;
+}
+
+.fbk-shot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-normal);
+}
+
+.fbk-shot:hover img {
+    transform: scale(1.04);
+}
+
+.fbk-contact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--ui-surface-subtle);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--radius-md);
+}
+
+.fbk-contact__value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--font-size-sm);
+    color: var(--ui-text);
+    word-break: break-all;
+}
+
+.fbk-copy {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: 32px;
+    padding: 0 var(--space-2);
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--ui-text-muted);
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.fbk-copy svg {
+    width: 14px;
+    height: 14px;
+}
+
+.fbk-copy:hover {
+    color: var(--ui-text);
+    background: var(--ui-surface-selected);
+}
+
+.fbk-copy.is-copied {
+    color: var(--ui-success);
+}
+
+.fbk-detail__foot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-4) var(--space-10);
+    font-size: var(--font-size-xs);
+    color: var(--ui-text-muted);
+}
+
+.fbk-detail__foot svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 图片放大 */
+.fbk-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-popover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    background: rgba(24, 26, 30, 0.9);
+    cursor: zoom-out;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+}
+
+.fbk-lightbox.is-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.fbk-lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    transform: scale(0.94);
+    transition: transform var(--transition-normal);
+}
+
+.fbk-lightbox.is-open img {
+    transform: scale(1);
+}
+
+.fbk-lightbox__close {
+    position: absolute;
+    top: var(--space-6);
+    right: var(--space-6);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: rgba(252, 252, 253, 0.12);
+    border: none;
+    border-radius: var(--radius-full);
+    color: var(--ui-surface);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.fbk-lightbox__close:hover {
+    background: rgba(252, 252, 253, 0.24);
+}
+
+/* ------------------------------------------------------------
+   5. 无障碍与降级
+   ------------------------------------------------------------ */
+.fbk-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fbk-fab,
+    .fbk-fabs,
+    .fbk-fab--loading svg,
+    .fbk-submit--loading svg,
+    .fbk-shot img,
+    .fbk-lightbox,
+    .fbk-lightbox img {
+        transition: none;
+        animation: none;
+        transform: none;
+    }
+}

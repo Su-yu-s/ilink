@@ -13,6 +13,7 @@ import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.service.AdminDataService;
 import cn.ilink.mapper.CommunityPostFavoriteMapper;
+import cn.ilink.mapper.CommunityCommentMapper;
 import cn.ilink.util.HtmlSanitizer;
 import cn.ilink.vo.CommunityCommentVO;
 import cn.ilink.vo.CommunityPostDetailVO;
@@ -51,6 +52,7 @@ public class CommunityController {
     private final CommunityPostServiceImpl communityPostService;
     private final CommunityPostInteractionService communityPostInteractionService;
     private final CommunityPostFavoriteMapper communityPostFavoriteMapper;
+    private final CommunityCommentMapper communityCommentMapper;
     private final CommunityCommentServiceImpl communityCommentService;
     private final UserService userService;
     private final ObjectMapper objectMapper;
@@ -60,6 +62,7 @@ public class CommunityController {
     public CommunityController(CommunityPostServiceImpl communityPostService,
                                CommunityPostInteractionService communityPostInteractionService,
                                CommunityPostFavoriteMapper communityPostFavoriteMapper,
+                               CommunityCommentMapper communityCommentMapper,
                                CommunityCommentServiceImpl communityCommentService,
                                UserService userService,
                                ObjectMapper objectMapper,
@@ -68,6 +71,7 @@ public class CommunityController {
         this.communityPostService = communityPostService;
         this.communityPostInteractionService = communityPostInteractionService;
         this.communityPostFavoriteMapper = communityPostFavoriteMapper;
+        this.communityCommentMapper = communityCommentMapper;
         this.communityCommentService = communityCommentService;
         this.userService = userService;
         this.objectMapper = objectMapper;
@@ -82,10 +86,21 @@ public class CommunityController {
         @RequestParam(defaultValue = "10") Integer size,
         @RequestParam(required = false) String category,
         @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) String sort,
         HttpSession session
     ) {
         LambdaQueryWrapper<CommunityPost> wrapper = new LambdaQueryWrapper<>();
-        wrapper.orderByDesc(CommunityPost::getCreatedAt);
+        // 置顶帖在任何排序下都优先；id 作最终 tiebreaker，同秒发布的记录翻页顺序不漂移。
+        // 排序键只看静态累计值（时间/浏览/点赞/收藏），阅读等行为不会改变列表顺序。
+        wrapper.orderByDesc(CommunityPost::getIsPinned);
+        String sortKey = sort == null || sort.isBlank() ? "latest" : sort.trim().toLowerCase();
+        switch (sortKey) {
+            case "views" -> wrapper.orderByDesc(CommunityPost::getViewCount);
+            case "likes" -> wrapper.orderByDesc(CommunityPost::getLikeCount);
+            case "favorites" -> wrapper.orderByDesc(CommunityPost::getFavoriteCount);
+            default -> wrapper.orderByDesc(CommunityPost::getCreatedAt);
+        }
+        wrapper.orderByDesc(CommunityPost::getId);
 
         if (category != null && !category.trim().isEmpty()) {
             String c = category.trim();
@@ -109,6 +124,7 @@ public class CommunityController {
         long total = result.getTotal();
 
         Map<Long, User> authorMap = loadAuthors(records.stream().map(CommunityPost::getAuthorId).collect(Collectors.toSet()));
+        Map<Long, Long> commentCountMap = countComments(records);
         User viewer = ControllerUtils.requireUser(session);
         List<Long> postIds = records.stream().map(CommunityPost::getId).collect(Collectors.toList());
         Map<Long, Boolean> likedMap = viewer != null
@@ -118,7 +134,7 @@ public class CommunityController {
             ? communityPostInteractionService.batchFavoritedStatus(viewer.getId(), postIds)
             : Collections.emptyMap();
         List<CommunityPostListItemVO> views = records.stream()
-            .map(p -> toListItem(p, authorMap.get(p.getAuthorId()), viewer, likedMap, favoritedMap))
+            .map(p -> toListItem(p, authorMap.get(p.getAuthorId()), viewer, likedMap, favoritedMap, commentCountMap))
             .collect(Collectors.toList());
 
         return Result.ok("获取成功", views).withPagination(safePage, safeSize, (int) total).toResponseEntity();
@@ -152,8 +168,9 @@ public class CommunityController {
         List<Long> postIds = records.stream().map(CommunityPost::getId).collect(Collectors.toList());
         Map<Long, Boolean> likedMap = communityPostInteractionService.batchLikedStatus(viewer.getId(), postIds);
         Map<Long, Boolean> favoritedMap = communityPostInteractionService.batchFavoritedStatus(viewer.getId(), postIds);
+        Map<Long, Long> commentCountMap = countComments(records);
         List<CommunityPostListItemVO> views = records.stream()
-            .map(p -> toListItem(p, viewer, viewer, likedMap, favoritedMap))
+            .map(p -> toListItem(p, viewer, viewer, likedMap, favoritedMap, commentCountMap))
             .collect(Collectors.toList());
 
         return Result.ok("获取成功", views).withPagination(safePage, safeSize, (int) total).toResponseEntity();
@@ -210,15 +227,16 @@ public class CommunityController {
         List<Long> allPostIds = ordered.stream().map(CommunityPost::getId).collect(Collectors.toList());
         Map<Long, Boolean> likedMap = communityPostInteractionService.batchLikedStatus(viewer.getId(), allPostIds);
         Map<Long, Boolean> favoritedMap = communityPostInteractionService.batchFavoritedStatus(viewer.getId(), allPostIds);
+        Map<Long, Long> commentCountMap = countComments(ordered);
         List<CommunityPostListItemVO> views = ordered.stream()
-            .map(p -> toListItem(p, authorMap.get(p.getAuthorId()), viewer, likedMap, favoritedMap))
+            .map(p -> toListItem(p, authorMap.get(p.getAuthorId()), viewer, likedMap, favoritedMap, commentCountMap))
             .collect(Collectors.toList());
 
         return Result.ok("获取成功", views).withPagination(safePage, safeSize, total).toResponseEntity();
     }
 
     /**
-     * 编辑页拉取正文：不增加阅读量；仅作者或管理员
+     * 编辑页拉取正文：不增加阅读量；仅作者本人
      */
     @GetMapping("/posts/{id}/for-edit")
     @ResponseBody
@@ -231,7 +249,8 @@ public class CommunityController {
         if (post == null) {
             return Result.notFound("文章不存在").toResponseEntity();
         }
-        if (!ControllerUtils.isAdmin(viewer) && !viewer.getId().equals(post.getAuthorId())) {
+        if (!viewer.getId().equals(post.getAuthorId())) {
+            // 仅发布者本人可编辑；管理员走管理后台的编辑接口
             return Result.fail(403, "无权编辑该文章").toResponseEntity();
         }
         User author = userService.getById(post.getAuthorId());
@@ -253,7 +272,7 @@ public class CommunityController {
         if (existing == null) {
             return Result.notFound("文章不存在").toResponseEntity();
         }
-        if (!ControllerUtils.isAdmin(user) && !user.getId().equals(existing.getAuthorId())) {
+        if (!user.getId().equals(existing.getAuthorId())) {
             return Result.fail(403, "无权修改该文章").toResponseEntity();
         }
 
@@ -486,7 +505,8 @@ public class CommunityController {
         if (post == null) {
             return Result.notFound("帖子不存在").toResponseEntity();
         }
-        if (!ControllerUtils.isAdmin(user) && !user.getId().equals(post.getAuthorId())) {
+        if (!user.getId().equals(post.getAuthorId())) {
+            // 仅发布者本人可删；管理员的删除能力收敛到管理后台（/api/admin/community-post/{id}）
             return Result.fail(403, "无权删除该帖").toResponseEntity();
         }
         try {
@@ -579,8 +599,21 @@ public class CommunityController {
         return p.getFavoriteCount() == null ? 0 : p.getFavoriteCount();
     }
 
+    /** 按帖子批量统计评论数，供列表卡展示（无评论的帖子不在 map 中，取 0） */
+    private Map<Long, Long> countComments(List<CommunityPost> posts) {
+        if (posts == null || posts.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<Long> ids = posts.stream().map(CommunityPost::getId).collect(Collectors.toList());
+        return communityCommentMapper.countByPostIds(ids).stream()
+            .collect(Collectors.toMap(
+                m -> ((Number) m.get("postId")).longValue(),
+                m -> ((Number) m.get("cnt")).longValue()));
+    }
+
     private CommunityPostListItemVO toListItem(CommunityPost p, User author, User viewer,
-                                            Map<Long, Boolean> likedMap, Map<Long, Boolean> favoritedMap) {
+                                            Map<Long, Boolean> likedMap, Map<Long, Boolean> favoritedMap,
+                                            Map<Long, Long> commentCountMap) {
         CommunityPostListItemVO vo = new CommunityPostListItemVO();
         vo.setId(p.getId());
         vo.setCategory(p.getCategory());
@@ -593,6 +626,8 @@ public class CommunityController {
         vo.setViewCount((long) viewCountOf(p));
         vo.setLikeCount((long) likeCountOf(p));
         vo.setFavoriteCount((long) favoriteCountOf(p));
+        vo.setPinned(p.getIsPinned() != null && p.getIsPinned() == 1);
+        vo.setCommentCount(commentCountMap.getOrDefault(p.getId(), 0L));
         if (viewer != null) {
             vo.setLiked(likedMap.getOrDefault(p.getId(), false));
             vo.setFavorited(favoritedMap.getOrDefault(p.getId(), false));
@@ -615,6 +650,7 @@ public class CommunityController {
         vo.setAuthorDisplay(authorDisplay(author));
         vo.setAuthorAvatar(resolveAuthorAvatar(author, viewer));
         vo.setViewCount((long) viewCountOf(p));
+        vo.setPinned(p.getIsPinned() != null && p.getIsPinned() == 1);
         vo.setCreatedAt(p.getCreatedAt());
         enrichInteraction(p, viewer, vo);
         return vo;

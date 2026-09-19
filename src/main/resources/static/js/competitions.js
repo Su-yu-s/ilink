@@ -49,7 +49,8 @@ function renderCompetitionCards(items) {
     grid.innerHTML = items.map(item => {
         const levelClass = item.levelClass || '三类';
         const scope = item.scope || '省赛';
-        const scopeClass = /国赛|国际/.test(scope) ? 'scope--national'
+        const scopeClass = /国际/.test(scope) ? 'scope--international'
+            : /国赛/.test(scope) ? 'scope--national'
             : /省赛/.test(scope) ? 'scope--province'
             : /校赛/.test(scope) ? 'scope--school' : 'scope--default';
         const levelCss = levelClass.includes('一类A') ? '1a'

@@ -1,7 +1,7 @@
 /* iLink administration console — quiet, dense and data-first. */
 
 html.ilink-app body[data-app-page="admin"] .admin-shell {
-  width: min(100% - 48px, 1360px) !important;
+  width: min(100% - 48px, 1500px) !important;
   margin: 0 auto !important;
   padding: 36px 0 64px !important;
 }
@@ -315,7 +315,7 @@ body[data-app-page="admin"] .modal-body {
 
 @media (max-width: 1024px) {
   html.ilink-app body[data-app-page="admin"] .admin-shell {
-    width: min(100% - 32px, 1360px) !important;
+    width: min(100% - 32px, 1500px) !important;
   }
 
   body[data-app-page="admin"] .admin-workspace {
@@ -419,3 +419,91 @@ body[data-app-page="admin"] .modal-body {
     font-weight: 600;
   }
 }
+
+/* 社区帖子表格：置顶按钮加入后的列宽方案。
+   table-layout:fixed 逐列显式宽度，标题列弹性吃剩余；按钮去掉 admin 皮肤的 min-width:54px。 */
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) {
+  min-width: 680px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) .admin-row-actions .btn {
+  padding: 3px 7px !important;
+  font-size: 12px !important;
+  min-width: 0 !important;
+}
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) tbody td {
+  font-size: 12.5px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td.admin-row-actions {
+  white-space: nowrap !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: 180px !important;
+  min-width: 180px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(6),
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(6) {
+  width: 180px !important;
+  min-width: 180px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(1),
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(1) {
+  width: 90px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(3),
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(3) {
+  width: 135px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(4),
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(4) {
+  width: 62px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(5),
+body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(5) {
+  width: 128px !important;
+  white-space: nowrap !important;
+}
+
+/* 成果表格：与社区帖子表格同款列宽方案 */
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) {
+  min-width: 680px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) .admin-row-actions .btn {
+  padding: 3px 7px !important;
+  font-size: 12px !important;
+  min-width: 0 !important;
+}
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) tbody td {
+  font-size: 12.5px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) td.admin-row-actions {
+  white-space: nowrap !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: 180px !important;
+  min-width: 180px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(5),
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(5) {
+  width: 180px !important;
+  min-width: 180px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(2),
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(2) {
+  width: 135px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(3),
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(3) {
+  width: 62px !important;
+}
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(4),
+body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(4) {
+  width: 128px !important;
+  white-space: nowrap !important;
+}
+

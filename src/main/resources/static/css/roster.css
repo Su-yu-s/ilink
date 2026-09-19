@@ -1,0 +1,206 @@
+/* 师生通讯录：导师 / 学生卡片
+   视觉沿用全站规范：白卡、灰边框、深色主按钮、纯内联 SVG、无渐变。 */
+
+.roster-switch {
+    display: inline-flex;
+    gap: 4px;
+    padding: 3px;
+    background: var(--bg-muted);
+    border-radius: var(--radius-lg);
+}
+
+/* display:inline-flex 会盖掉 [hidden] 的 UA 样式，必须显式兜一下 */
+.roster-switch[hidden] { display: none; }
+
+.roster-switch__btn {
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.roster-switch__btn:hover { color: var(--text-primary); }
+
+.roster-switch__btn.is-active {
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.roster-toolbar {
+    display: flex;
+    gap: 12px;
+    margin: 18px 0 16px;
+}
+
+.roster-toolbar__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: min(100%, 320px);
+    padding: 0 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+}
+
+.roster-toolbar__search svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    color: var(--text-tertiary);
+}
+
+.roster-toolbar__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0;
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    background: transparent;
+    border: 0;
+    outline: none;
+}
+
+.roster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.roster-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    transition: box-shadow var(--transition-slow) cubic-bezier(0.32, 0.72, 0, 1),
+                border-color var(--transition-fast);
+}
+
+.roster-card:hover {
+    border-color: var(--color-gray-300);
+    box-shadow: var(--shadow-md);
+}
+
+.roster-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.roster-card__avatar {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    overflow: hidden;
+    border-radius: var(--radius-full);
+    background: var(--bg-muted);
+}
+
+.roster-card__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.roster-card__avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.roster-card__body { flex: 1 1 auto; min-width: 0; }
+
+.roster-card__name {
+    margin: 0 0 2px;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.roster-card__meta {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.roster-card__connected {
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: #15803d;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius-full);
+}
+
+.roster-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.roster-card__tag {
+    padding: 3px 10px;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    background: var(--bg-muted);
+    border-radius: var(--radius-md);
+}
+
+.roster-card__actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-light);
+}
+
+.roster-empty {
+    grid-column: 1 / -1;
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.roster-empty__title {
+    margin: 12px 0 4px;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.roster-empty__text {
+    margin: 0 0 16px;
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+@media (max-width: 768px) {
+    .roster-grid { grid-template-columns: 1fr; }
+    .roster-toolbar__search { width: 100%; }
+    .roster-switch { width: 100%; }
+    .roster-switch__btn { flex: 1 1 0; }
+}

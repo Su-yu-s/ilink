@@ -709,6 +709,29 @@ html.ilink-app body[data-app-page="community-article"] .community-article-shell 
   padding: 32px 0 56px !important;
 }
 
+/* 成果详情与社区文章详情都承载大图/富文本正文，卡片与列表页内容区同宽（--container-max: 1200px） */
+html.ilink-app body[data-app-page="asset-detail"] .asset-detail-shell,
+html.ilink-app body[data-app-page="community-article"] .community-article-shell {
+  width: min(100% - 48px, 1200px) !important;
+}
+
+/* 详情页最上面是「← 返回」，它上面不该再空一段：
+   外层容器（.il-page-wrapper / .main-content）和 shell 的上内边距一起收掉，下内边距保留。 */
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"],
+                       [data-app-page="asset-detail"],[data-app-page="community-article"]) .il-page-wrapper {
+  padding-top: 12px !important;
+}
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"],
+                       [data-app-page="asset-detail"],[data-app-page="community-article"])
+  :is(.team-detail-shell, .teacher-detail-shell, .asset-detail-shell, .community-article-shell) {
+  padding-top: 0 !important;
+}
+/* 导师详情页外层用的是 .teacher-detail-main（detail-refresh.css 给了 32px 上内边距），
+   那份样式在本文件之后加载，靠 !important 直接盖住 */
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-main {
+  padding-top: 12px !important;
+}
+
 html.ilink-app .detail-view,
 html.ilink-app .teacher-detail-card,
 html.ilink-app .community-article-card,
@@ -1735,24 +1758,101 @@ html.ilink-app body[data-app-page="competitions"] .competition-toolbar__search {
    ============================================================ */
 
 /* ---------- A. 发布组队需求表单 ---------- */
+/* 页面头部收一收：这是表单页，重点应该在表单上，不该被 hero 顶掉半屏 */
+/* 页头下面的空白来自两处：.il-page-wrapper 的 32px 上内边距，以及全局
+   `.il-hero { padding: 40px 0 24px }`。表单页不需要这两段留白，一起收掉。 */
+html.ilink-app body[data-app-page="team-publish"] .il-page-wrapper {
+  padding-top: 12px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .il-hero {
+  padding: 0 0 16px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-hero {
+  margin-bottom: 20px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-hero .il-hero-title {
+  font-size: clamp(1.6rem, 3.4vw, 2rem) !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-hero .il-hero-desc {
+  font-size: 1rem !important;
+}
+
 html.ilink-app body[data-app-page="team-publish"] .il-surface {
-  width: min(100%, 820px) !important;
-  padding: 36px 40px !important;
+  width: min(100%, 860px) !important;
+  margin: 0 auto !important;
+  padding: 4px 40px 28px !important;
   border-radius: 20px !important;
   box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
 }
-html.ilink-app body[data-app-page="team-publish"] form .mb-4 { margin-bottom: 22px !important; }
+/* 表单卡片不是内容卡：跟 hover 上浮会把整张表单抬起来，观感很怪 */
+html.ilink-app body[data-app-page="team-publish"] .il-surface:hover {
+  transform: none !important;
+  box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
+}
+
+/* 字段分组：六个字段糊成一整列会看不出层次，按「基本信息 / 队伍设置」切开 */
+html.ilink-app body[data-app-page="team-publish"] .tp-section {
+  padding: 22px 0 !important;
+  border-bottom: 1px solid #f0efec !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-section:first-child { padding-top: 24px !important; }
+html.ilink-app body[data-app-page="team-publish"] .tp-section__title {
+  margin: 0 0 14px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-section__hint {
+  margin: 0 0 18px !important;
+  font-size: 12.5px !important;
+  color: #9ca3af !important;
+}
+
+html.ilink-app body[data-app-page="team-publish"] .tp-field { margin-bottom: 16px !important; }
+html.ilink-app body[data-app-page="team-publish"] .tp-field:last-child { margin-bottom: 0 !important; }
+
+/* 短字段并排（分类 / 人数 / 截止日期），长字段独占一行 */
+html.ilink-app body[data-app-page="team-publish"] .tp-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  margin-bottom: 16px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-grid .tp-field { margin-bottom: 0 !important; }
+
+html.ilink-app body[data-app-page="team-publish"] .tp-req {
+  margin-left: 2px !important;
+  color: #dc2626 !important;
+  font-weight: 600 !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-optional {
+  margin-left: 4px !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: #9ca3af !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-field__hint {
+  margin: 7px 0 0 !important;
+  font-size: 12.5px !important;
+  color: #9ca3af !important;
+}
+
 html.ilink-app body[data-app-page="team-publish"] .il-form-label {
   display: block !important;
-  margin-bottom: 9px !important;
+  margin-bottom: 8px !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   color: #1f2937 !important;
 }
-html.ilink-app body[data-app-page="team-publish"] .il-form-input,
+/* 权重说明：layout.css 里那条 `.ilink-app input:not([type=checkbox])...`（五个 :not，
+   每个都算一个属性选择器）权重是 (0,6,1)，只写 body[data-app-page] .il-form-input 是 (0,3,2)，
+   会被它的 border-radius / border-color / min-height 压住，所以这里把祖先链写全到 (0,6,2)。
+   textarea 和 select 那边 layout.css 只用了单类，不受影响。 */
+html.ilink-app body[data-app-page="team-publish"] .tp-card .tp-section .tp-field .il-form-input,
 html.ilink-app body[data-app-page="team-publish"] .il-form-select {
   width: 100% !important;
   height: 46px !important;
+  min-height: 46px !important;
   padding: 0 15px !important;
   border: 1px solid #e3e4e0 !important;
   border-radius: 12px !important;
@@ -1763,11 +1863,13 @@ html.ilink-app body[data-app-page="team-publish"] .il-form-select {
   transition: border-color .18s ease, box-shadow .18s ease !important;
   box-sizing: border-box !important;
 }
-html.ilink-app body[data-app-page="team-publish"] textarea.il-form-input {
+/* 权重必须压过上面那条 46px 的输入框规则（那条为了赢过 layout.css 抬到了 (0,6,2)），
+   否则 textarea 会被钉成一行高 */
+html.ilink-app body[data-app-page="team-publish"] .tp-card .tp-section .tp-field textarea.il-form-input {
   height: auto !important;
-  min-height: 150px !important;
-  padding: 13px 15px !important;
-  line-height: 1.7 !important;
+  min-height: 180px !important;
+  padding: 14px 15px !important;
+  line-height: 1.75 !important;
   resize: vertical !important;
 }
 html.ilink-app body[data-app-page="team-publish"] select.il-form-select {
@@ -1785,19 +1887,94 @@ html.ilink-app body[data-app-page="team-publish"] .il-form-select:focus {
   border-color: #1f2937 !important;
   box-shadow: 0 0 0 3px rgba(31,41,55,0.08) !important;
 }
-html.ilink-app body[data-app-page="team-publish"] .form-text {
-  display: block !important;
-  margin-top: 7px !important;
+
+/* 标签行：左标题右注解（字数统计 / 一直开放招募） */
+html.ilink-app body[data-app-page="team-publish"] .tp-label-row {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 8px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-label-row .il-form-label,
+html.ilink-app body[data-app-page="team-publish"] .tp-label-row .tp-section__title {
+  margin-bottom: 0 !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-counter,
+html.ilink-app body[data-app-page="team-publish"] .tp-label-note {
+  flex: 0 0 auto !important;
   font-size: 12.5px !important;
   color: #9ca3af !important;
+  font-variant-numeric: tabular-nums !important;
 }
-html.ilink-app body[data-app-page="team-publish"] form .row { --bs-gutter-x: 20px; }
-html.ilink-app body[data-app-page="team-publish"] form .row > [class*=col-] { margin-bottom: 20px !important; }
-html.ilink-app body[data-app-page="team-publish"] .d-flex.gap-3 {
-  margin-top: 8px !important;
-  padding-top: 22px !important;
-  border-top: 1px solid #f0efec !important;
+
+/* 单选芯片：分类与截止日期共用 */
+html.ilink-app body[data-app-page="team-publish"] .tp-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
   gap: 12px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-chip {
+  flex: 1 1 auto !important;
+  min-width: 120px !important;
+  height: 52px !important;
+  padding: 0 22px !important;
+  font-family: inherit !important;
+  font-size: 14.5px !important;
+  font-weight: 500 !important;
+  color: #1f2937 !important;
+  background: #ffffff !important;
+  border: 1px solid #e3e4e0 !important;
+  border-radius: 12px !important;
+  cursor: pointer !important;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-chip:hover {
+  border-color: #c9cac6 !important;
+  background: #fafaf9 !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-chip:focus-visible {
+  outline: 2px solid #1f2937 !important;
+  outline-offset: 2px !important;
+}
+/* 选中态：深色实底 + 白字，和全站主按钮同一套语言 */
+html.ilink-app body[data-app-page="team-publish"] .tp-chip.is-active {
+  color: #ffffff !important;
+  background: #282a2f !important;
+  border-color: #282a2f !important;
+  font-weight: 600 !important;
+}
+
+/* 截止日期的时间跨度是“快选”，做成胶囊更好和“分类”区分 */
+html.ilink-app body[data-app-page="team-publish"] .tp-chips--period .tp-chip {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  height: 44px !important;
+  padding: 0 24px !important;
+  border-radius: 999px !important;
+}
+
+html.ilink-app body[data-app-page="team-publish"] .tp-field--custom-date {
+  margin-top: 12px !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-field--custom-date[hidden] {
+  display: none !important;
+}
+html.ilink-app body[data-app-page="team-publish"] .tp-field--custom-date .il-form-input {
+  max-width: 280px !important;
+}
+
+/* 两列：人数 + 技能 */
+html.ilink-app body[data-app-page="team-publish"] .tp-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+/* 底部操作区：与最后一组字段用留白隔开，不再叠一条分隔线（上面那组已经收过边了） */
+html.ilink-app body[data-app-page="team-publish"] .tp-actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  padding-top: 22px !important;
 }
 html.ilink-app body[data-app-page="team-publish"] .il-btn {
   height: 46px !important;
@@ -1807,7 +1984,32 @@ html.ilink-app body[data-app-page="team-publish"] .il-btn {
   font-weight: 600 !important;
   display: inline-flex !important;
   align-items: center !important;
+  justify-content: center !important;
   gap: 7px !important;
+}
+
+/* 平板：短字段从三列退到两列 */
+@media (max-width: 900px) {
+  html.ilink-app body[data-app-page="team-publish"] .tp-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* 手机：全部单列，按钮铺满并让主操作落在最下面 */
+@media (max-width: 600px) {
+  html.ilink-app body[data-app-page="team-publish"] .il-surface {
+    padding: 4px 20px 24px !important;
+  }
+  html.ilink-app body[data-app-page="team-publish"] .tp-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* 手机上是竖排：取消在上、发布需求在下，主操作贴着最后一组字段，拇指好按 */
+  html.ilink-app body[data-app-page="team-publish"] .tp-actions {
+    flex-direction: column !important;
+  }
+  html.ilink-app body[data-app-page="team-publish"] .tp-actions .il-btn {
+    width: 100% !important;
+  }
 }
 
 /* ---------- B. 组队/导师详情：信息网格卡片 ---------- */
@@ -2061,39 +2263,6 @@ html.ilink-app body[data-app-page="community-article"] .community-article__avata
 html.ilink-app body[data-app-page="community-article"] .community-article__meta-item { color: #6b7280 !important; }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-card__body { padding: 28px 34px 32px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content {
-  max-width: 100% !important; color: #374151 !important; font-size: 16px !important; line-height: 1.9 !important;
-}
-html.ilink-app body[data-app-page="community-article"] .community-article__content p { margin-bottom: 14px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content h1,
-html.ilink-app body[data-app-page="community-article"] .community-article__content h2,
-html.ilink-app body[data-app-page="community-article"] .community-article__content h3,
-html.ilink-app body[data-app-page="community-article"] .community-article__content h4 {
-  color: #1f2937 !important; font-weight: 700 !important; line-height: 1.4 !important; margin: 24px 0 12px !important;
-}
-html.ilink-app body[data-app-page="community-article"] .community-article__content h2 { font-size: 21px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content h3 { font-size: 18px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content ul,
-html.ilink-app body[data-app-page="community-article"] .community-article__content ol { margin: 0 0 14px !important; padding-left: 24px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content li { margin-bottom: 7px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content strong { color: #1f2937 !important; font-weight: 700 !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content a { color: #2563eb !important; text-decoration: none !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content a:hover { text-decoration: underline !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content blockquote {
-  margin: 14px 0 !important; padding: 10px 16px !important; border-left: 3px solid #1f2937 !important;
-  background: #f8f8f6 !important; border-radius: 0 10px 10px 0 !important; color: #4b5563 !important;
-}
-html.ilink-app body[data-app-page="community-article"] .community-article__content code {
-  background: #f3f4f6 !important; padding: 2px 6px !important; border-radius: 6px !important;
-  font-size: 14px !important; color: #db2777 !important; font-family: ui-monospace, Consolas, monospace !important;
-}
-html.ilink-app body[data-app-page="community-article"] .community-article__content pre {
-  background: #1f2937 !important; color: #f3f4f6 !important; padding: 16px 18px !important;
-  border-radius: 12px !important; overflow-x: auto !important; margin: 14px 0 !important; line-height: 1.6 !important;
-}
-html.ilink-app body[data-app-page="community-article"] .community-article__content pre code { background: transparent !important; color: inherit !important; padding: 0 !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content img { border-radius: 12px !important; margin: 10px 0 !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__content hr { border: none !important; border-top: 1px solid #f0efec !important; margin: 22px 0 !important; }
 
 /* 评论区 */
 html.ilink-app body[data-app-page="community-article"] .community-article-comments__header {

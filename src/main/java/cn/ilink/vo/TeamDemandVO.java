@@ -2,6 +2,7 @@ package cn.ilink.vo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.util.Date;
 import java.util.List;
@@ -28,10 +29,16 @@ public class TeamDemandVO {
     private long applicationCount;
     private long approvedMemberCount;
     private long currentMemberCount;
+    /** 同 MyTeamVO.isCreator：不注解会变成 full，前端 profile.js 读的就是 isFull */
+    @JsonProperty("isFull")
     private boolean isFull;
     private boolean canEdit;
     private boolean canDelete;
     private boolean canMoveToTeaming;
     private boolean canClose;
+    /** 当前用户能否邀请成员 / 审批申请（创建者或在队导师）；仅「我的团队」接口返回 */
+    private boolean canManageMembers;
+    /** 待确认的邀请数，用于卡片上的琥珀色提示；仅「我的团队」接口返回 */
+    private long pendingInviteCount;
     private List<TeamMemberViewVO> members;
 }

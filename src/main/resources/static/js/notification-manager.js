@@ -71,6 +71,15 @@ class NotificationManager {
             // 使用 notification.type 作为跳转路由依据（relatedType 通常为空）
             const safeType = this.escapeHtml(notification.type || 'SYSTEM');
             const safeRelatedId = Number(notification.relatedId) || 0;
+            // 只有「还没处理的邀请」才带按钮：invitationId 由服务端反查 team_application 得到，
+            // 已同意/已拒绝/邀请作废时后端不再下发该字段，卡片自动退回普通通知
+            const invitationId = Number(notification.invitationId) || 0;
+            const inviteActions = (safeType === 'TEAM_INVITE' && invitationId > 0)
+                ? `<div class="notification-item__actions">
+                        <button type="button" class="notification-invite-btn notification-invite-btn--primary" data-invite-action="accept" data-invitation-id="${invitationId}">同意加入</button>
+                        <button type="button" class="notification-invite-btn" data-invite-action="reject" data-invitation-id="${invitationId}">拒绝</button>
+                    </div>`
+                : '';
 
             html += `
                 <div class="notification-item ${unreadClass}" data-id="${notification.id}" data-notification-type="${safeType}" data-related-id="${safeRelatedId}" onclick="handleNotificationClick(${notification.id}, '${safeType}', ${safeRelatedId})">
@@ -83,11 +92,77 @@ class NotificationManager {
                         <div class="notification-item__time">${this.escapeHtml(notification.timeAgo)}</div>
                     </div>
                     ${!notification.isRead ? '<div class="notification-item__dot"></div>' : ''}
+                    ${inviteActions}
                 </div>
             `;
         });
 
         listContainer.innerHTML = html;
+        this.bindInviteActions(listContainer);
+    }
+
+    /**
+     * 邀请卡片上的「同意加入 / 拒绝」。
+     * 卡片本身挂着整块跳转的 onclick，所以按钮必须自己吃掉冒泡，否则点同意会同时跳走。
+     */
+    bindInviteActions(listContainer) {
+        listContainer.querySelectorAll('[data-invite-action]').forEach(button => {
+            button.addEventListener('click', event => {
+                event.stopPropagation();
+                event.preventDefault();
+                if (button.disabled) return;
+                this.respondInvitation(
+                    button.getAttribute('data-invitation-id'),
+                    button.getAttribute('data-invite-action'),
+                    button
+                );
+            });
+        });
+    }
+
+    respondInvitation(invitationId, action, button) {
+        const card = button.closest('.notification-item');
+        const buttons = card ? card.querySelectorAll('[data-invite-action]') : [button];
+        buttons.forEach(b => { b.disabled = true; });
+        button.textContent = '处理中…';
+
+        const teamTitle = card ? (card.querySelector('.notification-item__text') || {}).textContent || '' : '';
+        this.request(`/api/team/invitation/${invitationId}/${action}`, {
+            method: 'PUT',
+            credentials: 'include'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.code !== 200) {
+                throw new Error(data.message || '处理失败，请稍后重试');
+            }
+            const label = action === 'accept' ? '已加入团队' : '已拒绝邀请';
+            if (typeof showToast === 'function') {
+                showToast(label, 'success');
+            } else if (typeof notify === 'function') {
+                notify(label, 'success');
+            }
+            // 邀请已处理，卡片撤掉；未读数由服务端推送更新
+            if (card) card.remove();
+            const list = document.getElementById('notificationList');
+            if (list && !list.querySelector('.notification-item')) {
+                list.innerHTML = '<div class="notification-dropdown__empty">暂无通知</div>';
+            }
+            if (typeof window.onInvitationHandled === 'function') {
+                window.onInvitationHandled(invitationId, action, teamTitle);
+            }
+        })
+        .catch(error => {
+            buttons.forEach(b => { b.disabled = false; });
+            if (button.getAttribute('data-invite-action') === 'accept') button.textContent = '同意加入';
+            else button.textContent = '拒绝';
+            const message = error.message || '处理失败，请稍后重试';
+            if (typeof showToast === 'function') {
+                showToast(message, 'error');
+            } else if (typeof notify === 'function') {
+                notify(message, 'warning');
+            }
+        });
     }
 
     getNotificationIcon(type) {
@@ -96,6 +171,9 @@ class NotificationManager {
             'TEAM_APPLY': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 14s-3 1.5-5 1.5-5-1.5-5-1.5"/><circle cx="9" cy="9" r="5"/><path d="M16 5l3 4 5-7"/></svg>',
             'TEAM_APPROVED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 3 18 5 22 0"/></svg>',
             'TEAM_REJECTED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6L6 18M6 6l12 12"/><circle cx="9" cy="7" r="4"/><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/></svg>',
+            'TEAM_MEMBER_REMOVED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M17 8l4 4M21 8l-4 4"/></svg>',
+            'TEAM_OWNER_TRANSFERRED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 21h8"/><path d="M12 13v8"/><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4v1a4 4 0 0 0 4 4"/><path d="M17 6h3v1a4 4 0 0 1-4 4"/></svg>',
+            'TEAM_DISSOLVED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M9 12h6"/></svg>',
             'TASK_ASSIGNED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
             'TASK_COMPLETED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
             'TASK_SUBMITTED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>',
@@ -244,6 +322,9 @@ function handleNotificationClick(id, notificationType, relatedId) {
         case 'TEAM_INVITE':
         case 'TEAM_APPROVED':
         case 'TEAM_REJECTED':
+        case 'TEAM_MEMBER_REMOVED':
+        case 'TEAM_OWNER_TRANSFERRED':
+        case 'TEAM_DISSOLVED':
             // 团队相关：跳转到团队详情页
             route = '/team-detail.html?id=' + relatedId;
             break;

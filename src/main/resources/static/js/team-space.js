@@ -313,6 +313,7 @@
             var data = await api('/team-space/' + teamId + '/members', { silent: true });
             members = Array.isArray(data) ? data : [];
             renderMembersList();
+            renderMembersActions();
             fillAssigneeSelect();
             if (teamInfo) renderOverview(teamInfo);
             updateCreateTaskBtn();
@@ -342,6 +343,60 @@
         });
     }
 
+    /**
+     * 成员面板右上角的操作。
+     * 「邀请成员」给能管理成员的人；「转让 / 解散」只给创建者——这两条是团队所有权的
+     * 转移与终结，不随成员角色放宽。
+     */
+    function renderMembersActions() {
+        var box = byId('membersActions');
+        if (!box) return;
+        var buttons = [];
+        if (canManageMembers()) {
+            buttons.push('<button type="button" class="btn btn-sm btn-primary" id="membersInviteBtn">邀请成员</button>');
+        }
+        if (isTeamOwner()) {
+            buttons.push('<button type="button" class="btn btn-sm btn-outline-secondary" id="membersTransferBtn">转让创建者</button>');
+            buttons.push('<button type="button" class="btn btn-sm btn-outline-secondary" id="membersDissolveBtn">解散团队</button>');
+        }
+        box.innerHTML = buttons.join('');
+        var inviteBtn = byId('membersInviteBtn');
+        if (inviteBtn) inviteBtn.addEventListener('click', openInviteModal);
+        var transferBtn = byId('membersTransferBtn');
+        if (transferBtn) transferBtn.addEventListener('click', transferOwner);
+        var dissolveBtn = byId('membersDissolveBtn');
+        if (dissolveBtn) dissolveBtn.addEventListener('click', dissolveTeam);
+    }
+
+    /** 当前用户在该团队里的角色信息，从成员列表里回捞，用于决定渲染哪些操作按钮。 */
+    function currentMembership() {
+        var me = Number(document.body.getAttribute('data-user-id')) || 0;
+        for (var i = 0; i < members.length; i++) {
+            if (Number(members[i].userId) === me) return members[i];
+        }
+        return null;
+    }
+
+    function isTeamOwner() {
+        var mine = currentMembership();
+        return !!(mine && mine.isOwner);
+    }
+
+    /** 能邀请/审批：创建者或在队导师；与后端 canManageMembers 同一套判定 */
+    function canManageMembers() {
+        var mine = currentMembership();
+        if (!mine) return false;
+        return !!mine.isOwner || mine.memberRole === 'MENTOR';
+    }
+
+    function canRemoveMember(member) {
+        var me = Number(document.body.getAttribute('data-user-id')) || 0;
+        if (Number(member.userId) === me) return false;
+        if (isTeamOwner()) return true;
+        var mine = currentMembership();
+        return !!(mine && mine.memberRole === 'MENTOR') && member.memberRole !== 'MENTOR';
+    }
+
     function renderMembersList() {
         var area = byId('membersListArea');
         if (!area) return;
@@ -349,6 +404,7 @@
             area.innerHTML = renderEmptyState('暂无成员');
             return;
         }
+        var me = Number(document.body.getAttribute('data-user-id')) || 0;
 
         area.innerHTML = members.map(function (member) {
             var name = member.username || member.realName || '成员';
@@ -359,7 +415,12 @@
                 .filter(Boolean)
                 .map(function (value) { return escapeHtml(String(value)); })
                 .join(' / ');
-            var role = member.isLeader || member.role === 'LEADER' ? '队长' : (member.role || '队员');
+            var isOwnerRow = !!member.isOwner || member.isLeader === true;
+            var pending = member.status === 'PENDING';
+            var roleLabel = isOwnerRow ? '队长' : (pending ? '待确认' : (member.memberRole === 'MENTOR' ? '导师' : '学生'));
+            var roleChip = '<span class="member-role-chip' +
+                (isOwnerRow || member.memberRole === 'MENTOR' ? ' member-role-chip--mentor' : '') +
+                (pending ? ' member-role-chip--pending' : '') + '">' + escapeHtml(roleLabel) + '</span>';
             var skills = Array.isArray(member.skills) ? member.skills.slice(0, 4) : [];
             var skillHtml = skills.length ? '<div class="member-card-skills">' + skills.map(function (skill) {
                 return '<span class="skill-tag">' + escapeHtml(skill) + '</span>';
@@ -369,17 +430,220 @@
                 ? '<img src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(name) + '" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"><div class="avatar-placeholder" style="display:none;">' + initials + '</div>'
                 : '<div class="avatar-placeholder">' + initials + '</div>';
 
-            return '<button type="button" class="member-card" onclick="window.location.href=\'/user-profile.html?id=' + escapeHtml(userId) + '\'">' +
+            var actions = '';
+            if (!pending && canRemoveMember(member)) {
+                actions = '<button type="button" class="member-card-action" data-remove-member="' + escapeHtml(userId) +
+                    '" data-member-name="' + escapeHtml(name) + '">移除</button>';
+            } else if (!pending && Number(userId) === me && !isOwnerRow) {
+                actions = '<button type="button" class="member-card-action" data-leave-team="1">退出</button>';
+            }
+
+            return '<div class="member-card' + (pending ? ' member-card--pending' : '') + '" data-user-id="' + escapeHtml(userId) + '">' +
                 '<span class="member-card-avatar">' + avatarHtml + '</span>' +
                 '<span class="member-card-info">' +
-                    '<span class="member-card-name">' + escapeHtml(name) + '</span>' +
-                    '<span class="member-card-role">' + escapeHtml(role) + '</span>' +
+                    '<span class="member-card-name">' + escapeHtml(name) + roleChip + '</span>' +
                     (meta ? '<span class="member-card-meta">' + meta + '</span>' : '') +
                     joinTime +
                     skillHtml +
                 '</span>' +
-            '</button>';
+                '<span class="member-card-actions">' +
+                    '<a class="member-card-action" href="/user-profile.html?id=' + escapeHtml(userId) + '">主页</a>' +
+                    actions +
+                '</span>' +
+            '</div>';
         }).join('');
+
+        area.querySelectorAll('[data-remove-member]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var userId = button.getAttribute('data-remove-member');
+                var name = button.getAttribute('data-member-name');
+                window.teamSpace.confirmRemoveMember(userId, name);
+            });
+        });
+        var leaveBtn = area.querySelector('[data-leave-team]');
+        if (leaveBtn) {
+            leaveBtn.addEventListener('click', function () {
+                window.teamSpace.confirmLeaveTeam();
+            });
+        }
+    }
+
+    /**
+     * 通用二次确认弹窗。
+     * 团队解散这类不可逆操作由调用方通过 requireText 要求手输团队名，避免连点误触。
+     */
+    function confirmDialog(options) {
+        var opts = options || {};
+        return new Promise(function (resolve) {
+            var wrapper = document.createElement('div');
+            wrapper.className = 'modal fade';
+            wrapper.tabIndex = -1;
+            wrapper.innerHTML =
+                '<div class="modal-dialog modal-dialog-centered">' +
+                    '<div class="modal-content ts-confirm">' +
+                        '<div class="modal-header ts-confirm__header">' +
+                            '<h5 class="ts-confirm__title"></h5>' +
+                        '</div>' +
+                        '<div class="ts-confirm__body">' +
+                            '<p class="ts-confirm__text"></p>' +
+                            (opts.requireText
+                                ? '<input type="text" class="ts-confirm__input" placeholder="' +
+                                  escapeHtml(opts.requireText) + '">'
+                                : '') +
+                            (opts.selectOptions
+                                ? '<select class="ts-confirm__select"></select>'
+                                : '') +
+                        '</div>' +
+                        '<div class="modal-footer ts-confirm__footer">' +
+                            '<button type="button" class="btn btn-secondary" data-ts-cancel>取消</button>' +
+                            '<button type="button" class="btn btn-primary" data-ts-ok disabled>确认</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(wrapper);
+
+            wrapper.querySelector('.ts-confirm__title').textContent = opts.title || '请确认';
+            wrapper.querySelector('.ts-confirm__text').textContent = opts.text || '';
+
+            var okBtn = wrapper.querySelector('[data-ts-ok]');
+            var input = wrapper.querySelector('.ts-confirm__input');
+            var select = wrapper.querySelector('.ts-confirm__select');
+            if (select && Array.isArray(opts.selectOptions)) {
+                opts.selectOptions.forEach(function (item) {
+                    var option = document.createElement('option');
+                    option.value = item.value;
+                    option.textContent = item.label;
+                    select.appendChild(option);
+                });
+                okBtn.disabled = false;
+            }
+            if (input) {
+                input.addEventListener('input', function () {
+                    okBtn.disabled = input.value.trim() !== (opts.requireText || '');
+                });
+            }
+
+            var modal = window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(wrapper) : null;
+            var settled = false;
+            function finish(result) {
+                if (settled) return;
+                settled = true;
+                resolve(result);
+            }
+            okBtn.addEventListener('click', function () { finish(true); if (modal) modal.hide(); });
+            wrapper.querySelector('[data-ts-cancel]').addEventListener('click', function () { finish(false); if (modal) modal.hide(); });
+            wrapper.addEventListener('hidden.bs.modal', function () {
+                finish(false);
+                wrapper.remove();
+            });
+            if (modal) modal.show();
+            else { wrapper.style.display = 'block'; wrapper.classList.add('show'); }
+        });
+    }
+
+    async function removeMember(userId, name) {
+        var agreed = await confirmDialog({
+            title: '移除成员',
+            text: '确定把「' + name + '」移出团队吗？他名下未完成的任务会被清空指派。',
+            confirmText: '移除'
+        });
+        if (!agreed) return;
+        try {
+            await api('/team/' + teamId + '/members/' + encodeURIComponent(userId), { method: 'DELETE' });
+            notify('已移除该成员', 'success');
+            await loadMembers();
+            await loadOverview();
+        } catch (error) {
+            notify(error.message || '移除失败', 'error');
+        }
+    }
+
+    async function leaveTeam() {
+        var me = Number(document.body.getAttribute('data-user-id')) || 0;
+        var agreed = await confirmDialog({
+            title: '退出团队',
+            text: '退出后将无法再进入该团队的协作空间，确定退出吗？',
+            confirmText: '退出'
+        });
+        if (!agreed) return;
+        try {
+            await api('/team/' + teamId + '/members/' + me, { method: 'DELETE' });
+            notify('已退出团队', 'success');
+            window.setTimeout(function () { window.location.href = '/profile.html#teams'; }, 800);
+        } catch (error) {
+            notify(error.message || '退出失败', 'error');
+        }
+    }
+
+    async function transferOwner() {
+        var candidates = members.filter(function (member) {
+            return !member.isOwner && member.status !== 'PENDING';
+        });
+        if (!candidates.length) {
+            notify('还没有其他成员可以接手，先邀请成员吧', 'warning');
+            return;
+        }
+        var agreed = await confirmDialog({
+            title: '转让创建者',
+            text: '转让后你将变为普通成员，无法再删除或解散该团队。',
+            confirmText: '确认转让',
+            selectOptions: candidates.map(function (member) {
+                return {
+                    value: member.userId,
+                    label: (member.username || '成员') + '（' + (member.memberRole === 'MENTOR' ? '导师' : '学生') + '）'
+                };
+            })
+        });
+        if (!agreed) return;
+        var select = document.querySelector('.ts-confirm__select');
+        var newOwnerId = select ? select.value : '';
+        if (!newOwnerId) return;
+        try {
+            await api('/team/' + teamId + '/transfer', {
+                method: 'POST',
+                body: JSON.stringify({ newOwnerId: Number(newOwnerId) })
+            });
+            notify('已转让创建者', 'success');
+            await loadMembers();
+            await loadOverview();
+        } catch (error) {
+            notify(error.message || '转让失败', 'error');
+        }
+    }
+
+    async function dissolveTeam() {
+        var title = teamTitle();
+        var agreed = await confirmDialog({
+            title: '解散团队',
+            text: '解散不可撤销：未完成的任务会被取消，成员将收到通知。群聊与协作记录会保留。请输入团队名称确认。',
+            confirmText: title,
+            requireText: title
+        });
+        if (!agreed) return;
+        try {
+            await api('/team/' + teamId + '/dissolve', { method: 'POST' });
+            notify('团队已解散', 'success');
+            window.setTimeout(function () { window.location.href = '/profile.html#teams'; }, 800);
+        } catch (error) {
+            notify(error.message || '解散失败', 'error');
+        }
+    }
+
+    /** 团队名：/api/team-space/{id}/info 用的字段是 teamName，别按 title 取 */
+    function teamTitle() {
+        if (!teamInfo) return '';
+        return teamInfo.teamName || teamInfo.title || teamInfo.name || '';
+    }
+
+    function openInviteModal() {
+        if (!window.TeamInvite) {
+            notify('邀请窗口未就绪，请刷新页面', 'error');
+            return;
+        }
+        window.TeamInvite.open(teamId, teamTitle(), function () {
+            loadMembers();
+            loadOverview();
+        });
     }
 
     async function loadTasks() {
@@ -978,11 +1242,14 @@
         }
     }
 
+    var CHAT_ATTACHMENT_ACCEPT = '.jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.zip,.rar,.7z,.exe,.msi,.apk,.ipa';
+
     function setupUploadButton(button, imageOnly) {
         var input = document.createElement('input');
         input.type = 'file';
         input.style.display = 'none';
         if (imageOnly) input.accept = 'image/*';
+        else input.accept = CHAT_ATTACHMENT_ACCEPT;
         document.body.appendChild(input);
         button.addEventListener('click', function () {
             input.click();
@@ -1101,12 +1368,13 @@
     function renderAiCompetitionSelect() {
         var select = byId('aiCompetitionSelect');
         if (!select) return;
-        select.innerHTML = aiCompetitions.length
-            ? aiCompetitions.map(function (c) {
-                var name = c.name || c.title || ('竞赛 ' + (c.id || ''));
-                return '<option value="' + Number(c.id) + '">' + escapeHtml(name) + '</option>';
-            }).join('')
-            : '<option value="">暂无可用竞赛</option>';
+        // 首项为「通用提问」：不绑定竞赛，靠联网搜索 + 模型知识作答
+        var options = '<option value="">通用提问（不绑定竞赛）</option>';
+        options += aiCompetitions.map(function (c) {
+            var name = c.name || c.title || ('竞赛 ' + (c.id || ''));
+            return '<option value="' + Number(c.id) + '">' + escapeHtml(name) + '</option>';
+        }).join('');
+        select.innerHTML = options;
     }
 
     function renderAiTaskPicker() {
@@ -1136,8 +1404,22 @@
         }).join('');
     }
 
+    // 正在排队滚动的容器。每来一个 token 就读一次 scrollHeight 会强制同步回流，
+    // 是流式输出卡顿的主要来源；同一帧内只滚一次，读到的是当帧最终高度。
+    var pendingScrollTargets = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
+
     function scrollAiQaToBottom(container) {
-        if (container) container.scrollTop = container.scrollHeight;
+        if (!container) return;
+        if (!pendingScrollTargets) {
+            container.scrollTop = container.scrollHeight;
+            return;
+        }
+        if (pendingScrollTargets.has(container)) return;
+        pendingScrollTargets.add(container);
+        window.requestAnimationFrame(function () {
+            pendingScrollTargets.delete(container);
+            container.scrollTop = container.scrollHeight;
+        });
     }
 
     // 轻量安全的 Markdown 渲染，先 HTML 转义（common.js 的 escapeHtml）防 XSS，再解析常见语法。
@@ -1317,41 +1599,86 @@
      * 流式输出气泡：把 AI 的完整回答按块逐个追加到页面，
      * 配合淡入上移动效与末尾光标，模拟"正在生成中"的交互体验。
      */
-    function streamAiAnswerInto(bubble, html, container) {
-        bubble.innerHTML = '';
-        var wrapper = document.createElement('div');
-        wrapper.innerHTML = html;
-        var blocks = [];
-        wrapper.childNodes.forEach(function (node) {
-            if (node.nodeType === 1) { // 元素节点
-                blocks.push(node);
-            } else if (node.nodeType === 3 && node.textContent.trim()) { // 有内容的文本节点
-                blocks.push(node);
-            }
-        });
-        var caret = document.createElement('span');
-        caret.className = 'ai-typing-caret';
-        caret.setAttribute('aria-hidden', 'true');
-        bubble.appendChild(caret);
-        var index = 0;
-        var timer = null;
+    var AI_THINK_SPARK =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/></svg>';
 
-        function nextBlock() {
-            if (index >= blocks.length) {
-                caret.remove();
-                scrollAiQaToBottom(container);
-                return;
-            }
-            var block = blocks[index];
-            bubble.insertBefore(block, caret);
-            if (block.nodeType === 1) { // 仅元素节点需要动画类
-                block.classList.add('ai-flow-block');
-            }
-            index++;
-            scrollAiQaToBottom(container);
-            timer = window.setTimeout(nextBlock, 48);
-        }
-        nextBlock();
+    /**
+     * 「已思考」面板外壳。返回各部件供调用方填充：
+     * 非流式一次性填满，流式则先插壳再把思考增量追进 reason。
+     */
+    function createThinkPanel() {
+        var panel = document.createElement('div');
+        panel.className = 'ai-qa-think';
+
+        var head = document.createElement('button');
+        head.type = 'button';
+        head.className = 'ai-qa-think__head';
+        head.setAttribute('aria-expanded', 'false');
+        head.innerHTML = '<span class="ai-qa-think__spark">' + AI_THINK_SPARK + '</span>' +
+            '<span class="ai-qa-think__label"></span>' +
+            '<svg class="ai-qa-think__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+
+        var body = document.createElement('div');
+        body.className = 'ai-qa-think__body';
+        body.hidden = true;
+
+        // 模型自述按纯文本展示，不解析 Markdown（避免其中的标记被当成排版指令）
+        var reason = document.createElement('p');
+        reason.className = 'ai-qa-think__reason';
+        body.appendChild(reason);
+
+        var shell = {
+            panel: panel,
+            head: head,
+            label: head.querySelector('.ai-qa-think__label'),
+            body: body,
+            reason: reason
+        };
+        head.addEventListener('click', function () {
+            setThinkOpen(shell, body.hidden);
+        });
+
+        panel.appendChild(head);
+        panel.appendChild(body);
+        return shell;
+    }
+
+    function setThinkOpen(shell, open) {
+        shell.body.hidden = !open;
+        shell.head.setAttribute('aria-expanded', open ? 'true' : 'false');
+        shell.panel.classList.toggle('is-open', open);
+    }
+
+    /** 往面板正文末尾追加检索来源列表（流式与非流式共用）。 */
+    function appendThinkSources(body, sources) {
+        var links = [];
+        (Array.isArray(sources) ? sources : []).forEach(function (item) {
+            var url = String((item && item.url) || '').trim();
+            // 只放行 http(s)，挡掉 javascript: 之类的伪协议
+            if (!/^https?:\/\//i.test(url)) return;
+            links.push({ url: url, title: String((item && item.title) || url) });
+        });
+        if (!links.length) return;
+
+        var meta = document.createElement('div');
+        meta.className = 'ai-qa-think__meta';
+        meta.textContent = '搜索到 ' + links.length + ' 个网页';
+        body.appendChild(meta);
+
+        var ul = document.createElement('ul');
+        ul.className = 'ai-qa-think__sources';
+        links.forEach(function (link) {
+            var li = document.createElement('li');
+            var a = document.createElement('a');
+            a.href = link.url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.textContent = link.title;
+            li.appendChild(a);
+            ul.appendChild(li);
+        });
+        body.appendChild(ul);
     }
 
     function appendAiQaMessage(container, text, role) {
@@ -1378,10 +1705,6 @@
             return;
         }
         var competitionId = select ? select.value : '';
-        if (!competitionId) {
-            notify('当前没有可用竞赛，暂无法答疑', 'warning');
-            return;
-        }
         aiQaBusy = true;
         var sendBtn = byId('aiQaSendBtn');
         if (sendBtn) sendBtn.disabled = true;
@@ -1390,28 +1713,301 @@
         if (window.teamSpace && typeof window.teamSpace.autoResizeChatInput === 'function') {
             window.teamSpace.autoResizeChatInput(input);
         }
-        var answerBubble = appendAiQaMessage(messages, 'AI 思考中…', 'assistant');
+        var answerBubble = appendAiQaMessage(messages, '', 'assistant');
         answerBubble.classList.add('ai-qa-bubble--loading');
         answerBubble.innerHTML =
             '<span class="ai-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>' +
-            '<span>正在联网搜索并思考中…</span>';
+            '<span class="ai-qa-stage">正在理解你的问题</span>';
+        var stopStages = startAiQaStages(answerBubble.querySelector('.ai-qa-stage'));
+        var renderer = createAiQaStreamRenderer(answerBubble, messages);
         try {
-            var data = await api('/ai/competition-qa', {
-                method: 'POST',
-                body: JSON.stringify({ competitionId: Number(competitionId), question: question }),
-                timeoutMs: 90000
+            var payload = { question: question };
+            // 选了竞赛才带上，留空走通用提问（后端会按问题本身联网检索）
+            if (competitionId) payload.competitionId = Number(competitionId);
+            var failure = null;
+            await readAiQaStream(payload, function (name, data) {
+                if (name === 'reasoning') {
+                    renderer.reasoning(asStreamText(data));
+                } else if (name === 'answer') {
+                    renderer.answer(asStreamText(data));
+                } else if (name === 'done') {
+                    renderer.finish(data);
+                } else if (name === 'error') {
+                    failure = new Error((data && data.message) || '回答失败，请稍后重试');
+                }
             });
-            answerBubble.classList.remove('ai-qa-bubble--loading');
-            streamAiAnswerInto(answerBubble, formatAiAnswer(data && data.answer), messages);
+            if (failure) throw failure;
+            renderer.finish(null);
         } catch (error) {
-            answerBubble.classList.remove('ai-qa-bubble--loading');
-            answerBubble.classList.add('ai-qa-bubble--error');
-            answerBubble.innerHTML = formatAiAnswer(error.message || '回答失败，请稍后重试');
+            renderer.fail(error.message || '回答失败，请稍后重试');
             scrollAiQaToBottom(messages);
         } finally {
+            stopStages();
             aiQaBusy = false;
             if (sendBtn) sendBtn.disabled = false;
         }
+    }
+
+    /**
+     * 流式答疑渲染器：思考过程逐字追加，正文按累计文本重新渲染 Markdown。
+     * 真流式下不能再等全文到齐再假打字——那时用户等待期间气泡是空的。
+     */
+    function createAiQaStreamRenderer(bubble, messages) {
+        var shell = null;       // 「已思考」面板
+        var answerEl = null;    // 正文容器
+        var caret = null;
+        var raw = '';
+        var lastRendered = null;
+        var renderPending = false;
+        var lastRenderAt = 0;
+        var finished = false;
+        var startedAt = Date.now();
+
+        /**
+         * 正文重渲染间隔随篇幅放宽。
+         * 短回答每个 delta 都按帧画（最跟手）；长回答全量重解析 Markdown 变贵，
+         * 放宽到几十毫秒一次——肉眼看不出台阶，主线程也不会被压满。
+         */
+        function renderIntervalFor(textLength) {
+            if (textLength > 2500) return 120;
+            if (textLength > 800) return 60;
+            return 0;
+        }
+
+        function clearLoading() {
+            if (!bubble.classList.contains('ai-qa-bubble--loading')) return;
+            bubble.classList.remove('ai-qa-bubble--loading');
+            // loading 动效与阶段文案是 innerHTML 塞进去的，remove class 不会清掉；
+            // 不清就会在答案气泡顶部永久残留一行「内容较多，仍在生成中」
+            bubble.innerHTML = '';
+        }
+
+        function ensureShell() {
+            if (shell) return shell;
+            clearLoading();
+            shell = createThinkPanel();
+            // 面板恒在正文之上；正文可能已经建好了
+            bubble.insertBefore(shell.panel, answerEl);
+            return shell;
+        }
+
+        function ensureAnswer() {
+            if (answerEl) return answerEl;
+            clearLoading();
+            answerEl = document.createElement('div');
+            answerEl.className = 'ai-qa-answer';
+            bubble.appendChild(answerEl);
+            caret = document.createElement('span');
+            caret.className = 'ai-typing-caret';
+            caret.setAttribute('aria-hidden', 'true');
+            bubble.appendChild(caret);
+            return answerEl;
+        }
+
+        function renderAnswer() {
+            if (!answerEl) return;
+            // 收尾、补画、排队的帧可能撞在一起；文本没变就不必重排整段 Markdown
+            if (raw === lastRendered) return;
+            lastRendered = raw;
+            lastRenderAt = Date.now();
+            answerEl.innerHTML = formatAiAnswer(stripAiPromptTags(raw));
+            scrollAiQaToBottom(messages);
+        }
+
+        // 一个 token 一次 innerHTML 重排会把主线程压满，这里合并到「帧」上；
+        // 帧内多次请求只保留最后一次。收尾时由 finish 直接补画，不依赖这个回调。
+        function scheduleRender() {
+            if (renderPending) return;
+            renderPending = true;
+            var wait = Math.max(0, renderIntervalFor(raw.length) - (Date.now() - lastRenderAt));
+            window.setTimeout(function () {
+                // 先解锁再排帧：标签页被节流时 rAF 可能迟迟不触发，
+                // 若把解锁放在 rAF 里，后续所有增量都会被这一个卡住的帧挡掉
+                renderPending = false;
+                window.requestAnimationFrame(renderAnswer);
+            }, wait);
+        }
+
+        return {
+            reasoning: function (delta) {
+                if (finished || !delta) return;
+                var panel = ensureShell();
+                if (!panel.labelPlaced) {
+                    // 标题只需写一次；每个 token 都写 DOM 是白白的强制重排
+                    panel.label.textContent = '正在思考…';
+                    panel.labelPlaced = true;
+                    setThinkOpen(panel, true);
+                }
+                // appendChild 是 O(1)；textContent += 每次都要重建整段文本节点
+                panel.reason.appendChild(document.createTextNode(delta));
+                scrollAiQaToBottom(messages);
+            },
+
+            answer: function (delta) {
+                if (finished || !delta) return;
+                if (shell && shell.panel.classList.contains('is-open')) {
+                    // 开始作答说明思考结束了，收起过程让答案出现在视线内
+                    shell.label.textContent = '已思考';
+                    setThinkOpen(shell, false);
+                }
+                ensureAnswer();
+                raw += delta;
+                scheduleRender();
+            },
+
+            finish: function (data) {
+                if (finished) return;
+                finished = true;
+                clearLoading();
+                if (data) {
+                    if (data.reasoning && !shell) {
+                        ensureShell().reason.textContent = String(data.reasoning);
+                    }
+                    if (shell) {
+                        appendThinkSources(shell.body, data.sources);
+                    }
+                }
+                if (shell) {
+                    // 后端没给耗时（流被截断）时用本地计时兜底，免得标题停在「已思考」
+                    var elapsed = data && Number(data.elapsedMs) > 0 ? Number(data.elapsedMs) : Date.now() - startedAt;
+                    shell.label.textContent = '已思考（用时 ' + Math.max(1, Math.round(elapsed / 1000)) + ' 秒）';
+                    setThinkOpen(shell, false);
+                }
+                if (caret) {
+                    caret.remove();
+                    caret = null;
+                }
+                if (answerEl) {
+                    renderAnswer();
+                } else if (!shell) {
+                    // 既无思考也无正文：留一句兜底，避免出现空气泡
+                    answerEl = ensureAnswer();
+                    raw = '（本次没有返回内容，请换个问法再试）';
+                    renderAnswer();
+                }
+                scrollAiQaToBottom(messages);
+            },
+
+            fail: function (message) {
+                finished = true;
+                if (caret) {
+                    caret.remove();
+                    caret = null;
+                }
+                bubble.classList.remove('ai-qa-bubble--loading');
+                if (shell || answerEl) {
+                    // 已经吐出过内容（思考或部分答案），不要把已有内容抹掉，只补一条错误提示
+                    // 渲染节流可能还剩最后一批增量没落盘，先补画一次再挂提示
+                    renderAnswer();
+                    if (shell) {
+                        shell.label.textContent = '已思考（回答被中断）';
+                    }
+                    var notice = document.createElement('div');
+                    notice.className = 'ai-qa-stream-error';
+                    notice.textContent = message;
+                    bubble.appendChild(notice);
+                    scrollAiQaToBottom(messages);
+                    return;
+                }
+                bubble.classList.add('ai-qa-bubble--error');
+                bubble.innerHTML = formatAiAnswer(message);
+            }
+        };
+    }
+
+    /**
+     * 以 SSE 读取答疑流，逐个事件回调。校验失败等仍走 JSON 通道，这里统一转成异常抛出。
+     */
+    async function readAiQaStream(payload, onEvent) {
+        var response = await apiFetch('/api/ai/competition-qa/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            // 答疑是分钟级的：检索本身可能就要几十秒，再叠上模型生成。
+            // 这里给得比服务端 SSE 超时（180s）宽，让服务端的超时先说话。
+            timeoutMs: 240000
+        });
+        var contentType = response.headers.get('content-type') || '';
+        if (contentType.indexOf('text/event-stream') < 0) {
+            var text = await response.text();
+            var body = null;
+            try { body = JSON.parse(text); } catch (e) { body = null; }
+            throw new Error((body && body.message) || '回答失败，请稍后重试');
+        }
+        var reader = response.body.getReader();
+        var decoder = new TextDecoder();
+        var buffer = '';
+        while (true) {
+            var chunk = await reader.read();
+            if (chunk.done) break;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            var index;
+            while ((index = buffer.indexOf('\n\n')) >= 0) {
+                var frame = buffer.slice(0, index);
+                buffer = buffer.slice(index + 2);
+                var parsed = parseSseFrame(frame);
+                if (parsed) onEvent(parsed.name, parsed.data);
+            }
+        }
+    }
+
+    /** 增量载荷必须是字符串；协议异常时宁可丢这一块，也不要往气泡里写 [object Object]。 */
+    function asStreamText(value) {
+        return typeof value === 'string' ? value : '';
+    }
+
+    /** 解析一个 SSE 帧（事件名 + 可能多行的 data；data 为本项目 JSON 序列化的载荷）。 */
+    function parseSseFrame(frame) {
+        var name = 'message';
+        var dataLines = [];
+        frame.split('\n').forEach(function (line) {
+            if (line.indexOf('event:') === 0) {
+                name = line.slice(6).trim();
+            } else if (line.indexOf('data:') === 0) {
+                dataLines.push(line.slice(5).replace(/^ /, ''));
+            }
+        });
+        if (!dataLines.length) return null;
+        var raw = dataLines.join('\n');
+        var data = raw;
+        try { data = JSON.parse(raw); } catch (e) { /* 非 JSON 就按原文透传 */ }
+        return { name: name, data: data };
+    }
+
+    /**
+     * 剥离模型可能复读的 prompt 专用标签。
+     * 流式下只能对「累计文本」整体清洗——标签可能跨分片，逐块清洗会漏。
+     */
+    function stripAiPromptTags(text) {
+        if (!text) return '';
+        return text
+            .replace(/<\/?competition_info\s*>/gi, ' ')
+            .replace(/<\/?web_search_results\s*>/gi, ' ')
+            .replace(/<search(_results)?\s*>[\s\S]*?<\/search(_results)?\s*>/gi, ' ')
+            .replace(/<\/?search(_results)?\s*>/gi, ' ')
+            .replace(/<\/?question\s*>/gi, ' ');
+    }
+
+    // 等待期约 20~60 秒，一直停在同一句话会让人以为卡死。
+    // 这里按经验时间点推进文案（各句长度接近，避免气泡宽度来回跳）。
+    var AI_QA_STAGES = [
+        [2500, '正在联网检索资料'],
+        [8000, '正在阅读资料并整理答案'],
+        [22000, '内容较多，仍在生成中'],
+        [45000, '快好了，请再稍等片刻'],
+        // 检索慢的时候整体能到一分半以上，最后一句停太久又会被当成卡死
+        [70000, '网络有点慢，仍在等待模型返回']
+    ];
+
+    /** 返回一个停止函数，务必在请求结束时调用，避免定时器写到已被替换的节点上。 */
+    function startAiQaStages(label) {
+        if (!label) return function () {};
+        var timers = AI_QA_STAGES.map(function (stage) {
+            return setTimeout(function () { label.textContent = stage[1]; }, stage[0]);
+        });
+        return function () {
+            timers.forEach(function (id) { clearTimeout(id); });
+        };
     }
 
     function showAiBreakdownPreview() {
@@ -1481,6 +2077,11 @@
     }
 
     window.teamSpace = {
+        openInviteModal: openInviteModal,
+        transferOwner: transferOwner,
+        dissolveTeam: dissolveTeam,
+        confirmRemoveMember: removeMember,
+        confirmLeaveTeam: leaveTeam,
         handleColDragOver: function (event) {
             if (isMobileLayout()) return;
             event.preventDefault();

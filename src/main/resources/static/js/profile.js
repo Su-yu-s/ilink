@@ -103,6 +103,7 @@ function teamDemandStatusLabel(status) {
     if (status === 'OPEN') return '招募中';
     if (status === 'CLOSED') return '已结束';
     if (status === 'TEAMING') return '已组队';
+    if (status === 'DISSOLVED') return '已解散';
     return status || '';
 }
 
@@ -891,67 +892,56 @@ function renderOverview(user, honorsList, activity) {
     renderTeamActivityLists(act);
 }
 
-/** 他人公开主页：仅概览 + 成果摘要，无邮箱 / 活动 Tab / 编辑入口 */
+/** 他人公开主页：概览卡片 + 成果摘要，无邮箱 / 活动 Tab / 编辑入口 */
 function renderPublicOverview(vo, honorsList) {
     const userInfoContainer = document.getElementById('userInfo');
     if (!userInfoContainer) return;
 
-    const honorCount = honorsList ? honorsList.length : 0;
-    const honorPreview =
-        honorCount > 0
-            ? `<div class="profile-honors-snippet profile-honors-snippet--in-card">
-                    <h3 class="profile-snippet-title">成果与荣誉</h3>
-                    <ul class="list-unstyled mb-0 profile-honors-preview-list">
-                        ${honorsList
-                            .slice(0, 4)
-                            .map((x) => {
-                                const lv = x.level ? honorLevelLabel(x.level) : '';
-                                const tier = honorLevelTierClass(x.level);
-                                const meta = honorMetaParts(x);
-                                const proof = String(x.proofUrl || '').trim();
-                                const proofAside = honorProofAsideHtml(proof, x.proofName);
-                                const lvHtml = lv
-                                    ? `<span class="honor-level-pill ${tier}">${escapeHtml(lv)}</span>`
-                                    : '';
-                                const withProof = proof ? ' profile-honors-preview-list__item--with-proof' : '';
-                                return `<li class="profile-honors-preview-list__item honor-level-item ${tier}${withProof}">
-                                    <div class="honors-preview-card__layout">
-                                    <div class="honors-preview-card__main">
-                                    <div class="profile-honors-card__head">
-                                        <span class="meta-chip meta-chip--muted">${escapeHtml(honorTypeLabel(x.type))}</span>
-                                        ${lvHtml}
-                                    </div>
-                                    <div class="profile-honors-card__body">
-                                        <p class="profile-honors-card__title">${escapeHtml(x.title || '')}</p>
-                                        ${meta ? `<p class="profile-honors-card__meta text-muted">${meta}</p>` : ''}
-                                    </div>
-                                    </div>
-                                    ${proofAside}
-                                    </div>
-                                </li>`;
-                            })
-                            .join('')}
-                    </ul>
-                    ${
-                        honorCount > 4
-                            ? `<p class="small text-muted mb-0 mt-2">还有 ${honorCount - 4} 条未在此页展示。</p>`
-                            : ''
-                    }
-               </div>`
-            : `<div class="profile-honors-snippet profile-honors-snippet--in-card">
-                    <h3 class="profile-snippet-title">成果与荣誉</h3>
-                    <p class="small text-muted mb-0">尚未填写公开成果摘要。</p>
-               </div>`;
-
     const role = vo.role || 'STUDENT';
     const roleLabel = getUserRoleDisplayName(role);
-    const avatarHtml = profileSummaryAvatarHtml(vo);
+    const isTeacher = role === 'TEACHER';
+    const isAdmin = role === 'ADMIN';
+    const honorCount = honorsList ? honorsList.length : 0;
+    const posts = Array.isArray(vo.publishedPosts) ? vo.publishedPosts : [];
 
-    const displayName = escapeHtml(
-        (vo.username && String(vo.username).trim()) || vo.realName || '用户'
-    );
-    const identityTitle = `${displayName} · ${escapeHtml(roleLabel)}`;
-    const basicRows = role === 'TEACHER'
+    const icons = {
+        user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.1a7.5 7.5 0 0115 0"/></svg>',
+        doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25V11.6a3.4 3.4 0 00-3.4-3.4h-1.5A1.1 1.1 0 0113.5 7.1V5.6a3.4 3.4 0 00-3.4-3.4H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.6c-.6 0-1.1.5-1.1 1.1v17.3c0 .6.5 1.1 1.1 1.1h12.8c.6 0 1.1-.5 1.1-1.1V11.25a9 9 0 00-9-9z"/></svg>',
+        news: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.4c.6 0 1.1.5 1.1 1.1v8.4a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.9c0-.6-.5-1.1-1.1-1.1H4.1C3.5 3.8 3 4.3 3 4.9V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z"/></svg>',
+        trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.5-1.125-1.125-1.125h-.87M7.5 18.75v-3.375c0-.621.5-1.125 1.125-1.125h.87m5.01 0H9.5m5.01 0a7.45 7.45 0 01-.98-3.172M9.5 14.25a7.45 7.45 0 00.98-3.172M5.25 4.236 4.5 3.75m15 1.5-.75-.486M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>',
+        calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>'
+    };
+
+    /** 三个区块共用同一种空态：虚线框 + 图标 + 说明 */
+    const emptyState = (icon, text) =>
+        '<div class="pub-empty">' + icon + '<span>' + escapeHtml(text) + '</span></div>';
+
+    const sectionTitle = (icon, text) =>
+        '<h3 class="pub-card__title">' + icon + escapeHtml(text) + '</h3>';
+
+    // ---------- 1. 个人资料 ----------
+    const displayName = escapeHtml((vo.username && String(vo.username).trim()) || vo.realName || '用户');
+    const avatarHtml = profileSummaryAvatarHtml(vo);
+    const badgeClass = isTeacher ? 'pub-role-badge pub-role-badge--teacher'
+        : (isAdmin ? 'pub-role-badge pub-role-badge--admin' : 'pub-role-badge');
+    const identityCard = `
+        <section class="pub-card pub-card--identity">
+            <div class="pub-identity__main">
+                ${avatarHtml}
+                <div class="pub-identity__text">
+                    <div class="pub-identity__nameline">
+                        <h2 class="pub-identity__name">${displayName}</h2>
+                        <span class="${badgeClass}">${escapeHtml(roleLabel)}</span>
+                    </div>
+                    <p class="pub-identity__meta">${icons.calendar}注册于 ${escapeHtml(formatTime(vo.createdAt))}</p>
+                </div>
+            </div>
+        </section>
+    `;
+
+    // ---------- 2. 基本信息（含个人简介） ----------
+    // 教师用任职语义、学生用学籍语义
+    const basicRows = isTeacher
         ? [
             { label: '姓名', value: vo.realName || '' },
             { label: '用户名', value: vo.username || '' },
@@ -967,88 +957,158 @@ function renderPublicOverview(vo, honorsList) {
             { label: '学校', value: vo.school || '' },
             { label: '学院', value: vo.college || '' }
         ];
-    const basicInfoHtml = `
-        <div class="profile-public-basic">
-            <h3 class="profile-snippet-title mb-2">基本信息</h3>
-            <div class="profile-public-basic__grid">
+    const bioText = String(vo.bio || '').trim();
+    const basicCard = `
+        <section class="pub-card">
+            ${sectionTitle(icons.user, '基本信息')}
+            <div class="pub-grid">
                 ${basicRows
                     .map(function (x) {
                         const val = String(x.value || '').trim();
                         return `
-                        <div class="profile-public-basic__item">
-                            <span class="profile-public-basic__label">${escapeHtml(x.label)}</span>
-                            <span class="profile-public-basic__value">${escapeHtml(val || '未填写')}</span>
+                        <div class="pub-grid__item">
+                            <span class="pub-grid__label">${escapeHtml(x.label)}</span>
+                            <span class="pub-grid__value">${escapeHtml(val || '未填写')}</span>
                         </div>`;
                     })
                     .join('')}
             </div>
-        </div>
+            <div class="pub-bio-block">
+                <span class="pub-bio-block__label">个人简介</span>
+                ${bioText
+                    ? '<p class="pub-bio">' + escapeHtml(bioText) + '</p>'
+                    : '<p class="pub-bio pub-bio--empty">暂未填写个人简介</p>'}
+            </div>
+        </section>
     `;
-    const bioText = String(vo.bio || '').trim();
-    const bioHtml = `
-        <div class="profile-public-bio">
-            <h3 class="profile-snippet-title mb-2">个人简介</h3>
-            <p class="profile-public-bio__text mb-0">${escapeHtml(bioText || '暂未填写个人简介。')}</p>
-        </div>
+
+    // ---------- 3. 成果展示 ----------
+    // 与「荣誉与奖项」共用同一套 .pub-row 行样式；有封面就出缩略图，没有就退回文件图标
+    const assets = Array.isArray(vo.publishedAssets) ? vo.publishedAssets : [];
+    const assetLimit = 6;
+    const assetsBody = assets.length
+        ? '<ul class="pub-rows">' +
+          assets
+              .slice(0, assetLimit)
+              .map(function (a) {
+                  const cat = String(a.category || '').trim();
+                  // 优先作者上传的封面；没有则按分类回退，保证每行都有图（与成果展示页一致）
+                  const cover = String(a.coverUrl || '').trim()
+                      || window.ILinkFiles.coverForCategory(cat);
+                  const thumb = cover
+                      ? '<img class="pub-row__thumb-img" src="' + escapeHtml(cover) + '" alt="" loading="lazy" decoding="async">'
+                      : icons.doc;
+                  return `<li class="pub-row pub-row--link">
+                      <a class="pub-row__link" href="/asset-detail.html?id=${encodeURIComponent(String(a.id || ''))}">
+                          <span class="pub-row__thumb" aria-hidden="true">${thumb}</span>
+                          <div class="pub-row__body">
+                              <div class="pub-row__titleline">
+                                  <span class="pub-row__title" title="${escapeHtml(a.title || '未命名成果')}">${escapeHtml(a.title || '未命名成果')}</span>
+                                  ${cat ? `<span class="pub-chip">${escapeHtml(cat)}</span>` : ''}
+                                  <span class="pub-row__date">${escapeHtml(formatTime(a.createdAt))}</span>
+                              </div>
+                              <span class="pub-row__meta">阅读 ${a.viewCount || 0}</span>
+                          </div>
+                      </a>
+                  </li>`;
+              })
+              .join('') +
+          '</ul>' +
+          (assets.length > assetLimit
+              ? `<p class="pub-more">还有 ${assets.length - assetLimit} 条未在此页展示。</p>`
+              : '')
+        : emptyState(icons.doc, '暂无公开成果');
+    const assetsCard = `
+        <section class="pub-card">
+            ${sectionTitle(icons.doc, '成果展示')}
+            ${assetsBody}
+        </section>
     `;
-    const posts = Array.isArray(vo.publishedPosts) ? vo.publishedPosts : [];
+
+    // ---------- 4. 发布过的文字 ----------
     const categoryMap = {
         general: '综合交流',
         tech: '技术讨论',
         competition: '竞赛经验',
         resource: '资源分享'
     };
-    const postsHtml = `
-        <div class="profile-public-posts">
-            <h3 class="profile-snippet-title mb-2">发布过的文字</h3>
-            ${
-                posts.length
-                    ? `<ul class="list-unstyled mb-0 profile-public-posts__list">
-                        ${posts
-                            .map(function (p) {
-                                const cat = categoryMap[p.category] || p.category || '未分类';
-                                return `<li class="profile-public-posts__item">
-                                    <div class="profile-public-posts__head">
-                                        <a class="profile-public-posts__title" href="/community-article.html?id=${encodeURIComponent(String(p.id || ''))}">
-                                            ${escapeHtml(p.title || '未命名文章')}
-                                        </a>
-                                        <span class="meta-chip meta-chip--muted">${escapeHtml(cat)}</span>
-                                    </div>
-                                    <p class="profile-public-posts__excerpt mb-1">${escapeHtml(p.excerpt || '暂无摘要')}</p>
-                                    <p class="profile-public-posts__meta mb-0 text-muted">${formatTime(p.createdAt)}</p>
-                                </li>`;
-                            })
-                            .join('')}
-                    </ul>`
-                    : '<p class="small text-muted mb-0">暂无公开发布内容。</p>'
-            }
-        </div>
+    const postsBody = posts.length
+        ? '<ul class="pub-posts">' +
+          posts
+              .map(function (p) {
+                  const cat = categoryMap[p.category] || p.category || '未分类';
+                  return `<li class="pub-posts__item">
+                      <div class="pub-posts__head">
+                          <div class="pub-posts__titleline">
+                              <a class="pub-posts__title" href="/community-article.html?id=${encodeURIComponent(String(p.id || ''))}">${escapeHtml(p.title || '未命名文章')}</a>
+                              <span class="pub-chip">${escapeHtml(cat)}</span>
+                          </div>
+                          <span class="pub-posts__date">${escapeHtml(formatTime(p.createdAt))}</span>
+                      </div>
+                      ${p.excerpt ? '<p class="pub-posts__excerpt">' + escapeHtml(p.excerpt) + '</p>' : ''}
+                  </li>`;
+              })
+              .join('') +
+          '</ul>'
+        : emptyState(icons.news, '暂无公开发布内容');
+    const postsCard = `
+        <section class="pub-card">
+            ${sectionTitle(icons.doc, '发布过的文字')}
+            ${postsBody}
+        </section>
+    `;
+
+    // ---------- 5. 荣誉与奖项 ----------
+    // 公开主页用简洁行（图标 + 标题 + 等级 + 元信息）；带证明材料的复杂条目留在个人中心与成果页
+    const honorLimit = 6;
+    const honorsBody = honorCount
+        ? '<ul class="pub-rows">' +
+          honorsList
+              .slice(0, honorLimit)
+              .map(function (x) {
+                  const lv = x.level ? honorLevelLabel(x.level) : '';
+                  const tier = honorLevelTierClass(x.level);
+                  const meta = honorMetaParts(x);
+                  // 有「图片类」证明材料就显示缩略图并可点开大图；PDF / 无证明才退回奖杯图标
+                  const proof = String(x.proofUrl || '').trim();
+                  const proofIsImage = proof && honorProofMediaKind(proof) === 'image';
+                  const thumb = proofIsImage
+                      ? '<a class="pub-row__thumb" href="' + escapeHtml(proof) + '" target="_blank" rel="noopener"'
+                          + ' aria-label="查看奖项证明材料" title="查看证明材料">'
+                          + '<img class="pub-row__thumb-img" src="' + escapeHtml(honorProofSafeUrl(proof))
+                          + '" alt="" loading="lazy" decoding="async"></a>'
+                      : '<span class="pub-row__thumb" aria-hidden="true">' + icons.trophy + '</span>';
+                  return `<li class="pub-row">
+                      ${thumb}
+                      <div class="pub-row__body">
+                          <div class="pub-row__titleline">
+                              <span class="pub-row__title" title="${escapeHtml(x.title || '')}">${escapeHtml(x.title || '')}</span>
+                              ${lv ? `<span class="honor-level-pill ${tier}">${escapeHtml(lv)}</span>` : ''}
+                          </div>
+                          ${meta ? `<span class="pub-row__meta">${meta}</span>` : ''}
+                      </div>
+                  </li>`;
+              })
+              .join('') +
+          '</ul>' +
+          (honorCount > honorLimit
+              ? `<p class="pub-more">还有 ${honorCount - honorLimit} 条未在此页展示。</p>`
+              : '')
+        : emptyState(icons.trophy, '尚未填写公开奖项');
+    const honorsCard = `
+        <section class="pub-card">
+            ${sectionTitle(icons.trophy, '荣誉与奖项')}
+            ${honorsBody}
+        </section>
     `;
 
     userInfoContainer.innerHTML = `
-        <div class="profile-summary profile-summary--inline page-transition">
-            <div class="profile-summary-identity">
-                ${avatarHtml}
-                <div class="profile-summary-identity__text min-w-0">
-                    <p class="profile-summary-identity__title mb-1">${identityTitle}</p>
-                    <p class="profile-summary-identity__meta profile-summary-identity__meta--muted mb-0">注册于 ${formatTime(vo.createdAt)}</p>
-                </div>
-            </div>
-            <hr class="profile-summary-rule" />
-            <div class="profile-quick-stats profile-quick-stats--full">
-                <div class="profile-stat-pill">
-                    <span class="profile-stat-pill__label">公开成果条数</span>
-                    <span class="profile-stat-pill__value">${honorCount}</span>
-                </div>
-            </div>
-            <hr class="profile-summary-rule" />
-            ${basicInfoHtml}
-            <hr class="profile-summary-rule" />
-            ${bioHtml}
-            <hr class="profile-summary-rule" />
-            ${postsHtml}
-            <hr class="profile-summary-rule" />
-            ${honorPreview}
+        <div class="pub-profile page-transition">
+            ${identityCard}
+            ${basicCard}
+            ${assetsCard}
+            ${postsCard}
+            ${honorsCard}
         </div>
     `;
 }
@@ -1062,6 +1122,53 @@ function getProfilePage() {
     if (hash === 'settings') return 'overview';
     if (hash === 'honors') return 'overview';
     return 'overview';
+}
+
+/** 教师竞赛概览：公开成果与个人荣誉各自成组，不混入团队数据。 */
+function renderTeacherCompetitionOverview(user, honorsList) {
+    const root = document.getElementById('teacherCompetitionOverview');
+    const assetsRoot = document.getElementById('teacherCompetitionAssets');
+    const honorsRoot = document.getElementById('teacherCompetitionHonors');
+    if (!root || !assetsRoot || !honorsRoot || !user || user.role !== 'TEACHER') return;
+
+    const assets = Array.isArray(user.publishedAssets) ? user.publishedAssets : [];
+    const honors = Array.isArray(honorsList) ? honorsList : [];
+    const itemIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg>';
+    const awardIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/></svg>';
+
+    assetsRoot.innerHTML = assets.length
+        ? assets.slice(0, 5).map(function (asset) {
+            const category = String(asset.category || '').trim();
+            return '<a class="il-teacher-competition-item" href="/asset-detail.html?id=' +
+                encodeURIComponent(String(asset.id || '')) + '">' +
+                '<span class="il-teacher-competition-item__icon">' + itemIcon + '</span>' +
+                '<span class="il-teacher-competition-item__body">' +
+                    '<strong>' + escapeHtml(asset.title || '未命名成果') + '</strong>' +
+                    '<small>' + escapeHtml(category || '成果展示') + ' · ' + escapeHtml(formatTime(asset.createdAt)) + '</small>' +
+                '</span>' +
+                '<span class="il-teacher-competition-item__arrow" aria-hidden="true">›</span>' +
+            '</a>';
+        }).join('')
+        : '<p class="il-teacher-competition-empty">暂无竞赛成果</p>';
+
+    honorsRoot.innerHTML = honors.length
+        ? honors.slice(0, 5).map(function (raw) {
+            const honor = normalizeHonor(raw);
+            const level = honor.level ? honorLevelLabel(honor.level) : '';
+            const meta = honorMetaParts(honor);
+            return '<div class="il-teacher-competition-item">' +
+                '<span class="il-teacher-competition-item__icon">' + awardIcon + '</span>' +
+                '<span class="il-teacher-competition-item__body">' +
+                    '<strong>' + escapeHtml(honor.title || '未命名奖项') + '</strong>' +
+                    '<small>' + (meta || '荣誉奖项') + '</small>' +
+                '</span>' +
+                (level ? '<span class="honor-level-pill ' + honorLevelTierClass(honor.level) + '">' + escapeHtml(level) + '</span>' : '') +
+            '</div>';
+        }).join('')
+        : '<p class="il-teacher-competition-empty">暂无荣誉奖项</p>';
+
+    root.setAttribute('data-profile-loaded', 'true');
+    root.hidden = window.location.hash === '#teams';
 }
 
 async function fetchPublicProfileById(userId) {
@@ -1082,22 +1189,23 @@ async function fetchPublicProfileById(userId) {
 
 /** 竞赛小队：展示用户已加入的团队列表，支持选择团队进入二级子面板 */
 async function renderJoinedTeams() {
-    const container = document.getElementById('joinedTeamsList');
+    var container = document.getElementById('joinedTeamsList');
     if (!container) return;
     try {
-        const res = await apiFetch('/api/team/my/joined');
-        const data = await res.json();
+        var res = await apiFetch('/api/team/my/joined');
+        var data = await res.json();
         if (data.code !== 200 || !Array.isArray(data.data)) {
             container.innerHTML = '<div class="text-center py-4 text-muted">加载失败</div>';
             return;
         }
-        const teams = data.data;
+        var teams = data.data;
         if (!teams.length) {
             container.innerHTML =
                 '<div class="il-empty-state">' +
                     '<div class="il-empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>' +
                     '<p class="il-empty-title">还没有加入任何团队</p>' +
-                    '<p class="il-empty-text">去组队大厅看看，找到志同道合的伙伴</p>' +
+                    '<p class="il-empty-text">去组队大厅看看，或者直接新建一个团队</p>' +
+                    '<a class="il-btn il-btn-primary" href="/team-market.html">去组队大厅</a>' +
                 '</div>';
             return;
         }
@@ -1109,64 +1217,85 @@ async function renderJoinedTeams() {
             var statusClass = teamDemandStatusBadgeClass(status);
             var joined = t.joinedAt ? formatTime(t.joinedAt) : '';
             var isCreator = !!t.isCreator;
-            var badge = isCreator ? ' <span class="meta-chip meta-chip--primary">队长</span>' : '';
-            // 异步加载成员数和任务数（不阻塞渲染）
+            var roleChip = isCreator
+                ? '<span class="meta-chip meta-chip--primary">队长</span>'
+                : (t.memberRole === 'MENTOR'
+                    ? '<span class="meta-chip meta-chip--primary">导师</span>'
+                    : '<span class="meta-chip">队员</span>');
+            // 解散的团队只留「查看详情」，不再提供任何写操作
+            var dissolved = status === 'DISSOLVED';
+            var pending = Number(t.pendingInviteCount) || 0;
+            var pendingChip = pending > 0
+                ? '<span class="il-team-card__pending">' + pending + ' 个邀请待确认</span>'
+                : '';
+            var inviteBtn = (!dissolved && t.canManageMembers)
+                ? '<button type="button" class="il-team-card__btn" data-invite-team="' + teamId +
+                  '" data-invite-title="' + title + '">邀请成员</button>'
+                : '';
+            var enterBtn = dissolved
+                ? ''
+                : '<a href="/team-space.html?id=' + teamId + '" class="il-team-card__btn il-team-card__btn--primary">进入团队</a>';
+
             (function fetchTeamExtras(tid) {
                 Promise.all([
-                    apiFetch('/api/team/' + tid + '/members').then(function(r){ return r.json(); }).then(function(j){ return Array.isArray(j.data) ? j.data.length : 0; }).catch(function(){ return 0; }),
-                    apiFetch('/api/tasks?teamId=' + tid).then(function(r){ return r.json(); }).then(function(j){
-                        var tasks = Array.isArray(j.data) ? j.data : [];
-                        var pending = 0;
-                        for (var i = 0; i < tasks.length; i++) {
-                            var s = (tasks[i].status || 'pending').toLowerCase();
-                            if (s === 'pending' || s === 'todo') pending++;
-                        }
-                        return { total: tasks.length, pending: pending };
-                    }).catch(function(){ return { total: 0, pending: 0 }; })
+                    apiFetch('/api/team/' + tid + '/members').then(function(r){ return r.json(); }).catch(function(){ return {}; }),
+                    apiFetch('/api/tasks?teamId=' + tid).then(function(r){ return r.json(); }).catch(function(){ return {}; })
                 ]).then(function(results) {
-                    var memberCount = results[0];
-                    var taskInfo = results[1];
+                    var members = Array.isArray(results[0].data) ? results[0].data : [];
+                    var tasks = Array.isArray(results[1].data) ? results[1].data : [];
+                    var pendingTask = 0;
+                    for (var i = 0; i < tasks.length; i++) {
+                        var st = (tasks[i].status || 'pending').toLowerCase();
+                        if (st === 'pending' || st === 'todo') pendingTask++;
+                    }
                     var card = document.querySelector('[data-team-id="' + tid + '"]');
                     if (!card) return;
                     var metaEl = card.querySelector('.il-team-card__meta');
                     if (metaEl) {
                         metaEl.innerHTML = '<span>加入于 ' + joined + '</span>' +
                             ' <span class="il-team-card__meta-sep">·</span>' +
-                            '<span class="il-team-card__stat">成员 <span class="il-team-card__stat-value">' + memberCount + '</span> 人</span>' +
+                            '<span class="il-team-card__stat">成员 <span class="il-team-card__stat-value">' + members.length + '</span> 人</span>' +
                             ' <span class="il-team-card__meta-sep">·</span>' +
-                            '<span class="il-team-card__stat">待办 <span class="il-team-card__stat-value">' + taskInfo.pending + '</span> 个</span>';
-                    }
-                    var actionsEl = card.querySelector('.il-team-card__actions');
-                    if (actionsEl && (status === 'TEAMING' || status === 'CLOSED')) {
-                        actionsEl.innerHTML =
-                            '<a href="/team-space.html?id=' + tid + '" class="il-team-card__btn il-team-card__btn--primary">进入空间</a>' +
-                            '<a href="/team-detail.html?id=' + tid + '" class="il-team-card__btn">查看详情</a>';
+                            '<span class="il-team-card__stat">待办 <span class="il-team-card__stat-value">' + pendingTask + '</span> 个</span>';
                     }
                 });
             })(teamId);
+
             return '<div class="il-team-card ' + teamCardStatusClass(status) + '" data-team-id="' + teamId + '">' +
                 '<div class="il-team-card__inner">' +
                 '<div class="il-team-card__header">' +
                     '<div class="il-team-card__icon">' + teamIconSvg + '</div>' +
                     '<div class="il-team-card__body">' +
-                        '<a class="il-team-card__title" href="/team-detail.html?id=' + teamId + '">' + title + badge + '</a>' +
-                        '<div class="il-team-card__meta">' +
-                            '<span>加载中...</span>' +
-                        '</div>' +
+                        '<a class="il-team-card__title" href="/team-detail.html?id=' + teamId + '">' + title + roleChip + '</a>' +
+                        '<div class="il-team-card__meta"><span>加载中...</span></div>' +
                     '</div>' +
-                    '<span class="il-team-card__badge ' + statusClass + '">' + statusLabel + '</span>' +
-                    '<span class="il-team-card__arrow" aria-hidden="true">' + arrowSvg + '</span>' +
+                    '<div class="il-team-card__status">' +
+                        pendingChip +
+                        '<span class="il-team-card__badge ' + statusClass + '">' + statusLabel + '</span>' +
+                    '</div>' +
                 '</div>' +
                 '</div>' +
                 '<div class="il-team-card__divider"></div>' +
                 '<div class="il-team-card__actions">' +
+                    inviteBtn +
+                    enterBtn +
                     '<a href="/team-detail.html?id=' + teamId + '" class="il-team-card__btn">查看详情</a>' +
-                    (status === 'TEAMING' || status === 'CLOSED' ? '<a href="/team-space.html?id=' + teamId + '" class="il-team-card__btn il-team-card__btn--secondary">进入空间</a>' : '') +
                 '</div>' +
             '</div>';
         }).join('');
+
+        container.querySelectorAll('[data-invite-team]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (!window.TeamInvite) return;
+                window.TeamInvite.open(
+                    button.getAttribute('data-invite-team'),
+                    button.getAttribute('data-invite-title'),
+                    function () { renderJoinedTeams(); }
+                );
+            });
+        });
     } catch (e) {
-        console.error('加载竞赛小队失败', e);
+        console.error('加载我的团队失败', e);
         container.innerHTML = '<div class="text-center py-4 text-muted">网络异常，请稍后重试</div>';
     }
 }
@@ -1378,8 +1507,9 @@ function applyRoleAwareOverviewLayout(user) {
     const isTeacher = user && user.role === 'TEACHER';
     const activityCard = document.getElementById('activitySectionCard');
     if (activityCard) {
-        activityCard.hidden = isTeacher;
-        activityCard.setAttribute('aria-hidden', isTeacher ? 'true' : 'false');
+        const hidden = isTeacher && window.location.hash !== '#teams';
+        activityCard.hidden = hidden;
+        activityCard.setAttribute('aria-hidden', hidden ? 'true' : 'false');
     }
 
     const institution = document.getElementById('profileInstitutionText');
@@ -1387,6 +1517,9 @@ function applyRoleAwareOverviewLayout(user) {
         institution.textContent = isTeacher
             ? (user.school || '未设置任职单位')
             : (user.school || '未设置学校');
+    }
+    if (typeof window.applyProfileHashView === 'function') {
+        window.applyProfileHashView();
     }
 }
 
@@ -1418,7 +1551,8 @@ async function syncTeacherProfile(user, page) {
             if (projects) projects.value = teacher.projects || '';
         }
         if (summary) {
-            summary.hidden = false;
+            summary.setAttribute('data-profile-loaded', 'true');
+            summary.hidden = window.location.hash === '#teams';
             setProfileText('teacherSummaryExpertise', teacher.expertise, '未设置');
             setProfileText('teacherSummaryTitle', teacher.professionalTitle, '未设置');
             setProfileText('teacherSummaryResearch', teacher.researchDirection, '未设置');
@@ -1468,17 +1602,17 @@ let myTeamsStatusFilter = 'ALL';
 let myTeamsSort = 'createdDesc';
 
 function teamDemandStatusLabel(status) {
-    const map = { OPEN: '招募中', TEAMING: '已组队', CLOSED: '已结束' };
+    const map = { OPEN: '招募中', TEAMING: '已组队', CLOSED: '已结束', DISSOLVED: '已解散' };
     return map[status] || status || '';
 }
 
 function teamDemandStatusBadgeClass(status) {
-    const map = { OPEN: 'il-team-card__badge--open', TEAMING: 'il-team-card__badge--teaming', CLOSED: 'il-team-card__badge--closed' };
+    const map = { OPEN: 'il-team-card__badge--open', TEAMING: 'il-team-card__badge--teaming', CLOSED: 'il-team-card__badge--closed', DISSOLVED: 'il-team-card__badge--closed' };
     return map[status] || 'il-team-card__badge--closed';
 }
 
 function teamCardStatusClass(status) {
-    const map = { OPEN: 'il-team-card--open', TEAMING: 'il-team-card--teaming', CLOSED: 'il-team-card--closed' };
+    const map = { OPEN: 'il-team-card--open', TEAMING: 'il-team-card--teaming', CLOSED: 'il-team-card--closed', DISSOLVED: 'il-team-card--closed' };
     return map[status] || 'il-team-card--closed';
 }
 
@@ -2146,15 +2280,23 @@ document.addEventListener('DOMContentLoaded', async function () {
             applyUserToProfileForm(user);
             const teacherProfile = await syncTeacherProfile(user, page);
 
+            let publicData = null;
+            if (page === 'overview' || (page === 'teams' && user.role === 'TEACHER')) {
+                publicData = await fetchPublicProfileById(user.id);
+            }
+            const merged = publicData
+                ? Object.assign({}, user, {
+                      publishedPosts: Array.isArray(publicData.publishedPosts) ? publicData.publishedPosts : [],
+                      publishedAssets: Array.isArray(publicData.publishedAssets) ? publicData.publishedAssets : [],
+                      bio: publicData.bio != null ? publicData.bio : user.bio
+                  })
+                : Object.assign({}, user, { publishedAssets: [] });
+            if (user.role === 'TEACHER') {
+                renderTeacherCompetitionOverview(merged, honorsState);
+            }
+
             if (page === 'overview') {
                 bindAvatarPreview();
-                const publicData = await fetchPublicProfileById(user.id);
-                const merged = publicData
-                    ? Object.assign({}, user, {
-                          publishedPosts: Array.isArray(publicData.publishedPosts) ? publicData.publishedPosts : [],
-                          bio: publicData.bio != null ? publicData.bio : user.bio
-                      })
-                    : user;
                 renderOverview(merged, honorsState, lastActivity);
             } else if (page === 'edit') {
                 bindAvatarPreview();
@@ -2176,11 +2318,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 renderHonorsEditor();
                 persistHonorsDraft();
             } else if (page === 'teams') {
-                // 隐藏"我的活动"标题和tab栏，改为"我的小队"
+                // 隐藏"我的活动"标题与 tab 栏，改成本页更贴切的标题
                 var titleEl = document.getElementById('activitySectionTitle');
+                var subtitleEl = document.getElementById('activitySectionSubtitle');
                 var tabsEl = document.getElementById('activityTabs');
-                if (titleEl) titleEl.textContent = '我的小队';
+                var createBtn = document.getElementById('createTeamBtn');
+                if (titleEl) titleEl.textContent = '我的团队';
+                if (subtitleEl) subtitleEl.textContent = '管理你创建或参与的项目';
                 if (tabsEl) tabsEl.style.display = 'none';
+                if (createBtn) createBtn.style.display = '';
                 renderJoinedTeams();
             }
         } else {

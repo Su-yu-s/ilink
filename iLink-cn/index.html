@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1C1E23">
+<title>iLink — 同声相应 · 高校竞赛组队与协作平台</title>
+<meta name="description" content="iLink：为高校师生而生的竞赛组队与协作平台。组队 · 协作 · 沉淀，一站走完从想法到上场的全程。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23282A2F'/%3E%3Ctext x='32' y='43' font-family='Segoe UI,sans-serif' font-size='27' font-weight='800' fill='%23fff' text-anchor='middle'%3EiL%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F7F8FB;--bg-soft:#F1F4FA;--surface:#FFFFFF;
+  --ink:#1B2432;--ink-2:#4A5468;--ink-3:#8A93A6;
+  --brand:#282A2F;--brand-deep:#101216;--brand-soft:#F0F1F4;
+  --ok:#16A34A;--line:#E7E9EE;--dark:#1C1E23;
+  --grad:linear-gradient(120deg,#1F2126 0%,#3A3E46 60%,#575C66 100%);
+  --shadow:0 10px 34px rgba(28,30,35,.08);
+  --shadow-brand:0 14px 38px rgba(40,42,47,.2);
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --fs-hero:clamp(40px,5.4vw,64px);
+  --fs-h2:clamp(30px,3.6vw,44px);
+  --fs-h3:20px;--fs-body:16px;--fs-sm:14px;--fs-xs:12.5px;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:"HarmonyOS Sans SC","MiSans","PingFang SC",-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.8;font-size:var(--fs-body);overflow-x:hidden;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--brand);color:#fff}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font:inherit;background:none;border:none;cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+.i{width:20px;height:20px;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+#boot{position:fixed;inset:0;z-index:100;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#boot .bo{text-align:center;padding:0 20px}
+#boot .bo-mark{width:76px;height:76px;border-radius:20px;background:var(--grad);margin:0 auto 26px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#fff;letter-spacing:-.03em}
+#boot .bo-word{font-size:clamp(24px,4.4vw,44px);font-weight:700;letter-spacing:.12em;display:block}
+#boot .bo-sub{font-size:var(--fs-xs);letter-spacing:.42em;margin-top:14px;color:rgba(255,255,255,.45);text-transform:uppercase}
+#boot .bo-bar{width:200px;height:3px;background:rgba(255,255,255,.12);margin:34px auto 0;border-radius:99px;overflow:hidden}
+#boot .bo-bar i{display:block;height:100%;background:#fff;transform:scaleX(0);transform-origin:0 50%;border-radius:99px}
+#boot .bo-num{position:absolute;right:6vw;bottom:5vh;font-size:clamp(36px,7vw,96px);font-weight:800;letter-spacing:-.02em;color:rgba(255,255,255,.14);font-variant-numeric:tabular-nums}
+
+#cur{display:none}
+@media (pointer:fine){
+  #cur{display:block;position:fixed;left:0;top:0;z-index:90;pointer-events:none;color:var(--brand)}
+  #cur .ring{position:absolute;width:34px;height:34px;margin-left:-17px;margin-top:-17px;border:1.5px solid currentColor;border-radius:50%;opacity:0;transition:opacity .3s,transform .25s var(--ease)}
+  #cur .dot{position:absolute;width:6px;height:6px;margin-left:-3px;margin-top:-3px;background:currentColor;border-radius:50%}
+  body.cur-on #cur .ring{opacity:.55}
+  body.cur-grow #cur .ring{transform:scale(1.7);opacity:.9}
+}
+
+#nav{position:fixed;top:0;left:0;right:0;z-index:60;border-bottom:1px solid transparent;transition:background .3s,border-color .3s,backdrop-filter .3s;padding-top:var(--safe-top)}
+#nav .wrap{display:flex;align-items:center;justify-content:space-between;height:68px}
+#nav.scrolled{background:rgba(255,255,255,.85);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-color:var(--line)}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:18.5px;letter-spacing:-.01em}
+.brand .bmark{width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;letter-spacing:-.02em;box-shadow:0 4px 14px rgba(40,42,47,.3)}
+#nav .nlinks{display:flex;gap:6px}
+#nav .nlinks a{font-size:var(--fs-sm);color:var(--ink-2);padding:8px 15px;border-radius:99px;transition:color .2s,background .2s}
+#nav .nlinks a:hover{color:var(--ink);background:var(--brand-soft)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.ncta{display:inline-flex;align-items:center;gap:7px;background:var(--brand);color:#fff;padding:10px 24px;border-radius:99px;font-size:var(--fs-sm);font-weight:600;box-shadow:0 6px 18px rgba(40,42,47,.25);transition:background .2s,transform .2s,box-shadow .2s}
+.ncta:hover{background:var(--brand-deep);transform:translateY(-1px);box-shadow:0 10px 26px rgba(40,42,47,.32)}
+.ncta .i{width:15px;height:15px}
+.nav-burger{display:none;width:44px;height:44px;border-radius:12px;background:var(--brand-soft);align-items:center;justify-content:center;color:var(--ink);transition:background .2s}
+.nav-burger:active{background:#E3E5EA}
+.nav-burger svg{width:24px;height:24px;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none;stroke:currentColor}
+
+/* ===== 移动端菜单：右侧悬浮小面板 ===== */
+#mnav{
+  display:none;
+  position:fixed;
+  top:calc(66px + var(--safe-top));
+  right:14px;
+  left:auto;
+  width:180px;
+  background:rgba(255,255,255,.98);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--line);
+  border-radius:14px;
+  z-index:55;
+  padding:6px;
+  flex-direction:column;
+  gap:1px;
+  transform:translateY(-8px) scale(.96);
+  transform-origin:top right;
+  opacity:0;
+  pointer-events:none;
+  transition:transform .2s var(--ease),opacity .2s;
+  box-shadow:0 16px 40px rgba(28,30,35,.12);
+}
+#mnav.open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
+#mnav a{display:block;padding:9px 12px;font-size:14px;font-weight:600;color:var(--ink);border-radius:9px;transition:background .15s}
+#mnav a:active{background:var(--brand-soft)}
+#mnav .m-cta{background:var(--brand);color:#fff;text-align:center;margin-top:4px;padding:10px 12px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13.5px}
+#mnav .m-cta:active{background:var(--brand-deep)}
+
+#hero{position:relative;padding:150px 0 90px;text-align:center;overflow:hidden}
+#hero .h-glow{position:absolute;inset:-30% -20% auto;height:120%;pointer-events:none;background:
+  radial-gradient(52% 46% at 50% 8%,rgba(40,42,47,.09),transparent 70%),
+  radial-gradient(34% 30% at 76% 18%,rgba(40,42,47,.05),transparent 70%),
+  radial-gradient(30% 28% at 22% 22%,rgba(40,42,47,.04),transparent 70%)}
+#hero .h-grid{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:72px 72px;opacity:.55;-webkit-mask-image:radial-gradient(70% 62% at 50% 0%,#000 25%,transparent 100%);mask-image:radial-gradient(70% 62% at 50% 0%,#000 25%,transparent 100%);pointer-events:none}
+#hero .wrap{position:relative;z-index:2}
+.h-badge{display:inline-flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);color:var(--ink-2);font-size:13px;font-weight:600;padding:8px 18px;border-radius:99px;box-shadow:0 4px 16px rgba(28,30,35,.06)}
+.h-badge .bd{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(34,197,94,.16);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.htitle{margin-top:30px;font-size:var(--fs-hero);font-weight:700;letter-spacing:.005em;line-height:1.22}
+.htitle .h-line{display:block;overflow:hidden;padding-top:.08em;margin-top:-.06em}
+.htitle .h-char{display:inline-block;will-change:transform}
+.htitle .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.h-sub{margin:26px auto 0;max-width:620px;font-size:17.5px;color:var(--ink-2);line-height:1.9}
+.h-sub b{color:var(--ink);font-weight:600}
+.hero-ctas{margin-top:42px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-p{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--brand);color:#fff;padding:14px 34px;border-radius:99px;font-size:15.5px;font-weight:600;box-shadow:var(--shadow-brand);transition:background .2s,transform .25s var(--ease),box-shadow .25s;min-height:44px}
+.btn-p:hover{background:var(--brand-deep);transform:translateY(-2px);box-shadow:0 18px 44px rgba(40,42,47,.28)}
+.btn-p:active{transform:translateY(0) scale(.97)}
+.btn-p .i{width:16px;height:16px}
+.btn-s{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:#fff;border:1px solid var(--line);color:var(--ink);padding:14px 30px;border-radius:99px;font-size:15.5px;font-weight:600;transition:border-color .2s,background .2s,transform .25s var(--ease);min-height:44px}
+.btn-s:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft);transform:translateY(-2px)}
+.btn-s:active{transform:translateY(0) scale(.97)}
+.scroll-hint{margin-top:70px;display:inline-flex;flex-direction:column;align-items:center;gap:10px;font-size:11px;letter-spacing:.3em;color:var(--ink-3);text-transform:uppercase;overflow:hidden}
+.scroll-hint .ln{width:1px;height:52px;background:linear-gradient(var(--brand),transparent);animation:drop 1.8s var(--ease) infinite}
+@keyframes drop{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+.marquee{overflow:hidden;background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0;white-space:nowrap;user-select:none}
+.marquee .mq-track{display:inline-flex;animation:mq 28s linear infinite;will-change:transform}
+.marquee .mq-track:hover{animation-play-state:paused}
+.marquee span{font-size:clamp(22px,2.6vw,34px);font-weight:700;letter-spacing:.02em;color:var(--ink-2);padding:0 1.8vw;display:inline-flex;align-items:center;gap:1.8vw}
+.marquee .mq-dot{width:9px;height:9px;border-radius:50%;background:var(--grad)}
+.marquee .mq-mid{width:8px;height:8px;background:var(--brand-soft);border:2px solid var(--brand);border-radius:3px;transform:rotate(45deg)}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+#stats{padding:96px 0}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:36px 30px;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.stat:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:#D9DBE0}
+.stat .num{font-size:clamp(40px,4.4vw,56px);font-weight:800;letter-spacing:-.01em;line-height:1.1;font-variant-numeric:tabular-nums;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .lbl{margin-top:12px;font-size:var(--fs-sm);color:var(--ink-2);font-weight:500}
+.stat .en{font-size:11px;letter-spacing:.22em;color:var(--ink-3);text-transform:uppercase;margin-top:3px}
+
+.sec-head{text-align:center;max-width:720px;margin:0 auto}
+.sec-kick{display:inline-flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700;letter-spacing:.24em;color:var(--brand);background:var(--brand-soft);padding:7px 18px;border-radius:99px;text-transform:uppercase}
+.sec-title{margin-top:22px;font-size:var(--fs-h2);font-weight:700;letter-spacing:.005em;line-height:1.3}
+.sec-title .grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sec-desc{margin:18px auto 0;max-width:560px;font-size:16px;color:var(--ink-2)}
+
+#manifesto{padding:110px 0 40px}
+#manifesto .big{font-size:clamp(26px,3.4vw,40px);font-weight:700;letter-spacing:.005em;line-height:1.6;text-align:center;max-width:860px;margin:0 auto}
+#manifesto .big em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+#manifesto .sub{margin:26px auto 0;max-width:640px;text-align:center;color:var(--ink-2);font-size:16px}
+
+#features{padding:110px 0}
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:64px}
+.feat{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:34px 30px;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s;position:relative;overflow:hidden;display:block}
+.feat:hover{transform:translateY(-6px);box-shadow:var(--shadow);border-color:#D5D7DC}
+.feat .f-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.feat .f-ic{width:50px;height:50px;border-radius:14px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;transition:background .3s,color .3s}
+.feat:hover .f-ic{background:var(--brand);color:#fff}
+.feat .f-ic .i{width:22px;height:22px}
+.feat .f-no{font-size:13px;font-weight:700;letter-spacing:.16em;color:#C9CCD2;font-variant-numeric:tabular-nums;transition:color .3s}
+.feat:hover .f-no{color:var(--brand)}
+.feat h3{font-size:var(--fs-h3);font-weight:700;letter-spacing:.005em;margin-bottom:10px}
+.feat p{font-size:14.5px;color:var(--ink-2);line-height:1.85}
+.feat .f-arrow{position:absolute;right:26px;bottom:24px;width:34px;height:34px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;opacity:0;transform:translateX(-8px);transition:opacity .3s,transform .3s var(--ease)}
+.feat:hover .f-arrow{opacity:1;transform:translateX(0)}
+.feat .f-arrow .i{width:15px;height:15px}
+
+#screens{background:var(--bg-soft)}
+#screens .sec-head{padding-top:110px}
+.gal{height:100vh;display:flex;align-items:center;overflow:hidden}
+.gal .track{display:flex;gap:30px;padding:0 6vw;will-change:transform}
+.gal .card{flex:none;width:min(56vw,680px);background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px 14px 0;box-shadow:0 16px 44px rgba(28,30,35,.1)}
+.gal .card .ph{height:56vh;overflow:hidden;border-radius:12px;background:var(--bg-soft)}
+.gal .card .ph img{width:100%;height:100%;object-fit:cover;object-position:top;transition:transform .7s var(--ease)}
+.gal .card:hover .ph img{transform:scale(1.03)}
+.gal .card .meta{display:flex;justify-content:space-between;align-items:center;padding:16px 8px;font-size:13px;color:var(--ink-2)}
+.gal .card .meta b{font-size:15px;color:var(--ink);font-weight:700}
+.gal .card .meta .idx{color:var(--brand);font-weight:700;font-variant-numeric:tabular-nums}
+
+#flow{padding:110px 0}
+.flow-col{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:64px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:32px 28px;position:relative;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.step:hover{transform:translateY(-5px);box-shadow:var(--shadow);border-color:#D5D7DC}
+.step .stn{display:flex;align-items:center;gap:13px}
+.step .stn b{font-size:34px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+.step .stn .dot{width:8px;height:8px;border-radius:50%;background:var(--grad)}
+.step h4{font-size:18px;font-weight:700;margin:20px 0 8px;letter-spacing:.005em}
+.step p{font-size:14px;color:var(--ink-2);line-height:1.8}
+.step .link-more{position:absolute;top:26px;right:26px;color:#C9CCD2;transition:color .3s}
+.step:hover .link-more{color:var(--brand)}
+.step .link-more .i{width:17px;height:17px}
+
+#ai{position:relative;background:var(--dark);color:#fff;padding:120px 0;overflow:hidden}
+#ai .ai-glow{position:absolute;inset:0;pointer-events:none;background:
+  radial-gradient(44% 40% at 18% 12%,rgba(255,255,255,.07),transparent 70%),
+  radial-gradient(40% 36% at 84% 78%,rgba(255,255,255,.05),transparent 70%),
+  radial-gradient(30% 30% at 60% 30%,rgba(255,255,255,.03),transparent 70%)}
+#ai .wrap{position:relative;z-index:2}
+#ai .sec-kick{background:rgba(255,255,255,.09);color:rgba(255,255,255,.62)}
+#ai .sec-title{color:#fff}
+#ai .sec-desc{color:rgba(255,255,255,.62)}
+.ai-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:64px}
+.ai-cell{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:30px 26px;transition:background .3s,border-color .3s,transform .3s var(--ease)}
+.ai-cell:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.35);transform:translateY(-4px)}
+.ai-cell .ai-ic{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.09);color:rgba(255,255,255,.82);display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+.ai-cell .ai-ic .i{width:20px;height:20px}
+.ai-cell .tag{font-size:10.5px;letter-spacing:.26em;color:rgba(255,255,255,.4);font-weight:700;text-transform:uppercase}
+.ai-cell h4{font-size:17px;font-weight:700;margin:10px 0 8px;color:#fff}
+.ai-cell p{font-size:13.5px;color:rgba(255,255,255,.55);line-height:1.8}
+
+#security{padding:110px 0}
+.sec-list{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:64px}
+.s-item{display:flex;gap:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px 26px;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.s-item:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#D5D7DC}
+.s-item .sic{width:42px;height:42px;border-radius:12px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none}
+.s-item .sic .i{width:19px;height:19px}
+.s-item b{display:block;font-size:15.5px;font-weight:700;margin-bottom:4px;letter-spacing:.005em}
+.s-item span{font-size:13.5px;color:var(--ink-2);line-height:1.7}
+
+#roles{padding:0 0 120px}
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:64px}
+.role{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:36px 32px;position:relative;overflow:hidden;transition:transform .3s var(--ease),box-shadow .3s,border-color .3s}
+.role:hover{transform:translateY(-5px);box-shadow:var(--shadow);border-color:#D5D7DC}
+.role .role-ic{width:52px;height:52px;border-radius:15px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 8px 20px rgba(40,42,47,.25)}
+.role .role-ic .i{width:23px;height:23px}
+.role .who{font-size:11px;letter-spacing:.26em;color:var(--ink-3);font-weight:700;text-transform:uppercase}
+.role h3{font-size:22px;font-weight:700;margin:10px 0 12px;letter-spacing:.005em}
+.role p{font-size:14.5px;color:var(--ink-2);line-height:1.8}
+.role .rbar{display:flex;gap:7px;margin-top:24px}
+.role .rbar i{width:22px;height:5px;border-radius:99px;background:var(--brand-soft)}
+.role .rbar i.on{background:var(--grad)}
+
+#cta{position:relative;background:var(--dark);color:#fff;padding:130px 0;overflow:hidden;text-align:center}
+#cta .cta-glow{position:absolute;inset:0;pointer-events:none;background:
+  radial-gradient(46% 42% at 50% 0%,rgba(255,255,255,.08),transparent 70%),
+  radial-gradient(30% 30% at 78% 70%,rgba(255,255,255,.04),transparent 70%)}
+#cta .wrap{position:relative;z-index:2}
+#cta .sec-kick{background:rgba(255,255,255,.09);color:rgba(255,255,255,.62)}
+#cta h2{margin-top:26px;font-size:clamp(34px,5vw,58px);font-weight:700;letter-spacing:.005em;line-height:1.25}
+#cta h2 .grad-text{background:linear-gradient(120deg,#FFFFFF,#C9CDD6 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+#cta p{color:rgba(255,255,255,.62);max-width:460px;margin:24px auto 0;font-size:16px}
+#cta .hero-ctas{margin-top:44px}
+#cta .btn-p{background:#fff;color:var(--ink);box-shadow:0 14px 40px rgba(255,255,255,.14)}
+#cta .btn-p:hover{background:#F0F1F4;box-shadow:0 18px 48px rgba(255,255,255,.16)}
+#cta .btn-ghost{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.28);color:#fff;padding:14px 30px;border-radius:99px;font-size:15.5px;font-weight:600;transition:background .25s,border-color .25s,transform .25s var(--ease);min-height:44px}
+#cta .btn-ghost:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.5);transform:translateY(-2px)}
+#cta .btn-ghost:active{transform:scale(.97)}
+
+footer{background:var(--dark);color:rgba(255,255,255,.85);border-top:1px solid rgba(255,255,255,.08);padding:64px 0 calc(36px + var(--safe-bottom))}
+.foot-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:44px}
+.foot-brand-col .brand{color:#fff;margin-bottom:18px}
+.foot-brand-col p{font-size:13.5px;color:rgba(255,255,255,.45);max-width:300px;line-height:1.8}
+.foot-col h5{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:20px;font-weight:700}
+.foot-col a{display:block;font-size:14px;color:rgba(255,255,255,.62);padding:6px 0;transition:color .2s,padding-left .25s var(--ease)}
+.foot-col a:hover{color:#fff;padding-left:6px}
+.foot-meta{margin-top:56px;padding-top:26px;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-size:12.5px;color:rgba(255,255,255,.38);letter-spacing:.03em}
+
+@media (max-width:1000px){
+  .feat-grid{grid-template-columns:1fr 1fr}
+  .ai-grid{grid-template-columns:1fr 1fr}
+  .flow-col{grid-template-columns:1fr 1fr}
+  .role-grid{grid-template-columns:1fr}
+  .sec-list{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .foot-grid{grid-template-columns:1fr;gap:36px}
+  .gal .card{width:82vw}
+  .gal .card .ph{height:50vh}
+}
+@media (max-width:768px){
+  .wrap{padding:0 20px}
+  #nav .nlinks{display:none}
+  #nav .ncta{display:none}
+  .nav-burger{display:flex}
+  #nav .wrap{height:60px}
+  #mnav{display:flex}
+  #hero{padding:100px 0 56px}
+  .h-badge{font-size:11.5px;padding:6px 14px;gap:7px}
+  .h-badge .bd{width:7px;height:7px}
+  .htitle{margin-top:22px;font-size:clamp(32px,9vw,42px);line-height:1.28}
+  .h-sub{margin-top:20px;font-size:15px;line-height:1.85;padding:0 4px}
+  .hero-ctas{margin-top:30px;gap:10px;flex-direction:column;align-items:stretch}
+  .btn-p,.btn-s{padding:14px 24px;font-size:15px;width:100%;max-width:320px;margin:0 auto}
+  .scroll-hint{margin-top:44px;font-size:10px;letter-spacing:.28em}
+  .scroll-hint .ln{height:40px}
+  .marquee{padding:16px 0}
+  .marquee span{font-size:20px;gap:14px;padding:0 14px}
+  .marquee .mq-dot{width:7px;height:7px}
+  .marquee .mq-mid{width:6px;height:6px}
+  #stats{padding:64px 0}
+  .stat-grid{gap:10px}
+  .stat{padding:22px 18px;border-radius:16px}
+  .stat .num{font-size:32px}
+  .stat .lbl{font-size:12.5px;margin-top:8px}
+  .stat .en{font-size:10px;letter-spacing:.16em}
+  .stat:hover{transform:none}
+  #manifesto{padding:72px 0 24px}
+  #manifesto .big{font-size:clamp(22px,6vw,28px);line-height:1.55;padding:0 8px}
+  #manifesto .sub{margin-top:18px;font-size:14px;padding:0 4px}
+  #features,#flow{padding:72px 0}
+  .sec-kick{font-size:11px;padding:5px 14px;letter-spacing:.2em}
+  .sec-title{margin-top:16px;font-size:clamp(24px,6.8vw,30px);line-height:1.32}
+  .sec-desc{margin-top:14px;font-size:14px;padding:0 4px}
+  .feat-grid{gap:12px;margin-top:40px;grid-template-columns:1fr}
+  .feat{padding:24px 22px;border-radius:16px}
+  .feat:hover{transform:none}
+  .feat h3{font-size:17px}
+  .feat p{font-size:13.5px;line-height:1.75}
+  .feat .f-top{margin-bottom:18px}
+  .feat .f-ic{width:44px;height:44px;border-radius:12px}
+  .feat .f-ic .i{width:20px;height:20px}
+  .feat .f-arrow{display:none}
+  #screens .sec-head{padding-top:64px}
+  .gal{height:auto;display:block;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:32px 0 40px;scrollbar-width:none}
+  .gal::-webkit-scrollbar{display:none}
+  .gal .track{display:flex;gap:14px;padding:0 20px;transform:none!important;animation:none!important}
+  .gal .card{width:82vw;max-width:340px;padding:10px 10px 0;scroll-snap-align:center;border-radius:16px}
+  .gal .card .ph{height:200px;border-radius:10px}
+  .gal .card .meta{padding:12px 6px;font-size:12px}
+  .gal .card .meta b{font-size:13.5px}
+  .gal .card:hover .ph img{transform:none}
+  .flow-col{grid-template-columns:1fr;gap:12px;margin-top:40px}
+  .step{padding:22px 20px;border-radius:16px}
+  .step:hover{transform:none}
+  .step .stn b{font-size:26px}
+  .step .stn{gap:10px}
+  .step h4{font-size:16px;margin:14px 0 6px}
+  .step p{font-size:13px;line-height:1.75}
+  .step .link-more{top:22px;right:22px}
+  #ai{padding:72px 0}
+  .ai-grid{grid-template-columns:1fr;gap:12px;margin-top:40px}
+  .ai-cell{padding:22px 20px;border-radius:16px}
+  .ai-cell:hover{transform:none}
+  .ai-cell .ai-ic{width:42px;height:42px;margin-bottom:16px}
+  .ai-cell h4{font-size:16px;margin:8px 0 6px}
+  .ai-cell p{font-size:13px;line-height:1.75}
+  #security{padding:72px 0}
+  .sec-list{gap:10px;margin-top:40px}
+  .s-item{padding:18px 20px;gap:14px;border-radius:14px}
+  .s-item:hover{transform:none}
+  .s-item .sic{width:38px;height:38px;border-radius:10px}
+  .s-item .sic .i{width:17px;height:17px}
+  .s-item b{font-size:14.5px}
+  .s-item span{font-size:12.5px;line-height:1.65}
+  #roles{padding:0 0 72px}
+  .role-grid{gap:14px;margin-top:40px}
+  .role{padding:26px 22px;border-radius:16px}
+  .role:hover{transform:none}
+  .role .role-ic{width:46px;height:46px;border-radius:13px;margin-bottom:18px}
+  .role .role-ic .i{width:21px;height:21px}
+  .role h3{font-size:18px;margin:8px 0 10px}
+  .role p{font-size:13.5px;line-height:1.75}
+  .role .rbar{margin-top:18px}
+  #cta{padding:72px 0}
+  #cta h2{font-size:clamp(26px,7.5vw,34px);margin-top:20px;line-height:1.28}
+  #cta p{margin-top:18px;font-size:14px;padding:0 8px}
+  #cta .hero-ctas{margin-top:30px;gap:10px;flex-direction:column;align-items:stretch}
+  #cta .btn-p,#cta .btn-ghost{width:100%;max-width:320px;margin:0 auto;font-size:15px}
+  footer{padding:48px 0 calc(28px + var(--safe-bottom))}
+  .foot-grid{grid-template-columns:1fr 1fr;gap:32px 20px}
+  .foot-brand-col{grid-column:1/-1}
+  .foot-brand-col p{font-size:13px}
+  .foot-col h5{font-size:11px;letter-spacing:.2em;margin-bottom:14px}
+  .foot-col a{font-size:13.5px;padding:5px 0}
+  .foot-meta{margin-top:32px;padding-top:20px;flex-direction:column;text-align:center;gap:8px;font-size:11.5px}
+  #boot .bo-mark{width:64px;height:64px;font-size:24px;border-radius:16px;margin-bottom:20px}
+  #boot .bo-num{font-size:32px;right:8vw;bottom:6vh}
+  #boot .bo-bar{width:160px}
+  .gal .card:hover .ph img{transform:none}
+}
+@media (max-width:380px){
+  .wrap{padding:0 16px}
+  .htitle{font-size:28px}
+  .h-sub{font-size:14px}
+  .gal .card{width:88vw}
+  .foot-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .stat{padding:18px 14px}
+  .stat .num{font-size:28px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .marquee .mq-track{animation:none}
+  .scroll-hint .ln{animation:none}
+  .h-badge .bd{animation:none}
+  [data-reveal]{opacity:1!important;transform:none!important}
+}
+@media (hover:none){
+  .feat:hover{transform:none;box-shadow:none;border-color:var(--line)}
+  .feat:hover .f-ic{background:var(--brand-soft);color:var(--brand)}
+  .feat:hover .f-no{color:#C9CCD2}
+  .stat:hover,.step:hover,.s-item:hover,.role:hover,.ai-cell:hover{transform:none;box-shadow:none}
+  .gal .card:hover .ph img{transform:none}
+}
+</style>
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-graduation" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12.5V17c0 1.5 2.7 2.5 6 2.5s6-1 6-2.5v-4.5"/><path d="M22 10v6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-kanban" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18"/><path d="M15 3v13"/><circle cx="6" cy="7.5" r=".4" fill="currentColor"/><circle cx="12" cy="7.5" r=".4" fill="currentColor"/><circle cx="18" cy="7.5" r=".4" fill="currentColor"/><circle cx="12" cy="12" r=".4" fill="currentColor"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1 1 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-filecheck" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8 12 3 7 8"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-2 2"/><path d="m15.5 7.5 3 3L22 7l-3-3"/><path d="m13.5 9.5-5.5 5.5"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6"/><path d="M11 8v6"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 24 24"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></symbol>
+  <symbol id="i-filetext" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M10.7 5.1a10.74 10.74 0 0 1 11.2 6.57 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.44 2.49"/><path d="M14.08 10.4a2.47 2.47 0 0 1-2.3 2.3"/><path d="M17.48 15.41a2.47 2.47 0 0 1-1.06 1.1 10.7 10.7 0 0 1-4.42 1.79A10.75 10.75 0 0 1 2 12a10.75 10.75 0 0 1 5.5-5.5"/><path d="m2 2 20 20"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-user1" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-teach" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/><path d="m17 8 3-1.5L17 5"/></symbol>
+  <symbol id="i-admin" viewBox="0 0 24 24"><path d="M12 2 20 6v5c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6z"/><circle cx="12" cy="11" r="2.5"/></symbol>
+</svg>
+
+<div id="boot" aria-hidden="true">
+  <div class="bo">
+    <div class="bo-mark">iL</div>
+    <span class="bo-word" id="bootWord">同声相应</span>
+    <span class="bo-sub">iLink Platform</span>
+    <div class="bo-bar"><i id="bootBar"></i></div>
+  </div>
+  <span class="bo-num" id="bootNum">00</span>
+</div>
+
+<div id="cur" aria-hidden="true"><span class="ring"></span><span class="dot"></span></div>
+
+<header id="nav">
+  <div class="wrap">
+    <a class="brand" href="#hero"><span class="bmark">iL</span>iLink</a>
+    <nav class="nlinks">
+      <a href="#features">功能</a>
+      <a href="#screens">界面</a>
+      <a href="#flow">流程</a>
+      <a href="#ai">AI 协作</a>
+      <a href="#security">安全</a>
+    </nav>
+    <div class="nav-right">
+      <a class="ncta" href="http://121.40.34.68:8090/">立即加入<svg class="i"><use href="#i-arrow"/></svg></a>
+      <button class="nav-burger" id="burger" aria-label="打开菜单" aria-expanded="false">
+        <svg id="burgerIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="4" y1="7" x2="20" y2="7"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav id="mnav" aria-label="移动端导航">
+  <a href="#features">功能</a>
+  <a href="#screens">界面</a>
+  <a href="#flow">流程</a>
+  <a href="#ai">AI 协作</a>
+  <a href="#security">安全</a>
+  <a class="m-cta" href="http://121.40.34.68:8090/">立即加入<svg class="i" style="width:14px;height:14px"><use href="#i-arrow"/></svg></a>
+</nav>
+
+<main>
+  <section id="hero">
+    <div class="h-glow" aria-hidden="true"></div>
+    <div class="h-grid" aria-hidden="true"></div>
+    <div class="wrap">
+      <span class="h-badge" data-hero><span class="bd"></span>高校竞赛组队与协作平台 · 平台在线</span>
+      <h1 class="htitle">
+        <span class="h-line" data-line>频率相近的人，</span>
+        <span class="h-line" data-line>终会在<span class="grad-text">某个路口</span>相遇。</span>
+      </h1>
+      <p class="h-sub" data-hero>一个人做竞赛，像在黑暗里划火柴。<b>iLink</b> 把你的队友、导师、作品、资料连成一条线——<b>组队 · 协作 · 沉淀</b>，从第一次组队到站上领奖台，全程一个平台走完。</p>
+      <div class="hero-ctas" data-hero>
+        <a class="btn-p" href="http://121.40.34.68:8090/">立即加入<svg class="i"><use href="#i-arrow"/></svg></a>
+        <a class="btn-s" href="http://121.40.34.68:8090/team-market.html">先逛逛组队大厅</a>
+      </div>
+      <div class="scroll-hint" data-hero><span class="ln"></span><span>向下探索</span></div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="mq-track">
+      <span>组队 <i class="mq-dot"></i> 找队友</span>
+      <span>导师 <i class="mq-mid"></i> 找方向</span>
+      <span>竞赛 <i class="mq-dot"></i> 找赛道</span>
+      <span>协作 <i class="mq-mid"></i> 找节奏</span>
+      <span>沉淀 <i class="mq-dot"></i> 找作品</span>
+      <span>组队 <i class="mq-dot"></i> 找队友</span>
+      <span>导师 <i class="mq-mid"></i> 找方向</span>
+      <span>竞赛 <i class="mq-dot"></i> 找赛道</span>
+      <span>协作 <i class="mq-mid"></i> 找节奏</span>
+      <span>沉淀 <i class="mq-dot"></i> 找作品</span>
+    </div>
+  </div>
+
+  <section id="stats">
+    <div class="wrap">
+      <div class="stat-grid">
+        <div class="stat" data-reveal><div class="num" data-count="18">0</div><div class="lbl">注册师生</div><div class="en">Members</div></div>
+        <div class="stat" data-reveal><div class="num" data-count="5">0</div><div class="lbl">活跃队伍</div><div class="en">Teams</div></div>
+        <div class="stat" data-reveal><div class="num" data-count="7">0</div><div class="lbl">入驻导师</div><div class="en">Mentors</div></div>
+        <div class="stat" data-reveal><div class="num" data-count="55">0</div><div class="lbl">收录赛事</div><div class="en">Events</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="manifesto">
+    <div class="wrap">
+      <h2 class="big" data-reveal>竞赛不是一个人的全力以赴，<br><em>是一群人的同频共振。</em></h2>
+      <p class="sub" data-reveal>微信群聊被刷走的需求、网盘里遗失的版本、找不到队友的深夜——这些竞赛路上最消耗热情的事，都在 iLink 里被重新设计。</p>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-kick" data-reveal>六大模块</span>
+        <h2 class="sec-title" data-reveal>竞赛路上每个环节，<br>都被<span class="grad-text">接好了线</span></h2>
+        <p class="sec-desc" data-reveal>不必在微信群、网盘、论坛之间来回跳转。六个模块对应你从组队到获奖的每一步。</p>
+      </div>
+      <div class="feat-grid">
+        <a class="feat" href="http://121.40.34.68:8090/team-market.html" data-reveal>
+          <div class="f-top"><span class="f-ic"><svg class="i"><use href="#i-users"/></svg></span><span class="f-no">01</span></div>
+          <h3>组队大厅</h3>
+          <p>发布需求写清赛道、技能与档期；招募中 / 组队中 / 已组队一目了然。队长审批制，满员自动转协作——组队第一次变得有章法。</p>
+          <span class="f-arrow"><svg class="i"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="feat" href="http://121.40.34.68:8090/teacher-wall.html" data-reveal>
+          <div class="f-top"><span class="f-ic"><svg class="i"><use href="#i-graduation"/></svg></span><span class="f-no">02</span></div>
+          <h3>导师招贤</h3>
+          <p>只展示已通过审核的导师：研究方向、擅长领域、可带队伍规模清清楚楚。学生申请、导师审批，双向留痕。</p>
+          <span class="f-arrow"><svg class="i"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="feat" href="http://121.40.34.68:8090/community.html" data-reveal>
+          <div class="f-top"><span class="f-ic"><svg class="i"><use href="#i-chat"/></svg></span><span class="f-no">03</span></div>
+          <h3>交流社区</h3>
+          <p>综合 / 技术 / 竞赛 / 资源四频道。Markdown 长文、点赞收藏、作者主页——把散落各处的经验沉积成可检索的知识库。</p>
+          <span class="f-arrow"><svg class="i"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="feat" href="http://121.40.34.68:8090/competitions.html" data-reveal>
+          <div class="f-top"><span class="f-ic"><svg class="i"><use href="#i-trophy"/></svg></span><span class="f-no">04</span></div>
+          <h3>竞赛目录</h3>
+          <p>国家级 / 省级 / 校际赛事按级别分档：主办单位、赛季参考、报名窗口一卡齐全。备赛信息，不再靠打听。</p>
+          <span class="f-arrow"><svg class="i"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="feat" href="http://121.40.34.68:8090/gallery.html" data-reveal>
+          <div class="f-top"><span class="f-ic"><svg class="i"><use href="#i-package"/></svg></span><span class="f-no">05</span></div>
+          <h3>成果展示</h3>
+          <p>从项目、论文到开源代码，成果卡支持附件与 Markdown 说明。毕业前的「竞赛作品集」，比简历更有说服力。</p>
+          <span class="f-arrow"><svg class="i"><use href="#i-arrow"/></svg></span>
+        </a>
+        <a class="feat" href="http://121.40.34.68:8090/team-space.html" data-reveal>
+          <div class="f-top"><span class="f-ic"><svg class="i"><use href="#i-kanban"/></svg></span><span class="f-no">06</span></div>
+          <h3>团队空间</h3>
+          <p>任务看板五态流转、STOMP 实时群聊、文件共享——访问权限仅限本队成员。从头脑风暴到最终答辩，全程留档。</p>
+          <span class="f-arrow"><svg class="i"><use href="#i-arrow"/></svg></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap sec-head">
+      <span class="sec-kick" data-reveal>真实界面</span>
+      <h2 class="sec-title" data-reveal>不是概念稿，<br>是<span class="grad-text">跑起来的系统</span></h2>
+      <p class="sec-desc" data-reveal>以下截图全部来自 iLink 真实运行实例（桌面 Web 端），含登录态的团队空间。低噪音的界面，让信息自己说话。横向滑动浏览 →</p>
+    </div>
+    <div class="gal" id="gal">
+      <div class="track" id="galTrack">
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/01-home.png" alt="iLink 首页" loading="lazy"></div><figcaption class="meta"><b>首页 · 一屏讲清</b><span class="idx">01 / 09</span></figcaption></figure>
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/04-team-market.png" alt="组队大厅" loading="lazy"></div><figcaption class="meta"><b>组队大厅</b><span class="idx">02 / 09</span></figcaption></figure>
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/05-competitions.png" alt="竞赛目录" loading="lazy"></div><figcaption class="meta"><b>竞赛目录</b><span class="idx">03 / 09</span></figcaption></figure>
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/07-teacher.png" alt="导师招贤" loading="lazy"></div><figcaption class="meta"><b>导师招贤</b><span class="idx">04 / 09</span></figcaption></figure>
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/06-community.png" alt="交流社区" loading="lazy"></div><figcaption class="meta"><b>交流社区</b><span class="idx">05 / 09</span></figcaption></figure>
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/08-gallery.png" alt="成果展示" loading="lazy"></div><figcaption class="meta"><b>成果展示</b><span class="idx">06 / 09</span></figcaption></figure>
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/09-team-space.png" alt="团队空间：任务看板五列流转" loading="lazy"></div><figcaption class="meta"><b>团队空间 · 任务看板</b><span class="idx">07 / 09</span></figcaption></figure>
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/10-team-chat.png" alt="团队空间：实时群聊与成员列表" loading="lazy"></div><figcaption class="meta"><b>团队空间 · 实时群聊</b><span class="idx">08 / 09</span></figcaption></figure>
+        <figure class="card" data-reveal><div class="ph"><img src="screenshots/11-team-ai.png" alt="团队空间 AI 协作：智能答疑与任务拆解" loading="lazy"></div><figcaption class="meta"><b>团队空间 · AI 协作</b><span class="idx">09 / 09</span></figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="flow">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-kick" data-reveal>协作流程</span>
+        <h2 class="sec-title" data-reveal>从组队到获奖，<span class="grad-text">四步走完</span></h2>
+        <p class="sec-desc" data-reveal>队伍状态机「招募中 → 组队中 → 已组队」全程可视，每个环节有明确的责任人与动作。</p>
+      </div>
+      <div class="flow-col">
+        <div class="step" data-reveal>
+          <svg class="i link-more"><use href="#i-arrow"/></svg>
+          <div class="stn"><b>01</b><span class="dot"></span></div>
+          <h4>发布 / 寻找</h4>
+          <p>组队大厅发需求，或按赛道、技能标签找到与你频率相合的那支队伍。</p>
+        </div>
+        <div class="step" data-reveal>
+          <svg class="i link-more"><use href="#i-arrow"/></svg>
+          <div class="stn"><b>02</b><span class="dot"></span></div>
+          <h4>申请 · 审批</h4>
+          <p>成员提交申请，队长审批；满员自动进入 TEAMING，规则前置透明。</p>
+        </div>
+        <div class="step" data-reveal>
+          <svg class="i link-more"><use href="#i-arrow"/></svg>
+          <div class="stn"><b>03</b><span class="dot"></span></div>
+          <h4>协作推进</h4>
+          <p>团队空间开任务看板：待办 / 进行 / 评审 / 完成 / 取消五态流转，群聊与通知实时同步。</p>
+        </div>
+        <div class="step" data-reveal>
+          <svg class="i link-more"><use href="#i-arrow"/></svg>
+          <div class="stn"><b>04</b><span class="dot"></span></div>
+          <h4>沉淀展示</h4>
+          <p>获奖后把项目 / 论文 / 代码挂上成果展示，收进个人作品集，共同点亮平台陈列。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ai">
+    <div class="ai-glow" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-kick" data-reveal>AI 协作</span>
+        <h2 class="sec-title" data-reveal>把「不会问」「不会拆」<br><span class="grad-text">不会写周报</span>，交给 AI</h2>
+        <p class="sec-desc" data-reveal>iLink 把 AI 嵌进协作场景，而非塞给你一个聊天框。同时把隐私边界写清楚：群聊与个人信息不外发。</p>
+      </div>
+      <div class="ai-grid">
+        <div class="ai-cell" data-reveal>
+          <div class="ai-ic"><svg class="i"><use href="#i-search"/></svg></div>
+          <span class="tag">QA</span><h4>竞赛答疑</h4>
+          <p>Bing 检索增强 + SSE 流式回复，规则、备赛资料、往届案例即问即答。</p>
+        </div>
+        <div class="ai-cell" data-reveal>
+          <div class="ai-ic"><svg class="i"><use href="#i-branch"/></svg></div>
+          <span class="tag">SPLIT</span><h4>任务建议</h4>
+          <p>把「做一套 Web 系统」拆成可排期的任务——AI 只给建议，你确认后才落库。</p>
+        </div>
+        <div class="ai-cell" data-reveal>
+          <div class="ai-ic"><svg class="i"><use href="#i-filetext"/></svg></div>
+          <span class="tag">REPORT</span><h4>周报聚合</h4>
+          <p>按周自动汇总任务与讨论，导师与队长一眼看清进度，不用手工排版。</p>
+        </div>
+        <div class="ai-cell" data-reveal>
+          <div class="ai-ic"><svg class="i"><use href="#i-eyeoff"/></svg></div>
+          <span class="tag">PRIVACY</span><h4>隐私边界</h4>
+          <p>AI 调用只发送必要上下文，群聊与个人敏感信息留在本地，不外发。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="security">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-kick" data-reveal>安全体系</span>
+        <h2 class="sec-title" data-reveal>学生数据，<span class="grad-text">不该被将就</span></h2>
+        <p class="sec-desc" data-reveal>安全不是功能列表，是设计前提。从登录到上传、从 XSS 到 CSRF，全部按企业级标准实现。</p>
+      </div>
+      <div class="sec-list">
+        <div class="s-item" data-reveal><div class="sic"><svg class="i"><use href="#i-lock"/></svg></div><div><b>多凭证登录 + 智能锁定</b><span>手机号 / 学号 / 工号 / 用户名 / 邮箱皆可；失败 5 次锁 15 分钟，防暴力破解</span></div></div>
+        <div class="s-item" data-reveal><div class="sic"><svg class="i"><use href="#i-shield"/></svg></div><div><b>CSRF 全覆盖</b><span>Spring Security Cookie 模式，动态页面一律带 token；写操作裸 POST 直接拒绝</span></div></div>
+        <div class="s-item" data-reveal><div class="sic"><svg class="i"><use href="#i-filecheck"/></svg></div><div><b>HTML 白名单净化</b><span>Jsoup 白名单而非黑名单，XSS 攻击面收敛到最小</span></div></div>
+        <div class="s-item" data-reveal><div class="sic"><svg class="i"><use href="#i-upload"/></svg></div><div><b>上传双校验</b><span>按业务分档 + 内容嗅探双保险，路径规范化防目录穿越</span></div></div>
+        <div class="s-item" data-reveal><div class="sic"><svg class="i"><use href="#i-key"/></svg></div><div><b>密码重置不外泄</b><span>响应不区分账号存在性，token 只存哈希、30 分钟一次性</span></div></div>
+        <div class="s-item" data-reveal><div class="sic"><svg class="i"><use href="#i-clipboard"/></svg></div><div><b>236 项单元测试全绿</b><span>服务层 / 控制器 / 安全组件 / AI 服务全覆盖，回归零失败</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="roles">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="sec-kick" data-reveal>三种身份</span>
+        <h2 class="sec-title" data-reveal>学生、导师、管理员，<span class="grad-text">各得其所</span></h2>
+      </div>
+      <div class="role-grid">
+        <div class="role" data-reveal>
+          <div class="role-ic"><svg class="i"><use href="#i-user1"/></svg></div>
+          <span class="who">STUDENT</span><h3>学生 · 发起方</h3>
+          <p>注册即用：找队友、找导师、发需求、写周报、挂作品。资料越完整，公开可见度越高，越好被同频的人找到。</p>
+          <span class="rbar"><i class="on"></i><i class="on"></i><i class="on"></i></span>
+        </div>
+        <div class="role" data-reveal>
+          <div class="role-ic"><svg class="i"><use href="#i-teach"/></svg></div>
+          <span class="who">TEACHER</span><h3>导师 · 入驻方</h3>
+          <p>注册即获导师身份；资料完善后自动公开，进入招贤墙。学生申请、导师审批，双向留痕。</p>
+          <span class="rbar"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>
+        </div>
+        <div class="role" data-reveal>
+          <div class="role-ic"><svg class="i"><use href="#i-admin"/></svg></div>
+          <span class="who">ADMIN</span><h3>管理员 · 治理方</h3>
+          <p>审核导师入驻、管理赛事目录、审计操作日志。管理员不可公开注册，由平台方指定。</p>
+          <span class="rbar"><i class="on"></i><i class="on"></i></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cta">
+    <div class="cta-glow" aria-hidden="true"></div>
+    <div class="wrap">
+      <span class="sec-kick" data-reveal>准备好了吗</span>
+      <h2 data-reveal>下一个路口，<br>先把你的人<span class="grad-text">找齐。</span></h2>
+      <p data-reveal>注册 30 秒，发布第一条组队需求 3 分钟。剩下的，交给 iLink。</p>
+      <div class="hero-ctas" data-reveal>
+        <a class="btn-p" href="http://121.40.34.68:8090/">立即加入<svg class="i"><use href="#i-arrow"/></svg></a>
+        <a class="btn-ghost" href="http://121.40.34.68:8090/team-market.html">先逛逛组队大厅</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand-col">
+        <a class="brand" href="#hero"><span class="bmark">iL</span>iLink</a>
+        <p>同声相应。为高校师生而生的竞赛组队与协作平台——组队 · 协作 · 沉淀，一站走完。</p>
+      </div>
+      <div class="foot-col">
+        <h5>产品</h5>
+        <a href="#features">功能</a>
+        <a href="#screens">界面</a>
+        <a href="#flow">流程</a>
+        <a href="#ai">AI 协作</a>
+        <a href="#security">安全体系</a>
+      </div>
+      <div class="foot-col">
+        <h5>平台</h5>
+        <a href="http://121.40.34.68:8090/">立即注册</a>
+        <a href="http://121.40.34.68:8090/">登录</a>
+        <a href="http://121.40.34.68:8090/team-market.html">组队大厅</a>
+        <a href="#cta">参与进来</a>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <span>© 2026 iLink · 高校竞赛组队与协作平台</span>
+      <span>界面截图来自真实运行实例 · 数据 2026-09-13 采集</span>
+      <span>本页为独立落地页，非产品源码</span>
+    </div>
+  </div>
+</footer>
+
+<script src="lib/gsap.min.js"></script>
+<script src="lib/ScrollTrigger.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var doc = document, root = doc.documentElement;
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isMobile = matchMedia('(max-width: 768px)').matches;
+  var hasGsap = typeof window.gsap !== 'undefined';
+
+  var burger = doc.getElementById('burger');
+  var burgerIcon = doc.getElementById('burgerIcon');
+  var mnav = doc.getElementById('mnav');
+  var menuOpen = false;
+  function toggleMenu(force) {
+    menuOpen = typeof force === 'boolean' ? force : !menuOpen;
+    mnav.classList.toggle('open', menuOpen);
+    burger.setAttribute('aria-expanded', menuOpen);
+    burgerIcon.innerHTML = menuOpen
+      ? '<line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/>'
+      : '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>';
+  }
+  if (burger) {
+    burger.addEventListener('click', function (e) { e.stopPropagation(); toggleMenu(); });
+    mnav.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', function () { toggleMenu(false); });
+    });
+  }
+  // 点击外部关闭菜单
+  document.addEventListener('click', function (e) {
+    if (menuOpen && !e.target.closest('#mnav') && !e.target.closest('#burger')) {
+      toggleMenu(false);
+    }
+  });
+
+  var boot = doc.getElementById('boot');
+  if (hasGsap && !reduce) {
+    var numEl = doc.getElementById('bootNum');
+    var barEl = doc.getElementById('bootBar');
+    var tl = gsap.timeline({ onComplete: function () {
+      gsap.to(boot, { yPercent: -100, duration: .75, ease: 'power4.inOut', onComplete: function () {
+        boot.style.display = 'none';
+        launchHero();
+      }});
+    }, defaults: { ease: 'power2.out' }});
+    tl.from('#boot .bo-mark', { y: 22, opacity: 0, scale: .92, duration: .55 })
+      .from('#boot .bo-word', { y: 18, opacity: 0, duration: .55 }, '-=.3')
+      .from('#boot .bo-sub', { opacity: 0, duration: .4 }, '-=.3')
+      .from(barEl, { scaleX: 0, duration: 1.0, ease: 'power1.inOut' })
+      .to({ v: 0 }, { duration: 1.0, v: 100, ease: 'power1.inOut', onUpdate: function () {
+        numEl.textContent = String(Math.round(this.targets()[0].v)).padStart(2, '0');
+      }}, '-=1.0');
+  } else {
+    boot.style.display = 'none';
+    if (!reduce && hasGsap) launchHero();
+  }
+
+  function launchHero() {
+    if (!hasGsap) return;
+    doc.querySelectorAll('.htitle .h-line').forEach(function (ln) {
+      var nodes = Array.prototype.slice.call(ln.childNodes);
+      nodes.forEach(function (n) {
+        if (n.nodeType !== 3) return;
+        var frag = doc.createDocumentFragment();
+        n.textContent.split('').forEach(function (ch) {
+          var s = doc.createElement('span');
+          s.className = 'h-char';
+          s.textContent = ch === ' ' ? ' ' : ch;
+          frag.appendChild(s);
+        });
+        ln.replaceChild(frag, n);
+      });
+    });
+    gsap.from('.h-char', { yPercent: 110, opacity: 0, duration: .95, ease: 'power4.out', stagger: .022 });
+    gsap.from('[data-hero]', { y: 22, opacity: 0, duration: .85, ease: 'power3.out', stagger: .1, delay: .35 });
+  }
+
+  if (matchMedia('(pointer:fine)').matches && hasGsap && !reduce) {
+    root.classList.add('cur-on');
+    var ring = doc.querySelector('#cur .ring'), dot = doc.querySelector('#cur .dot');
+    var rx = gsap.quickTo(ring, 'x', { duration: .45, ease: 'power3' });
+    var ry = gsap.quickTo(ring, 'y', { duration: .45, ease: 'power3' });
+    var dx = gsap.quickTo(dot, 'x', { duration: .15, ease: 'power2' });
+    var dy = gsap.quickTo(dot, 'y', { duration: .15, ease: 'power2' });
+    doc.addEventListener('mousemove', function (e) { rx(e.clientX); ry(e.clientY); dx(e.clientX); dy(e.clientY); });
+    doc.addEventListener('mouseover', function (e) {
+      var hit = e.target.closest('a,button,.feat,.card,.step,.role,.s-item,.stat');
+      doc.body.classList.toggle('cur-grow', !!hit);
+    });
+  }
+
+  if (hasGsap && !reduce) {
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.context(function () {
+      ScrollTrigger.create({ start: 30, end: 'max', onToggle: function (self) {
+        doc.getElementById('nav').classList.toggle('scrolled', self.isActive);
+      }});
+      doc.querySelectorAll('[data-reveal]').forEach(function (el) {
+        gsap.from(el, { y: 30, opacity: 0, duration: .85, ease: 'power3.out',
+          scrollTrigger: { trigger: el, start: 'top 90%', toggleActions: 'play none none none' } });
+      });
+      doc.querySelectorAll('[data-count]').forEach(function (el) {
+        var target = +el.getAttribute('data-count');
+        var obj = { v: 0 };
+        gsap.to(obj, { v: target, duration: 1.6, ease: 'power2.out',
+          scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+          onUpdate: function () { el.textContent = String(Math.round(obj.v)); } });
+      });
+      if (!isMobile) {
+        var gal = doc.getElementById('gal');
+        var track = doc.getElementById('galTrack');
+        var dist = function () { return track.scrollWidth - gal.clientWidth; };
+        gsap.to(track, {
+          x: function () { return -dist(); },
+          ease: 'none',
+          scrollTrigger: {
+            trigger: gal, start: 'top top',
+            end: function () { return '+=' + dist() + 'px'; },
+            pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true
+          }
+        });
+        window.addEventListener('resize', function () { ScrollTrigger.refresh(); });
+      }
+    });
+  }
+
+  var lastMobile = isMobile;
+  window.addEventListener('resize', function () {
+    var nowMobile = matchMedia('(max-width: 768px)').matches;
+    if (nowMobile !== lastMobile) { location.reload(); }
+  });
+})();
+</script>
+</body>
+</html>

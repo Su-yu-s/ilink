@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 public class FaviconController {
 
     private static final MediaType SVG_TYPE = MediaType.valueOf("image/svg+xml");
-    private static final MediaType PNG_TYPE = MediaType.valueOf("image/png");
 
     private static final CacheControl CACHE_1Y = CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic();
 
@@ -56,10 +55,6 @@ public class FaviconController {
         Resource svg = resolve("favicon.svg");
         if (svg != null) {
             return ResponseEntity.ok().contentType(SVG_TYPE).cacheControl(CACHE_1Y).body(svg);
-        }
-        Resource png = resolve("favicon.png");
-        if (png != null) {
-            return ResponseEntity.ok().contentType(PNG_TYPE).cacheControl(CACHE_1Y).body(png);
         }
         return ResponseEntity.notFound().build();
     }
@@ -91,12 +86,7 @@ public class FaviconController {
             }
         }
         // 2. 回退：打包进 jar 的 classpath 资源
-        Resource cp;
-        if ("favicon.png".equals(filename)) {
-            cp = loadFromClasspath("static/images/favicon.png");
-        } else {
-            cp = loadFromClasspath("static/favicon.svg");
-        }
+        Resource cp = loadFromClasspath("static/favicon.svg");
         if (cp.exists() && cp.isReadable()) {
             return cp;
         }

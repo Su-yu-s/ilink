@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- 详情页含用户联系方式，不进入搜索引擎索引 -->
+    <meta name="robots" content="noindex, nofollow">
+    <title th:text="'反馈 ' + ${displayNumber} + ' - iLink'">反馈详情 - iLink</title>
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=false)"></th:block>
+</head>
+<body class="fbk-detail">
+
+<header class="fbk-detail__top">
+    <button class="fbk-detail__back" id="fbkBack" type="button" aria-label="返回">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"/>
+        </svg>
+    </button>
+    <h1 class="fbk-detail__title">反馈详情</h1>
+    <span class="fbk-detail__no" th:text="${displayNumber}">#FB20260912001</span>
+</header>
+
+<main class="fbk-detail__main">
+    <!-- 基本信息 -->
+    <section class="fbk-card">
+        <div class="fbk-badges">
+            <span class="fbk-badge"
+                  th:classappend="' fbk-badge--' + ${#strings.toLowerCase(feedback.type)}">
+                <svg th:if="${feedback.type == 'BUG'}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 9v2m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/>
+                </svg>
+                <span th:text="${typeLabel}">Bug 反馈</span>
+            </span>
+            <span class="fbk-badge fbk-badge--done" th:if="${feedback.handled}">
+                <span class="fbk-badge__dot" aria-hidden="true"></span>
+                已处理
+            </span>
+            <span class="fbk-badge fbk-badge--pending" th:unless="${feedback.handled}">
+                <span class="fbk-badge__dot" aria-hidden="true"></span>
+                待处理
+            </span>
+        </div>
+
+        <div class="fbk-meta">
+            <span class="fbk-meta__item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="8" r="3.75"/>
+                    <path d="M4.5 20.1a7.5 7.5 0 0 1 15 0"/>
+                </svg>
+                <span th:text="${feedback.submitterId != null ? '注册用户 #' + feedback.submitterId : '匿名用户'}">匿名用户</span>
+            </span>
+            <span class="fbk-meta__item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 6v6h4.5"/>
+                </svg>
+                <span th:text="${#dates.format(feedback.createdAt, 'yyyy-MM-dd HH:mm:ss')}">2026-09-12 14:32:18</span>
+            </span>
+            <span class="fbk-meta__item" th:if="${not #lists.isEmpty(imageUrls)}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M2.5 15.8 7.7 10.6a2.3 2.3 0 0 1 3.2 0l5.2 5.2m-1.5-1.5 1.4-1.4a2.3 2.3 0 0 1 3.2 0l2.9 2.9M3.7 21h16.6a1.5 1.5 0 0 0 1.5-1.5V4.5A1.5 1.5 0 0 0 20.3 3H3.7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 3.7 21z"/>
+                </svg>
+                <span th:text="'含 ' + ${#lists.size(imageUrls)} + ' 张截图'">含 2 张截图</span>
+            </span>
+        </div>
+    </section>
+
+    <!-- 详细描述 -->
+    <section class="fbk-card">
+        <h2 class="fbk-card__title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19.5 14.25V11.6a3.4 3.4 0 0 0-3.4-3.4h-1.5A1.1 1.1 0 0 1 13.5 7.1V5.6a3.4 3.4 0 0 0-3.4-3.4H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.6c-.6 0-1.1.5-1.1 1.1v17.3c0 .6.5 1.1 1.1 1.1h12.8c.6 0 1.1-.5 1.1-1.1V11.25a9 9 0 0 0-9-9z"/>
+            </svg>
+            详细描述
+        </h2>
+        <div class="fbk-desc" th:text="${feedback.description}">描述</div>
+    </section>
+
+    <!-- 用户截图 -->
+    <section class="fbk-card" th:if="${not #lists.isEmpty(imageUrls)}">
+        <h2 class="fbk-card__title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2.5 15.8 7.7 10.6a2.3 2.3 0 0 1 3.2 0l5.2 5.2m-1.5-1.5 1.4-1.4a2.3 2.3 0 0 1 3.2 0l2.9 2.9M3.7 21h16.6a1.5 1.5 0 0 0 1.5-1.5V4.5A1.5 1.5 0 0 0 20.3 3H3.7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 3.7 21z"/>
+            </svg>
+            用户截图
+            <span class="fbk-card__title-hint">(点击可放大)</span>
+        </h2>
+        <div class="fbk-shots">
+            <button class="fbk-shot" type="button" th:each="url, urlStat : ${imageUrls}"
+                    th:attr="data-src=${url},aria-label='放大查看第 ' + ${urlStat.count} + ' 张截图'">
+                <img th:src="${url}" alt="用户上传的截图" loading="lazy">
+            </button>
+        </div>
+    </section>
+
+    <!-- 联系方式 -->
+    <section class="fbk-card" th:if="${feedback.contact != null and !feedback.contact.isEmpty()}">
+        <h2 class="fbk-card__title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/>
+                <path d="m3 7 8 5.5L20 7"/>
+            </svg>
+            联系方式
+        </h2>
+        <div class="fbk-contact">
+            <span class="fbk-contact__value" id="fbkContactValue" th:text="${feedback.contact}">contact</span>
+            <button class="fbk-copy" id="fbkCopy" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="11" height="11" rx="2"/>
+                    <path d="M5 15V6a2 2 0 0 1 2-2h9"/>
+                </svg>
+                复制
+            </button>
+        </div>
+    </section>
+
+    <p class="fbk-detail__foot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="m9 12.5 2.2 2.2L15.5 10"/>
+        </svg>
+        该页面由 iLink 系统自动生成 · <span th:text="${#dates.format(feedback.createdAt, 'yyyy-MM-dd')}">2026-09-12</span>
+    </p>
+</main>
+
+<div class="fbk-lightbox" id="fbkLightbox" role="dialog" aria-modal="true" aria-label="截图预览">
+    <button class="fbk-lightbox__close" id="fbkLightboxClose" type="button" aria-label="关闭预览">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="m6 6 12 12M18 6 6 18"/>
+        </svg>
+    </button>
+    <img id="fbkLightboxImg" src="" alt="放大后的截图">
+</div>
+
+<script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+<script th:src="@{/js/common.js}"></script>
+<script th:src="@{/js/feedback-detail.js}"></script>
+</body>
+</html>

@@ -134,13 +134,71 @@ class AiAssistantServiceTest {
     }
 
     @Test
+    void qaAnswerCarriesReasoningSourcesAndElapsed() {
+        when(aiClient.chat(anyList(), anyInt())).thenReturn(
+            new AiClient.AiChatResult("答案正文", "我先看看搜索结果再作答。", 10, 20));
+        when(webSearchService.search(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+            .thenReturn(java.util.Arrays.asList(
+                new WebSearchService.SearchResult("官网公告", "https://example.com/a", "摘要A"),
+                new WebSearchService.SearchResult("技术文章", "https://example.com/b", "摘要B")));
+
+        AiAssistantService.QaAnswer qa = service.answerCompetitionQuestion("怎么报名？", null);
+
+        assertEquals("答案正文", qa.answer);
+        // 前端「已思考」折叠区依赖这三个字段
+        assertEquals("我先看看搜索结果再作答。", qa.reasoning);
+        assertEquals(2, qa.sources.size());
+        assertEquals("官网公告", qa.sources.get(0).get("title"));
+        assertEquals("https://example.com/a", qa.sources.get(0).get("url"));
+        assertTrue(qa.elapsedMs >= 0);
+    }
+
+    @Test
+    void qaAnswerToleratesModelWithoutReasoning() {
+        // 非推理模型不返回 reasoning_content；搜索也没结果时不该给前端造出空面板
+        when(aiClient.chat(anyList(), anyInt())).thenReturn(new AiClient.AiChatResult("答案", 10, 20));
+        when(webSearchService.search(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+            .thenReturn(java.util.Collections.emptyList());
+
+        AiAssistantService.QaAnswer qa = service.answerCompetitionQuestion("问题", null);
+
+        assertEquals("答案", qa.answer);
+        assertEquals("", qa.reasoning);
+        assertTrue(qa.sources.isEmpty());
+    }
+
+    @Test
+    void generalQuestionWithoutCompetitionStillSearchesWeb() {
+        when(aiClient.chat(anyList(), anyInt())).thenReturn(new AiClient.AiChatResult("通用回答", 10, 20));
+        when(webSearchService.search(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyInt()))
+            .thenReturn(java.util.Collections.singletonList(
+                new WebSearchService.SearchResult("数学建模官网", "https://example.com/mcm", "每年 9 月开赛。")));
+
+        String answer = service.answerCompetitionQuestion("数学建模怎么备赛？", null).answer;
+
+        assertEquals("通用回答", answer);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Map<String, String>>> captor = ArgumentCaptor.forClass((Class) List.class);
+        org.mockito.Mockito.verify(aiClient).chat(captor.capture(), anyInt());
+        String userPrompt = captor.getValue().get(1).get("content");
+        // 未绑定竞赛：不应出现竞赛资料块，但联网上下文必须照常注入
+        assertFalse(userPrompt.contains("<competition_info>"));
+        assertTrue(userPrompt.contains("<web_search_results>"));
+        assertTrue(userPrompt.contains("数学建模官网"));
+        assertTrue(userPrompt.contains("数学建模怎么备赛？"));
+        // 检索词直接来自问题本身（没有竞赛名可拼）
+        org.mockito.Mockito.verify(webSearchService)
+            .search(org.mockito.ArgumentMatchers.eq("数学建模怎么备赛？"), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
     void competitionQaWrapsQuestionAndInfo() {
         when(aiClient.chat(anyList(), anyInt())).thenReturn(new AiClient.AiChatResult("回答内容", 10, 20));
         Competition competition = new Competition();
         competition.setName("挑战杯");
         competition.setOrganizer("共青团中央");
 
-        String answer = service.answerCompetitionQuestion("参赛需要什么材料？", competition);
+        String answer = service.answerCompetitionQuestion("参赛需要什么材料？", competition).answer;
 
         assertEquals("回答内容", answer);
         @SuppressWarnings("unchecked")
@@ -163,7 +221,7 @@ class AiAssistantServiceTest {
         competition.setName("互联网+大学生创新创业大赛");
         competition.setOrganizer("教育部");
 
-        String answer = service.answerCompetitionQuestion("什么时候报名？", competition);
+        String answer = service.answerCompetitionQuestion("什么时候报名？", competition).answer;
 
         assertEquals("指导回答", answer);
         @SuppressWarnings("unchecked")
@@ -220,6 +278,9 @@ class AiAssistantServiceTest {
         assertTrue(AiAssistantService.stripPromptTags("<competition_info>内容一</competition_info>\n<question>内容二</question>").contains("内容一"));
         assertTrue(AiAssistantService.stripPromptTags("<competition_info>内容一</competition_info>\n<question>内容二</question>").contains("内容二"));
         assertEquals("普通回答", AiAssistantService.stripPromptTags("普通回答"));
+        // 模型自发检索标记也要清掉（实测会出现在回答开头）
+        assertEquals("评审规则如下。", AiAssistantService.stripPromptTags("<search>某大赛2026评审规则</search>评审规则如下。"));
+        assertEquals("结论。", AiAssistantService.stripPromptTags("<search_results>q</search_results>结论。"));
         assertEquals("", AiAssistantService.stripPromptTags(null));
     }
 }

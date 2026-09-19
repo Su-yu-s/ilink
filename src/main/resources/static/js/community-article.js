@@ -201,24 +201,19 @@ function renderArticleBody(el, content) {
         el.classList.add('community-post-body--plain');
         return;
     }
-    // 检测 markdown 包裹格式，解码并渲染
-    const mdMatch = raw.match(/^<!--md:([A-Za-z0-9+/=]+)-->/);
-    if (mdMatch && typeof marked !== 'undefined') {
-        try {
-            const decoded = decodeURIComponent(escape(atob(mdMatch[1])));
-            // 如果解码后是 HTML，提取纯文本作为 markdown 渲染（渲染结果经 DOMPurify 净化）
-            const markdownText = decoded.replace(/<[^>]+>/g, '').trim();
-            renderMarkdownSafe(el, markdownText);
-            el.classList.remove('community-post-body--plain');
-            return;
-        } catch (_) {}
+    const sourcePayload = markdownSourcePayload(raw);
+    if (sourcePayload && configureMarkdownRenderer()) {
+        renderMarkdownSafe(el, decodeMarkdownSource(sourcePayload));
+        el.classList.remove('community-post-body--plain');
+        return;
     }
-    const looksLikeHtml = /<[a-z][\s\S]*>/i.test(raw);
+    const storedHtml = stripMarkdownSourceMarker(raw);
+    const looksLikeHtml = /<[a-z][\s\S]*>/i.test(storedHtml);
     if (looksLikeHtml && typeof DOMPurify !== 'undefined') {
-        el.innerHTML = DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } });
+        el.innerHTML = DOMPurify.sanitize(storedHtml, { USE_PROFILES: { html: true } });
         el.classList.remove('community-post-body--plain');
     } else {
-        el.textContent = raw;
+        el.textContent = storedHtml;
         el.classList.add('community-post-body--plain');
     }
 }
@@ -320,9 +315,8 @@ async function loadArticle() {
         }
 
         const delBtn = document.getElementById('deleteArticleBtn');
-        if (delBtn && currentUser && (
-            String(currentUser.id) === String(articleData.authorId) || currentUser.role === 'ADMIN'
-        )) {
+        if (delBtn && currentUser && String(currentUser.id) === String(articleData.authorId)) {
+            // 仅发布者本人可见删除入口；管理员的删除能力在管理后台
             delBtn.classList.remove('d-none');
         }
         setArticleLoadState('success');

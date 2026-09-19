@@ -11,3 +11,10 @@ app:
     api-key: ${AGNES_API_KEY:sk-在这里填入你的Key}
     # 国内节点 https://apihub.agnes-ai.cn/v1；国际站 https://apihub.agnes-ai.com/v1
     base-url: ${AGNES_BASE_URL:https://apihub.agnes-ai.cn/v1}
+  # 反馈推送 / 密码重置邮件里拼详情链接用的公网地址，微信里必须能打开
+  public-base-url: ${APP_PUBLIC_BASE_URL:http://121.40.34.68:8090}
+
+  feedback:
+    # Server酱（https://sct.ftqq.com）SendKey，用于把意见反馈推送到开发者微信。
+    # 留空则反馈照常落库并生成详情页，只是不推送。
+    serverchan-sendkey: ${SERVERCHAN_SENDKEY:在这里填入你的SendKey}

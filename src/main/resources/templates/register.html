@@ -118,8 +118,8 @@
         </div>
     </div>
 
-    <script src="/js/common.js?v=9.2"></script>
-    <script src="/js/register.js?v=7.4"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/register.js}"></script>
     <script>        /* === Password visibility toggle === */
         function togglePasswordVisibility(inputId, eyeId, eyeOffId) {
             const input = document.getElementById(inputId);
@@ -199,5 +199,6 @@
             }
         }
     </script>
+    <th:block th:replace="fragments/feedback-widget :: widget"></th:block>
 </body>
 </html>

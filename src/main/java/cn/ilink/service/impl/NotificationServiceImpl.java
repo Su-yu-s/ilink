@@ -2,7 +2,9 @@ package cn.ilink.service.impl;
 
 import cn.ilink.dto.NotificationDTO;
 import cn.ilink.entity.Notification;
+import cn.ilink.entity.TeamApplication;
 import cn.ilink.mapper.NotificationMapper;
+import cn.ilink.mapper.TeamApplicationMapper;
 import cn.ilink.service.NotificationPushService;
 import cn.ilink.service.NotificationService;
 import cn.ilink.util.CacheEvictUtils;
@@ -32,6 +34,9 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Autowired
     private NotificationPushService notificationPushService;
+
+    @Autowired
+    private TeamApplicationMapper teamApplicationMapper;
 
     @Override
     public Notification getById(Long id) {
@@ -194,13 +199,66 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    @Override
+    public void markInviteHandled(Long userId, Long teamId) {
+        if (userId == null || teamId == null) {
+            return;
+        }
+        int updated = notificationMapper.update(null,
+            new LambdaUpdateWrapper<Notification>()
+                .eq(Notification::getUserId, userId)
+                .eq(Notification::getType, "TEAM_INVITE")
+                .eq(Notification::getRelatedId, teamId)
+                .eq(Notification::getIsRead, false)
+                .set(Notification::getIsRead, true));
+        if (updated > 0) {
+            CacheEvictUtils.evictUnreadCount(userId);
+            notificationPushService.sendUnreadCount(userId, getUnreadCount(userId));
+        }
+    }
+
     private List<NotificationVO> convertToVO(List<Notification> notifications) {
-        return notifications.stream().map(n -> {
+        List<NotificationVO> vos = notifications.stream().map(n -> {
             NotificationVO vo = new NotificationVO();
             BeanUtils.copyProperties(n, vo);
             vo.setTimeAgo(formatTimeAgo(n.getCreatedAt()));
             return vo;
         }).collect(Collectors.toList());
+        fillInvitationIds(vos);
+        return vos;
+    }
+
+    /**
+     * 邀请类通知补上对应的 team_application.id，前端才渲染得出「同意加入 / 拒绝」按钮。
+     * relatedId 存的是团队 ID（沿用既有跳转语义），所以按 (用户, 团队, 待确认) 反查，
+     * 靠 uk_team_user 保证结果唯一。实时推送走的也是这里，因此推送天然带上该字段。
+     */
+    private void fillInvitationIds(List<NotificationVO> vos) {
+        Set<Long> userIds = new HashSet<>();
+        Set<Long> teamIds = new HashSet<>();
+        for (NotificationVO vo : vos) {
+            if ("TEAM_INVITE".equals(vo.getType()) && vo.getUserId() != null && vo.getRelatedId() != null) {
+                userIds.add(vo.getUserId());
+                teamIds.add(vo.getRelatedId());
+            }
+        }
+        if (userIds.isEmpty()) {
+            return;
+        }
+        Map<String, Long> byUserAndTeam = new HashMap<>();
+        teamApplicationMapper.selectList(new LambdaQueryWrapper<TeamApplication>()
+                .in(TeamApplication::getUserId, userIds)
+                .in(TeamApplication::getTeamId, teamIds)
+                .eq(TeamApplication::getStatus, "PENDING")
+                .apply("initiator_id IS NOT NULL AND initiator_id <> user_id"))
+            .forEach(row -> byUserAndTeam.putIfAbsent(
+                row.getUserId() + ":" + row.getTeamId(), row.getId()));
+        for (NotificationVO vo : vos) {
+            if (!"TEAM_INVITE".equals(vo.getType()) || vo.getUserId() == null || vo.getRelatedId() == null) {
+                continue;
+            }
+            vo.setInvitationId(byUserAndTeam.get(vo.getUserId() + ":" + vo.getRelatedId()));
+        }
     }
 
     private String formatTimeAgo(Date date) {

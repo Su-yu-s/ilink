@@ -29,6 +29,32 @@
                 </svg>
                 <span>我的团队</span>
             </a>
+            <!-- 师生通讯录：只有教师看「我的学生」，其余（学生、管理员）都看「我的导师」。
+                 必须和 roster.js 的 data-default-side 用同一个判据，否则会出现
+                 「侧边栏没有入口、但直接打开 /roster.html 又落在我的导师」的错位。 -->
+            <a th:if="${currentUser != null and currentUser.role != 'TEACHER'}"
+               th:href="@{/roster.html(side='mentors')}" href="/roster.html?side=mentors"
+               class="il-profile-nav-item"
+               th:classappend="${active == 'mentors'} ? ' active' : ''">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M22 10v6"/>
+                    <path d="M2 10l10-5 10 5-10 5z"/>
+                    <path d="M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/>
+                </svg>
+                <span>我的导师</span>
+            </a>
+            <a th:if="${currentUser != null and currentUser.role == 'TEACHER'}"
+               th:href="@{/roster.html(side='students')}" href="/roster.html?side=students"
+               class="il-profile-nav-item"
+               th:classappend="${active == 'students'} ? ' active' : ''">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <span>我的学生</span>
+            </a>
             <a th:href="@{/profile-edit.html}" href="/profile-edit.html"
                class="il-profile-nav-item"
                th:classappend="${active == 'edit'} ? ' active' : ''">

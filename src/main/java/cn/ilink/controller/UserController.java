@@ -7,8 +7,10 @@ import cn.ilink.dto.ChangePasswordRequest;
 import cn.ilink.dto.ProfileRequest;
 import cn.ilink.dto.PublicUserProfileVO;
 import cn.ilink.entity.CommunityPost;
+import cn.ilink.entity.Asset;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.CommunityPostMapper;
+import cn.ilink.mapper.AssetMapper;
 import cn.ilink.service.UserService;
 import cn.ilink.service.RememberMeService;
 import cn.ilink.util.PasswordPolicy;
@@ -39,6 +41,9 @@ public class UserController {
     private CommunityPostMapper communityPostMapper;
 
     @Autowired
+    private AssetMapper assetMapper;
+
+    @Autowired
     private RememberMeService rememberMeService;
 
     @Value("${file.access-url-prefix:/uploads/}")
@@ -67,7 +72,36 @@ public class UserController {
         vo.setCreatedAt(u.getCreatedAt());
         vo.setHonors(u.getHonors());
         vo.setPublishedPosts(loadPublishedPosts(u.getId()));
+        vo.setPublishedAssets(loadPublishedAssets(u.getId()));
         return Result.ok(vo).toResponseEntity();
+    }
+
+    /**
+     * 用户发布的公开成果（成果展示里的资产）。
+     * 只回概要字段：公开主页不需要附件地址与下载统计。
+     */
+    private List<Map<String, Object>> loadPublishedAssets(Long userId) {
+        if (userId == null) {
+            return new ArrayList<>();
+        }
+        Page<Asset> page = new Page<>(1, 20);
+        Page<Asset> result = assetMapper.selectPage(page,
+            new LambdaQueryWrapper<Asset>()
+                .eq(Asset::getUserId, userId)
+                .orderByDesc(Asset::getCreatedAt)
+        );
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Asset a : result.getRecords()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", a.getId());
+            m.put("title", a.getTitle());
+            m.put("category", a.getCategory());
+            m.put("coverUrl", a.getCoverUrl());
+            m.put("viewCount", a.getViewCount());
+            m.put("createdAt", a.getCreatedAt() == null ? new Date() : a.getCreatedAt());
+            out.add(m);
+        }
+        return out;
     }
 
     private List<Map<String, Object>> loadPublishedPosts(Long userId) {

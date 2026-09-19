@@ -5,19 +5,6 @@
 
   const PAGE_SIZE = 12;
 
-	  const COVERS = {
-	    '竞赛获奖': 'https://images.unsplash.com/photo-1546422904-90eab23c3d7e?w=400&h=280&fit=crop&auto=format',
-	    '论文发表': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=280&fit=crop&auto=format',
-	    '科研项目': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=280&fit=crop&auto=format',
-	    '作品项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=280&fit=crop&auto=format',
-	    '作品 / 项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=280&fit=crop&auto=format',
-	    '技术创新': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=280&fit=crop&auto=format',
-	    '荣誉称号': 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=400&h=280&fit=crop&auto=format',
-	    '奖学金': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=280&fit=crop&auto=format',
-	    '其他': 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400&h=280&fit=crop&auto=format',
-	    default: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=280&fit=crop&auto=format'
-	  };
-
   const TAG_CLASS = {
     '竞赛获奖': 'gallery-tag--competition', '论文发表': 'gallery-tag--paper',
     '科研项目': 'gallery-tag--research', '作品项目': 'gallery-tag--work',
@@ -90,7 +77,27 @@
       var s = this.$('sort'); if (s) s.addEventListener('change', function () { app.load(1); });
       var sb = this.$('searchBtn'); if (sb) sb.addEventListener('click', function () { app.load(1); });
       if (window.AssetPublish) AssetPublish.bind({ onSuccess: function () { app.load(1); } });
-      this.load(1);
+      // 从详情返回（浏览器后退）时沿用离开前的列表快照：
+      // 浏览量是「最多浏览」的排序键，若返回时重新拉取，刚看过的卡片会实时跳位。
+      // 快照让浏览行为不打断当前浏览顺序；切筛选/搜索/刷新页面才拉最新数据。
+      if (!this.restoreSnapshot()) this.load(1);
+    },
+
+    restoreSnapshot: function () {
+      try {
+        var nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+        if (!nav || nav.type !== 'back_forward') return false;
+        var raw = sessionStorage.getItem('ilink-gallery-list');
+        if (!raw) return false;
+        var snap = JSON.parse(raw);
+        if (!snap || !snap.rows || !snap.rows.length) return false;
+        if (this.$('sort')) this.$('sort').value = snap.sort || 'latest';
+        if (this.$('category')) this.$('category').value = snap.category || '';
+        if (this.$('keyword')) this.$('keyword').value = snap.keyword || '';
+        this.page = snap.page || 1;
+        this.render(snap.rows, snap.pg);
+        return true;
+      } catch (e) { return false; }
     },
 
     load: async function (page) {
@@ -105,7 +112,17 @@
         var r = await fetch('/api/asset/list?' + params);
         var d = await r.json();
         var pg = (d.extra && d.extra.pagination) || d.pagination;
-        if (d.code === 200) app.render(d.data, pg);
+        if (d.code === 200) {
+          app.render(d.data, pg);
+          try {
+            sessionStorage.setItem('ilink-gallery-list', JSON.stringify({
+              rows: d.data, pg: pg, page: app.page,
+              sort: (app.$('sort') || {}).value || 'latest',
+              category: (app.$('category') || {}).value || '',
+              keyword: (app.$('keyword') || {}).value || ''
+            }));
+          } catch (storeErr) { /* 存储满时静默跳过，快照只是体验增强 */ }
+        }
         else showMessage(d.message || '加载失败', 'error');
       } catch (e) { showMessage('网络异常', 'error'); }
     },
@@ -113,34 +130,34 @@
     render: function (rows, pg) {
       var c = app.$('listContainer'); if (!c) return;
       if (!rows || !rows.length) {
-        c.innerHTML = '<div class="gc-empty"><div class="gc-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div><h3>暂无成果</h3><p>还没有人发布成果，成为第一个吧。</p><button class="il-btn il-btn-primary" onclick="GalleryApp.openPublish()">发布成果</button></div>';
+        c.innerHTML = '<div class="gc-empty"><div class="gc-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div><h3>暂无成果</h3><p>还没有人发布成果，成为第一个吧。</p><a class="il-btn il-btn-primary" href="/profile-asset-edit.html">发布成果</a></div>';
         app.$('pagination').innerHTML = '';
         return;
       }
       c.innerHTML = '<div class="gc-grid">' + rows.map(function (a) {
         var raw = a.description || '';
-        // 去掉 markdown 注释前缀
-        var mdMatch = raw.match(/^<!--md:([A-Za-z0-9+/=]+(?:\|[A-Za-z0-9+/=]*)?)-->/);
-        if (mdMatch) {
-          try {
-            raw = decodeURIComponent(escape(atob(mdMatch[1])));
-          } catch (_) {
-            raw = raw.replace(/^<!--md:[^>]+-->/, '');
-          }
+        // 卡片摘要优先使用 Markdown 源码，同时兼容新标记和历史注释标记。
+        var mdPayload = markdownSourcePayload(raw);
+        if (mdPayload) {
+          var leadSource = decodeMarkdownSource(String(mdPayload).split('|')[0]);
+          raw = leadSource || stripMarkdownSourceMarker(raw);
+        } else {
+          raw = stripMarkdownSourceMarker(raw);
         }
         var desc = raw.replace(/（分类：[^）]*）/g, '').trim();
         // 去掉 HTML 标签，只保留纯文本
-        desc = desc.replace(/<[^>]+>/g, '').trim();
+        desc = desc.replace(/<[^>]+>/g, '').replace(/[#*>`_~]/g, '').replace(/!\[(.*?)\]\(.*?\)/g, '$1').replace(/\[(.*?)\]\(.*?\)/g, '$1').replace(/^\s*[-+]\s+/gm, '').replace(/\s+/g, ' ').trim();
         var catM = raw.match(/（分类：([^）]+)）/);
         var cat = a.category || (catM ? catM[1] : '');
         var s = storedActions('asset-' + (a.id || ''));
         var likes = (a.likeCount || 0) + (s.likeDelta || 0);
         var favs = (a.favoriteCount || 0) + (s.favDelta || 0);
-        var cover = COVERS[cat] || COVERS.default;
+        // 优先用作者上传的封面；没传过才回退到按分类的内置占位图（映射见 common.js）
+        var cover = a.coverUrl || window.ILinkFiles.coverForCategory(cat);
         return '<article class="result-card gc-card with-cover" role="link" tabindex="0" onclick="location.href=\'/asset-detail.html?id=' + (a.id || '') + '\'">'
           + '<div class="gc-cover"><img src="' + cover + '" alt="封面" loading="lazy" decoding="async"><div class="gc-cover-overlay"></div></div>'
           + '<div class="gc-content">' + authorHtml(a)
-          + '<div class="gc-meta-row">' + (cat ? '<span class="gallery-tag ' + catTag(cat) + '">' + escapeHtml(cat) + '</span>' : '') + '<span class="gc-date">' + fmtDate(a.createdAt) + '</span></div>'
+          + '<div class="gc-meta-row">' + (a.pinned ? '<span class="gallery-tag gc-tag-pin">置顶</span>' : '') + (cat ? '<span class="gallery-tag ' + catTag(cat) + '">' + escapeHtml(cat) + '</span>' : '') + '<span class="gc-date">' + fmtDate(a.createdAt) + '</span></div>'
           + '<div class="gc-body"><h3 class="gc-title">' + escapeHtml(a.title || '未命名成果') + '</h3>' + (desc ? '<p class="gc-desc">' + escapeHtml(desc) + '</p>' : '') + '</div>'
           + '<div class="gc-stats">'
           + '<button class="gc-action' + (s.liked ? ' gc-action--on' : '') + '" data-action="like" data-id="' + (a.id || '') + '" onclick="event.stopPropagation();GalleryApp.doAction(this)">'
@@ -186,7 +203,7 @@
     },
 
     openPublish: function () {
-      if (window.AssetPublish) AssetPublish.openCreate(function () { app.load(1); });
+      window.location.href = '/profile-asset-edit.html';
     }
   };
 

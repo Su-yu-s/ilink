@@ -6,8 +6,8 @@
     <title>团队聊天 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link rel="stylesheet" href="/css/team-chat.css?v=1">
-    <link href="/css/portal-redesign.css?v=1.3" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/team-chat.css}">
+    <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
 </head>
 <body data-app-page="team-chat" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
         <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -64,7 +64,7 @@
                                         <path d="M21.44 11.05L12.25 20.24C11.1241 21.3659 9.59718 21.9983 8.005 21.9983C6.41282 21.9983 4.88589 21.3659 3.76 20.24C2.63501 19.1149 2.00269 17.588 2.00269 15.9958C2.00269 14.4036 2.63501 12.8767 3.76 11.7508L12.95 2.56001C13.7004 1.80952 14.7185 1.38776 15.785 1.38776C16.8515 1.38776 17.8696 1.80952 18.62 2.56001C19.3705 3.31049 19.7922 4.32857 19.7922 5.39505C19.7922 6.46153 19.3705 7.47962 18.62 8.23009L9.41001 17.43C9.03488 17.8052 8.52568 18.0007 7.99501 18.0007C7.46433 18.0007 6.95514 17.8052 6.58001 17.43C6.20488 17.0548 6.00936 16.5457 6.00936 16.015C6.00936 15.4843 6.20488 14.9751 6.58001 14.6L14.17 7.00001" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     </svg>
                                 </button>
-                                <input type="file" id="fileInput" onchange="chatManager.handleFileSelect(event)">
+                                <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.zip,.rar,.7z,.exe,.msi,.apk,.ipa" onchange="chatManager.handleFileSelect(event)">
                             </div>
                             <textarea class="chat-textarea" id="messageInput" placeholder="输入消息..." rows="1" onkeydown="chatManager.handleKeyDown(event)" oninput="chatManager.autoResize(this)"></textarea>
                             <button class="chat-send-btn" id="sendBtn" onclick="chatManager.sendMessage()" title="发送">
@@ -95,9 +95,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=9.6"></script>
-    <script src="/js/ui-particles.js?v=1.0"></script>
-    <script src="/js/team-chat.js?v=2"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/ui-particles.js}"></script>
+    <script th:src="@{/js/team-chat.js}"></script>
 </body>
 </html>

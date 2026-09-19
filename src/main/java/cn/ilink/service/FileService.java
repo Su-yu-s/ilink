@@ -42,11 +42,17 @@ public class FileService {
         ".jpg", ".jpeg", ".png", ".gif", ".webp"
     );
 
+    /** 安装包：exe/msi（Windows）、apk（Android）、ipa（iOS），仅附件类业务可用 */
+    private static final Set<String> INSTALLER_EXTENSIONS = Set.of(
+        ".exe", ".msi", ".apk", ".ipa"
+    );
+
     private static final Set<String> ATTACHMENT_EXTENSIONS;
 
     static {
         Set<String> extensions = new HashSet<>(IMAGE_EXTENSIONS);
         extensions.addAll(DOCUMENT_EXTENSIONS);
+        extensions.addAll(INSTALLER_EXTENSIONS);
         ATTACHMENT_EXTENSIONS = Set.copyOf(extensions);
     }
 
@@ -59,14 +65,18 @@ public class FileService {
             "\u56fe\u7247", "jpg\u3001png\u3001gif\u3001webp", "2MB"),
         "proofs", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf"), 5 * MB,
             "\u8bc1\u660e\u9644\u4ef6", "jpg\u3001png\u3001gif\u3001webp\u3001pdf", "5MB"),
-        "community", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
-            "\u793e\u533a\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB"),
-        "tasks", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
-            "\u4efb\u52a1\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB"),
-        "chat", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
-            "\u804a\u5929\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB"),
-        "assets", new UploadRule(ATTACHMENT_EXTENSIONS, 20 * MB,
-            "\u6210\u679c\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u548c\u6587\u672c", "20MB")
+        "community", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u793e\u533a\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"),
+        "tasks", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u4efb\u52a1\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"),
+        "chat", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u804a\u5929\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"),
+        "assets", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u6210\u679c\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"),
+        "covers", new UploadRule(IMAGE_EXTENSIONS, 5 * MB,
+            "\u6210\u679c\u5c01\u9762", "jpg\u3001png\u3001gif\u3001webp", "5MB"),
+        "feedback", new UploadRule(IMAGE_EXTENSIONS, 5 * MB,
+            "\u53cd\u9988\u622a\u56fe", "jpg\u3001png\u3001gif\u3001webp", "5MB")
     );
 
     @Value("${file.upload-dir:/data/uploads/}")
@@ -309,6 +319,10 @@ public class FileService {
             && header[6] == 0x1A && (header[7] & 0xFF) == 0xE1) {
             return ".ole";
         }
+        // PE 可执行文件（exe/msi 安装器外壳）以 DOS MZ 头开始
+        if (header.length >= 2 && header[0] == 0x4D && header[1] == 0x5A) {
+            return ".exe";
+        }
         if (startsWithAscii(header, "Rar!")) {
             return ".rar";
         }
@@ -329,6 +343,8 @@ public class FileService {
         boolean hasWord = false;
         boolean hasExcel = false;
         boolean hasPowerPoint = false;
+        boolean hasAndroidManifest = false;
+        boolean hasPayload = false;
         int inspected = 0;
         try (ZipInputStream zip = new ZipInputStream(file.getInputStream())) {
             ZipEntry entry;
@@ -338,11 +354,15 @@ public class FileService {
                 if (name.startsWith("word/")) hasWord = true;
                 if (name.startsWith("xl/")) hasExcel = true;
                 if (name.startsWith("ppt/")) hasPowerPoint = true;
+                if ("AndroidManifest.xml".equals(name) || "classes.dex".equals(name)) hasAndroidManifest = true;
+                if (name.startsWith("Payload/")) hasPayload = true;
             }
         }
         if (hasContentTypes && hasWord) return ".docx";
         if (hasContentTypes && hasExcel) return ".xlsx";
         if (hasContentTypes && hasPowerPoint) return ".pptx";
+        if (hasAndroidManifest) return ".apk";
+        if (hasPayload) return ".ipa";
         return ".zip";
     }
 
@@ -363,7 +383,8 @@ public class FileService {
             return IMAGE_EXTENSIONS.contains(declared);
         }
         if (".ole".equals(actual)) {
-            return Set.of(".doc", ".xls", ".ppt").contains(declared);
+            // OLE 复合文档头同时覆盖老版 Office 和 .msi 安装包
+            return Set.of(".doc", ".xls", ".ppt", ".msi").contains(declared);
         }
         if (".text".equals(actual)) {
             return Set.of(".txt", ".md", ".csv").contains(declared);

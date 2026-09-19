@@ -10,6 +10,7 @@ import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.service.impl.CommunityCommentServiceImpl;
 import cn.ilink.service.impl.CommunityPostServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -38,6 +39,9 @@ class CommunityControllerWebTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
     private CommunityPostServiceImpl communityPostService;
 
@@ -58,6 +62,9 @@ class CommunityControllerWebTest {
 
     @MockBean
     private cn.ilink.service.AdminDataService adminDataService;
+
+    @MockBean
+    private cn.ilink.mapper.CommunityCommentMapper communityCommentMapper;
 
     @MockBean
     private LoginAttemptService loginAttemptService;
@@ -143,6 +150,62 @@ class CommunityControllerWebTest {
         org.mockito.ArgumentCaptor<CommunityPost> captor =
             org.mockito.ArgumentCaptor.forClass(CommunityPost.class);
         verify(communityPostService).updateById(captor.capture());
-        assertEquals("[{\"name\":\"keep.pdf\",\"url\":\"/uploads/keep.pdf\"}]", captor.getValue().getAttachments());
+        assertEquals(
+            objectMapper.readTree("[{\"name\":\"keep.pdf\",\"url\":\"/uploads/keep.pdf\"}]"),
+            objectMapper.readTree(captor.getValue().getAttachments())
+        );
+    }
+
+    /** 文章接口仅发布者本人可操作；管理员一律 403（删除/编辑能力收敛在管理后台）。 */
+    private CommunityPost postOf(long authorId) {
+        CommunityPost post = new CommunityPost();
+        post.setId(6L);
+        post.setAuthorId(authorId);
+        post.setTitle("别人的文章");
+        return post;
+    }
+
+    @Test
+    void deletePostRejectsNonAuthor() throws Exception {
+        User stranger = new User();
+        stranger.setId(99L);
+        stranger.setUsername("stranger");
+        stranger.setRole("STUDENT");
+        when(communityPostService.getById(6L)).thenReturn(postOf(7L));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .delete("/api/community/posts/6")
+                .sessionAttr("user", stranger))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
+    }
+
+    @Test
+    void deletePostRejectsAdmin() throws Exception {
+        User admin = new User();
+        admin.setId(1L);
+        admin.setUsername("admin");
+        admin.setRole("ADMIN");
+        when(communityPostService.getById(6L)).thenReturn(postOf(7L));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .delete("/api/community/posts/6")
+                .sessionAttr("user", admin))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
+    }
+
+    @Test
+    void forEditRejectsAdmin() throws Exception {
+        User admin = new User();
+        admin.setId(1L);
+        admin.setUsername("admin");
+        admin.setRole("ADMIN");
+        when(communityPostService.getById(6L)).thenReturn(postOf(7L));
+
+        mockMvc.perform(get("/api/community/posts/6/for-edit")
+                .sessionAttr("user", admin))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
     }
 }

@@ -3,9 +3,8 @@
 function parseAssetDescription(raw) {
     const text = String(raw || '').trim();
     let body = text;
-    // 去掉 markdown 前缀
-    const mdMatch = body.match(/^<!--md:([^>]+)-->/);
-    if (mdMatch) body = body.replace(mdMatch[0], '').trim();
+    const mdPayload = markdownSourcePayload(body);
+    body = stripMarkdownSourceMarker(body);
 
     let category = '';
     const categoryMatch = body.match(/（分类：([^）]+)）/);
@@ -15,11 +14,11 @@ function parseAssetDescription(raw) {
     }
 
     let lead = '', insight = '';
-    if (mdMatch) {
+    if (mdPayload) {
         // 从 base64 直接解码，避免 \n\n 跨字段串扰
-        const mdParts = mdMatch[1].split('|');
-        try { lead = decodeURIComponent(escape(atob(mdParts[0] || ''))) || ''; } catch(_) {}
-        try { insight = decodeURIComponent(escape(atob(mdParts[1] || ''))) || ''; } catch(_) {}
+        const mdParts = mdPayload.split('|');
+        lead = decodeMarkdownSource(mdParts[0] || '');
+        insight = decodeMarkdownSource(mdParts[1] || '');
     } else {
         // 旧格式兼容
         const parts = body.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
@@ -204,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     document.addEventListener('click', function (event) {
-        const download = event.target.closest('.download-btn');
+        const download = event.target.closest('.asset-attachment-card');
         if (!download) return;
         if (!document.body.dataset.userId) {
             event.preventDefault();
@@ -212,14 +211,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             redirectToLogin(700);
         }
     });
-
-    if (window.AssetPublish) {
-        AssetPublish.bind({
-            onSuccess: async function () {
-                await loadAssetDetail();
-            }
-        });
-    }
 
     await loadAssetDetail();
 });
@@ -242,9 +233,7 @@ async function setupOwnerActions(asset) {
         if (!editBtn.dataset.bound) {
             editBtn.dataset.bound = '1';
             editBtn.addEventListener('click', function () {
-                if (window.AssetPublish && currentAssetDetail) {
-                    AssetPublish.openEdit(currentAssetDetail);
-                }
+                window.location.href = '/profile-asset-edit.html?id=' + encodeURIComponent(asset.id);
             });
         }
     } else {
@@ -351,22 +340,16 @@ function renderAssetDetail(asset) {
     const filesEl = document.getElementById('assetFiles');
     if (asset.fileUrl && filesEl) {
         const fname = originalDisplayName(asset) || fileNameFromUrl(asset.fileUrl, title);
-        const icon = fileIconClass(fname);
         if (attachSection) attachSection.hidden = false;
         filesEl.innerHTML =
-            '<div class="file-item">' +
-            '<div class="file-info">' +
-            '<div class="file-icon"><i class="fas ' +
-            icon +
-            '" aria-hidden="true"></i></div>' +
-            '<div class="file-details"><h4>' +
+            '<a class="asset-attachment-card" href="/api/asset/download/' +
+            encodeURIComponent(asset.id) +
+            '" download="' + escapeHtml(fname) +
+            '" title="下载 ' + escapeHtml(fname) + '">' +
+            window.ILinkFiles.iconMarkup(fname) +
+            '<span class="asset-attachment-card__body"><strong>' +
             escapeHtml(fname) +
-            '</h4><span>点击下载发布者上传的附件</span></div>' +
-            '</div>' +
-            '<a class="download-btn" href="/api/asset/download/' +
-            asset.id +
-            '"><i class="fas fa-download" aria-hidden="true"></i> 下载</a>' +
-            '</div>';
+            '</strong><small>点击下载</small></span></a>';
     } else {
         if (attachSection) attachSection.hidden = true;
         if (filesEl) filesEl.innerHTML = '';

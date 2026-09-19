@@ -48,6 +48,12 @@ public class Notification {
         TEAM_APPLY,
         TEAM_APPROVED,
         TEAM_REJECTED,
+        /** 被移出团队 */
+        TEAM_MEMBER_REMOVED,
+        /** 接手成为团队创建者 */
+        TEAM_OWNER_TRANSFERRED,
+        /** 团队被解散 */
+        TEAM_DISSOLVED,
         TASK_ASSIGNED,
         TASK_COMPLETED,
         TASK_SUBMITTED,

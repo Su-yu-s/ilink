@@ -84,6 +84,30 @@ window.ILinkFiles = window.ILinkFiles || {
         return String(fallbackTitle || '附件').trim() + suffix;
     },
 
+    /** 成果按分类的内置封面图（未上传封面时的兜底） */
+    categoryCovers: {
+        '竞赛获奖': 'https://images.unsplash.com/photo-1546422904-90eab23c3d7e?w=400&h=280&fit=crop&auto=format',
+        '论文发表': 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=280&fit=crop&auto=format',
+        '科研项目': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=280&fit=crop&auto=format',
+        '作品项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=280&fit=crop&auto=format',
+        '作品 / 项目': 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&h=280&fit=crop&auto=format',
+        '技术创新': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=280&fit=crop&auto=format',
+        '荣誉称号': 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=400&h=280&fit=crop&auto=format',
+        '奖学金': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=280&fit=crop&auto=format',
+        '其他': 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400&h=280&fit=crop&auto=format',
+        fallback: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=280&fit=crop&auto=format'
+    },
+
+    /**
+     * 取成果的分类兜底封面。调用方应优先用成果自身的 coverUrl，
+     * 只有没上传过封面时才回退到这里，保证卡片永远有图。
+     */
+    coverForCategory: function (category) {
+        var covers = this.categoryCovers;
+        var key = String(category == null ? '' : category).trim();
+        return covers[key] || covers.fallback;
+    },
+
     iconMarkup: function (name) {
         return '<span class="il-upload-file-icon" aria-hidden="true">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
@@ -93,31 +117,84 @@ window.ILinkFiles = window.ILinkFiles || {
     }
 };
 
-/**
- * 将 Markdown 渲染结果写入元素，统一经过 DOMPurify 净化，
- * 防止编辑预览与成果/文章展示场景的 XSS（marked 默认透传原始 HTML）。
- * 无 DOMPurify 或渲染失败时降级为纯文本展示。
- */
-function renderMarkdownSafe(el, raw) {
+let configuredMarkedInstance = null;
+
+/** 编辑预览与公开详情页必须共用同一套 Markdown 解析选项。 */
+function configureMarkdownRenderer() {
+    if (typeof marked === 'undefined') return false;
+    if (configuredMarkedInstance === marked) return true;
+    marked.setOptions({ gfm: true, breaks: true, pedantic: false });
+    configuredMarkedInstance = marked;
+    return true;
+}
+
+function encodeMarkdownSource(raw) {
     const text = raw == null ? '' : String(raw);
-    if (!el) return;
-    if (typeof marked === 'undefined') {
-        el.textContent = text;
-        return;
-    }
-    let html;
     try {
-        html = marked.parse(text);
-    } catch (e) {
-        el.textContent = text;
-        return;
+        const bytes = new TextEncoder().encode(text);
+        let binary = '';
+        bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+        return btoa(binary);
+    } catch (_) {
+        return btoa(unescape(encodeURIComponent(text)));
     }
-    if (typeof DOMPurify !== 'undefined') {
-        el.innerHTML = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
-    } else {
-        // 无 DOMPurify 时展示纯文本，杜绝原始 HTML 注入
-        el.textContent = text;
+}
+
+function decodeMarkdownSource(payload) {
+    const clean = String(payload || '').replace(/[^A-Za-z0-9+/=]/g, '');
+    if (!clean) return '';
+    try {
+        const binary = atob(clean);
+        const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+        return new TextDecoder('utf-8').decode(bytes);
+    } catch (_) {
+        try { return decodeURIComponent(escape(atob(clean))); } catch (_) { return ''; }
     }
+}
+
+/**
+ * Markdown 源码以不可见 data 属性保存；该结构能通过服务端白名单清洗。
+ * 同时继续识别历史 <!--md:...--> 数据。
+ */
+function markdownSourcePayload(raw) {
+    const text = raw == null ? '' : String(raw);
+    const elementMatch = text.match(/<span\b[^>]*\bdata-ilink-markdown=["']([A-Za-z0-9+/=|]+)["'][^>]*><\/span>/i);
+    if (elementMatch) return elementMatch[1];
+    const commentMatch = text.match(/<!--md:([A-Za-z0-9+/=|]+)-->/);
+    return commentMatch ? commentMatch[1] : '';
+}
+
+function stripMarkdownSourceMarker(raw) {
+    return String(raw == null ? '' : raw)
+        .replace(/<span\b[^>]*\bdata-ilink-markdown=["'][A-Za-z0-9+/=|]+["'][^>]*><\/span>/ig, '')
+        .replace(/<!--md:[A-Za-z0-9+/=|]+-->/g, '')
+        .trim();
+}
+
+function markdownSourceMarker(payload) {
+    const safe = String(payload || '').replace(/[^A-Za-z0-9+/=|]/g, '');
+    return safe
+        ? '<span class="ilink-markdown-source" data-ilink-markdown="' + safe + '" hidden aria-hidden="true"></span>'
+        : '';
+}
+
+function markdownToSafeHtml(raw) {
+    const text = raw == null ? '' : String(raw);
+    if (!configureMarkdownRenderer()) return escapeHtml(text).replace(/\n/g, '<br>');
+    try {
+        const html = marked.parse(text);
+        return typeof DOMPurify !== 'undefined'
+            ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
+            : escapeHtml(text).replace(/\n/g, '<br>');
+    } catch (_) {
+        return escapeHtml(text).replace(/\n/g, '<br>');
+    }
+}
+
+/** 将 Markdown 写入元素；预览页和详情页均从这里渲染。 */
+function renderMarkdownSafe(el, raw) {
+    if (!el) return;
+    el.innerHTML = markdownToSafeHtml(raw);
 }
 
 /**
@@ -1038,6 +1115,14 @@ const ilinkPublicApi = {
     avatarInitial: avatarInitial,
     publisherAvatarHtml: publisherAvatarHtml,
     publisherAvatarFromAuthorFields: publisherAvatarFromAuthorFields,
+    configureMarkdownRenderer: configureMarkdownRenderer,
+    encodeMarkdownSource: encodeMarkdownSource,
+    decodeMarkdownSource: decodeMarkdownSource,
+    markdownSourcePayload: markdownSourcePayload,
+    stripMarkdownSourceMarker: stripMarkdownSourceMarker,
+    markdownSourceMarker: markdownSourceMarker,
+    markdownToSafeHtml: markdownToSafeHtml,
+    renderMarkdownSafe: renderMarkdownSafe,
     teamStatusLabel: teamStatusLabel,
     CATEGORY_LABELS: CATEGORY_LABELS,
     navigate: navigateTo

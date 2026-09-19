@@ -190,7 +190,7 @@ class ApiPathContractTest {
     void homePageLoadsItsScopedLayoutStyles() throws Exception {
         Path template = Path.of("src/main/resources/templates/index.html");
         String homeHtml = Files.readString(template, StandardCharsets.UTF_8);
-        assertTrue(homeHtml.contains("href=\"/css/home.css?v="),
+        assertTrue(homeHtml.contains("th:href=\"@{/css/home.css}\""),
             "index.html must load its page-specific stylesheet after shared assets");
     }
 }

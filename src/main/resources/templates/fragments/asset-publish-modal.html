@@ -52,7 +52,7 @@
                             </div>
                             <div class="md-divider visible"></div>
                             <div class="md-preview-pane">
-                                <div class="markdown-body" id="pubDescPreview"></div>
+                                <div class="markdown-body il-markdown-content" id="pubDescPreview"></div>
                             </div>
                         </div>
                     </div>
@@ -78,14 +78,14 @@
                             </div>
                             <div class="md-divider visible"></div>
                             <div class="md-preview-pane">
-                                <div class="markdown-body" id="pubInsightPreview"></div>
+                                <div class="markdown-body il-markdown-content" id="pubInsightPreview"></div>
                             </div>
                         </div>
                     </div>
                     <div class="il-bs-form-modal__field">
                         <label class="il-bs-form-modal__label" for="pubFile">附件 <span class="il-asset-publish-modal__optional">选填</span></label>
-                        <input type="file" class="form-control il-bs-form-modal__control il-asset-publish-modal__file" id="pubFile">
-                        <p class="il-asset-publish-modal__hint" id="pubFileHint">支持 PDF、ZIP、图片等，便于他人下载参考。</p>
+                        <input type="file" class="form-control il-bs-form-modal__control il-asset-publish-modal__file" id="pubFile" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.zip,.rar,.7z,.exe,.msi,.apk,.ipa">
+                        <p class="il-asset-publish-modal__hint" id="pubFileHint">支持 PDF、ZIP、图片、安装包（exe/msi/apk）等，最大 50MB。</p>
                     </div>
                 </div>
                 <div class="modal-footer">

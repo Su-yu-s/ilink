@@ -54,6 +54,9 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.GET, "/api/competitions").permitAll()
                 .antMatchers("/api/user/public/**").permitAll()
                 .antMatchers("/api/user/skills/public/**").permitAll()
+                // 意见反馈：匿名可提交（按 IP 限流）；详情页在微信内打开，靠不可猜令牌而非会话鉴权
+                .antMatchers("/api/feedback").permitAll()
+                .antMatchers("/feedback/view/**").permitAll()
 
                 .antMatchers("/index.html").permitAll()
                 .antMatchers("/competitions.html").permitAll()
@@ -165,6 +168,7 @@ public class SecurityConfig {
     /** 静态资源路径：上传文件和 classpath 静态资源，允许浏览器长期缓存 */
     private boolean isStaticResource(String path) {
         return path.startsWith("/uploads/")
+            || path.startsWith("/images/")
             || path.startsWith("/css/")
             || path.startsWith("/js/")
             || path.startsWith("/lib/")

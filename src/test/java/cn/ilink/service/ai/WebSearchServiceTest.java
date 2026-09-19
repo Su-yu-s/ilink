@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WebSearchServiceTest {
@@ -24,6 +25,25 @@ class WebSearchServiceTest {
             + "<h2><a href=\"https://example.com/empty\">空摘要</a></h2>"
             + "</li>"
             + "</ol></body></html>";
+
+    @Test
+    void buildSearchUriEncodesChineseExactlyOnce() {
+        String uri = WebSearchService.buildSearchUri("数学建模 报名").toString();
+
+        // 中文按 UTF-8 编码一次
+        assertTrue(uri.contains("%E6%95%B0%E5%AD%A6%E5%BB%BA%E6%A8%A1"), "中文未按 UTF-8 编码: " + uri);
+        // 空格编码为 +（表单式查询串）
+        assertTrue(uri.contains("+"), "空格未编码: " + uri);
+        // 绝不能出现二次编码的 %25：一旦出现，Bing 收到的是字面的百分号串，中文关键词全丢，
+        // 表现为「什么都搜不到」（这是真实踩过的坑：RestTemplate.exchange(String) 会再编码一次）
+        assertFalse(uri.contains("%25"), "出现二次编码，中文会被当字面量检索: " + uri);
+    }
+
+    @Test
+    void buildSearchUriKeepsAsciiQueryReadable() {
+        String uri = WebSearchService.buildSearchUri("icpc 2026").toString();
+        assertTrue(uri.contains("q=icpc+2026"), uri);
+    }
 
     @Test
     void parseHtmlExtractsResults() {
@@ -58,6 +78,32 @@ class WebSearchServiceTest {
         assertEquals("很长的摘要清理加粗", out);
         String truncated = WebSearchService.cleanText("1234567890", 4);
         assertEquals("1234…", truncated);
+    }
+
+    @Test
+    void refineQueryStripsQuestionParticles() {
+        // 实测：带上「是什么模型」后缀，Bing 会退化成通用站点结果；去掉后直接命中官网
+        assertEquals("deepseek-v4.1-flash", WebSearchService.refineQuery("deepseek-v4.1-flash 是什么模型"));
+        assertEquals("怎么报名", WebSearchService.refineQuery("请问 怎么报名"));
+        assertEquals("数学建模论文格式要求", WebSearchService.refineQuery("数学建模论文格式要求有哪些"));
+        assertEquals("挑战杯什么时候开始", WebSearchService.refineQuery("我想知道挑战杯什么时候开始"));
+        assertEquals("这道题怎么做", WebSearchService.refineQuery("这道题怎么做呢？"));
+    }
+
+    @Test
+    void refineQueryKeepsIntentBearingWording() {
+        // 「怎么准备」这类措辞携带检索意图，不能当语气词清掉；只允许顺带掉一个句末问号
+        assertEquals("数学建模怎么备赛", WebSearchService.refineQuery("数学建模怎么备赛？"));
+        assertEquals("互联网+ 报名流程", WebSearchService.refineQuery("互联网+ 报名流程"));
+    }
+
+    @Test
+    void refineQueryNeverReturnsEmpty() {
+        // 清洗后为空必须退回原串，否则会搜出毫不相干的东西
+        assertEquals("是什么", WebSearchService.refineQuery("是什么"));
+        assertEquals("吗", WebSearchService.refineQuery("吗"));
+        assertEquals("", WebSearchService.refineQuery("   "));
+        assertEquals("", WebSearchService.refineQuery(null));
     }
 
     @Test

@@ -9,6 +9,7 @@ import cn.ilink.entity.User;
 import cn.ilink.mapper.TeamTaskMapper;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
+import cn.ilink.service.TeamMembershipService;
 import cn.ilink.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
@@ -40,6 +41,9 @@ public class TeamSpaceController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private TeamMembershipService teamMembershipService;
 
     /**
      * 检查当前用户是否为团队成员（创建者或通过审批的成员）
@@ -233,14 +237,21 @@ public class TeamSpaceController {
             view.put("grade", creator.getGrade());
             view.put("role", "队长");
             view.put("isLeader", true);
+            view.put("isOwner", true);
+            view.put("memberRole", TeamMembershipService.deriveMemberRole(creator));
+            view.put("status", TeamMembershipService.STATUS_APPROVED);
             members.add(view);
         }
 
-        // 队员
+        // 队员。待确认的邀请只对「能管理成员的人」返回，否则等于把未公开的人员动向暴露给全队
+        boolean canSeePending = teamMembershipService.canManageMembers(team, user.getId());
         List<TeamApplication> approvedApps = teamApplicationService.list(
                 new LambdaQueryWrapper<TeamApplication>()
                         .eq(TeamApplication::getTeamId, teamId)
-                        .eq(TeamApplication::getStatus, "APPROVED")
+                        .in(TeamApplication::getStatus, canSeePending
+                                ? Arrays.asList(TeamMembershipService.STATUS_APPROVED,
+                                                TeamMembershipService.STATUS_PENDING)
+                                : Collections.singletonList(TeamMembershipService.STATUS_APPROVED))
         );
 
         Set<Long> userIds = new HashSet<>();
@@ -265,8 +276,13 @@ public class TeamSpaceController {
                 view.put("avatar", normalizeAvatar(u.getAvatar()));
                 view.put("major", u.getMajor());
                 view.put("grade", u.getGrade());
-                view.put("role", "队员");
+                boolean pending = TeamMembershipService.STATUS_PENDING.equals(app.getStatus());
+                view.put("role", pending ? "待确认" : "队员");
                 view.put("isLeader", false);
+                view.put("isOwner", false);
+                view.put("memberRole", app.getMemberRole() == null
+                        ? TeamMembershipService.deriveMemberRole(u) : app.getMemberRole());
+                view.put("status", app.getStatus());
                 view.put("joinedAt", app.getCreatedAt());
                 members.add(view);
             }

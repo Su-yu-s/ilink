@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--
+  邀请成员弹窗。由 team-invite.js 驱动，页面通过 window.TeamInvite.open(teamId, teamTitle) 打开。
+  两个标签页：搜索（冷启动，按姓名/学号找人）与通讯录（高频，直接勾自己已连接的人）。
+-->
+<div th:fragment="modal"
+     th:attr="data-inviter-role=${currentUser != null ? currentUser.role : ''}">
+    <div class="modal fade" id="teamInviteModal" tabindex="-1" aria-labelledby="teamInviteModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content ti-modal">
+                <div class="modal-header ti-modal__header">
+                    <div>
+                        <h5 class="ti-modal__title" id="teamInviteModalTitle">邀请成员</h5>
+                        <p class="ti-modal__subtitle" id="tiTeamName"></p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+
+                <div class="ti-tabs" role="tablist" aria-label="邀请方式">
+                    <button type="button" class="ti-tabs__btn is-active" data-ti-tab="search" role="tab" aria-selected="true">
+                        搜索学号/姓名
+                    </button>
+                    <button type="button" class="ti-tabs__btn" data-ti-tab="roster" role="tab" aria-selected="false">
+                        从通讯录选择
+                    </button>
+                </div>
+
+                <div class="ti-search" id="tiSearchBox">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                    <input type="text" id="tiSearchInput" class="ti-search__input"
+                           placeholder="输入姓名或学号，至少 1 个字" autocomplete="off">
+                </div>
+
+                <div class="ti-list" id="tiList" aria-live="polite"></div>
+
+                <div class="ti-footer">
+                    <span class="ti-footer__count" id="tiSelectedCount">已选 0 人</span>
+                    <div class="ti-footer__actions">
+                        <button type="button" class="il-btn il-btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="il-btn il-btn-primary" id="tiSubmitBtn" disabled>发送邀请</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -6,8 +6,8 @@
     <title>管理后台 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/admin-shell.css?v=1.0" rel="stylesheet">
-    <link href="/css/admin-redesign.css?v=1.0" rel="stylesheet">
+    <link th:href="@{/css/admin-shell.css}" rel="stylesheet">
+    <link th:href="@{/css/admin-redesign.css}" rel="stylesheet">
 </head>
 <body data-app-page="admin" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -265,6 +265,9 @@
                                 <tbody id="competitionTableBody"></tbody>
                             </table>
                         </div>
+                        <nav aria-label="竞赛分页" class="d-none mt-3" id="competitionPager">
+                            <ul class="pagination justify-content-center mb-0" id="competitionPagerInner"></ul>
+                        </nav>
                         <small class="text-muted d-block mt-3" id="competitionListHint">共 0 条</small>
                     </div>
                 </div>
@@ -580,9 +583,11 @@
     </div>
 
 
-    <script src="/lib/bootstrap.bundle.min.js?v=2.0"></script>
-    <script src="/js/common.js?v=9.2"></script>
-    <script src="/js/ui-particles.js?v=1.0"></script>
-    <script src="/js/admin.js?v=4.2"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/ui-particles.js}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
+    <script th:src="@{/js/admin.js}"></script>
 </body>
 </html>

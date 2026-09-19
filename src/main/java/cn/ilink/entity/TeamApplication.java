@@ -13,7 +13,12 @@ public class TeamApplication {
     private Long id;
     private Long teamId;
     private Long userId;
-    private String status; // PENDING, APPROVED, REJECTED
+    /** 发起人：申请=申请人本人（等于 userId），邀请=邀请人 */
+    private Long initiatorId;
+    /** PENDING, APPROVED, REJECTED, LEFT, REMOVED, VOID */
+    private String status;
+    /** 团队内角色：MENTOR / STUDENT */
+    private String memberRole;
     private String message;
     /** 审批备注（通过时选填）/ 拒绝理由（必填） */
     private String reviewerNote;

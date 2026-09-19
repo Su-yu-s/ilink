@@ -6,7 +6,9 @@
     <title>团队空间 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link rel="stylesheet" href="/css/team-space.css?v=38">
+    <link rel="stylesheet" th:href="@{/css/team-space.css}">
+    <link rel="stylesheet" th:href="@{/css/team-space-refresh.css}">
+    <link rel="stylesheet" th:href="@{/css/team-invite.css}">
 </head>
 <body data-app-page="team-space" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -203,6 +205,8 @@
                             <span class="panel-team-name" id="membersTeamName">团队空间</span>
                             <h1 class="panel-title" id="membersTitle">团队成员</h1>
                         </div>
+                        <!-- 操作按当前用户角色渲染，由 team-space.js 填充 -->
+                        <div class="panel-actions" id="membersActions"></div>
                     </div>
                     <div class="members-list-area" id="membersListArea">
                         <div class="panel-loading">加载中...</div>
@@ -232,13 +236,13 @@
                     <div class="ai-collab-grid">
                         <section class="ai-collab-card ai-collab-card--qa" aria-labelledby="aiQaTitle">
                             <div class="ai-collab-card__header">
-                                <h2 class="ai-collab-card__title" id="aiQaTitle">竞赛答疑</h2>
-                                <select class="form-select form-select-sm ai-competition-select" id="aiCompetitionSelect" aria-label="选择竞赛">
+                                <h2 class="ai-collab-card__title" id="aiQaTitle">AI 智能答疑</h2>
+                                <select class="form-select form-select-sm ai-competition-select" id="aiCompetitionSelect" aria-label="选择竞赛，可留空按通用提问">
                                     <option value="">加载竞赛中...</option>
                                 </select>
                             </div>
                             <div class="ai-qa-messages" id="aiQaMessages" aria-live="polite">
-                                <div class="ai-qa-welcome">你好，我是团队的 AI 竞赛助手。选择上方竞赛后，可以问我关于报名条件、赛程节点、评审规则、材料准备等问题。</div>
+                                <div class="ai-qa-welcome">你好，我是团队的 AI 助手，会联网检索资料后作答。选中上方竞赛可针对该赛事提问，留空则按通用问题处理。可以问我报名条件、赛程节点、评审规则、材料准备等问题。</div>
                             </div>
                             <div class="ai-qa-composer">
                                 <textarea id="aiQaInput" class="ai-qa-input" rows="2" maxlength="500" placeholder="向 AI 提问竞赛相关问题..." onkeydown="teamSpace.handleAiQaKeyDown(event)" oninput="teamSpace.autoResizeChatInput(this)"></textarea>
@@ -450,8 +454,11 @@
 
     <script defer src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
-    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=9.6"></script>
-    <script src="/js/team-space.js?v=43"></script>
+    <div th:replace="fragments/team-invite-modal :: modal"></div>
+
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/team-invite.js}"></script>
+    <script th:src="@{/js/team-space.js}"></script>
 </body>
 </html>

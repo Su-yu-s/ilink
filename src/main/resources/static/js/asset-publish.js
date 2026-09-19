@@ -20,20 +20,18 @@
         var text = String(raw || '').trim();
         var category = '';
         var body = text;
-        var mdMatch = body.match(/^<!--md:([A-Za-z0-9+/=]+(?:\|[A-Za-z0-9+/=]*)?)-->/);
-        if (mdMatch) {
-            body = body.replace(mdMatch[0], '').trim();
-        }
+        var mdPayload = markdownSourcePayload(body);
+        body = stripMarkdownSourceMarker(body);
         var m = body.match(/（分类：([^）]+)）/);
         if (m && m[1]) {
             category = m[1].trim();
             body = body.replace(m[0], '').trim();
         }
         var lead = '', insight = '';
-        if (mdMatch) {
-            var mdParts = mdMatch[1].split('|');
-            try { lead = decodeURIComponent(escape(atob(mdParts[0] || ''))) || ''; } catch(_) {}
-            try { insight = decodeURIComponent(escape(atob(mdParts[1] || ''))) || ''; } catch(_) {}
+        if (mdPayload) {
+            var mdParts = mdPayload.split('|');
+            lead = decodeMarkdownSource(mdParts[0] || '');
+            insight = decodeMarkdownSource(mdParts[1] || '');
         } else {
             var parts = body.split(/\n\s*\n/).map(function (p) {
                 return p.trim();
@@ -46,23 +44,17 @@
             lead: lead,
             insight: insight,
             full: body,
-            mdRaw: mdMatch ? mdMatch[1] : null
+            mdRaw: mdPayload || null
         };
     }
 
     function buildDescription(lead, insight, category) {
-        var l = String(lead || '').trim();
-        var i = String(insight || '').trim();
-        if (typeof marked !== 'undefined') {
-            l = l ? marked.parse(l) : '';
-            i = i ? marked.parse(i) : '';
-        }
+        var l = markdownToSafeHtml(String(lead || '').trim());
+        var i = markdownToSafeHtml(String(insight || '').trim());
         var body = l;
         if (i) body = body ? body + '\n\n' + i : i;
-        var mdSrc = [lead || '', insight || ''].map(function(s) {
-            return btoa(unescape(encodeURIComponent(s)));
-        }).join('|');
-        body = '<!--md:' + mdSrc + '-->' + body;
+        var mdSrc = [lead || '', insight || ''].map(encodeMarkdownSource).join('|');
+        body = markdownSourceMarker(mdSrc) + body;
         var cat = String(category || '').trim();
         if (!cat) return body;
         if (body.indexOf('（分类：') !== -1) return body;
@@ -247,8 +239,8 @@
         if (cat) cat.value = asset.category || parsed.category || '其他';
         if (parsed.mdRaw) {
             var parts = parsed.mdRaw.split('|');
-            if (lead) lead.value = decodeURIComponent(escape(atob(parts[0] || ''))) || '';
-            if (insight) insight.value = decodeURIComponent(escape(atob(parts[1] || ''))) || '';
+            if (lead) lead.value = decodeMarkdownSource(parts[0] || '');
+            if (insight) insight.value = decodeMarkdownSource(parts[1] || '');
         } else {
             if (lead) lead.value = parsed.lead || parsed.full || '';
             if (insight) insight.value = parsed.insight || '';

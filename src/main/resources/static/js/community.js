@@ -8,9 +8,12 @@ const COMM_FEED_CATEGORY_LABELS = {
     resource: '资源分享'
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 let currentCategory = '';
+let currentSort = 'latest';
 let currentPage = 1;
+
+const SORT_LABELS = { latest: '最新发布', views: '最多浏览', likes: '最多点赞', favorites: '最多收藏' };
 
 let pendingAttachments = [];
 let communityAttachmentSequence = 0;
@@ -21,6 +24,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     const channelSelect = document.getElementById('channelSelect');
     channelSelect?.addEventListener('change', function() {
         selectCategory(channelSelect.value || '');
+    });
+
+    document.getElementById('sortGroup')?.addEventListener('click', function(e) {
+        const btn = e.target.closest('button[data-sort]');
+        if (!btn || btn.classList.contains('on')) return;
+        document.querySelectorAll('#sortGroup button').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        currentSort = btn.dataset.sort;
+        loadPosts(1);
     });
 
     document.getElementById('refreshBtn')?.addEventListener('click', () => loadPosts(currentPage));
@@ -479,6 +491,9 @@ async function loadPosts(page) {
     if (currentCategory) {
         url += `&category=${encodeURIComponent(currentCategory)}`;
     }
+    if (currentSort && currentSort !== 'latest') {
+        url += `&sort=${encodeURIComponent(currentSort)}`;
+    }
     const kw = getKeyword();
     if (kw) url += `&keyword=${encodeURIComponent(kw)}`;
 
@@ -535,10 +550,10 @@ async function loadPosts(page) {
             const comments = p.commentCount != null ? p.commentCount : (p.comments != null ? p.comments : 0);
             const card = document.createElement('article');
             card.className = 'article-card il-post-card';
+            if (p.pinned || p.top || p.isTop) card.classList.add('is-pinned');
             card.setAttribute('role', 'link');
             card.setAttribute('tabindex', '0');
             card.setAttribute('aria-label', '阅读全文：' + (p.title || '未命名文章'));
-            const detailUrl = articlePageUrl(p.id);
 
             const authorAvatar = (p.authorDisplay || '用户').charAt(0).toUpperCase();
             const authorAvatarUrl = p.authorAvatar || null;
@@ -571,19 +586,10 @@ async function loadPosts(page) {
             }
 
             card.innerHTML = `
-                <div class="card-header il-post-header">
-                    ${buildCommunityAvatarHtml(authorAvatarUrl, authorAvatar, p.authorDisplay)}
-                    <div class="author-info il-post-author">
-                        <div class="author-name il-post-author-name">
-                            ${escapeHtml(p.authorDisplay || '')}
-                            ${badgesHtml}
-                        </div>
-                        <div class="author-meta il-post-meta">
-                            <span class="meta-item">${formatTime(p.createdAt)}</span>
-                            <span class="meta-item">阅读 ${views}</span>
-                            <span class="meta-item">评论 ${comments}</span>
-                        </div>
-                    </div>
+                <div class="il-pc-top">
+                    ${badgesHtml}
+                    <span class="card-tag primary il-tag ${tagClass}">${escapeHtml(badge)}</span>
+                    <span class="il-pc-views">阅读 ${views}</span>
                 </div>
                 <h2 class="card-title il-post-title">
                     ${escapeHtml(p.title)}
@@ -591,31 +597,30 @@ async function loadPosts(page) {
                 <p class="card-excerpt il-post-preview">
                     ${escapeHtml(p.excerpt || '')}
                 </p>
-                <div class="card-tags il-post-tags">
-                    <span class="card-tag primary il-tag ${tagClass}">${escapeHtml(badge)}</span>
-                </div>
-                <div class="card-divider"></div>
-                <div class="card-footer il-post-footer">
-                    <div class="card-actions il-post-stats">
-                        <div class="il-feed-actions" data-post-id="${p.id}">
-                            <button type="button" class="action-btn il-feed-action" data-action="like" aria-label="点赞">
-                                ${iconThumbUpSvg()}
-                                <span class="action-label">点赞</span>
-                                <span class="il-feed-action__num">${likes}</span>
-                            </button>
-                            <button type="button" class="action-btn il-feed-action" data-action="favorite" aria-label="收藏">
-                                ${iconStarSvg()}
-                                <span class="action-label">收藏</span>
-                                <span class="il-feed-action__num">${favs}</span>
-                            </button>
-                            <button type="button" class="action-btn il-feed-action" aria-label="评论">
-                                ${iconCommentSvg()}
-                                <span class="action-label">评论</span>
-                                <span class="il-feed-action__num">${comments}</span>
-                            </button>
-                        </div>
+                <div class="il-pc-foot">
+                    <div class="il-pc-author">
+                        ${buildCommunityAvatarHtml(authorAvatarUrl, authorAvatar, p.authorDisplay)}
+                        <span class="il-pc-author-name">${escapeHtml(p.authorDisplay || '')}</span>
+                        <span class="il-pc-dot">·</span>
+                        <span>${formatTime(p.createdAt)}</span>
                     </div>
-                    <a href="${detailUrl}" class="read-more-btn il-btn il-btn-primary">阅读全文 <span aria-hidden="true">→</span></a>
+                    <div class="il-feed-actions" data-post-id="${p.id}">
+                        <button type="button" class="action-btn il-feed-action" data-action="like" aria-label="点赞">
+                            ${iconThumbUpSvg()}
+                            <span class="action-label">点赞</span>
+                            <span class="il-feed-action__num">${likes}</span>
+                        </button>
+                        <button type="button" class="action-btn il-feed-action" data-action="favorite" aria-label="收藏">
+                            ${iconStarSvg()}
+                            <span class="action-label">收藏</span>
+                            <span class="il-feed-action__num">${favs}</span>
+                        </button>
+                        <button type="button" class="action-btn il-feed-action" aria-label="评论">
+                            ${iconCommentSvg()}
+                            <span class="action-label">评论</span>
+                            <span class="il-feed-action__num">${comments}</span>
+                        </button>
+                    </div>
                 </div>`;
             card.addEventListener('click', (event) => {
                 if (event.target.closest('a')) return;
@@ -664,11 +669,13 @@ function renderPager(pag, pagerEl, innerEl) {
     const totalPages = Math.max(1, Math.ceil(total / size) || 1);
 
     if (totalPages <= 1) {
-        pagerEl.classList.add('d-none');
+        // 单页时保留总数信息条（GitHub 风格），页码按钮在跨页后自动出现
+        pagerEl.classList.remove('d-none');
+        innerEl.innerHTML = '<li class="page-item disabled"><span class="page-link text-secondary">共 ' + total + ' 篇</span></li>';
         return;
     }
     pagerEl.classList.remove('d-none');
-    innerEl.innerHTML = '';
+    innerEl.innerHTML = "";
 
     const prevLi = document.createElement('li');
     prevLi.className = 'page-item' + (page <= 1 ? ' disabled' : '');
@@ -720,14 +727,8 @@ async function submitPost() {
         return;
     }
 
-    let htmlContent = '';
-    if (typeof marked !== 'undefined') {
-        try { htmlContent = marked.parse(mdContent); } catch(_) { htmlContent = '<p>' + escapeHtml(mdContent) + '</p>'; }
-    } else {
-        htmlContent = '<p>' + escapeHtml(mdContent) + '</p>';
-    }
-    const mdB64 = btoa(unescape(encodeURIComponent(mdContent)));
-    const wrappedHtml = '<!--md:' + mdB64 + '-->' + htmlContent;
+    const htmlContent = markdownToSafeHtml(mdContent);
+    const wrappedHtml = markdownSourceMarker(encodeMarkdownSource(mdContent)) + htmlContent;
 
     try {
         const response = await apiFetch('/api/community/posts', {

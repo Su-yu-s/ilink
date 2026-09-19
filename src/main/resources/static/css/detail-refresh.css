@@ -1,0 +1,286 @@
+/* ============================================================
+   detail-refresh.css — 组队详情 / 导师详情 中性灰深度对齐 demo
+   引入在 portal-redesign 之后；portal 对 .detail-view__row/meta 用了
+   !important，故本文件冲突属性一律 !important + 等权后引入胜出。
+   不改动顶部全局导航。
+   ============================================================ */
+
+/* ---------- 0. 设计令牌：暖米色 → 中性灰 ---------- */
+html.ilink-app body[data-app-page="team-detail"] {
+    --team-canvas: #f9fafb !important;
+    --team-subtle: #f9fafb !important;
+    --team-border: #e5e7eb !important;
+    --team-border-strong: #d1d5db !important;
+    --team-text: #1f2937 !important;
+    --team-muted: #6b7280 !important;
+    --team-deep: #111827 !important;
+    background: #f9fafb;
+}
+html.ilink-app body[data-app-page="teacher-detail"] {
+    --td-canvas: #f9fafb !important;
+    --td-subtle: #f9fafb !important;
+    --td-border: #e5e7eb !important;
+    --td-border-strong: #d1d5db !important;
+    --td-text: #1f2937 !important;
+    --td-muted: #6b7280 !important;
+    --td-deep: #111827 !important;
+    background: #f9fafb;
+}
+html.ilink-app body[data-app-page="team-detail"] .team-detail-page { max-width: 1000px; padding: 32px 24px 72px; }
+html.ilink-app body[data-app-page="team-detail"] .team-detail-shell,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-shell { max-width: 896px; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-main { max-width: 1000px; padding: 32px 24px 72px; }
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-back,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-back { color: #6b7280; font-size: 14px; font-weight: 500; margin-bottom: 18px; }
+html.ilink-app body[data-app-page="team-detail"] .team-detail-back:hover,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-back:hover { color: #111827; }
+
+/* ---------- 1. 主卡片 ---------- */
+html.ilink-app body[data-app-page="team-detail"] #teamDetailContent,
+html.ilink-app body[data-app-page="team-detail"] .detail-load-state,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-card,
+html.ilink-app body[data-app-page="teacher-detail"] .detail-load-state {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(17,24,39,.04), 0 1px 3px rgba(17,24,39,.06);
+}
+html.ilink-app body[data-app-page="team-detail"] .detail-view__header,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__header {
+    padding: 30px 32px !important; border-bottom: 1px solid #f3f4f6; background: #fff;
+}
+html.ilink-app body[data-app-page="team-detail"] .detail-view__title,
+html.ilink-app body[data-app-page="teacher-detail"] .detail-view__title { font-size: 30px; font-weight: 700; color: #111827; }
+html.ilink-app body[data-app-page="team-detail"] .detail-view__eyebrow,
+html.ilink-app body[data-app-page="teacher-detail"] .detail-view__eyebrow {
+    color: #9ca3af !important; font-size: 13px; font-weight: 500; letter-spacing: 0; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+}
+
+/* ============================================================
+   组队详情
+   ============================================================ */
+html.ilink-app body[data-app-page="team-detail"] .td-detail-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+html.ilink-app body[data-app-page="team-detail"] .td-detail-header__main { min-width: 0; }
+
+.td-status-pill { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; }
+.td-status-pill::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.td-status-pill.is-open { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.td-status-pill.is-open::before { background: #22c55e; animation: tdPulse 2s infinite; }
+.td-status-pill.is-teaming { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+.td-status-pill.is-teaming::before { background: #3b82f6; }
+.td-status-pill.is-closed { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+.td-status-pill.is-closed::before { background: #9ca3af; }
+@keyframes tdPulse {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,.45); }
+    70% { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+/* meta：覆盖 portal 的两列 grid，改为纵向分组 */
+html.ilink-app body[data-app-page="team-detail"] .detail-view__meta,
+html.ilink-app body[data-app-page="teacher-detail"] .detail-view__meta {
+    display: flex !important; flex-direction: column !important; gap: 16px !important;
+    grid-template-columns: none !important;
+}
+html.ilink-app body[data-app-page="team-detail"] .td-row-hidden { display: none !important; }
+.td-cond-grid, .td-stat-grid, .td-info-grid, .td-publisher-bar, .td-block-card { width: 100%; }
+
+/* —— 核心条件 2×2 灰卡 —— */
+.td-cond-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+html.ilink-app body[data-app-page="team-detail"] .detail-view__row.td-cond {
+    display: block !important; padding: 18px 20px !important;
+    background: #f9fafb !important; border: 1px solid #f3f4f6 !important; border-radius: 12px !important;
+}
+html.ilink-app body[data-app-page="team-detail"] .td-cond dt { display: block; margin: 0 0 8px !important; color: #9ca3af !important; font-size: 12px !important; font-weight: 500 !important; }
+html.ilink-app body[data-app-page="team-detail"] .td-cond dd {
+    margin: 0 !important; color: #111827 !important; font-size: 16px !important; font-weight: 600 !important; line-height: 1.5 !important;
+    display: flex; align-items: center; gap: 8px;
+}
+html.ilink-app body[data-app-page="team-detail"] .td-cond dd::before { content: ""; flex: 0 0 16px; width: 16px; height: 16px; background-repeat: no-repeat; background-position: center; background-size: contain; }
+html.ilink-app body[data-app-page="team-detail"] .td-cond--category dd::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%232563eb' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9L12 21.75 3 16.5v-9l9 5.25m0 0V12m0 5.25V12m0 0L3 7.5M12 12l9-4.5'/%3E%3C/svg%3E"); }
+html.ilink-app body[data-app-page="team-detail"] .td-cond--count dd::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%232563eb' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z'/%3E%3C/svg%3E"); }
+html.ilink-app body[data-app-page="team-detail"] .td-cond--deadline dd::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%232563eb' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5M9 12.75L11.25 15 15 9.75'/%3E%3C/svg%3E"); }
+html.ilink-app body[data-app-page="team-detail"] .td-cond--skills dd { flex-wrap: wrap; gap: 6px; }
+html.ilink-app body[data-app-page="team-detail"] .td-cond--skills dd::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%232563eb' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z'/%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 6h.008v.008H6V6z'/%3E%3C/svg%3E"); }
+
+/* —— 发布者横条 —— */
+.td-publisher-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    background: rgba(249,250,251,.7); border: 1px solid #f3f4f6; border-radius: 12px; padding: 14px 20px;
+}
+html.ilink-app body[data-app-page="team-detail"] .td-publisher-bar .detail-view__row {
+    display: flex !important; flex-direction: row !important; align-items: center !important; gap: 12px !important;
+    padding: 0 !important; background: transparent !important; border: 0 !important; border-radius: 0 !important;
+}
+html.ilink-app body[data-app-page="team-detail"] .td-publisher dt,
+html.ilink-app body[data-app-page="team-detail"] .td-pubtime dt { display: none !important; }
+html.ilink-app body[data-app-page="team-detail"] .td-publisher dd,
+html.ilink-app body[data-app-page="team-detail"] .td-pubtime dd { margin: 0 !important; font-size: 14px !important; font-weight: 500 !important; }
+html.ilink-app body[data-app-page="team-detail"] .td-publisher { flex: 1 1 auto; min-width: 0; }
+html.ilink-app body[data-app-page="team-detail"] .td-pubtime { flex: 0 0 auto; }
+html.ilink-app body[data-app-page="team-detail"] .td-pubtime dd { color: #9ca3af !important; font-size: 12px !important; font-weight: 400 !important; display: inline-flex; align-items: center; gap: 6px; }
+html.ilink-app body[data-app-page="team-detail"] .td-pubtime dd::before { content: ""; width: 14px; height: 14px; flex: 0 0 14px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%239ca3af' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M12 6v6l4 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E") center/contain no-repeat; }
+html.ilink-app body[data-app-page="team-detail"] #teamPublisher .publisher-avatar { width: 40px; height: 40px; flex-basis: 40px; }
+
+/* —— 描述 / 成员 白卡 —— */
+html.ilink-app body[data-app-page="team-detail"] .detail-view__row.td-block-card {
+    display: block !important; padding: 22px 24px !important;
+    background: #fff !important; border: 1px solid #f3f4f6 !important; border-radius: 12px !important;
+}
+html.ilink-app body[data-app-page="team-detail"] .td-block-card > dt {
+    display: flex; align-items: center; gap: 8px; margin: 0 0 12px !important;
+    color: #374151; font-size: 14px; font-weight: 700;
+}
+html.ilink-app body[data-app-page="team-detail"] .td-block-card > dt::before { content: ""; width: 16px; height: 16px; flex: 0 0 16px; background-repeat: no-repeat; background-position: center; background-size: contain; }
+html.ilink-app body[data-app-page="team-detail"] .td-block-card > dd { margin: 0 !important; }
+html.ilink-app body[data-app-page="team-detail"] .td-block-card .detail-view__text { color: #4b5563 !important; font-size: 14px !important; line-height: 1.8 !important; font-weight: 400 !important; }
+html.ilink-app body[data-app-page="team-detail"] .td-block-card:not(.td-members-card) > dt::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%239ca3af' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M7.5 3.75h9A2.25 2.25 0 0118.75 6v12A2.25 2.25 0 0116.5 20.25h-9A2.25 2.25 0 015.25 18V6A2.25 2.25 0 017.5 3.75zM8.25 8.25h7.5M8.25 12h7.5M8.25 15.75h4.5'/%3E%3C/svg%3E");
+}
+.td-block-card.td-members-card { display: block; padding: 22px 24px; background: #fff; border: 1px solid #f3f4f6; border-radius: 12px; }
+.td-block-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.td-block-title { margin: 0; display: flex; align-items: center; gap: 8px; color: #374151; font-size: 14px; font-weight: 700; }
+.td-block-title::before { content: ""; width: 16px; height: 16px; flex: 0 0 16px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%239ca3af' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M18 18.72a9.1 9.1 0 003.74-.48 3 3 0 00-4.68-2.72m.94 3.2a12 12 0 01-11.99 0M6 18.72a9.1 9.1 0 01-3.74-.48 3 3 0 014.68-2.72M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z'/%3E%3C/svg%3E") center/contain no-repeat; }
+.td-members-count { color: #9ca3af; font-size: 12px; }
+/* JS 渲染时会把 #teamMembers 的 className 重置为 d-flex flex-column，故用 id + !important 横排 */
+html.ilink-app body[data-app-page="team-detail"] #teamMembers {
+    display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; gap: 12px !important;
+}
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member {
+    width: auto; flex: 0 0 auto; margin: 0; padding: 12px 16px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px;
+}
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__avatar { width: 40px; height: 40px; flex-basis: 40px; border-color: #e5e7eb; }
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__role { border-color: #e5e7eb; color: #6b7280; }
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__role--leader { background: #111827; border-color: #111827; color: #fff; }
+
+/* —— 底部操作通栏 —— */
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions {
+    flex-direction: row !important; align-items: center !important; justify-content: space-between !important;
+    gap: 16px !important; flex-wrap: wrap;
+    margin: 24px -32px -32px !important; padding: 18px 32px !important;
+    background: rgba(249,250,251,.9); border-top: 1px solid #f3f4f6 !important; border-radius: 0 0 16px 16px;
+}
+.td-actions-hint { flex: 1 1 220px; color: #9ca3af; font-size: 12px; display: inline-flex; align-items: center; gap: 7px; }
+.td-actions-hint::before { content: ""; width: 15px; height: 15px; flex: 0 0 15px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%23d1d5db' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M11.25 11.25h.008v.008h-.008V11.25zM12 8.25h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'/%3E%3C/svg%3E") center/contain no-repeat; }
+.td-actions-btns { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .il-btn,
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .btn {
+    transition: transform .12s ease, background .2s, border-color .2s;
+}
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .il-btn:active,
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .btn:active { transform: scale(.95); }
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .il-btn--primary,
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .btn-primary { background: #111827 !important; border-color: #111827 !important; color: #fff !important; }
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .il-btn--primary:hover { background: #000 !important; border-color: #000 !important; }
+html.ilink-app body[data-app-page="team-detail"] #backBtn,
+html.ilink-app body[data-app-page="team-detail"] #editTeamBtn,
+html.ilink-app body[data-app-page="team-detail"] #markTeamingBtn { background: #fff !important; border-color: #e5e7eb !important; color: #374151 !important; }
+html.ilink-app body[data-app-page="team-detail"] #workspaceBtn { background: #111827 !important; border-color: #111827 !important; color: #fff !important; }
+html.ilink-app body[data-app-page="team-detail"] #backBtn:hover,
+html.ilink-app body[data-app-page="team-detail"] #editTeamBtn:hover,
+html.ilink-app body[data-app-page="team-detail"] #markTeamingBtn:hover { background: #f9fafb !important; border-color: #d1d5db !important; }
+html.ilink-app body[data-app-page="team-detail"] #closeTeamBtn { background: #fff !important; border-color: #fecaca !important; color: #dc2626 !important; }
+html.ilink-app body[data-app-page="team-detail"] #closeTeamBtn:hover { background: #fef2f2 !important; }
+
+/* 待审批区 */
+html.ilink-app body[data-app-page="team-detail"] .team-pending-section { background: #f9fafb; border-color: #f3f4f6; border-radius: 12px; margin-top: 4px; }
+html.ilink-app body[data-app-page="team-detail"] .pending-section__title { color: #111827 !important; }
+html.ilink-app body[data-app-page="team-detail"] .pending-section__badge { background: #f3f4f6 !important; color: #374151 !important; border: 1px solid #e5e7eb; }
+html.ilink-app body[data-app-page="team-detail"] .pending-card { border-color: #f3f4f6; }
+
+/* 编辑面板 */
+html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-control,
+html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-select { border-color: #e5e7eb; border-radius: 10px; }
+html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-control:focus,
+html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+
+/* ============================================================
+   导师详情
+   ============================================================ */
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__identity { gap: 24px; align-items: center; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar,
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot > a {
+    /* min/max 必须和 width/height 一起写：.publisher-avatar--lg 在 style.css 里被
+       min-width/max-width/min-height/max-height 钉死在 48px，而 min/max 恒胜于 width，
+       只改 width/height 会被夹回 48px —— 结果就是 80px 的白圆槽里卡着一个 48px 的头像 */
+    width: 80px !important; height: 80px !important;
+    min-width: 80px !important; max-width: 80px !important;
+    min-height: 80px !important; max-height: 80px !important;
+    flex: 0 0 80px !important;
+    background: #fff !important; border-color: #fff; border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(17,24,39,.08);
+}
+.td-cert-badge { display: inline-flex; align-items: center; padding: 2px 9px; margin-left: 2px; background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; border-radius: 999px; font-size: 10px; font-weight: 500; letter-spacing: 0; }
+
+/* 三列关键数据灰卡 */
+.td-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+html.ilink-app body[data-app-page="teacher-detail"] .detail-view__row.td-stat {
+    display: block !important; padding: 18px 20px !important; background: #f9fafb !important; border: 1px solid #f3f4f6 !important; border-radius: 12px !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .td-stat dt { display: block; margin: 0 0 8px !important; color: #9ca3af !important; font-size: 12px !important; font-weight: 500 !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .td-stat dd { margin: 0 !important; color: #1f2937 !important; font-size: 18px !important; font-weight: 700 !important; line-height: 1.4 !important; }
+
+/* 双列基本信息白卡 */
+.td-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+html.ilink-app body[data-app-page="teacher-detail"] .detail-view__row.td-info {
+    display: block !important; padding: 18px 20px !important; background: #fff !important; border: 1px solid #f3f4f6 !important; border-radius: 12px !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .td-info dt { display: block; margin: 0 0 6px !important; color: #9ca3af !important; font-size: 12px !important; font-weight: 500 !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .td-info dd { margin: 0 !important; color: #111827 !important; font-size: 16px !important; font-weight: 600 !important; }
+
+/* 文本块 */
+html.ilink-app body[data-app-page="teacher-detail"] .detail-view__row.td-textblock {
+    display: block !important; padding: 22px 24px !important; background: rgba(249,250,251,.6) !important; border: 1px solid #f3f4f6 !important; border-radius: 12px !important;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .td-textblock dt { display: flex !important; align-items: center; gap: 8px; margin: 0 0 12px !important; color: #374151; font-size: 14px; font-weight: 700; }
+html.ilink-app body[data-app-page="teacher-detail"] .td-textblock dt::before { content: ""; width: 15px; height: 15px; flex: 0 0 15px; background-repeat: no-repeat; background-position: center; background-size: contain; }
+html.ilink-app body[data-app-page="teacher-detail"] .td-textblock--bio dt::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%239ca3af' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0'/%3E%3C/svg%3E"); }
+html.ilink-app body[data-app-page="teacher-detail"] .td-textblock--research dt::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%239ca3af' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M9.75 3.1v5.7a2.25 2.25 0 01-.66 1.6L5 14.5m4.75-11.4c1.5-.16 3-.16 4.5 0m-4.5 0v5.7c0 .6.24 1.17.66 1.6l4.34 4.1m-.5-11.4v5.7m0 0l4.9 4.6m-4.9-4.6l1.4 1.4c1.23 1.23.65 3.32-1.07 3.61A48.3 48.3 0 0112 21a48 48 0 01-6.58-.69c-1.72-.29-2.3-2.38-1.07-3.61L5 14.5'/%3E%3C/svg%3E"); }
+html.ilink-app body[data-app-page="teacher-detail"] .td-textblock--projects dt::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%239ca3af' stroke-width='1.8' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.06-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9A2.25 2.25 0 0019.5 6.75h-6.44a1.5 1.5 0 01-1.06-.44z'/%3E%3C/svg%3E"); }
+html.ilink-app body[data-app-page="teacher-detail"] .td-textblock dd { margin: 0 !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .td-textblock .detail-view__text { color: #4b5563 !important; font-size: 14px !important; line-height: 1.8 !important; font-weight: 400 !important; }
+
+/* 申请合作 / 待处理：独立白卡 */
+html.ilink-app body[data-app-page="teacher-detail"] .td-standalone-card {
+    background: #fff !important; border: 1px solid #e5e7eb !important; border-radius: 16px !important;
+    padding: 28px 32px !important; margin-top: 24px !important;
+    box-shadow: 0 1px 2px rgba(17,24,39,.04), 0 1px 3px rgba(17,24,39,.06);
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__section-label { font-size: 20px !important; font-weight: 700 !important; color: #111827 !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-hint { color: #6b7280; font-size: 14px; }
+
+.td-textarea-wrap { position: relative; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea {
+    width: 100% !important; min-height: 132px !important; padding: 14px 16px 30px !important;
+    background: rgba(249,250,251,.5) !important; border: 1px solid #e5e7eb !important; border-radius: 12px !important;
+    color: #1f2937; font-size: 14px; line-height: 1.7; resize: vertical;
+    transition: border-color .15s, box-shadow .15s;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea:focus { outline: none; border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,.12) !important; }
+.td-char-count { position: absolute; right: 14px; bottom: 10px; color: #9ca3af; font-size: 12px; pointer-events: none; }
+.td-char-count.is-near { color: #d97706; font-weight: 500; }
+
+html.ilink-app body[data-app-page="teacher-detail"] .td-apply-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+.td-apply-note { color: #9ca3af; font-size: 12px; flex: 1 1 220px; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actions.td-apply-actions .teacher-detail__submit {
+    min-height: 42px; padding: 0 30px; border-radius: 10px;
+    background: #111827 !important; border: 1px solid #111827 !important; color: #fff !important; font-size: 14px; font-weight: 500;
+    transition: transform .12s ease, background .2s;
+}
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actions.td-apply-actions .teacher-detail__submit:hover:not(:disabled) { background: #000 !important; border-color: #000 !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit:active:not(:disabled) { transform: scale(.95); }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-status { font-size: 13px; color: #6b7280; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__pending-card { border-color: #f3f4f6; background: #f9fafb; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__decision { border-radius: 9px; border-color: #e5e7eb; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__decision--approve { background: #111827; border-color: #111827; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 767.98px) {
+    .td-cond-grid, .td-stat-grid, .td-info-grid { grid-template-columns: 1fr; }
+    html.ilink-app body[data-app-page="team-detail"] .detail-view__actions { margin: 20px -20px -24px !important; padding: 16px 20px !important; }
+    html.ilink-app body[data-app-page="teacher-detail"] .td-standalone-card { padding: 20px; }
+    html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit { width: 100%; justify-content: center; }
+}

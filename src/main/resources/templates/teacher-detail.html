@@ -6,8 +6,9 @@
     <title>导师详情 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/teacher-detail.css?v=1.2" rel="stylesheet">
-    <link href="/css/portal-redesign.css?v=3.2" rel="stylesheet">
+    <link th:href="@{/css/teacher-detail.css}" rel="stylesheet">
+    <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
+    <link th:href="@{/css/detail-refresh.css}" rel="stylesheet">
 </head>
 <body data-app-page="teacher-detail" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -34,7 +35,7 @@
                     <div class="teacher-detail__identity">
                         <div id="teacherHeaderAvatar" class="teacher-detail__avatar-slot" aria-hidden="false"></div>
                         <div class="teacher-detail__title-wrap">
-                            <p class="detail-view__eyebrow">导师详情</p>
+                            <p class="detail-view__eyebrow">导师详情 <span class="td-cert-badge">认证导师</span></p>
                             <h1 class="detail-view__title mb-0" id="teacherName">导师姓名</h1>
                         </div>
                     </div>
@@ -42,58 +43,70 @@
 
                 <div class="teacher-detail__body">
                     <dl class="detail-view__meta teacher-detail__meta">
-                        <div class="detail-view__row">
-                            <dt>专业领域</dt>
-                            <dd id="teacherMajor">-</dd>
+                        <div class="td-stat-grid">
+                            <div class="detail-view__row td-stat">
+                                <dt>申请时间</dt>
+                                <dd id="applicationTime">-</dd>
+                            </div>
+                            <div class="detail-view__row td-stat">
+                                <dt>已通过合作</dt>
+                                <dd id="teacherApprovedProjects">0</dd>
+                            </div>
+                            <div class="detail-view__row td-stat">
+                                <dt>公开成果</dt>
+                                <dd id="teacherPublicAssets">0</dd>
+                            </div>
                         </div>
-                        <div class="detail-view__row">
-                            <dt>职称</dt>
-                            <dd id="teacherTitle">-</dd>
+
+                        <div class="td-info-grid">
+                            <div class="detail-view__row td-info">
+                                <dt>专业领域</dt>
+                                <dd id="teacherMajor">-</dd>
+                            </div>
+                            <div class="detail-view__row td-info">
+                                <dt>职称</dt>
+                                <dd id="teacherTitle">-</dd>
+                            </div>
                         </div>
-                        <div class="detail-view__row">
-                            <dt>申请时间</dt>
-                            <dd id="applicationTime">-</dd>
-                        </div>
-                        <div class="detail-view__row">
-                            <dt>已通过合作</dt>
-                            <dd id="teacherApprovedProjects">0</dd>
-                        </div>
-                        <div class="detail-view__row">
-                            <dt>公开成果</dt>
-                            <dd id="teacherPublicAssets">0</dd>
-                        </div>
-                        <div class="detail-view__row detail-view__row--block">
+
+                        <div class="detail-view__row detail-view__row--block td-textblock td-textblock--bio">
                             <dt>个人简介</dt>
                             <dd>
                                 <p id="teacherBio" class="detail-view__text mb-0">-</p>
                             </dd>
                         </div>
-                        <div class="detail-view__row detail-view__row--block">
+                        <div class="detail-view__row detail-view__row--block td-textblock td-textblock--research">
                             <dt>研究方向</dt>
                             <dd>
                                 <p id="teacherResearch" class="detail-view__text mb-0">-</p>
                             </dd>
                         </div>
-                        <div class="detail-view__row detail-view__row--block" id="teacherProjectsRow" hidden>
+                        <div class="detail-view__row detail-view__row--block td-textblock td-textblock--projects" id="teacherProjectsRow" hidden>
                             <dt>代表项目</dt>
                             <dd>
                                 <p id="teacherProjects" class="detail-view__text mb-0">-</p>
                             </dd>
                         </div>
                     </dl>
+                </div>
+            </article>
 
-                    <section id="projectApplySection" class="teacher-detail__apply" aria-labelledby="projectApplyHeading">
+            <section id="projectApplySection" class="teacher-detail__apply td-standalone-card" aria-labelledby="projectApplyHeading">
                         <h2 id="projectApplyHeading" class="teacher-detail__section-label">申请合作 / 课题意向</h2>
                         <p id="projectApplyHint" class="teacher-detail__apply-hint">登录后可向该导师提交合作意向说明。</p>
-                        <textarea id="projectApplyMessage" class="teacher-detail__textarea" rows="4"
-                            placeholder="请简述您的背景、技能与希望参与的方向（选填）"></textarea>
-                        <div class="teacher-detail__apply-actions">
+                        <div class="td-textarea-wrap">
+                            <textarea id="projectApplyMessage" class="teacher-detail__textarea" rows="5" maxlength="500"
+                                placeholder="请简述您的背景、技能与希望参与的方向（选填）"></textarea>
+                            <span class="td-char-count"><span id="tdCharCount">0</span> / 500</span>
+                        </div>
+                        <div class="teacher-detail__apply-actions td-apply-actions">
+                            <span class="td-apply-note">提交后，导师将在 3-5 个工作日内处理您的申请。</span>
                             <button type="button" id="projectApplyBtn" class="btn btn-primary teacher-detail__submit">提交申请</button>
                         </div>
                         <p id="projectApplyStatus" class="teacher-detail__apply-status" role="status"></p>
                     </section>
 
-                    <section id="teacherPendingSection" class="teacher-detail__apply teacher-detail__pending" aria-labelledby="teacherPendingHeading" hidden>
+                    <section id="teacherPendingSection" class="teacher-detail__apply teacher-detail__pending td-standalone-card" aria-labelledby="teacherPendingHeading" hidden>
                         <div class="teacher-detail__pending-heading">
                             <div>
                                 <h2 id="teacherPendingHeading" class="teacher-detail__section-label">待处理合作申请</h2>
@@ -103,14 +116,13 @@
                         </div>
                         <div class="teacher-detail__pending-list" id="teacherPendingList" aria-live="polite"></div>
                     </section>
-                </div>
-            </article>
         </div>
     </main>
 
-    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=9.2"></script>
-    <script src="/js/ui-particles.js?v=1.0"></script>
-    <script src="/js/teacher-detail.js?v=5"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/ui-particles.js}"></script>
+    <script th:src="@{/js/teacher-detail.js}"></script>
+    <script th:src="@{/js/detail-refresh.js}"></script>
 </body>
 </html>

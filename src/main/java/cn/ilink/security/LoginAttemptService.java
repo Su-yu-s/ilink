@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 登录/注册失败次数限制：同一 key（IP 或账号）连续失败 5 次后锁定 15 分钟。
  * 注册限流：同一 IP 每分钟最多 3 次。
+ * 意见反馈限流：同一 IP 每 10 分钟最多 3 条。
  */
 @Service
 public class LoginAttemptService {
@@ -18,6 +19,7 @@ public class LoginAttemptService {
     private static final int LOCK_MINUTES = 15;
     private static final int REGISTER_MAX_PER_MINUTE = 3;
     private static final int PASSWORD_RESET_MAX_PER_15_MINUTES = 3;
+    private static final int FEEDBACK_MAX_PER_10_MINUTES = 3;
 
     private final Cache<String, AtomicInteger> attempts = Caffeine.newBuilder()
         .expireAfterWrite(LOCK_MINUTES, TimeUnit.MINUTES)
@@ -32,6 +34,12 @@ public class LoginAttemptService {
 
     private final Cache<String, AtomicInteger> passwordResetAttempts = Caffeine.newBuilder()
         .expireAfterWrite(15, TimeUnit.MINUTES)
+        .maximumSize(10_000)
+        .build();
+
+    /** 意见反馈限流：同一 IP 每 10 分钟最多 3 条 */
+    private final Cache<String, AtomicInteger> feedbackAttempts = Caffeine.newBuilder()
+        .expireAfterWrite(10, TimeUnit.MINUTES)
         .maximumSize(10_000)
         .build();
 
@@ -92,6 +100,18 @@ public class LoginAttemptService {
             "password-reset:" + clientIp, key -> new AtomicInteger(0));
         synchronized (count) {
             if (count.get() >= PASSWORD_RESET_MAX_PER_15_MINUTES) return false;
+            count.incrementAndGet();
+            return true;
+        }
+    }
+
+    /** 意见反馈限流：同一 IP 每 10 分钟最多 3 条，避免匿名入口被用来刷爆开发者微信。 */
+    public boolean tryFeedback(String clientIp) {
+        if (clientIp == null || clientIp.isBlank()) return true;
+        AtomicInteger count = feedbackAttempts.asMap().computeIfAbsent(
+            "feedback:" + clientIp, key -> new AtomicInteger(0));
+        synchronized (count) {
+            if (count.get() >= FEEDBACK_MAX_PER_10_MINUTES) return false;
             count.incrementAndGet();
             return true;
         }

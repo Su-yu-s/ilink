@@ -183,6 +183,138 @@
   border-radius: 8px;
 }
 
+/*
+ * Shared published Markdown surface.
+ * 编辑器预览、社区正文和成果正文都挂载该类，避免三处各自覆盖排版。
+ */
+.ilink-markdown-source {
+  display: none !important;
+}
+
+.ilink-app .markdown-body.il-markdown-content {
+  box-sizing: border-box;
+  min-width: 0;
+  color: #24292f;
+  background: transparent;
+  font-family: var(--font-sans, Inter, "Microsoft YaHei", "微软雅黑", sans-serif);
+  font-size: 14px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.ilink-app .markdown-body.il-markdown-content > :first-child { margin-top: 0 !important; }
+.ilink-app .markdown-body.il-markdown-content > :last-child { margin-bottom: 0 !important; }
+
+.ilink-app .markdown-body.il-markdown-content h1,
+.ilink-app .markdown-body.il-markdown-content h2,
+.ilink-app .markdown-body.il-markdown-content h3,
+.ilink-app .markdown-body.il-markdown-content h4,
+.ilink-app .markdown-body.il-markdown-content h5,
+.ilink-app .markdown-body.il-markdown-content h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  color: #1f2328;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.ilink-app .markdown-body.il-markdown-content h1 { padding-bottom: 0.3em; border-bottom: 1px solid #d8dee4; font-size: 2em; }
+.ilink-app .markdown-body.il-markdown-content h2 { padding-bottom: 0.3em; border-bottom: 1px solid #d8dee4; font-size: 1.5em; }
+.ilink-app .markdown-body.il-markdown-content h3 { font-size: 1.25em; }
+.ilink-app .markdown-body.il-markdown-content h4 { font-size: 1em; }
+.ilink-app .markdown-body.il-markdown-content h5 { font-size: 0.875em; }
+.ilink-app .markdown-body.il-markdown-content h6 { color: #656d76; font-size: 0.85em; }
+
+.ilink-app .markdown-body.il-markdown-content p,
+.ilink-app .markdown-body.il-markdown-content blockquote,
+.ilink-app .markdown-body.il-markdown-content ul,
+.ilink-app .markdown-body.il-markdown-content ol,
+.ilink-app .markdown-body.il-markdown-content dl,
+.ilink-app .markdown-body.il-markdown-content table,
+.ilink-app .markdown-body.il-markdown-content pre {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.ilink-app .markdown-body.il-markdown-content ul,
+.ilink-app .markdown-body.il-markdown-content ol { padding-left: 2em; }
+.ilink-app .markdown-body.il-markdown-content li + li { margin-top: 0.25em; }
+
+.ilink-app .markdown-body.il-markdown-content blockquote {
+  padding: 0 1em;
+  color: #656d76;
+  border-left: 0.25em solid #d0d7de;
+}
+
+.ilink-app .markdown-body.il-markdown-content a { color: #0969da; text-decoration: none; }
+.ilink-app .markdown-body.il-markdown-content a:hover { text-decoration: underline; }
+
+.ilink-app .markdown-body.il-markdown-content code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  border-radius: 6px;
+  background: rgba(175, 184, 193, 0.2);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 85%;
+}
+
+.ilink-app .markdown-body.il-markdown-content pre {
+  max-width: 100%;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 6px;
+  background: #f6f8fa;
+  color: #1f2328;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ilink-app .markdown-body.il-markdown-content pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  white-space: pre;
+}
+
+.ilink-app .markdown-body.il-markdown-content table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.ilink-app .markdown-body.il-markdown-content table th,
+.ilink-app .markdown-body.il-markdown-content table td {
+  padding: 6px 13px;
+  border: 1px solid #d0d7de;
+  text-align: left;
+}
+
+.ilink-app .markdown-body.il-markdown-content table th {
+  background: #f6f8fa;
+  font-weight: 600;
+}
+
+.ilink-app .markdown-body.il-markdown-content table tr { background: #fff; }
+.ilink-app .markdown-body.il-markdown-content table tr:nth-child(2n) { background: #f6f8fa; }
+
+.ilink-app .markdown-body.il-markdown-content hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  border: 0;
+  background: #d8dee4;
+}
+
+.ilink-app .markdown-body.il-markdown-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
 /* 分隔线 */
 .md-divider {
   width: 6px;

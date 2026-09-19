@@ -8,6 +8,10 @@ import org.jsoup.safety.Safelist;
  */
 public final class HtmlSanitizer {
 
+    private static final Safelist COMMUNITY_POST_SAFELIST = Safelist.relaxed()
+        .addTags("span")
+        .addAttributes("span", "class", "data-ilink-markdown", "hidden", "aria-hidden");
+
     private HtmlSanitizer() {
     }
 
@@ -19,7 +23,7 @@ public final class HtmlSanitizer {
         if (s.isEmpty()) {
             return "";
         }
-        return Jsoup.clean(s, Safelist.relaxed());
+        return Jsoup.clean(s, COMMUNITY_POST_SAFELIST);
     }
 
     /** 列表摘要：从 HTML 提取纯文本 */

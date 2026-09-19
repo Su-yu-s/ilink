@@ -25,4 +25,6 @@ public class PublicUserProfileVO {
     private String honors;
     /** 用户发布的公开文字内容（社区帖子） */
     private List<Map<String, Object>> publishedPosts;
+    /** 用户发布的公开成果（成果展示里的资产，只带概要字段） */
+    private List<Map<String, Object>> publishedAssets;
 }

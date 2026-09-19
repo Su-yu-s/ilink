@@ -1,0 +1,1158 @@
+/* ============================================================
+   iLink · demo-refresh
+   浏览/检索页统一中性灰视觉层（严格对齐高保真 demo）
+   覆盖范围：组队大厅 / 导师招贤 / 成果展示 / 竞赛目录 / 交流社区
+   仅做视觉覆盖，不改接口与交互逻辑；必须在 portal-redesign 之后引入。
+   ============================================================ */
+
+:root {
+    --dr-gray-50: #f9fafb;
+    --dr-gray-100: #f3f4f6;
+    --dr-gray-200: #e5e7eb;
+    --dr-gray-300: #d1d5db;
+    --dr-gray-400: #9ca3af;
+    --dr-gray-500: #6b7280;
+    --dr-gray-600: #4b5563;
+    --dr-gray-700: #374151;
+    --dr-gray-800: #1f2937;
+    --dr-gray-900: #111827;
+    --dr-green-50: #f0fdf4;
+    --dr-green-200: #bbf7d0;
+    --dr-green-500: #22c55e;
+    --dr-green-700: #15803d;
+    --dr-radius-card: 16px;
+    --dr-shadow-card: 0 1px 2px rgba(17, 24, 39, 0.04), 0 1px 3px rgba(17, 24, 39, 0.06);
+    --dr-shadow-hover: 0 12px 25px -8px rgba(17, 24, 39, 0.12);
+    --dr-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============ 1. 页面底色与内容宽度 ============ */
+html.ilink-app body[data-app-page="team-market"],
+html.ilink-app body[data-app-page="teacher-wall"],
+html.ilink-app body[data-app-page="gallery"],
+html.ilink-app body[data-app-page="competitions"],
+html.ilink-app body[data-app-page="community"] {
+    background: var(--dr-gray-50) !important;
+}
+
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"]) .il-page-wrapper {
+    width: 100% !important;
+    max-width: 1152px !important;
+    padding-top: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .container.main-content,
+html.ilink-app body[data-app-page="competitions"] .main-content {
+    width: 100% !important;
+    max-width: 1152px !important;
+    padding: 0 24px !important;
+    margin: 0 auto !important;
+}
+html.ilink-app body[data-app-page="community"] .il-page-wrapper {
+    width: 100% !important;
+    /* 与 gallery 等列表页同宽（原先 896px 过窄） */
+    max-width: 1152px !important;
+    padding-top: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-hub {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 0 72px !important;
+}
+
+/* ============ 2. Hero（两套类名统一到 demo） ============ */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .hero-section,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .toolbar-section,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .content-section,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .banner-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .hero-section {
+    padding: 40px 0 28px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .toolbar-section {
+    padding: 0 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .content-section {
+    padding: 0 0 80px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .banner-section {
+    padding: 0 0 8px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .hero-inner,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .toolbar-inner,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .content-inner,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .banner-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .hero-inner,
+html.ilink-app body:is([data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-hero {
+    max-width: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 12px;
+}
+html.ilink-app body:is([data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-hero {
+    padding: 40px 0 28px !important;
+    margin: 0 !important;
+}
+html.ilink-app .hero-eyebrow,
+html.ilink-app .il-hero__badge,
+html.ilink-app .il-hero__eyebrow {
+    align-self: flex-start !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: auto !important;
+    padding: 6px 12px !important;
+    border-radius: 999px !important;
+    background: #fff !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    box-shadow: 0 1px 2px rgba(17,24,39,.05) !important;
+    color: var(--dr-gray-500) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    margin: 0 !important;
+}
+html.ilink-app .hero-eyebrow svg,
+html.ilink-app .il-hero__badge svg,
+html.ilink-app .il-hero__eyebrow svg {
+    width: 14px !important; height: 14px !important;
+    stroke: var(--dr-gray-400) !important; color: var(--dr-gray-400) !important;
+}
+html.ilink-app .hero-title,
+html.ilink-app .il-hero__title {
+    font-family: "Inter", "Microsoft YaHei", "微软雅黑", -apple-system, sans-serif !important;
+    font-size: 36px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.01em !important;
+    color: var(--dr-gray-900) !important;
+    margin: 0 !important;
+    max-width: 720px !important;
+}
+html.ilink-app .hero-desc,
+html.ilink-app .il-hero__desc {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+    color: var(--dr-gray-500) !important;
+    margin: 0 !important;
+    max-width: 720px !important;
+}
+
+/* 社区：标题与工具条同行（demo 为 md:flex-row items-end） */
+html.ilink-app body[data-app-page="community"] .il-hero { padding-bottom: 16px !important; }
+
+/* ============ 3. 一体化工具栏（demo 白底圆角卡） ============
+   选择器权重与 portal-redesign 对齐（同权、后引入胜出），并兼容其 JS 自定义下拉。 */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    padding: 8px !important;
+    gap: 12px !important;
+    background: #fff !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    border-radius: var(--dr-radius-card) !important;
+    box-shadow: var(--dr-shadow-card) !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    margin: 0 0 28px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar:hover {
+    border-color: var(--dr-gray-200) !important;
+    box-shadow: var(--dr-shadow-card) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+}
+/* 搜索输入区：透明无边框，放大镜在内 */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-field,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-field--toolbar,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-field--combo {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 12px !important;
+    height: 44px !important;
+    box-shadow: none !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-field__icon {
+    position: static !important;
+    width: 20px !important; height: 20px !important;
+    flex: 0 0 20px !important;
+    color: var(--dr-gray-400) !important;
+    margin-right: 4px !important;
+    cursor: pointer;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-field__input {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 8px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 14px !important;
+    color: var(--dr-gray-800) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-field__input:focus,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-field__input:hover {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-field__input::placeholder {
+    color: var(--dr-gray-400) !important;
+}
+
+/* 自定义下拉（portal JS 注入 cs-trigger/cs-dropdown）：灰底胶囊 */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select {
+    flex: 0 0 auto !important;
+    position: relative !important;
+    height: 44px !important;
+    padding: 0 !important;
+    border: 1px solid transparent !important;
+    border-radius: 10px !important;
+    background: var(--dr-gray-100) !important;
+    transition: border-color .15s var(--dr-ease), background-color .15s var(--dr-ease) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select:hover {
+    background: var(--dr-gray-100) !important;
+    border-color: var(--dr-gray-200) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-trigger {
+    height: 42px !important;
+    padding: 0 12px !important;
+    border-radius: 10px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-label {
+    font-size: 12px !important;
+    color: var(--dr-gray-400) !important;
+    font-weight: 400 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-value {
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    color: var(--dr-gray-600) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-chevron { color: var(--dr-gray-400) !important; }
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-dropdown {
+    border-color: var(--dr-gray-200) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 28px -8px rgba(17,24,39,.18) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-item { color: var(--dr-gray-700) !important; border-radius: 8px !important; }
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-item:hover { background: var(--dr-gray-100) !important; }
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-item.active {
+    background: var(--dr-gray-100) !important;
+    color: var(--dr-gray-900) !important;
+    font-weight: 600 !important;
+}
+/* 原生 select（未被改造的兜底） */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select > select {
+    height: 42px !important;
+    min-width: 116px !important;
+    padding: 0 30px 0 12px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background-color: var(--dr-gray-100) !important;
+    color: var(--dr-gray-600) !important;
+    font-size: 14px !important;
+    box-shadow: none !important;
+}
+/* 竖分隔线（覆盖 portal 配色与位置） */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap + .il-search-bar__select::before,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select + .il-search-bar__select::before {
+    left: -6px !important;
+    height: 32px !important;
+    background: var(--dr-gray-200) !important;
+}
+
+/* 按钮统一 */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn {
+    height: 44px !important;
+    padding: 0 24px !important;
+    margin-left: 0 !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    gap: 8px !important;
+    position: relative;
+    white-space: nowrap;
+    transition: transform .12s var(--dr-ease), background-color .15s var(--dr-ease) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn svg { width: 16px !important; height: 16px !important; }
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--ghost,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--solid {
+    background: var(--dr-gray-900) !important;
+    color: #fff !important;
+    border: 1px solid var(--dr-gray-900) !important;
+    box-shadow: 0 1px 2px rgba(17,24,39,.12) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--ghost:hover,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--solid:hover {
+    background: #000 !important;
+    border-color: #000 !important;
+    color: #fff !important;
+    transform: none !important;
+    box-shadow: 0 1px 2px rgba(17,24,39,.12) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn:active { transform: scale(0.95) !important; }
+/* 主操作按钮前竖分隔线 */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--ghost::before,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--solid::before {
+    content: "";
+    position: absolute;
+    left: -7px; top: 50%;
+    transform: translateY(-50%);
+    width: 1px; height: 32px;
+    background: var(--dr-gray-200);
+}
+/* secondary（刷新）白底灰边 */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--secondary {
+    background: #fff !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    color: var(--dr-gray-500) !important;
+    border-radius: 12px !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--secondary:hover {
+    background: var(--dr-gray-50) !important;
+    color: var(--dr-gray-900) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__spacer { display: none !important; }
+
+/* ============ 4. 通用卡片悬浮微交互 ============ */
+html.ilink-app .team-card,
+html.ilink-app .mentor-card-shell,
+html.ilink-app .result-card.gc-card,
+html.ilink-app .contest-card,
+html.ilink-app .article-card.il-post-card {
+    transition: transform .2s var(--dr-ease), box-shadow .2s var(--dr-ease), border-color .2s var(--dr-ease) !important;
+}
+html.ilink-app .team-card:hover,
+html.ilink-app .mentor-card-shell:hover,
+html.ilink-app .result-card.gc-card:hover,
+html.ilink-app .contest-card:hover,
+html.ilink-app .article-card.il-post-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: var(--dr-shadow-hover) !important;
+    border-color: var(--dr-gray-300) !important;
+}
+
+/* ============================================================
+   5. 组队大厅卡片
+   ============================================================ */
+html.ilink-app body[data-app-page="team-market"] #teamList {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+    gap: 24px !important;
+}
+html.ilink-app body[data-app-page="team-market"] .il-team-card-shell {
+    display: block;
+    text-decoration: none !important;
+    color: inherit;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px !important;
+    padding: 24px !important;
+    border-radius: var(--dr-radius-card) !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    background: #fff !important;
+    box-shadow: var(--dr-shadow-card) !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .card-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    margin: 0 !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .card-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: var(--dr-gray-900) !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    flex: 1 1 auto !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .card-title:hover { color: var(--dr-gray-900) !important; }
+html.ilink-app body[data-app-page="team-market"] .team-card .category-tag {
+    flex: 0 0 auto !important;
+    height: auto !important;
+    padding: 4px 10px !important;
+    border-radius: 6px !important;
+    background: var(--dr-gray-100) !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    color: var(--dr-gray-600) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .category-tag:hover { background: var(--dr-gray-100) !important; }
+html.ilink-app body[data-app-page="team-market"] .team-card .card-meta {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px 16px !important;
+    margin: 0 !important;
+    font-size: 12px !important;
+    color: var(--dr-gray-500) !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .meta-item {
+    display: inline-flex !important; align-items: center !important; gap: 6px !important;
+    color: var(--dr-gray-500) !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .meta-item svg { width: 14px !important; height: 14px !important; color: var(--dr-gray-400) !important; }
+html.ilink-app body[data-app-page="team-market"] .team-card .meta-dot { display: none !important; }
+html.ilink-app body[data-app-page="team-market"] .team-card .skill-tags { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; margin: 0 !important; }
+html.ilink-app body[data-app-page="team-market"] .team-card .skill-tag {
+    height: auto !important;
+    padding: 3px 10px !important;
+    border-radius: 6px !important;
+    background: var(--dr-gray-50) !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    color: var(--dr-gray-600) !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .skill-tag:hover { background: var(--dr-gray-50) !important; color: var(--dr-gray-600) !important; }
+html.ilink-app body[data-app-page="team-market"] .team-card .card-desc {
+    font-size: 14px !important;
+    line-height: 1.65 !important;
+    color: var(--dr-gray-500) !important;
+    margin: 0 !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .card-divider {
+    height: 1px !important;
+    margin: auto 0 0 !important;
+    background: var(--dr-gray-100) !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .card-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    padding: 16px 0 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .author-info { display: flex !important; align-items: center !important; gap: 8px !important; }
+html.ilink-app body[data-app-page="team-market"] .team-card .author-avatar {
+    width: 24px !important; height: 24px !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    background: var(--dr-gray-100) !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .author-avatar:hover { border-color: var(--dr-gray-200) !important; transform: none !important; }
+html.ilink-app body[data-app-page="team-market"] .team-card .il-author-name { font-size: 14px !important; font-weight: 500 !important; color: var(--dr-gray-700) !important; }
+/* 状态药丸：招募中绿色呼吸 / 其余灰色 */
+html.ilink-app body[data-app-page="team-market"] .team-card .status-badge {
+    height: auto !important;
+    padding: 5px 12px !important;
+    border-radius: 999px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .status-badge::before {
+    position: static !important;
+    transform: none !important;
+    width: 6px !important; height: 6px !important;
+    border-radius: 50% !important;
+    flex: 0 0 6px !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .il-status-recruiting,
+html.ilink-app body[data-app-page="team-market"] .team-card .status-recruiting {
+    background: var(--dr-green-50) !important;
+    color: var(--dr-green-700) !important;
+    border: 1px solid var(--dr-green-200) !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .il-status-recruiting::before,
+html.ilink-app body[data-app-page="team-market"] .team-card .status-recruiting::before {
+    background: var(--dr-green-500) !important;
+    animation: dr-pulse 2s infinite !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .il-status-teamed,
+html.ilink-app body[data-app-page="team-market"] .team-card .status-teaming,
+html.ilink-app body[data-app-page="team-market"] .team-card .il-status-closed,
+html.ilink-app body[data-app-page="team-market"] .team-card .status-full,
+html.ilink-app body[data-app-page="team-market"] .team-card .status-closed {
+    background: var(--dr-gray-100) !important;
+    color: var(--dr-gray-500) !important;
+    border: 1px solid var(--dr-gray-200) !important;
+}
+html.ilink-app body[data-app-page="team-market"] .team-card .il-status-teamed::before,
+html.ilink-app body[data-app-page="team-market"] .team-card .status-teaming::before,
+html.ilink-app body[data-app-page="team-market"] .team-card .il-status-closed::before,
+html.ilink-app body[data-app-page="team-market"] .team-card .status-full::before,
+html.ilink-app body[data-app-page="team-market"] .team-card .status-closed::before {
+    background: var(--dr-gray-400) !important;
+    animation: none !important;
+}
+@keyframes dr-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,.4); }
+    70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+}
+
+/* ============================================================
+   6. 导师招贤卡片
+   ============================================================ */
+html.ilink-app body[data-app-page="teacher-wall"] #teacherList {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+    gap: 24px !important;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell {
+    position: relative;
+    background: #fff !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    border-radius: var(--dr-radius-card) !important;
+    box-shadow: var(--dr-shadow-card) !important;
+    padding: 24px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    cursor: pointer;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-corner,
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-divider { display: none !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-header {
+    display: flex !important; align-items: center !important; gap: 16px !important;
+    padding: 0 !important; border: 0 !important;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar {
+    width: 56px !important; height: 56px !important;
+    border-radius: 50% !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    background: var(--dr-gray-100) !important;
+    overflow: hidden; flex: 0 0 56px !important;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar img { width:100%; height:100%; object-fit:cover; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-info { display: flex !important; flex-direction: column !important; gap: 2px !important; min-width: 0 !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-name {
+    font-size: 18px !important; font-weight: 700 !important; color: var(--dr-gray-900) !important;
+    margin: 0 !important;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-title-row { font-size: 12px !important; color: var(--dr-gray-500) !important; order: 3; }
+/* 专业领域做成蓝色徽章 */
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-dept {
+    align-self: flex-start !important;
+    font-size: 12px !important;
+    padding: 4px 10px !important;
+    border-radius: 6px !important;
+    background: #eff6ff !important;
+    border: 1px solid #dbeafe !important;
+    color: #2563eb !important;
+    font-weight: 500 !important;
+    margin: 0 !important;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-dept--purple { background:#faf5ff !important; border-color:#f3e8ff !important; color:#9333ea !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-dept--teal { background:#f0fdfa !important; border-color:#ccfbf1 !important; color:#0d9488 !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-bio {
+    font-size: 14px !important; line-height: 1.65 !important; color: var(--dr-gray-500) !important;
+    padding: 0 !important; border: 0 !important; margin: 0 !important;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-tags { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; padding: 0 !important; margin: 0 !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-tag {
+    font-size: 12px !important; padding: 2px 8px !important; border-radius: 4px !important;
+    background: var(--dr-gray-50) !important; border: 1px solid var(--dr-gray-200) !important;
+    color: var(--dr-gray-600) !important; font-weight: 500 !important;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-footer {
+    margin-top: auto !important;
+    padding: 16px 0 0 !important;
+    border-top: 1px solid var(--dr-gray-100) !important;
+    display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 16px !important;
+    background: transparent !important;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-stats { display: flex !important; gap: 20px !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat { display: flex !important; flex-direction: column !important; gap: 4px !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat-value { font-size: 16px !important; font-weight: 700 !important; color: var(--dr-gray-900) !important; line-height: 1 !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat-label { font-size: 10px !important; color: var(--dr-gray-400) !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-btn {
+    display: inline-flex !important; align-items: center !important; gap: 4px !important;
+    font-size: 12px !important; font-weight: 500 !important;
+    padding: 8px 12px !important; border-radius: 10px !important;
+    background: var(--dr-gray-100) !important; color: var(--dr-gray-700) !important;
+    border: 0 !important; text-decoration: none !important;
+    transition: background-color .15s var(--dr-ease) !important;
+}
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-btn:hover { background: var(--dr-gray-200) !important; color: var(--dr-gray-900) !important; }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell:hover .mentor-btn svg { transform: translateX(4px); }
+html.ilink-app body[data-app-page="teacher-wall"] .mentor-btn svg { transition: transform .2s var(--dr-ease); width: 14px !important; height: 14px !important; }
+
+/* ============================================================
+   7. 成果展示卡片（双列、封面）
+   ============================================================ */
+html.ilink-app body[data-app-page="gallery"] #listContainer { width: 100%; }
+html.ilink-app body[data-app-page="gallery"] .gc-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+    gap: 24px !important;
+}
+html.ilink-app body[data-app-page="gallery"] .result-card.gc-card {
+    /* 必须解除 gallery.css 的 max-width:420px —— 网格单元是 540px，
+       留着上限会让每张卡右边空出 120px，两卡之间的视觉间距变成 144px */
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: var(--dr-radius-card) !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    background: #fff !important;
+    box-shadow: var(--dr-shadow-card) !important;
+    overflow: hidden;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    cursor: pointer;
+}
+html.ilink-app body[data-app-page="gallery"] .gc-cover {
+    height: 192px !important;
+    background: var(--dr-gray-100) !important;
+    position: relative;
+    overflow: hidden;
+}
+html.ilink-app body[data-app-page="gallery"] .gc-cover img { width:100% !important; height:100% !important; object-fit: cover !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-cover-overlay { display: none !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-content {
+    padding: 24px !important;
+    display: flex !important; flex-direction: column !important; gap: 16px !important;
+    flex: 1 1 auto !important;
+}
+html.ilink-app body[data-app-page="gallery"] .gc-author { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; }
+html.ilink-app body[data-app-page="gallery"] .result-card__author { display: flex !important; align-items: center !important; gap: 8px !important; }
+html.ilink-app body[data-app-page="gallery"] .result-card__avatar-link {
+    /* min-width 必须一起写：gallery.css 用 min-width:40px 撑住 flex 不被压缩，
+       而 min-width 恒胜于 width，只改 width 会得到 40×24 的椭圆 */
+    width: 24px !important; height: 24px !important; min-width: 24px !important; border-radius: 50% !important;
+    border: 1px solid var(--dr-gray-200) !important; background: var(--dr-gray-100) !important;
+    overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
+}
+html.ilink-app body[data-app-page="gallery"] .result-card__avatar-img { width:100%!important; height:100%!important; object-fit:cover; }
+html.ilink-app body[data-app-page="gallery"] .result-card__author-name { font-size: 14px !important; font-weight: 500 !important; color: var(--dr-gray-700) !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-meta-row { display:flex !important; align-items:center !important; justify-content: space-between !important; gap: 12px !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-date { font-size: 12px !important; color: var(--dr-gray-400) !important; }
+html.ilink-app body[data-app-page="gallery"] .gallery-tag {
+    font-size: 12px !important; padding: 4px 10px !important; border-radius: 6px !important; font-weight: 500 !important;
+    border: 1px solid transparent !important;
+}
+html.ilink-app body[data-app-page="gallery"] .gallery-tag--competition { background:#eff6ff!important; color:#1d4ed8!important; border-color:#dbeafe!important; }
+html.ilink-app body[data-app-page="gallery"] .gallery-tag--paper { background:#faf5ff!important; color:#7e22ce!important; border-color:#f3e8ff!important; }
+html.ilink-app body[data-app-page="gallery"] .gallery-tag--research { background:#f0fdfa!important; color:#0f766e!important; border-color:#ccfbf1!important; }
+html.ilink-app body[data-app-page="gallery"] .gallery-tag--work,
+html.ilink-app body[data-app-page="gallery"] .gallery-tag--tech { background:#eff6ff!important; color:#1d4ed8!important; border-color:#dbeafe!important; }
+html.ilink-app body[data-app-page="gallery"] .gallery-tag--honor,
+html.ilink-app body[data-app-page="gallery"] .gallery-tag--scholarship { background:#fffbeb!important; color:#b45309!important; border-color:#fde68a!important; }
+html.ilink-app body[data-app-page="gallery"] .gc-body { display:flex; flex-direction:column; gap:8px; }
+html.ilink-app body[data-app-page="gallery"] .gc-title { font-size: 18px !important; font-weight: 700 !important; color: var(--dr-gray-900) !important; margin: 0 !important; line-height: 1.4 !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-desc { font-size: 14px !important; line-height: 1.65 !important; color: var(--dr-gray-500) !important; margin: 0 !important;
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+html.ilink-app body[data-app-page="gallery"] .gc-stats {
+    margin-top: auto !important;
+    padding-top: 8px !important;
+    border-top: 1px solid var(--dr-gray-100) !important;
+    display: flex !important; align-items: center !important; gap: 16px !important;
+}
+html.ilink-app body[data-app-page="gallery"] .gc-action {
+    display: inline-flex !important; align-items: center !important; gap: 6px !important;
+    background: transparent !important; border: 0 !important; padding: 4px !important;
+    font-size: 12px !important; color: var(--dr-gray-500) !important;
+    transition: transform .15s var(--dr-ease), color .2s var(--dr-ease) !important;
+}
+html.ilink-app body[data-app-page="gallery"] .gc-action:active { transform: scale(.9); }
+html.ilink-app body[data-app-page="gallery"] .gc-action svg { width:16px !important; height:16px !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-action--on[data-action="like"] { color: #ef4444 !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-action--on[data-action="like"] svg { fill: #ef4444 !important; stroke: #ef4444 !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-action--on[data-action="fav"] { color: #f59e0b !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-action--on[data-action="fav"] svg { fill: #f59e0b !important; stroke: #f59e0b !important; }
+html.ilink-app body[data-app-page="gallery"] .gc-arrow { display: none !important; }
+
+/* ============================================================
+   8. 竞赛目录卡片（三列、级别彩色徽章）
+   ============================================================ */
+html.ilink-app body[data-app-page="competitions"] .competition-grid,
+html.ilink-app body[data-app-page="competitions"] #competitionGrid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+    gap: 24px !important;
+    margin: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .contest-card {
+    grid-column: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    border-radius: var(--dr-radius-card) !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    background: #fff !important;
+    box-shadow: var(--dr-shadow-card) !important;
+    display: flex !important; flex-direction: column !important; gap: 16px !important;
+    position: relative; overflow: hidden;
+}
+html.ilink-app body[data-app-page="competitions"] .contest-card.featured { border-color: var(--dr-gray-200) !important; }
+html.ilink-app body[data-app-page="competitions"] .competition-card__header {
+    display: flex !important; align-items: flex-start !important; justify-content: space-between !important; gap: 16px !important;
+    padding: 0 !important; border: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-card__title {
+    font-size: 18px !important; font-weight: 700 !important; color: var(--dr-gray-900) !important;
+    line-height: 1.4 !important; margin: 0 !important; flex: 1 1 auto !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-card__levels {
+    display: flex !important; flex-direction: column !important; gap: 4px !important; align-items: flex-end !important;
+    flex: 0 0 auto !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-card__level {
+    font-size: 12px !important; padding: 2px 8px !important; border-radius: 4px !important; font-weight: 500 !important;
+    border: 1px solid transparent !important; line-height: 1.5 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .scope--national { background:#eff6ff!important; color:#1d4ed8!important; border-color:#dbeafe!important; }
+html.ilink-app body[data-app-page="competitions"] .scope--international { background:#f0fdfa!important; color:#0f766e!important; border-color:#ccfbf1!important; }
+html.ilink-app body[data-app-page="competitions"] .scope--province { background:#faf5ff!important; color:#7e22ce!important; border-color:#f3e8ff!important; }
+html.ilink-app body[data-app-page="competitions"] .scope--school { background:#ecfdf5!important; color:#047857!important; border-color:#d1fae5!important; }
+html.ilink-app body[data-app-page="competitions"] .scope--default { background:var(--dr-gray-100)!important; color:var(--dr-gray-600)!important; border-color:var(--dr-gray-200)!important; }
+html.ilink-app body[data-app-page="competitions"] .level--1a { background:#faf5ff!important; color:#7e22ce!important; border-color:#f3e8ff!important; }
+html.ilink-app body[data-app-page="competitions"] .level--1b,
+html.ilink-app body[data-app-page="competitions"] .level--2a { background:#eef2ff!important; color:#4338ca!important; border-color:#e0e7ff!important; }
+html.ilink-app body[data-app-page="competitions"] .level--2b,
+html.ilink-app body[data-app-page="competitions"] .level--3,
+html.ilink-app body[data-app-page="competitions"] .level--default { background:var(--dr-gray-100)!important; color:var(--dr-gray-600)!important; border-color:var(--dr-gray-200)!important; }
+html.ilink-app body[data-app-page="competitions"] .competition-card__meta {
+    display: flex !important; flex-direction: column !important; gap: 6px !important;
+    font-size: 12px !important; color: var(--dr-gray-500) !important; padding: 0 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-card__meta-line { display:flex !important; align-items:flex-start !important; gap:6px !important; }
+html.ilink-app body[data-app-page="competitions"] .competition-card__meta-line strong { color: var(--dr-gray-500) !important; font-weight: 400 !important; }
+html.ilink-app body[data-app-page="competitions"] .competition-card__tags { display:flex !important; flex-wrap:wrap !important; gap:6px !important; }
+html.ilink-app body[data-app-page="competitions"] .contest-tag,
+html.ilink-app body[data-app-page="competitions"] .meta-chip {
+    font-size: 12px !important; padding: 2px 8px !important; border-radius: 4px !important;
+    background: var(--dr-gray-100) !important; color: var(--dr-gray-600) !important;
+    border: 0 !important; font-weight: 400 !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-card__desc {
+    font-size: 14px !important; line-height: 1.65 !important; color: var(--dr-gray-500) !important;
+    margin: auto 0 0 !important;
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+}
+html.ilink-app body[data-app-page="competitions"] .card-divider,
+html.ilink-app body[data-app-page="competitions"] .competition-card__divider {
+    height:1px !important; margin: 0 !important; background: var(--dr-gray-100) !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-card__foot {
+    display:flex !important; align-items:center !important; justify-content:space-between !important; gap:16px !important;
+    padding: 16px 0 0 !important; border-top: 1px solid var(--dr-gray-100) !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-card__season {
+    display:inline-flex !important; align-items:flex-start !important; gap:4px !important;
+    flex: 1 1 auto !important; min-width: 0 !important;
+    font-size:12px !important; line-height:1.5 !important; color:var(--dr-gray-400) !important;
+}
+html.ilink-app body[data-app-page="competitions"] .competition-card__season svg { width:14px!important; height:14px!important; flex:0 0 14px !important; margin-top:2px !important; }
+html.ilink-app body[data-app-page="competitions"] .competition-card__foot .competition-card__link,
+html.ilink-app body[data-app-page="competitions"] .competition-card__foot .contest-card__link { flex:0 0 auto !important; }
+html.ilink-app body[data-app-page="competitions"] .contest-card__link,
+html.ilink-app body[data-app-page="competitions"] .competition-card__link {
+    display:inline-flex !important; align-items:center !important; gap:4px !important;
+    font-size:12px !important; font-weight:500 !important;
+    padding:6px 12px !important; border-radius:10px !important;
+    background:var(--dr-gray-100) !important; color:var(--dr-gray-700) !important;
+    border:0 !important; text-decoration:none !important;
+    transition: background-color .15s var(--dr-ease) !important;
+}
+html.ilink-app body[data-app-page="competitions"] .contest-card:hover .competition-card__link { /* keep */ }
+html.ilink-app body[data-app-page="competitions"] .competition-card__link:hover { background:var(--dr-gray-200)!important; color:var(--dr-gray-900)!important; }
+html.ilink-app body[data-app-page="competitions"] .competition-card__link--disabled {
+    background: transparent !important; color: var(--dr-gray-400) !important; cursor: default !important;
+}
+
+/* ============================================================
+   9. 交流社区卡片（单列大卡）
+   ============================================================ */
+html.ilink-app body[data-app-page="community"] #postList { display:flex; flex-direction:column; gap:16px; }
+html.ilink-app body[data-app-page="community"] .article-card.il-post-card {
+    background: #fff !important;
+    border: 1px solid var(--dr-gray-200) !important;
+    border-radius: var(--dr-radius-card) !important;
+    box-shadow: var(--dr-shadow-card) !important;
+    padding: 24px !important;
+    display: flex !important; flex-direction: column !important; gap: 16px !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-header {
+    display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:12px !important;
+    padding: 0 !important; border: 0 !important; margin: 0 !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-avatar {
+    width:40px !important; height:40px !important; border-radius:50% !important;
+    border:1px solid var(--dr-gray-200) !important; background:var(--dr-gray-100) !important;
+    overflow:hidden; flex:0 0 40px !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-avatar img { width:100%;height:100%;object-fit:cover; }
+html.ilink-app body[data-app-page="community"] .il-post-author { display:flex !important; flex:0 1 auto !important; flex-direction:column !important; align-items:flex-start !important; gap:2px !important; text-align:left !important; }
+html.ilink-app body[data-app-page="community"] .il-post-author-name { font-size:14px !important; font-weight:600 !important; color:var(--dr-gray-900) !important; display:inline-flex !important; align-items:center !important; justify-content:flex-start !important; gap:6px !important; }
+html.ilink-app body[data-app-page="community"] .il-post-meta { display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:8px !important; font-size:12px !important; color:var(--dr-gray-400) !important; }
+html.ilink-app body[data-app-page="community"] .il-post-title {
+    font-size:20px !important; font-weight:700 !important; color:var(--dr-gray-900) !important;
+    line-height:1.4 !important; margin:0 !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-preview {
+    font-size:14px !important; line-height:1.65 !important; color:var(--dr-gray-500) !important; margin:0 !important;
+    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden;
+}
+html.ilink-app body[data-app-page="community"] .il-post-tags { display:flex !important; gap:8px !important; flex-wrap:wrap !important; }
+html.ilink-app body[data-app-page="community"] .il-post-tags .il-tag,
+html.ilink-app body[data-app-page="community"] .card-tag {
+    font-size:12px !important; padding:4px 10px !important; border-radius:6px !important; font-weight:500 !important;
+    background:var(--dr-gray-100) !important; color:var(--dr-gray-600) !important; border:0 !important;
+}
+html.ilink-app body[data-app-page="community"] .card-divider { height:1px !important; background:var(--dr-gray-100) !important; margin:0 !important; }
+html.ilink-app body[data-app-page="community"] .il-post-footer {
+    display:flex !important; align-items:center !important; justify-content:space-between !important; gap:16px !important;
+    padding:16px 0 0 !important; border-top:1px solid var(--dr-gray-100) !important; margin:0 !important;
+}
+html.ilink-app body[data-app-page="community"] .il-feed-actions { display:flex !important; align-items:center !important; gap:24px !important; }
+html.ilink-app body[data-app-page="community"] .il-feed-action {
+    display:inline-flex !important; align-items:center !important; gap:6px !important;
+    background:transparent !important; border:0 !important; padding:4px !important;
+    font-size:12px !important; color:var(--dr-gray-500) !important;
+    transition: transform .15s var(--dr-ease), color .2s var(--dr-ease) !important;
+}
+html.ilink-app body[data-app-page="community"] .il-feed-action:active { transform:scale(.9); }
+html.ilink-app body[data-app-page="community"] .il-feed-action svg { width:16px !important; height:16px !important; }
+html.ilink-app body[data-app-page="community"] .il-feed-action.il-feed-action--on[data-action="like"] { color:#ef4444 !important; }
+html.ilink-app body[data-app-page="community"] .il-feed-action.il-feed-action--on[data-action="like"] svg { fill:#ef4444 !important; stroke:#ef4444 !important; }
+html.ilink-app body[data-app-page="community"] .il-feed-action.il-feed-action--on[data-action="favorite"] { color:#f59e0b !important; }
+html.ilink-app body[data-app-page="community"] .il-feed-action.il-feed-action--on[data-action="favorite"] svg { fill:#f59e0b !important; stroke:#f59e0b !important; }
+html.ilink-app body[data-app-page="community"] .read-more-btn.il-btn-primary {
+    background: transparent !important; color: var(--dr-gray-500) !important;
+    border: 0 !important; box-shadow: none !important;
+    font-size:12px !important; font-weight:500 !important; padding:4px 8px !important; height:auto !important;
+    display:inline-flex !important; align-items:center !important; gap:4px !important;
+}
+html.ilink-app body[data-app-page="community"] .read-more-btn.il-btn-primary:hover { color:var(--dr-gray-900) !important; background:transparent !important; }
+
+/* ============ 10. 分页 / 空态 ============ */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"]) .empty-state,
+html.ilink-app body[data-app-page="gallery"] .gc-empty,
+html.ilink-app body[data-app-page="community"] .il-empty-state {
+    text-align:center; padding:72px 24px; color:var(--dr-gray-400);
+    background:#fff; border:1px dashed var(--dr-gray-200); border-radius:var(--dr-radius-card);
+}
+html.ilink-app body[data-app-page="competitions"] #competitionEmpty {
+    background:#fff !important; border:1px dashed var(--dr-gray-200) !important; border-radius:var(--dr-radius-card) !important;
+    color:var(--dr-gray-400) !important; padding:48px 24px !important;
+}
+html.ilink-app .pagination .page-link {
+    border-radius: 12px !important;
+    border:1px solid var(--dr-gray-200) !important;
+    color:var(--dr-gray-600) !important;
+    background:#fff !important;
+    min-width:40px !important; height:40px !important;
+    display:inline-flex; align-items:center; justify-content:center;
+    margin:0 2px;
+}
+html.ilink-app .pagination .page-item.active .page-link {
+    background:var(--dr-gray-900) !important; color:#fff !important; border-color:var(--dr-gray-900) !important;
+}
+html.ilink-app .pagination .page-item.disabled .page-link { opacity:.5; }
+html.ilink-app body[data-app-page="gallery"] .pagination-wrap {
+    display:flex; align-items:center; justify-content:center; gap:8px; margin:32px 0;
+}
+html.ilink-app body[data-app-page="gallery"] .page-btn {
+    border:1px solid var(--dr-gray-200); background:#fff; color:var(--dr-gray-600);
+    border-radius:12px; padding:8px 16px; font-size:14px; cursor:pointer;
+}
+html.ilink-app body[data-app-page="gallery"] .page-btn:disabled { opacity:.5; cursor:not-allowed; }
+html.ilink-app body[data-app-page="gallery"] .page-info { font-size:13px; color:var(--dr-gray-400); }
+
+/* ============ 11. 响应式 ============ */
+@media (max-width: 1023.98px) {
+    html.ilink-app body[data-app-page="team-market"] #teamList,
+    html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
+    html.ilink-app body[data-app-page="competitions"] .competition-grid,
+    html.ilink-app body[data-app-page="competitions"] #competitionGrid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+}
+@media (max-width: 767.98px) {
+    html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"]) .il-page-wrapper,
+    html.ilink-app body[data-app-page="competitions"] .container.main-content,
+    html.ilink-app body[data-app-page="community"] .il-page-wrapper { width: 100% !important; }
+    html.ilink-app .hero-title, html.ilink-app .il-hero__title { font-size:28px !important; }
+    html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar {
+        flex-wrap: wrap !important;
+    }
+    html.ilink-app .il-search-bar .il-search-field,
+    html.ilink-app .il-search-bar__input-wrap { flex: 1 1 100% !important; }
+    html.ilink-app .il-search-bar .il-search-bar__select::before,
+    html.ilink-app .il-search-bar__btn--ghost::before,
+    html.ilink-app .il-search-bar__btn--solid::before { display:none !important; }
+    html.ilink-app .il-search-bar__select { flex: 1 1 auto !important; }
+    html.ilink-app .il-search-bar__select select { width:100% !important; min-width:0 !important; }
+    html.ilink-app .il-search-bar__btn { flex: 1 1 auto !important; justify-content:center !important; }
+    html.ilink-app body[data-app-page="team-market"] #teamList,
+    html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
+    html.ilink-app body[data-app-page="gallery"] .gc-grid,
+    html.ilink-app body[data-app-page="competitions"] .competition-grid,
+    html.ilink-app body[data-app-page="competitions"] #competitionGrid { grid-template-columns: minmax(0,1fr) !important; }
+}
+
+/* ============ 社区列表紧凑双列卡片（2026-09 方案定稿：GitHub pinned 风格） ============
+   覆盖上方 community 段的单列大卡布局；计数/点赞按钮沿用系统原有组件样式。 */
+html.ilink-app body[data-app-page="community"] #postList {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+}
+/* 空态/加载失败占满整行，避免被切半 */
+html.ilink-app body[data-app-page="community"] #postList:has(.il-empty-state) {
+    display: block !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 9px !important;
+    padding: 15px 18px 13px !important;
+    margin-bottom: 0 !important;
+    background: #fff !important;
+    border: 1px solid var(--gray-200, #E5E7EB) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card:hover {
+    border-color: var(--gray-400, #A8ABB1) !important;
+    box-shadow: 0 4px 12px rgba(24, 26, 30, .08) !important;
+    transform: translateY(-1px);
+}
+html.ilink-app body[data-app-page="community"] .il-pc-top {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+}
+html.ilink-app body[data-app-page="community"] .il-pc-views {
+    margin-left: auto !important;
+    color: var(--gray-400, #A8ABB1) !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card .il-post-title {
+    margin: 0 !important;
+    font-size: 15.5px !important;
+    font-weight: 650 !important;
+    line-height: 1.4 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card:hover .il-post-title {
+    text-decoration: underline !important;
+    text-underline-offset: 3px !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card .il-post-preview {
+    display: block !important;
+    margin: 0 !important;
+    font-size: 12.5px !important;
+    line-height: 1.6 !important;
+    color: var(--gray-500, #73757A) !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+html.ilink-app body[data-app-page="community"] .il-pc-foot {
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding-top: 9px !important;
+    border-top: 1px dashed var(--gray-100, #F1F2F4) !important;
+    min-width: 0 !important;
+}
+html.ilink-app body[data-app-page="community"] .il-pc-author {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    color: var(--gray-400, #A8ABB1) !important;
+    font-size: 12px !important;
+}
+html.ilink-app body[data-app-page="community"] .il-pc-author-name {
+    color: var(--gray-600, #52555C) !important;
+    font-weight: 500 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+html.ilink-app body[data-app-page="community"] .il-pc-dot {
+    color: var(--gray-300, #D3D5D9) !important;
+}
+/* 紧凑卡头像 20px；三连写死 min/max，防止旧层 40px 与 min-* 锁复活 */
+html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    flex: 0 0 24px !important;
+    border-radius: 50% !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar .il-post-avatar-fallback {
+    width: 100% !important;
+    height: 100% !important;
+    font-size: 12px !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+}
+html.ilink-app body[data-app-page="community"] .il-pc-foot .il-feed-actions {
+    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+html.ilink-app body[data-app-page="community"] .il-pc-foot .il-feed-action {
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    gap: 4px !important;
+    font-size: 12.5px !important;
+    cursor: pointer;
+}
+html.ilink-app body[data-app-page="community"] .il-pc-foot .il-feed-action svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+/* 置顶徽章：黑底白字，任何排序下该卡都排最前 */
+html.ilink-app body[data-app-page="community"] .article-badge.badge-pin {
+    background: var(--primary, #282A2F) !important;
+    color: #fff !important;
+}
+/* 排序按钮组（搜索栏内） */
+html.ilink-app body[data-app-page="community"] .il-sort-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: var(--gray-50, #F7F7F8) !important;
+    border: 1px solid var(--gray-200, #E5E7EB) !important;
+    border-radius: 10px !important;
+    padding: 3px !important;
+}
+html.ilink-app body[data-app-page="community"] .il-sort-group button {
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--gray-500, #73757A) !important;
+    padding: 7px 13px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-family: inherit !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: color .15s;
+}
+html.ilink-app body[data-app-page="community"] .il-sort-group button:hover { color: var(--primary, #282A2F) !important; }
+html.ilink-app body[data-app-page="community"] .il-sort-group button.on {
+    background: #fff !important;
+    color: var(--primary, #282A2F) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(24, 26, 30, .10) !important;
+}
+@media (max-width: 860px) {
+    html.ilink-app body[data-app-page="community"] #postList {
+        grid-template-columns: 1fr !important;
+    }
+}
+/* 分类标签着色（2026-09 用户定稿：技术蓝/竞赛紫/资源绿/综合橙，与 demo 一致） */
+html.ilink-app body[data-app-page="community"] .il-post-card .il-tag--tech {
+    background: #EFF6FF !important; color: #1D4ED8 !important; border-color: transparent !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card .il-tag--competition {
+    background: #F5F3FF !important; color: #6D28D9 !important; border-color: transparent !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card .il-tag--resource {
+    background: #ECFDF5 !important; color: #047857 !important; border-color: transparent !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card .il-tag--general {
+    background: #FFF7ED !important; color: #C2410C !important; border-color: transparent !important;
+}
+/* 头像必须宽高双锁：community-feed 旧层的 min/max-height:44px 只压宽度会撑出蛋形 */
+html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar {
+    min-height: 24px !important;
+    max-height: 24px !important;
+    display: grid !important;
+    overflow: hidden !important;
+}
+html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar img {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    flex: 0 0 auto !important;
+}
+
+/* ============ 列表页工具栏主操作按钮：统一缩小精致化（写文章/发布成果/发布需求等） ============ */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn {
+    padding: 8px 15px !important;
+    font-size: 13px !important;
+    gap: 6px !important;
+    border-radius: 10px !important;
+    line-height: 1.4 !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn svg {
+    width: 14px !important;
+    height: 14px !important;
+}
+
+/* ---- 工具栏按钮交互反馈：过渡 / 悬停上浮 / 按压 / 键盘焦点 ---- */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn {
+    transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease, border-color .16s ease, color .16s ease !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 14px rgba(17, 24, 39, .18) !important;
+}
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn:active {
+    transform: translateY(0) scale(.96) !important;
+    box-shadow: 0 1px 3px rgba(17, 24, 39, .16) !important;
+    transition-duration: .06s !important;
+}
+/* 浅色次级按钮（刷新等）：悬停浅灰底 + 边框加深 */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--secondary:hover {
+    background: #F1F2F4 !important;
+    border-color: #D3D5D9 !important;
+}
+/* 键盘可达性：焦点环 */
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn:focus-visible {
+    outline: 2px solid #17181C;
+    outline-offset: 2px;
+}
+
+/* ============ 成果卡片置顶徽章（管理后台置顶后展示） ============ */
+html.ilink-app body[data-app-page="gallery"] .gallery-tag.gc-tag-pin {
+    background: var(--dr-gray-900, #111827) !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+}

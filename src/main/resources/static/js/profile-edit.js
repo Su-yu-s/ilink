@@ -682,6 +682,13 @@ class ProfileDetailsController {
 
         const role = document.getElementById('profileReadRole');
         if (role) role.textContent = isTeacher ? '教师' : user.role === 'ADMIN' ? '管理员' : '学生';
+        const identityMeta = document.getElementById('profileReadIdentityMeta');
+        if (identityMeta) {
+            const institutionParts = [user.school, user.college]
+                .map(item => String(item || '').trim())
+                .filter(Boolean);
+            identityMeta.textContent = institutionParts.length ? institutionParts.join(' · ') : '未填写学校与院系信息';
+        }
         const gradeItem = document.getElementById('profileReadGradeItem');
         if (gradeItem) gradeItem.hidden = isTeacher;
         const teacherSection = document.getElementById('profileReadTeacherSection');

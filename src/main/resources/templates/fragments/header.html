@@ -1,5 +1,5 @@
 <th:block th:fragment="header(currentUser, activeMenu)">
-    <script src="/js/notification-manager.js?v=1.2"></script>
+    <script th:src="@{/js/notification-manager.js}"></script>
     <header class="il-header" id="ilHeader"
             th:attr="data-current-user-id=${currentUser != null ? currentUser.id : null}">
         <div class="il-header__inner">
@@ -92,6 +92,15 @@
                                 管理后台
                             </a>
                             <hr class="il-header__dropdown-divider">
+                            <a href="#" class="il-header__dropdown-item" data-fbk-open>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 7.7a5.6 5.6 0 0 1-.6 2.5A5.7 5.7 0 0 1 8.4 13.3a5.6 5.6 0 0 1-2.5-.6L2 14l1.3-3.8A5.6 5.6 0 0 1 2.7 7.7a5.7 5.7 0 0 1 3.1-5.1 5.6 5.6 0 0 1 2.5-.6h.3A5.7 5.7 0 0 1 14 7.4v.3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                意见反馈
+                            </a>
+                            <a href="https://su-yu-s.github.io/portfolio/" target="_blank" rel="noopener noreferrer" class="il-header__dropdown-item">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V7.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="5.4" r="0.75" fill="currentColor"/></svg>
+                                关于作者
+                            </a>
+                            <hr class="il-header__dropdown-divider">
                             <a href="/api/logout" class="il-header__dropdown-item il-header__dropdown-item--danger" onclick="event.preventDefault(); logout();">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3M10 11l3-3-3-3M5.5 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 退出登录
@@ -115,5 +124,8 @@
             </div>
         </div>
     </header>
+
+    <!-- 全站右下角悬浮入口：意见反馈 / 关于作者 -->
+    <th:block th:replace="fragments/feedback-widget :: widget"></th:block>
 
 </th:block>

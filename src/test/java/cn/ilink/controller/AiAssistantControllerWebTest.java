@@ -7,7 +7,7 @@ import cn.ilink.entity.User;
 import cn.ilink.service.TeamTaskService;
 import cn.ilink.service.UserService;
 import cn.ilink.service.ai.AiAssistantService;
-import cn.ilink.service.ai.AiQuotaService;
+import cn.ilink.service.ai.AiUsageService;
 import cn.ilink.service.impl.CompetitionServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
@@ -28,6 +28,7 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -47,7 +48,7 @@ class AiAssistantControllerWebTest {
     private AiAssistantService aiAssistantService;
 
     @MockBean
-    private AiQuotaService aiQuotaService;
+    private AiUsageService aiUsageService;
 
     @MockBean
     private AiProperties aiProperties;
@@ -91,9 +92,6 @@ class AiAssistantControllerWebTest {
 
         given(aiProperties.isEnabled()).willReturn(true);
         given(aiAssistantService.isConfigured()).willReturn(true);
-        given(aiQuotaService.isOverQuota(9L)).willReturn(false);
-        given(aiQuotaService.dailyQuota()).willReturn(20);
-        given(aiQuotaService.usedToday(9L)).willReturn(0L);
     }
 
     @Test
@@ -123,18 +121,20 @@ class AiAssistantControllerWebTest {
     }
 
     @Test
-    void breakdownRejectsOverQuotaWithoutExternalCall() throws Exception {
-        given(aiQuotaService.isOverQuota(9L)).willReturn(true);
+    void breakdownHasNoDailyCap() throws Exception {
+        // 已取消每日调用上限：无论当天用过多少次都应正常放行（用量只记录、不拦截）
+        given(aiAssistantService.breakdownTask(any(TeamTask.class), any()))
+            .willReturn(Arrays.asList(new LinkedHashMap<String, Object>() {{ put("title", "子任务一"); }}));
 
         mockMvc.perform(post("/api/team/3/ai/task-breakdown")
                 .session(session)
                 .contentType("application/json")
                 .content("{\"taskId\":11}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value(429));
+            .andExpect(jsonPath("$.code").value(200));
 
-        // 关键约束：超配额时绝不发起外部 AI 调用
-        verify(aiAssistantService, never()).breakdownTask(any(), any());
+        verify(aiAssistantService).breakdownTask(any(TeamTask.class), any());
+        verify(aiUsageService).record(eq(9L), eq(3L), eq("TASK_BREAKDOWN"), any(), any(), eq(true));
     }
 
     @Test
@@ -166,7 +166,7 @@ class AiAssistantControllerWebTest {
             .andExpect(jsonPath("$.code").value(200))
             .andExpect(jsonPath("$.data[0].title").value("子任务一"));
 
-        verify(aiQuotaService).record(eq(9L), eq(3L), eq("TASK_BREAKDOWN"), any(), any(), eq(true));
+        verify(aiUsageService).record(eq(9L), eq(3L), eq("TASK_BREAKDOWN"), any(), any(), eq(true));
     }
 
     @Test
@@ -220,6 +220,72 @@ class AiAssistantControllerWebTest {
                 .session(session)
                 .contentType("application/json")
                 .content("{\"question\":\"这个比赛怎么报名？\",\"competitionId\":1}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(400));
+
+        verify(aiAssistantService, never()).answerCompetitionQuestion(any(), any());
+    }
+
+    @Test
+    void competitionQaReturnsReasoningSourcesAndElapsed() throws Exception {
+        Map<String, String> source = new LinkedHashMap<>();
+        source.put("title", "官网公告");
+        source.put("url", "https://example.com/a");
+        given(aiAssistantService.answerCompetitionQuestion(any(), any())).willReturn(
+            new AiAssistantService.QaAnswer("答案正文", "我先查了官网。", Arrays.asList(source), 2500L));
+
+        mockMvc.perform(post("/api/ai/competition-qa")
+                .session(session)
+                .contentType("application/json")
+                .content("{\"question\":\"怎么报名？\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.answer").value("答案正文"))
+            // 前端「已思考」折叠区靠这三个字段渲染
+            .andExpect(jsonPath("$.data.reasoning").value("我先查了官网。"))
+            .andExpect(jsonPath("$.data.sources[0].title").value("官网公告"))
+            .andExpect(jsonPath("$.data.sources[0].url").value("https://example.com/a"))
+            .andExpect(jsonPath("$.data.elapsedMs").value(2500));
+    }
+
+    @Test
+    void competitionQaAnswersGeneralQuestionWithoutCompetition() throws Exception {
+        given(aiAssistantService.answerCompetitionQuestion(any(), any())).willReturn(new AiAssistantService.QaAnswer("通用回答", null, java.util.Collections.emptyList(), 1200L));
+
+        mockMvc.perform(post("/api/ai/competition-qa")
+                .session(session)
+                .contentType("application/json")
+                .content("{\"question\":\"怎么准备数学建模？\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200))
+            .andExpect(jsonPath("$.data.answer").value("通用回答"))
+            .andExpect(jsonPath("$.data.competitionName").doesNotExist());
+
+        // 不传竞赛时应以 null 传入，走「联网搜索 + 模型知识」的通用提问
+        verify(aiAssistantService).answerCompetitionQuestion(eq("怎么准备数学建模？"), isNull());
+    }
+
+    @Test
+    void competitionQaTreatsBlankCompetitionIdAsGeneralQuestion() throws Exception {
+        given(aiAssistantService.answerCompetitionQuestion(any(), any())).willReturn(new AiAssistantService.QaAnswer("通用回答", null, java.util.Collections.emptyList(), 1200L));
+
+        // 前端下拉框留空时可能传空串，同样应按通用提问处理而不是报错
+        mockMvc.perform(post("/api/ai/competition-qa")
+                .session(session)
+                .contentType("application/json")
+                .content("{\"question\":\"问题\",\"competitionId\":\"\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+
+        verify(aiAssistantService).answerCompetitionQuestion(eq("问题"), isNull());
+    }
+
+    @Test
+    void competitionQaRejectsNonNumericCompetitionId() throws Exception {
+        mockMvc.perform(post("/api/ai/competition-qa")
+                .session(session)
+                .contentType("application/json")
+                .content("{\"question\":\"问题\",\"competitionId\":\"abc\"}"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.code").value(400));
 

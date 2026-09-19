@@ -13,6 +13,7 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -66,18 +67,51 @@ public class WebSearchService {
         }
     }
 
+    /**
+     * 提问语气词 / 疑问后缀：不携带检索价值，留着会稀释关键词匹配。
+     * 实测「deepseek-v4.1-flash 是什么模型」会退化成通用站点结果，去掉后缀后能直接命中官网。
+     * 只清「是什么 / 有哪些 / 吗 / 呢」这类纯语气成分，不影响「怎么准备」这类带意图的措辞。
+     */
+    private static final Pattern QUESTION_NOISE = Pattern.compile(
+        "^(请问|想问一下|我想知道|帮我看看|帮我查一下|帮我)[\\s，,]*"
+            + "|[\\s，,。？！?!]*(是怎么样的|是什么意思|是什么模型|指的是什么|什么意思|是什么|是啥|有哪些|有什么)[\\s，,。？！?!]*$"
+            + "|[\\s，,。？！?!]*(吗|呢|吧)[\\s，,。？！?!]*$"
+            + "|[\\s，,。？！?!]+$");
+
+    /** 清洗检索词。清洗后若为空则退回原串，避免搜出毫不相干的东西。 */
+    static String refineQuery(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        String value = raw.trim();
+        if (value.isEmpty()) {
+            return value;
+        }
+        String refined = QUESTION_NOISE.matcher(value).replaceAll("").trim();
+        return refined.isEmpty() ? value : refined;
+    }
+
+    /**
+     * 构造搜索请求 URI。
+     *
+     * <p>必须编码后以 {@link java.net.URI} 传入：若把字符串交给
+     * {@code restTemplate.exchange(String, ...)}，它会把该字符串当作 URI 模板再编码一次，
+     * {@code %E6%A8%A1} 变成 {@code %25E6%25A8%25A1}，Bing 解码一次后拿到的是字面的百分号串，
+     * 中文关键词全部丢失，退化成只按拉丁字母部分检索（表现为「什么都搜不到」）。
+     */
+    static URI buildSearchUri(String query) {
+        String encoded = URLEncoder.encode(query.trim(), StandardCharsets.UTF_8);
+        return URI.create(String.format(SEARCH_URL, encoded));
+    }
+
     /** 搜索公开网页。未开启 / 失败 / 无结果时返回空列表，不抛异常。 */
     public List<SearchResult> search(String query, int limit) {
         if (!aiProperties.isSearchEnabled() || query == null || query.trim().isEmpty()) {
             return Collections.emptyList();
         }
         int capped = Math.max(1, Math.min(limit <= 0 ? 5 : limit, RESULT_HARD_CAP));
-        String encoded;
-        try {
-            encoded = URLEncoder.encode(query.trim(), StandardCharsets.UTF_8.name());
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
+        // 先清掉提问语气词再检索，否则「X 是什么模型」这类问法会退化成泛结果
+        String effectiveQuery = refineQuery(query);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.TEXT_HTML));
@@ -87,11 +121,18 @@ public class WebSearchService {
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(
-                String.format(SEARCH_URL, encoded),
+                buildSearchUri(effectiveQuery),
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
                 String.class);
-            return parseHtml(response.getBody(), capped);
+            List<SearchResult> results = parseHtml(response.getBody(), capped);
+            // 命中 0 条时说明页面结构变了或被反爬拦截，必须留下痕迹，否则会静默退化成「没有联网」
+            if (results.isEmpty()) {
+                log.warn("[联网搜索] 未解析到结果 query={} httpStatus={} bodyBytes={}",
+                    effectiveQuery, response.getStatusCodeValue(),
+                    response.getBody() == null ? 0 : response.getBody().length());
+            }
+            return results;
         } catch (ResourceAccessException e) {
             log.warn("[联网搜索] 搜索超时/连接失败: {}", e.getMessage());
             return Collections.emptyList();

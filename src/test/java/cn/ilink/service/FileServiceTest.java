@@ -6,10 +6,15 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -182,6 +187,91 @@ class FileServiceTest {
 
         assertEquals("竞赛材料.doc", info.getOriginalName());
         assertTrue(info.getUrl().endsWith(".doc"));
+    }
+
+    @Test
+    void uploadCommunityAcceptsRealExeInstaller() throws Exception {
+        FileService service = newService();
+        // DOS MZ 头 + DOS stub 片段，模拟真实 PE 结构
+        byte[] exe = new byte[] {
+            0x4D, 0x5A, (byte) 0x90, 0x00, 0x03, 0x00, 0x00, 0x00,
+            0x04, 0x00, 0x00, 0x00, (byte) 0xFF, (byte) 0xFF, 0x00, 0x00
+        };
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "工具软件.exe", "application/octet-stream", exe);
+
+        UploadedFileInfo info = service.uploadWithMetadata(file, "community");
+
+        assertTrue(info.getUrl().endsWith(".exe"));
+        assertEquals("工具软件.exe", info.getOriginalName());
+    }
+
+    @Test
+    void uploadCommunityAcceptsMsiPackage() throws Exception {
+        FileService service = newService();
+        // msi 是 OLE 复合文档，与老版 Office 同文件头
+        byte[] oleHeader = new byte[] {
+            (byte) 0xD0, (byte) 0xCF, 0x11, (byte) 0xE0,
+            (byte) 0xA1, (byte) 0xB1, 0x1A, (byte) 0xE1
+        };
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "安装包.msi", "application/octet-stream", oleHeader);
+
+        UploadedFileInfo info = service.uploadWithMetadata(file, "community");
+
+        assertTrue(info.getUrl().endsWith(".msi"));
+    }
+
+    @Test
+    void uploadCommunityAcceptsApkPackage() throws Exception {
+        FileService service = newService();
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "移动应用.apk", "application/octet-stream", zipBytes(
+                new String[][] {
+                    {"AndroidManifest.xml", "fake-manifest"},
+                    {"classes.dex", "fake-dex"}
+                }));
+
+        UploadedFileInfo info = service.uploadWithMetadata(file, "community");
+
+        assertTrue(info.getUrl().endsWith(".apk"));
+    }
+
+    @Test
+    void uploadCommunityAcceptsIpaPackage() throws Exception {
+        FileService service = newService();
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "ios应用.ipa", "application/octet-stream", zipBytes(
+                new String[][] {
+                    {"Payload/Demo.app/Info.plist", "fake-plist"},
+                    {"META-INF/com.apple.ZipMetadata.xipkg", "fake-meta"}
+                }));
+
+        UploadedFileInfo info = service.uploadWithMetadata(file, "community");
+
+        assertTrue(info.getUrl().endsWith(".ipa"));
+    }
+
+    @Test
+    void uploadRejectsZipDisguisedAsExe() throws Exception {
+        FileService service = newService();
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "伪装.exe", "application/octet-stream", zipBytes(
+                new String[][] {{"readme.txt", "not an installer"}}));
+
+        assertThrows(IllegalArgumentException.class, () -> service.upload(file, "community"));
+    }
+
+    private byte[] zipBytes(String[][] entries) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(bos)) {
+            for (String[] entry : entries) {
+                zip.putNextEntry(new ZipEntry(entry[0]));
+                zip.write(entry[1].getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
+        }
+        return bos.toByteArray();
     }
 
     @Test

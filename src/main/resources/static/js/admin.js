@@ -6,6 +6,7 @@ const AdminState = {
     assetsById: new Map(),
     communityPostsById: new Map(),
     competitionsById: new Map(),
+    competitionPage: 1,
     userEditModal: null,
     userDetailModal: null,
     recordDetailModal: null,
@@ -92,7 +93,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     bindAdminSearch('teacherSearchInput', 'teacherSearchBtn', applyTeacherSearchAndRender);
     bindAdminSearch('assetSearchInput', 'assetSearchBtn', applyAssetSearchAndRender);
     bindAdminSearch('communitySearchInput', 'communitySearchBtn', applyCommunityPostSearchAndRender);
-    bindAdminSearch('competitionSearchInput', 'competitionSearchBtn', applyCompetitionSearchAndRender);
+    bindAdminSearch('competitionSearchInput', 'competitionSearchBtn', function() {
+        AdminState.competitionPage = 1;
+        applyCompetitionSearchAndRender();
+    });
 });
 
 function bindBootstrapModal(modalId) {
@@ -209,7 +213,7 @@ function cleanTooltipText(text) {
 }
 
 // ============ 富文本内容可读化（成果描述 / 帖子正文） ============
-// 平台存储格式：'<!--md:base64(markdown源码)-->' + 渲染后 HTML；
+// 平台存储格式：不可见源码标记 + 渲染后的安全 HTML；
 // 成果为两段式：base64(简介)|base64(心得)。管理后台详情/编辑需要解码后展示。
 function decodeBase64Utf8(b64) {
     const clean = String(b64 || '').replace(/[^A-Za-z0-9+/=]/g, '');
@@ -228,25 +232,11 @@ function decodeBase64Utf8(b64) {
     }
 }
 
-function encodeUtf8Base64(text) {
-    const str = String(text == null ? '' : text);
-    try {
-        const bytes = new TextEncoder().encode(str);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-        return btoa(binary);
-    } catch (e) {
-        return btoa(unescape(encodeURIComponent(str)));
-    }
-}
-
-// 提取 <!--md:...--> 中嵌入的 markdown 源码（成果为 lead|insight 两段，合并返回）
+// 提取统一源码标记中的 Markdown（兼容历史 <!--md:...--> 数据）
 function extractWrappedMarkdown(raw) {
-    const text = String(raw || '');
-    const match = text.match(/^<!--md:([A-Za-z0-9+/=|]+)-->/)
-        || text.match(/<!--md:([A-Za-z0-9+/=|]+)-->/);
-    if (!match) return '';
-    return String(match[1]).split('|')
+    const payload = markdownSourcePayload(raw);
+    if (!payload) return '';
+    return String(payload).split('|')
         .map(decodeBase64Utf8)
         .filter(Boolean)
         .join('\n\n')
@@ -303,7 +293,7 @@ function readableRichText(raw) {
     const md = extractWrappedMarkdown(text);
     let out = md
         ? markdownToReadable(md)
-        : htmlToPlainText(text.replace(/^<!--md:[\s\S]*?-->/, ''));
+        : htmlToPlainText(stripMarkdownSourceMarker(text));
     // 成果旧格式尾部的（分类：xxx）标记，分类字段已单独展示
     return out.replace(/（分类：[^）]*）\s*$/g, '').trim();
 }
@@ -314,18 +304,19 @@ function editableRichText(raw) {
     if (!text.trim()) return '';
     const md = extractWrappedMarkdown(text);
     if (md) return md;
-    return htmlToPlainText(text.replace(/^<!--md:[\s\S]*?-->/, ''));
+    return htmlToPlainText(stripMarkdownSourceMarker(text));
 }
 
-// 编辑保存用：重新包装为平台统一的 <!--md:base64--> 存储格式，保证公开页正常渲染
+// 编辑保存用：同时保存可恢复的 Markdown 源码与安全 HTML。
 function wrapRichTextForSave(text, kind) {
     const value = String(text == null ? '' : text).trim();
     if (!value) return '';
+    const html = markdownToSafeHtml(value);
     if (kind === 'asset') {
         // 成果格式为 lead|insight 两段；管理后台单框编辑时整体作为 lead
-        return '<!--md:' + encodeUtf8Base64(value) + '|-->';
+        return markdownSourceMarker(encodeMarkdownSource(value) + '|') + html;
     }
-    return '<!--md:' + encodeUtf8Base64(value) + '-->';
+    return markdownSourceMarker(encodeMarkdownSource(value)) + html;
 }
 
 // 加载仪表盘数据
@@ -1271,6 +1262,7 @@ function renderAssetRows(assets) {
                 html: `
                     <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openAssetDetailModal(${asset.id})">详情</button>
                     <button class="btn btn-outline-primary btn-sm" onclick="openAssetEditModal(${asset.id})">编辑</button>
+                    <button class="btn ${asset.isPinned == 1 ? 'btn-secondary' : 'btn-outline-secondary'} btn-sm" title="${asset.isPinned == 1 ? '已置顶，点击取消' : '点击置顶，列表所有排序下排最前'}" onclick="toggleAssetPinned(${asset.id}, ${asset.isPinned == 1 ? 'false' : 'true'})">置顶</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteAsset(${asset.id})">删除</button>
                 `
             }
@@ -1307,7 +1299,7 @@ function openAssetEditModal(assetId) {
     document.getElementById('adminEditAssetId').value = String(asset.id || '');
     document.getElementById('adminEditAssetTitle').value = asset.title || '';
     document.getElementById('adminEditAssetCategory').value = asset.category || '';
-    // 解码 <!--md:base64--> 存储格式，回填可读的 markdown/纯文本，避免编辑框出现 base64 乱码
+    // 解码统一源码标记，回填可读的 Markdown/纯文本。
     document.getElementById('adminEditAssetDescription').value = editableRichText(asset.description);
     AdminState.assetEditModal?.show();
 }
@@ -1322,7 +1314,7 @@ async function saveAssetEditFromModal() {
     const payload = {
         title: (document.getElementById('adminEditAssetTitle')?.value || '').trim(),
         category: (document.getElementById('adminEditAssetCategory')?.value || '').trim(),
-        // 重新包装为平台统一的 <!--md:base64(lead)|--> 格式，保证公开成果页正常渲染
+        // 重新包装为统一源码标记 + 安全 HTML，保证公开成果页与预览一致。
         description: wrapRichTextForSave(document.getElementById('adminEditAssetDescription')?.value || '', 'asset')
     };
     if (!payload.title) {
@@ -1450,12 +1442,59 @@ function renderCommunityPostRows(posts) {
                 html: `
                     <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openCommunityPostDetailModal(${post.id})">详情</button>
                     <button class="btn btn-outline-primary btn-sm" onclick="openCommunityPostEditModal(${post.id})">编辑</button>
+                    <button class="btn ${post.isPinned == 1 ? 'btn-secondary' : 'btn-outline-secondary'} btn-sm" title="${post.isPinned == 1 ? '已置顶，点击取消' : '点击置顶，列表所有排序下排最前'}" onclick="toggleCommunityPostPinned(${post.id}, ${post.isPinned == 1 ? 'false' : 'true'})">置顶</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteCommunityPost(${post.id})">删除</button>
                 `
             }
         ]);
         tbody.appendChild(tr);
     });
+}
+
+async function toggleCommunityPostPinned(postId, pinned) {
+    if (!window.confirm(pinned ? '确认置顶该帖子？置顶帖在社区列表所有排序下都排在最前。' : '确认取消置顶该帖子？')) {
+        return;
+    }
+    try {
+        const response = await apiFetch(`/api/admin/community-post/${encodeURIComponent(String(postId))}/pinned`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pinned: pinned })
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            showMessage(pinned ? '已置顶' : '已取消置顶', 'success');
+            loadCommunityPosts();
+        } else {
+            showMessage(result.message || '操作失败', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showMessage('操作失败，请稍后重试', 'error');
+    }
+}
+
+async function toggleAssetPinned(assetId, pinned) {
+    if (!window.confirm(pinned ? '确认置顶该成果？置顶成果在成果列表所有排序下都排在最前。' : '确认取消置顶该成果？')) {
+        return;
+    }
+    try {
+        const response = await apiFetch(`/api/admin/asset/${encodeURIComponent(String(assetId))}/pinned`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pinned: pinned })
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            showMessage(pinned ? '已置顶' : '已取消置顶', 'success');
+            loadAssets();
+        } else {
+            showMessage(result.message || '操作失败', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showMessage('操作失败，请稍后重试', 'error');
+    }
 }
 
 function openCommunityPostDetailModal(postId) {
@@ -1507,7 +1546,7 @@ function openCommunityPostEditModal(postId) {
     document.getElementById('adminEditPostId').value = String(post.id || '');
     document.getElementById('adminEditPostTitle').value = post.title || '';
     document.getElementById('adminEditPostCategory').value = post.category || 'general';
-    document.getElementById('adminEditPostContent').value = post.content || '';
+    document.getElementById('adminEditPostContent').value = editableRichText(post.content);
     AdminState.communityPostEditModal?.show();
 }
 
@@ -1521,7 +1560,7 @@ async function saveCommunityPostEditFromModal() {
     const payload = {
         title: (document.getElementById('adminEditPostTitle')?.value || '').trim(),
         category: (document.getElementById('adminEditPostCategory')?.value || '').trim(),
-        // 重新包装为平台统一的 <!--md:base64--> 格式，保证公开帖子页正常渲染
+        // 重新包装为统一源码标记 + 安全 HTML，保证公开帖子页与预览一致。
         content: wrapRichTextForSave(document.getElementById('adminEditPostContent')?.value || '', 'post')
     };
     if (!payload.title) {
@@ -1597,6 +1636,8 @@ async function loadCompetitionsAdmin() {
     }
 }
 
+const COMPETITION_PAGE_SIZE = 10;
+
 function applyCompetitionSearchAndRender() {
     const keyword = document.getElementById('competitionSearchInput')?.value || '';
     AdminState.filteredCompetitions = AdminState.allCompetitions.filter(item => matchesKeyword([
@@ -1609,8 +1650,46 @@ function applyCompetitionSearchAndRender() {
         item.status === 'ACTIVE' ? '已发布' : '已停用',
         ...(Array.isArray(item.tags) ? item.tags : [])
     ], keyword));
-    renderCompetitionAdminRows(AdminState.filteredCompetitions);
-    updateAdminListHint('competitionListHint', AdminState.filteredCompetitions.length);
+    const total = AdminState.filteredCompetitions.length;
+    const totalPages = Math.max(1, Math.ceil(total / COMPETITION_PAGE_SIZE));
+    if (AdminState.competitionPage > totalPages) AdminState.competitionPage = totalPages;
+    const start = (AdminState.competitionPage - 1) * COMPETITION_PAGE_SIZE;
+    renderCompetitionAdminRows(AdminState.filteredCompetitions.slice(start, start + COMPETITION_PAGE_SIZE));
+    renderCompetitionPager(total, totalPages);
+    const hint = document.getElementById('competitionListHint');
+    if (hint) hint.textContent = '共 ' + total + ' 条 · 第 ' + AdminState.competitionPage + '/' + totalPages + ' 页';
+}
+
+function renderCompetitionPager(total, totalPages) {
+    const pager = document.getElementById('competitionPager');
+    const inner = document.getElementById('competitionPagerInner');
+    if (!pager || !inner) return;
+    if (totalPages <= 1) {
+        pager.classList.add('d-none');
+        return;
+    }
+    pager.classList.remove('d-none');
+    inner.innerHTML = '';
+    const mk = (label, page, disabled, active) => {
+        const li = document.createElement('li');
+        li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'page-link';
+        btn.textContent = label;
+        if (!disabled && !active) btn.addEventListener('click', () => gotoCompetitionPage(page));
+        li.appendChild(btn);
+        return li;
+    };
+    inner.appendChild(mk('上一页', AdminState.competitionPage - 1, AdminState.competitionPage <= 1, false));
+    for (let i = 1; i <= totalPages; i++) inner.appendChild(mk(String(i), i, false, i === AdminState.competitionPage));
+    inner.appendChild(mk('下一页', AdminState.competitionPage + 1, AdminState.competitionPage >= totalPages, false));
+}
+
+function gotoCompetitionPage(page) {
+    AdminState.competitionPage = Math.max(1, page);
+    applyCompetitionSearchAndRender();
+    document.getElementById('competitionTableBody')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function renderCompetitionAdminRows(items) {

@@ -6,8 +6,9 @@
     <title>组队详情 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/team-detail.css?v=1.2" rel="stylesheet">
-    <link href="/css/portal-redesign.css?v=3.2" rel="stylesheet">
+    <link th:href="@{/css/team-detail.css}" rel="stylesheet">
+    <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
+    <link th:href="@{/css/detail-refresh.css}" rel="stylesheet">
 </head>
 <body data-app-page="team-detail" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -30,9 +31,12 @@
             </section>
 
             <article class="detail-view page-transition" id="teamDetailContent" hidden>
-                <header class="detail-view__header">
+                <header class="detail-view__header td-detail-header">
+                    <div class="td-detail-header__main">
                     <p class="detail-view__eyebrow">组队详情</p>
                     <h1 class="detail-view__title" id="teamTitle">组队标题</h1>
+                    </div>
+                    <span class="td-status-pill" id="teamHeaderStatus" hidden></span>
                 </header>
                 <div class="detail-view__body">
                     <!-- 编辑模式（仅队长可见） -->
@@ -79,45 +83,54 @@
 
                     <!-- 详情展示模式（默认） -->
                     <dl class="detail-view__meta" id="detailViewMeta">
-                        <div class="detail-view__row">
-                            <dt>发布</dt>
-                            <dd id="teamPublisher">-</dd>
-                        </div>
-                        <div class="detail-view__row">
-                            <dt>分类</dt>
-                            <dd id="teamCategory">-</dd>
-                        </div>
-                        <div class="detail-view__row">
+                        <div class="detail-view__row td-row-hidden">
                             <dt>状态</dt>
                             <dd id="teamStatus">-</dd>
                         </div>
-                        <div class="detail-view__row">
-                            <dt>所需人数</dt>
-                            <dd id="teamMemberCount">-</dd>
+
+                        <div class="td-cond-grid">
+                            <div class="detail-view__row td-cond td-cond--category">
+                                <dt>分类</dt>
+                                <dd id="teamCategory">-</dd>
+                            </div>
+                            <div class="detail-view__row td-cond td-cond--count">
+                                <dt>所需人数</dt>
+                                <dd id="teamMemberCount">-</dd>
+                            </div>
+                            <div class="detail-view__row td-cond td-cond--deadline">
+                                <dt>截止日期</dt>
+                                <dd id="teamDeadline">-</dd>
+                            </div>
+                            <div class="detail-view__row td-cond td-cond--skills">
+                                <dt>所需技能</dt>
+                                <dd id="teamSkills">-</dd>
+                            </div>
                         </div>
-                        <div class="detail-view__row">
-                            <dt>截止日期</dt>
-                            <dd id="teamDeadline">-</dd>
+
+                        <div class="td-publisher-bar">
+                            <div class="detail-view__row td-publisher">
+                                <dt>发布者</dt>
+                                <dd id="teamPublisher">-</dd>
+                            </div>
+                            <div class="detail-view__row td-pubtime">
+                                <dt>发布时间</dt>
+                                <dd id="teamCreateTime">-</dd>
+                            </div>
                         </div>
-                        <div class="detail-view__row">
-                            <dt>所需技能</dt>
-                            <dd id="teamSkills">-</dd>
-                        </div>
-                        <div class="detail-view__row">
-                            <dt>发布时间</dt>
-                            <dd id="teamCreateTime">-</dd>
-                        </div>
-                        <div class="detail-view__row detail-view__row--block">
-                            <dt>描述</dt>
+
+                        <div class="detail-view__row detail-view__row--block td-block-card">
+                            <dt>队伍描述</dt>
                             <dd>
                                 <p id="teamDescription" class="detail-view__text mb-0">-</p>
                             </dd>
                         </div>
-                        <div class="detail-view__row detail-view__row--block">
-                            <dt>成员</dt>
-                            <dd>
-                                <div id="teamMembers" class="d-flex flex-column gap-2">-</div>
-                            </dd>
+
+                        <div class="td-block-card td-members-card">
+                            <div class="td-block-head">
+                                <h4 class="td-block-title">当前成员</h4>
+                                <span class="td-members-count" id="teamMembersCount"></span>
+                            </div>
+                            <div id="teamMembers" class="td-members-list">-</div>
                         </div>
                     </dl>
 
@@ -131,6 +144,8 @@
                     </section>
 
                     <div class="detail-view__actions">
+                        <span class="td-actions-hint">申请加入后，队长将收到你的个人资料。</span>
+                        <div class="td-actions-btns">
                         <button type="button" id="editTeamBtn" class="il-btn d-none">
                             <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -148,6 +163,7 @@
                         <button type="button" id="closeTeamBtn" class="il-btn d-none">结束项目</button>
                         <button type="button" id="applyBtn" class="il-btn il-btn--primary">申请加入</button>
                         <a href="/team-market.html" id="backBtn" class="il-btn">返回组队大厅</a>
+                        </div>
                     </div>
                 </div>
 
@@ -245,9 +261,9 @@
                         <textarea class="form-control" id="submitRemark" rows="3" placeholder="说明完成了哪些内容"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">上传附件（可选，最大 20MB）</label>
-                        <input type="file" class="form-control" id="submitFile" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip,.rar,.7z">
-                        <small class="text-muted">支持图片、PDF、Word、压缩包等格式</small>
+                        <label class="form-label">上传附件（可选，最大 50MB）</label>
+                        <input type="file" class="form-control" id="submitFile" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.zip,.rar,.7z,.exe,.msi,.apk,.ipa">
+                        <small class="text-muted">支持图片、PDF、Word/Excel/PPT、压缩包、文本和安装包（exe/msi/apk/ipa）</small>
                         <div class="task-submit-file" id="submitFilePreview" hidden aria-live="polite"></div>
                     </div>
                 </div>
@@ -329,10 +345,11 @@
         </div>
     </div>
 
-    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=9.6"></script>
-    <script src="/js/ui-particles.js?v=1.0"></script>
-    <script src="/js/team-detail.js?v=11"></script>
-    <script src="/js/team-detail-tasks.js?v=6"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/ui-particles.js}"></script>
+    <script th:src="@{/js/team-detail.js}"></script>
+    <script th:src="@{/js/team-detail-tasks.js}"></script>
+    <script th:src="@{/js/detail-refresh.js}"></script>
 </body>
 </html>

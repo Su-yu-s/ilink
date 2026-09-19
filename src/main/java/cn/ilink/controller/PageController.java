@@ -61,6 +61,7 @@ public class PageController {
         "profile-posts",
         "profile-favorites",
         "profile-password",
+        "roster",
         "profile-article-edit",
         "profile-asset-edit",
         "user-profile",

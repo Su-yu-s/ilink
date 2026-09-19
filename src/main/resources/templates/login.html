@@ -74,8 +74,8 @@
         </div>
     </div>
 
-    <script src="/js/common.js?v=9.2"></script>
-    <script src="/js/login.js?v=7.5"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/login.js}"></script>
     <script>
         function togglePasswordVisibility() {
             const pwd = document.getElementById('password');
@@ -92,5 +92,6 @@
             }
         }
     </script>
+    <th:block th:replace="fragments/feedback-widget :: widget"></th:block>
 </body>
 </html>

@@ -61,7 +61,7 @@ async function loadMyPosts(page) {
                     </div>
                     <p class="il-empty-title">还没有发布过文章</p>
                     <p class="il-empty-text">在交流社区写第一篇，会显示在这个列表里</p>
-                    <a href="/community.html" class="il-btn il-btn-primary il-btn-sm mt-3">前往交流社区</a>
+                    <a href="/profile-article-edit.html" class="il-btn il-btn-primary il-btn-sm mt-3">发布新文章</a>
                 </div>`;
             if (pager) pager.classList.add('d-none');
             return;

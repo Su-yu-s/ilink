@@ -6,9 +6,10 @@
     <title>导师招贤 - iLink</title>
 
     <th:block th:replace="~{fragments/head-assets :: core(bootstrap=true)}"></th:block>
-    <link href="/css/teacher-wall.css?v=2.9" rel="stylesheet">
-    <link href="/css/search-bar.css?v=1.9" rel="stylesheet">
-    <link href="/css/portal-redesign.css?v=2.5" rel="stylesheet">
+    <link th:href="@{/css/teacher-wall.css}" rel="stylesheet">
+    <link th:href="@{/css/search-bar.css}" rel="stylesheet">
+    <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
+    <link th:href="@{/css/demo-refresh.css}" rel="stylesheet">
 </head>
 <body data-app-page="teacher-wall" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="~{fragments/header :: header(${currentUser}, 'teacher')}"></div>
@@ -71,10 +72,6 @@
                         </select>
                     </div>
 
-                    <button type="button" class="il-search-bar__btn il-search-bar__btn--primary" id="searchBtn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        搜索
-                    </button>
 
                     <div class="il-search-bar__spacer"></div>
 
@@ -146,8 +143,9 @@
         </div>
     </div>
 
-    <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=9.5"></script>
-    <script src="/js/teacher-wall.js?v=4.9"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/teacher-wall.js}"></script>
+    <script th:src="@{/js/demo-refresh.js}"></script>
 </body>
 </html>

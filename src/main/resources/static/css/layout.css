@@ -10,6 +10,28 @@ html.ilink-app,
   scroll-behavior: smooth;
 }
 
+/* 页面滚动条：系统默认那根又粗又灰，比正文还抢眼。
+   统一收细、降对比、轨道透明，悬停时才加深一点，保留「这里能滚」的提示。 */
+/* 只写 ::-webkit-scrollbar：Chrome/Edge 121+ 一旦声明 scrollbar-width
+   就会忽略伪元素样式，两套同时写反而拿不到这里想要的颜色和宽度。 */
+html::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: rgb(17 24 39 / 16%);
+  border-radius: 4px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: rgb(17 24 39 / 30%);
+}
+
 .ilink-app body {
   font-family: var(--font-family);
   font-size: var(--font-size-base);

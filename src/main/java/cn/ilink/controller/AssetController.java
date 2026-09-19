@@ -76,11 +76,14 @@ public class AssetController {
                                                         @RequestParam(required = false, defaultValue = "latest") String sort) {
 
         LambdaQueryWrapper<Asset> wrapper = new LambdaQueryWrapper<>();
+        // 置顶帖在任何排序下都优先；id 作最终 tiebreaker，翻页顺序不漂移
+        wrapper.orderByDesc(Asset::getIsPinned);
         if ("popular".equalsIgnoreCase(sort)) {
             wrapper.orderByDesc(Asset::getViewCount).orderByDesc(Asset::getCreatedAt);
         } else {
             wrapper.orderByDesc(Asset::getCreatedAt);
         }
+        wrapper.orderByDesc(Asset::getId);
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             String kw = keyword.trim();
@@ -145,9 +148,11 @@ public class AssetController {
         m.put("category", resolveCategory(asset));
         m.put("fileUrl", asset.getFileUrl());
         m.put("originalFileName", asset.getOriginalFileName());
+        m.put("coverUrl", asset.getCoverUrl());
         m.put("userId", asset.getUserId());
         m.put("viewCount", asset.getViewCount());
         m.put("downloadCount", asset.getDownloadCount());
+        m.put("pinned", asset.getIsPinned() != null && asset.getIsPinned() == 1);
         m.put("createdAt", asset.getCreatedAt());
         m.put("ownerPreview", UserPreviewHelper.toPreview(owner));
         return m;
@@ -215,6 +220,7 @@ public class AssetController {
             data.put("category", resolveCategory(asset));
             data.put("fileUrl", asset.getFileUrl());
             data.put("originalFileName", asset.getOriginalFileName());
+            data.put("coverUrl", asset.getCoverUrl());
             data.put("userId", asset.getUserId());
             data.put("viewCount", asset.getViewCount());
             data.put("downloadCount", asset.getDownloadCount());
@@ -243,10 +249,13 @@ public class AssetController {
         }
 
         try {
-            MultipartFile file = resolveOptionalUploadFile(request);
             String normalizedCategory = normalizeCategory(category, description);
             Asset asset = assetLifecycleService.createAsset(
-                user.getId(), title.trim(), stripCategoryFromDescription(description), normalizedCategory, file);
+                new AssetLifecycleService.AssetPayload(user.getId(), title.trim(),
+                        stripCategoryFromDescription(description))
+                    .category(normalizedCategory)
+                    .file(resolveOptionalUploadFile(request, "file"))
+                    .cover(resolveOptionalUploadFile(request, "cover")));
             return Result.ok("发布成功", asset).toResponseEntity();
         } catch (IllegalArgumentException e) {
             return Result.badRequest(e.getMessage()).toResponseEntity();
@@ -265,6 +274,8 @@ public class AssetController {
                                                         @RequestParam("title") String title,
                                                         @RequestParam("description") String description,
                                                         @RequestParam(required = false) String category,
+                                                        @RequestParam(value = "removeFile", defaultValue = "false") boolean removeFile,
+                                                        @RequestParam(value = "removeCover", defaultValue = "false") boolean removeCover,
                                                         HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
@@ -275,10 +286,14 @@ public class AssetController {
         }
 
         try {
-            MultipartFile file = resolveOptionalUploadFile(request);
-            String normalizedCategory = normalizeCategory(category, description);
-            Asset asset = assetLifecycleService.updateOwnedAsset(
-                id, user.getId(), title.trim(), stripCategoryFromDescription(description), normalizedCategory, file);
+            Asset asset = assetLifecycleService.updateOwnedAsset(id,
+                new AssetLifecycleService.AssetPayload(user.getId(), title.trim(),
+                        stripCategoryFromDescription(description))
+                    .category(normalizeCategory(category, description))
+                    .file(resolveOptionalUploadFile(request, "file"))
+                    .removeFile(removeFile)
+                    .cover(resolveOptionalUploadFile(request, "cover"))
+                    .removeCover(removeCover));
             return Result.ok("保存成功", asset).toResponseEntity();
         } catch (NoSuchElementException e) {
             return Result.notFound(e.getMessage()).toResponseEntity();
@@ -293,12 +308,12 @@ public class AssetController {
         }
     }
 
-    /** 附件选填：未上传 part 时不抛 MissingServletRequestPartException */
-    private MultipartFile resolveOptionalUploadFile(HttpServletRequest request) {
+    /** 附件/封面选填：未上传 part 时不抛 MissingServletRequestPartException */
+    private MultipartFile resolveOptionalUploadFile(HttpServletRequest request, String partName) {
         if (!(request instanceof MultipartHttpServletRequest)) {
             return null;
         }
-        MultipartFile file = ((MultipartHttpServletRequest) request).getFile("file");
+        MultipartFile file = ((MultipartHttpServletRequest) request).getFile(partName);
         if (file == null || file.isEmpty()) {
             return null;
         }

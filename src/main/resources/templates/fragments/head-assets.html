@@ -10,30 +10,34 @@
 <th:block th:fragment="core(bootstrap)">
     <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{/favicon.svg(v=5)}" href="/favicon.svg?v=5">
     <!-- 字体使用系统默认：宋体（古诗词/标题）、微软雅黑（正文）、Times New Roman（西文）-->
-    <link th:if="${bootstrap}" href="/lib/bootstrap.min.css" rel="stylesheet">
-    <link href="/css/design-tokens.css?v=7.9" rel="stylesheet">
-    <link href="/css/effects.css?v=7.11" rel="stylesheet">
-    <link href="/css/components.css?v=9.4" rel="stylesheet">
-    <link href="/css/layout.css?v=8.0" rel="stylesheet">
-    <link href="/css/pages.css?v=1.0" rel="stylesheet">
-    <link href="/css/style.css?v=15.0" rel="stylesheet">
+    <link th:if="${bootstrap}" th:href="@{/lib/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/design-tokens.css}" rel="stylesheet">
+    <link th:href="@{/css/effects.css}" rel="stylesheet">
+    <link th:href="@{/css/components.css}" rel="stylesheet">
+    <link th:href="@{/css/layout.css}" rel="stylesheet">
+    <link th:href="@{/css/pages.css}" rel="stylesheet">
+    <link th:href="@{/css/style.css}" rel="stylesheet">
     <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
+    <!-- 意见反馈 / 关于作者：悬浮入口与反馈详情页样式，放在最后避免与既有层冲突 -->
+    <link th:href="@{/css/feedback.css}" rel="stylesheet">
 </th:block>
 
 <th:block th:fragment="auth">
     <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{/favicon.svg(v=5)}" href="/favicon.svg?v=5">
     <!-- 字体使用系统默认：宋体（古诗词/标题）、微软雅黑（正文）、Times New Roman（西文）-->
-    <link href="/css/design-tokens.css?v=7.9" rel="stylesheet">
-    <link href="/css/effects.css?v=7.11" rel="stylesheet">
-    <link href="/css/components.css?v=9.4" rel="stylesheet">
-    <link href="/css/layout.css?v=8.0" rel="stylesheet">
-    <link href="/css/auth.css?v=8.3" rel="stylesheet">
+    <link th:href="@{/css/design-tokens.css}" rel="stylesheet">
+    <link th:href="@{/css/effects.css}" rel="stylesheet">
+    <link th:href="@{/css/components.css}" rel="stylesheet">
+    <link th:href="@{/css/layout.css}" rel="stylesheet">
+    <link th:href="@{/css/auth.css}" rel="stylesheet">
     <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
+    <!-- 意见反馈 / 关于作者：悬浮入口与反馈详情页样式，放在最后避免与既有层冲突 -->
+    <link th:href="@{/css/feedback.css}" rel="stylesheet">
 </th:block>
 
 <!-- Must be inserted after page-specific styles when a page has them. -->
 <th:block th:fragment="redesign">
-    <link href="/css/app-redesign.css?v=2.2" rel="stylesheet">
+    <link th:href="@{/css/app-redesign.css}" rel="stylesheet">
 </th:block>
 </body>
 </html>

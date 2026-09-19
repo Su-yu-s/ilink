@@ -6,10 +6,10 @@
     <title>交流社区 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/community-feed.css?v=4.7" rel="stylesheet">
-    <link href="/css/search-bar.css?v=1.9" rel="stylesheet">
-    <link href="/css/md-editor.css?v=1.2" rel="stylesheet">
-    <link href="/css/portal-redesign.css?v=2.5" rel="stylesheet">
+    <link th:href="@{/css/community-feed.css}" rel="stylesheet">
+    <link th:href="@{/css/search-bar.css}" rel="stylesheet">
+    <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
+    <link th:href="@{/css/demo-refresh.css}" rel="stylesheet">
 </head>
 <body data-app-page="community" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'community')"></div>
@@ -39,12 +39,19 @@
                 </select>
             </div>
 
+            <div class="il-search-bar__select il-sort-group" id="sortGroup" role="group" aria-label="排序方式">
+                <button type="button" class="on" data-sort="latest">最新发布</button>
+                <button type="button" data-sort="views">最多浏览</button>
+                <button type="button" data-sort="likes">最多点赞</button>
+                <button type="button" data-sort="favorites">最多收藏</button>
+            </div>
+
             <div class="il-search-bar__spacer"></div>
 
-            <button type="button" class="il-search-bar__btn il-search-bar__btn--solid" id="openComposeBtn">
+            <a href="/profile-article-edit.html" class="il-search-bar__btn il-search-bar__btn--solid">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                 写文章
-            </button>
+            </a>
 
             <button type="button" class="il-search-bar__btn il-search-bar__btn--secondary" id="refreshBtn">刷新</button>
         </div>
@@ -60,7 +67,7 @@
         </nav>
     </div>
 
-    <div class="il-modal-overlay" id="composeModal" aria-hidden="true" onclick="if(event.target === this) closeComposeModal()">
+    <div class="il-modal-overlay" id="composeModal" aria-hidden="true" th:remove="all" onclick="if(event.target === this) closeComposeModal()">
         <div class="il-modal" onclick="event.stopPropagation()">
             <div class="il-modal-header">
                 <h5 class="il-modal-title">写文章</h5>
@@ -118,14 +125,14 @@
                         </div>
                         <div class="md-divider visible"></div>
                         <div class="md-preview-pane">
-                            <div class="markdown-body" id="composeMdPreview"></div>
+                            <div class="markdown-body il-markdown-content" id="composeMdPreview"></div>
                         </div>
                     </div>
                 </div>
                 <div class="il-form-group" style="margin-bottom: 0;">
                     <label class="il-form-label">附件（可选）</label>
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                        <input type="file" id="composeAttachmentInput" class="d-none" multiple>
+                        <input type="file" id="composeAttachmentInput" class="d-none" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.zip,.rar,.7z,.exe,.msi,.apk,.ipa">
                         <button type="button" class="il-btn il-btn-secondary il-btn--sm" id="composeAddAttachmentBtn">上传文件</button>
                         <span class="small text-muted">与正文一并发布，最多 10 个</span>
                     </div>
@@ -139,11 +146,10 @@
         </div>
     </div>
 
-    <script src="/lib/bootstrap.bundle.min.js?v=4.0"></script>
-    <script src="/js/common.js?v=9.7"></script>
-    <script src="/js/ui-particles.js?v=1.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
-    <script src="/js/community.js?v=5.2"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/ui-particles.js}"></script>
+    <script th:src="@{/js/community.js}"></script>
+    <script th:src="@{/js/demo-refresh.js}"></script>
 </body>
 </html>

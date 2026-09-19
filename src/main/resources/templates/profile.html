@@ -6,9 +6,11 @@
     <title>个人中心 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/profile.css?v=10.4" rel="stylesheet">
+    <link th:href="@{/css/profile.css}" rel="stylesheet">
+    <link th:href="@{/css/team-invite.css}" rel="stylesheet">
 </head>
-<body data-profile-page="overview" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+<body data-profile-page="overview" class="ilink-page-bg"
+      th:attr="data-user-id=${currentUser != null ? currentUser.id : null},data-user-role=${currentUser != null ? currentUser.role : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
 
     <div class="il-page-wrapper">
@@ -18,7 +20,7 @@
             <!-- Content -->
             <div class="il-profile-content">
                 <!-- Profile Card -->
-                <div class="il-profile-card">
+                <div class="il-profile-card" id="profileOverviewCard">
                     <div class="il-profile-avatar">
                         <img th:if="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
                              th:src="${currentUser.avatar}"
@@ -80,13 +82,45 @@
                     </dl>
                 </section>
 
+                <section class="il-section-card il-teacher-competition-overview" id="teacherCompetitionOverview" hidden
+                         aria-labelledby="teacherCompetitionOverviewTitle">
+                    <div class="il-section-header">
+                        <div>
+                            <h2 class="il-section-title" id="teacherCompetitionOverviewTitle">竞赛概览</h2>
+                            <p class="il-section-subtitle">集中查看公开成果与荣誉奖项</p>
+                        </div>
+                    </div>
+                    <div class="il-teacher-competition-overview__grid">
+                        <section class="il-teacher-competition-block" aria-labelledby="teacherCompetitionAssetsTitle">
+                            <div class="il-teacher-competition-block__header">
+                                <h3 id="teacherCompetitionAssetsTitle">竞赛成果</h3>
+                                <a href="/gallery.html">查看成果展示</a>
+                            </div>
+                            <div id="teacherCompetitionAssets" class="il-teacher-competition-list">
+                                <p class="il-teacher-competition-empty">正在加载…</p>
+                            </div>
+                        </section>
+                        <section class="il-teacher-competition-block" aria-labelledby="teacherCompetitionHonorsTitle">
+                            <div class="il-teacher-competition-block__header">
+                                <h3 id="teacherCompetitionHonorsTitle">荣誉奖项</h3>
+                                <a href="/profile-honors.html">管理奖项</a>
+                            </div>
+                            <div id="teacherCompetitionHonors" class="il-teacher-competition-list">
+                                <p class="il-teacher-competition-empty">正在加载…</p>
+                            </div>
+                        </section>
+                    </div>
+                </section>
+
                 <!-- Activity Section -->
                 <div class="il-section-card" id="activitySectionCard">
                     <div class="il-section-header">
                         <div>
                             <h2 class="il-section-title" id="activitySectionTitle">我的活动</h2>
-                            <p class="il-section-subtitle">管理你发布和申请的组队</p>
+                            <p class="il-section-subtitle" id="activitySectionSubtitle">管理你发布和申请的组队</p>
                         </div>
+                        <a class="il-btn il-btn-primary" id="createTeamBtn" href="/team-publish.html"
+                           style="display: none;">新建团队</a>
                     </div>
 
                     <div class="il-tabs" id="activityTabs">
@@ -130,9 +164,12 @@
         </div>
     </div>
 
-    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=9.2"></script>
-    <script src="/js/profile.js?v=5.5"></script>
+    <div th:replace="fragments/team-invite-modal :: modal"></div>
+
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/team-invite.js}"></script>
+    <script th:src="@{/js/profile.js}"></script>
     <script>
 (function() {
     function switchTab(tab) {
@@ -142,6 +179,82 @@
         document.getElementById('content-teams').style.display = tab === 'teams' ? 'block' : 'none';
         document.getElementById('content-applications').style.display = tab === 'applications' ? 'block' : 'none';
     }
+
+    function isTeacher() {
+        return document.body.getAttribute('data-user-role') === 'TEACHER';
+    }
+
+    function setHidden(element, hidden) {
+        if (!element) return;
+        element.hidden = hidden;
+        element.setAttribute('aria-hidden', hidden ? 'true' : 'false');
+    }
+
+    function applyProfileHashView() {
+        var hash = window.location.hash || '#';
+        var teamView = hash === '#teams';
+        var teacher = isTeacher();
+        var navItems = document.querySelectorAll('.il-profile-nav-item');
+        var navMap = { '#teams': '我的团队', '#': '竞赛概览' };
+        var label = navMap[hash] || navMap['#'];
+
+        navItems.forEach(function(item) {
+            var span = item.querySelector('span');
+            item.classList.toggle('active', !!span && span.textContent.trim() === label);
+        });
+
+        var activityCard = document.getElementById('activitySectionCard');
+        var profileCard = document.getElementById('profileOverviewCard');
+        var teacherSummary = document.getElementById('teacherProfileSummary');
+        var competitionOverview = document.getElementById('teacherCompetitionOverview');
+        var title = document.getElementById('activitySectionTitle');
+        var subtitle = document.getElementById('activitySectionSubtitle');
+        var activityTabs = document.getElementById('activityTabs');
+        var teams = document.getElementById('content-teams');
+        var applications = document.getElementById('content-applications');
+        var joined = document.getElementById('content-teams-joined');
+        var createButton = document.getElementById('createTeamBtn');
+
+        if (teamView) {
+            setHidden(activityCard, false);
+            if (teacher) {
+                setHidden(profileCard, true);
+                setHidden(competitionOverview, true);
+                setHidden(teacherSummary, true);
+            }
+            if (title) title.textContent = '我的团队';
+            if (subtitle) subtitle.textContent = '管理你创建或参与的项目';
+            if (activityTabs) activityTabs.style.display = 'none';
+            if (teams) teams.style.display = 'none';
+            if (applications) applications.style.display = 'none';
+            if (joined) joined.style.display = 'block';
+            if (createButton) createButton.style.display = '';
+            if (typeof renderJoinedTeams === 'function') renderJoinedTeams();
+            return;
+        }
+
+        if (teacher) {
+            setHidden(profileCard, false);
+            setHidden(activityCard, true);
+            setHidden(competitionOverview, false);
+            if (teacherSummary && teacherSummary.getAttribute('data-profile-loaded') === 'true') {
+                setHidden(teacherSummary, false);
+            }
+            return;
+        }
+
+        setHidden(profileCard, false);
+        setHidden(activityCard, false);
+        if (title) title.textContent = '我的活动';
+        if (subtitle) subtitle.textContent = '管理你发布和申请的组队';
+        if (activityTabs) activityTabs.style.display = 'flex';
+        if (joined) joined.style.display = 'none';
+        if (teams) teams.style.display = 'block';
+        if (applications) applications.style.display = 'none';
+        if (createButton) createButton.style.display = 'none';
+    }
+
+    window.applyProfileHashView = applyProfileHashView;
 
     document.addEventListener('DOMContentLoaded', function() {
         var tabs = document.querySelectorAll('.il-tab');
@@ -154,53 +267,8 @@
             })(tabs[i]);
         }
 
-        // Hash-based navigation
-        var navMap = { '#teams': '竞赛小队', '#': '招募活动' };
-        var currentHash = window.location.hash || '#';
-        var navItems = document.querySelectorAll('.il-profile-nav-item');
-        navItems.forEach(function(item) { item.classList.remove('active'); });
-        var targetLabel = navMap[currentHash];
-        if (targetLabel) {
-            navItems.forEach(function(item) {
-                var span = item.querySelector('span');
-                if (span && span.textContent === targetLabel) item.classList.add('active');
-            });
-        }
-
-        if (currentHash === '#teams') {
-            document.getElementById('activitySectionTitle').textContent = '我的小队';
-            document.getElementById('activityTabs').style.display = 'none';
-            document.getElementById('content-teams').style.display = 'none';
-            document.getElementById('content-applications').style.display = 'none';
-            document.getElementById('content-teams-joined').style.display = 'block';
-            if (typeof renderJoinedTeams === 'function') renderJoinedTeams();
-        }
-
-        window.addEventListener('hashchange', function() {
-            var hash = window.location.hash;
-            navItems.forEach(function(item) { item.classList.remove('active'); });
-            var label = navMap[hash];
-            if (label) {
-                navItems.forEach(function(item) {
-                    var span = item.querySelector('span');
-                    if (span && span.textContent === label) item.classList.add('active');
-                });
-            }
-            if (hash === '#teams') {
-                document.getElementById('activitySectionTitle').textContent = '我的小队';
-                document.getElementById('activityTabs').style.display = 'none';
-                document.getElementById('content-teams').style.display = 'none';
-                document.getElementById('content-applications').style.display = 'none';
-                document.getElementById('content-teams-joined').style.display = 'block';
-                if (typeof renderJoinedTeams === 'function') renderJoinedTeams();
-            } else {
-                document.getElementById('activitySectionTitle').textContent = '我的活动';
-                document.getElementById('activityTabs').style.display = 'flex';
-                document.getElementById('content-teams-joined').style.display = 'none';
-                document.getElementById('content-teams').style.display = 'block';
-                document.getElementById('content-applications').style.display = 'none';
-            }
-        });
+        applyProfileHashView();
+        window.addEventListener('hashchange', applyProfileHashView);
     });
 })();
     </script>

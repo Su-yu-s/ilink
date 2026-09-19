@@ -16,8 +16,11 @@ public class Asset {
     private String category;
     private String fileUrl;
     private String originalFileName;
+    private String coverUrl;
     private Long userId;
     private Integer viewCount;
     private Integer downloadCount;
+    /** 是否置顶（管理后台设置，列表优先展示）0否 1是 */
+    private Integer isPinned;
     private Date createdAt;
 }

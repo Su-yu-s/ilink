@@ -1,0 +1,409 @@
+/* =====================================================================
+ * profile-refresh.css  v1.0
+ * 个人中心深度优化覆盖层（个人资料 / 我的文章 / 我的收藏 / 修改密码）
+ * 严格对齐高保真 demo：中性灰、独立白卡、去线性化、蓝色软徽章、
+ * 一体化工具栏、单列密码表单 + 强度条。选择器与 profile.css 等权，
+ * 依赖本文件在其后引入；冲突属性使用 !important。
+ * ===================================================================== */
+
+/* ---------- 通用微交互：主按钮点击缩放 ---------- */
+html.ilink-app body[data-profile-page] .il-btn-primary,
+html.ilink-app body[data-profile-page] .pf-toolbar__search-btn {
+  transition: background-color .18s ease, border-color .18s ease, transform .12s ease, box-shadow .18s ease;
+}
+html.ilink-app body[data-profile-page] .il-btn-primary:active { transform: scale(.96); }
+
+/* 输入框统一聚焦蓝环（编辑资料表单） */
+html.ilink-app body[data-profile-page] .il-form-input,
+html.ilink-app body[data-profile-page] .il-form-select {
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+html.ilink-app body[data-profile-page] .il-form-input:focus,
+html.ilink-app body[data-profile-page] .il-form-select:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.12) !important;
+  outline: none !important;
+}
+
+/* =====================================================================
+ * 一、个人资料（阅读视图：单张主卡片，内部以分割线分区）
+ * ===================================================================== */
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-section-card {
+  overflow: hidden;
+  background: #fff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 2px rgba(17,24,39,.04), 0 1px 3px rgba(17,24,39,.05) !important;
+  padding: 0 !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-details-header {
+  padding: 22px 28px !important;
+  margin-bottom: 0 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-view {
+  padding-top: 0 !important;
+  display: block !important;
+  animation: none !important;
+}
+
+/* 身份摘要与内容分区共享同一张卡片，仅保留内部边界 */
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-identity,
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-section {
+  background: #fff !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-identity {
+  padding: 24px 28px !important;
+  gap: 18px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-section {
+  margin-top: 0 !important;
+  padding: 26px 28px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-section:last-child {
+  border-bottom: 0 !important;
+}
+
+/* 头像 80、姓名 20、角色灰色药丸 */
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-avatar {
+  width: 80px !important;
+  height: 80px !important;
+  flex-basis: 80px !important;
+  border: 0 !important;
+  box-shadow: 0 0 0 1px #e5e7eb;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-name { font-size: 20px !important; font-weight: 700 !important; color:#111827 !important; }
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-role {
+  margin-top: 8px !important;
+  background: #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
+  color: #4b5563 !important;
+  padding: 3px 12px !important;
+  font-size: 12px !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-identity__body {
+  min-width: 0;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-identity__meta {
+  margin: 7px 0 0;
+  color: #9ca3af;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* 分区小标题 + 前置线性图标 */
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-section__title {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-section__title::before {
+  content: "";
+  width: 18px; height: 18px; flex: 0 0 18px;
+  background-repeat: no-repeat; background-position: center; background-size: contain;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) #profileReadBasicTitle::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111827' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Ccircle cx='9' cy='10' r='2'/%3E%3Cpath d='M15 8h3M15 12h3M6 16c.8-1.4 2-2 3-2s2.2.6 3 2'/%3E%3C/svg%3E");
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) #profileReadTeacherTitle::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111827' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 10 12 5 2 10l10 5 10-5z'/%3E%3Cpath d='M6 12v5c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-5'/%3E%3C/svg%3E");
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) #profileReadSkillsTitle::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111827' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z'/%3E%3Cline x1='7' y1='7' x2='7.01' y2='7'/%3E%3C/svg%3E");
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) #profileReadHonorsTitle::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111827' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3'/%3E%3C/svg%3E");
+}
+
+/* 基本信息：去分隔线，两列字段间距 */
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-grid {
+  border-top: 0 !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 22px 40px !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-grid > div {
+  padding: 0 !important;
+  border-bottom: 0 !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-grid dt {
+  margin-bottom: 6px !important;
+  font-size: 12px !important;
+  color: #9ca3af !important;
+  font-weight: 500 !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-grid dd {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #111827 !important;
+  line-height: 1.6 !important;
+}
+
+/* 个人简介空引导 */
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-grid__wide.is-bio-empty dd {
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  border-radius: 12px;
+  padding: 14px 16px !important;
+  color: #9ca3af !important;
+  font-style: italic;
+  font-weight: 400 !important;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px;
+}
+html.ilink-app body[data-profile-page="edit"] .pf-bio-fill {
+  font-style: normal;
+  border: 0; background: #eff6ff; color: #2563eb !important;
+  font-size: 12px; font-weight: 600;
+  padding: 4px 12px; border-radius: 8px; cursor: pointer;
+  transition: background .16s ease;
+}
+html.ilink-app body[data-profile-page="edit"] .pf-bio-fill:hover { background: #dbeafe; }
+
+/* 技能标签：蓝色软徽章 */
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-tag {
+  background: #eff6ff !important;
+  border: 1px solid #dbeafe !important;
+  color: #2563eb !important;
+  border-radius: 8px !important;
+  padding: 5px 11px !important;
+  font-size: 13px !important;
+  font-weight: 500;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-tag small { color: #60a5fa !important; }
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-empty {
+  color: #9ca3af !important;
+  font-size: 13px !important;
+  background: #f9fafb; border: 1px dashed #e5e7eb; border-radius: 10px;
+  padding: 12px 14px; display: block;
+}
+
+/* 奖项条目：浅灰小卡 + indigo 级别药丸 */
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-honor {
+  background: #f9fafb !important;
+  border: 1px solid #f3f4f6 !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  gap: 16px !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-honor__proof {
+  width: 48px !important; height: 48px !important; flex-basis: 48px !important;
+  background: #fff !important; border: 1px solid #e5e7eb !important; border-radius: 10px !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-honor strong { color:#111827 !important; font-size:14px !important; font-weight:600 !important; }
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-honor__level,
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-honor__level--international,
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-honor__level--national,
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-honor__level--provincial {
+  background: #eef2ff !important;
+  border: 1px solid #e0e7ff !important;
+  color: #4338ca !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+}
+html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-honor__meta { color:#9ca3af !important; font-size:12px !important; }
+
+/* =====================================================================
+ * 二、我的文章 / 我的收藏：一体化工具栏 + 卡片重构
+ * ===================================================================== */
+html.ilink-app body[data-profile-page="posts"] .il-section-card,
+html.ilink-app body[data-profile-page="favorites"] .il-section-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+html.ilink-app body[data-profile-page="posts"] .il-section-header,
+html.ilink-app body[data-profile-page="favorites"] .il-section-header { margin-bottom: 18px; }
+
+/* 工具栏白卡 */
+.pf-toolbar {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+  padding: 8px; margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(17,24,39,.04), 0 1px 3px rgba(17,24,39,.05);
+}
+.pf-toolbar__search { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; padding: 0 10px; }
+.pf-toolbar__search > svg { width: 19px; height: 19px; color: #9ca3af; flex: 0 0 auto; }
+.pf-toolbar__input {
+  flex: 1 1 auto; min-width: 0; border: 0 !important; background: transparent !important;
+  box-shadow: none !important; outline: none !important;
+  font-size: 14px; color: #111827; padding: 9px 4px;
+}
+.pf-toolbar__input::placeholder { color: #9ca3af; }
+.pf-toolbar__divider { width: 1px; height: 30px; background: #e5e7eb; flex: 0 0 auto; }
+.pf-toolbar__filters { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.pf-toolbar__select {
+  appearance: none; -webkit-appearance: none;
+  background: #f9fafabf url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center !important;
+  border: 1px solid transparent !important; border-radius: 10px !important;
+  padding: 8px 32px 8px 12px; font-size: 13px; color: #4b5563;
+  cursor: pointer; transition: border-color .16s ease, background-color .16s ease;
+}
+.pf-toolbar__select:hover { border-color: #e5e7eb !important; background-color: #f3f4f6 !important; }
+.pf-toolbar__select:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,.12); outline: none; }
+
+/* 列表与卡片 */
+html.ilink-app body[data-profile-page] .profile-post-list { display: flex; flex-direction: column; gap: 16px !important; }
+html.ilink-app body[data-profile-page] .profile-post-card {
+  background: #fff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 16px !important;
+  box-shadow: 0 1px 2px rgba(17,24,39,.04), 0 1px 3px rgba(17,24,39,.06) !important;
+  padding: 4px 6px;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
+}
+html.ilink-app body[data-profile-page] .profile-post-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #d1d5db !important;
+  box-shadow: 0 12px 24px -10px rgba(17,24,39,.14) !important;
+}
+html.ilink-app body[data-profile-page] .profile-post-card__body { gap: 12px !important; padding: 18px 18px !important; align-items: flex-start !important; }
+html.ilink-app body[data-profile-page] .profile-post-card__main { gap: 12px !important; }
+html.ilink-app body[data-profile-page] .profile-post-card__title { margin: 0 !important; font-size: 18px !important; line-height: 1.4 !important; }
+html.ilink-app body[data-profile-page] .profile-post-card__title-link { color: #111827 !important; font-weight: 700 !important; transition: color .16s ease; }
+html.ilink-app body[data-profile-page] .profile-post-card__title-link:hover { color: #2563eb !important; }
+html.ilink-app body[data-profile-page] .profile-post-card__meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px !important;
+  color: #6b7280 !important; font-size: 12px !important;
+}
+html.ilink-app body[data-profile-page] .profile-post-card__meta > span {
+  display: inline-flex; align-items: center; gap: 5px;
+}
+html.ilink-app body[data-profile-page] .profile-post-card__meta > span svg { width: 14px; height: 14px; color: #9ca3af; flex: 0 0 auto; }
+html.ilink-app body[data-profile-page] .profile-post-card__meta strong { color: #374151; font-weight: 600; }
+html.ilink-app body[data-profile-page] .profile-post-card__chip {
+  background: #f3f4f6 !important; border: 0 !important; color: #4b5563 !important;
+  border-radius: 6px !important; padding: 3px 9px !important; font-size: 12px !important; font-weight: 500 !important;
+}
+/* 收藏页“收藏 N”用琥珀实心星 */
+html.ilink-app body[data-profile-page="favorites"] .profile-post-card__meta .pf-meta-fav { color: #f59e0b !important; }
+html.ilink-app body[data-profile-page="favorites"] .profile-post-card__meta .pf-meta-fav svg { color: #f59e0b !important; }
+html.ilink-app body[data-profile-page="favorites"] .profile-post-card__meta .pf-meta-fav strong { color: #f59e0b !important; }
+
+html.ilink-app body[data-profile-page] .profile-post-more-btn {
+  width: 34px !important; height: 34px !important;
+  border-radius: 9px !important; border: 0 !important; background: transparent !important;
+  color: #9ca3af !important; display: grid; place-items: center;
+  transition: background .16s ease, color .16s ease;
+}
+html.ilink-app body[data-profile-page] .profile-post-more-btn:hover { background: #f3f4f6 !important; color: #4b5563 !important; }
+
+/* 筛选无结果空态 + 原有空态统一 */
+/* 自建筛选空态：默认隐藏，由 JS 加 .is-visible 才显示（不能用 !important，否则 inline 隐藏失效） */
+.pf-filter-empty {
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 56px 20px;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+}
+.pf-filter-empty.is-visible { display: flex; }
+/* 业务原生空态（无文章/无收藏时由业务 JS 显示） */
+html.ilink-app body[data-profile-page] .profile-posts-empty,
+html.ilink-app body[data-profile-page] .profile-favorites-empty {
+  display: flex !important; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 56px 20px !important;
+  background: #fff !important; border: 1px solid #e5e7eb !important; border-radius: 16px !important;
+}
+.pf-filter-empty__icon,
+html.ilink-app body[data-profile-page] .il-empty-icon {
+  width: 64px !important; height: 64px !important; border-radius: 50% !important;
+  background: #f9fafb !important; border: 0 !important;
+  display: grid; place-items: center; color: #d1d5db !important; margin-bottom: 10px;
+}
+.pf-filter-empty__icon svg { width: 28px; height: 28px; }
+.pf-filter-empty__title,
+html.ilink-app body[data-profile-page] .il-empty-title { font-size: 14px !important; font-weight: 600 !important; color: #111827 !important; margin: 0 !important; }
+.pf-filter-empty__text,
+html.ilink-app body[data-profile-page] .il-empty-text { font-size: 12px !important; color: #9ca3af !important; margin: 0 !important; }
+
+/* =====================================================================
+ * 三、修改密码：单列垂直 + 眼睛显隐 + 强度条 + 即时校验
+ * ===================================================================== */
+html.ilink-app body[data-profile-page="password"] .il-section-card {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important;
+}
+html.ilink-app body[data-profile-page="password"] .il-section-header { margin-bottom: 18px; }
+html.ilink-app body[data-profile-page="password"] #passwordForm {
+  max-width: 640px;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+  padding: 30px 32px;
+  box-shadow: 0 1px 2px rgba(17,24,39,.04), 0 1px 3px rgba(17,24,39,.06);
+}
+html.ilink-app body[data-profile-page="password"] #passwordForm .row { --bs-gutter-x: 0; --bs-gutter-y: 0; }
+html.ilink-app body[data-profile-page="password"] #passwordForm .col-12 { margin-bottom: 18px; }
+html.ilink-app body[data-profile-page="password"] #passwordForm label.form-label {
+  font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;
+}
+.pf-pwd-field { position: relative; }
+html.ilink-app body[data-profile-page="password"] .pf-pwd-field .il-form-input {
+  width: 100%; background: #f9fafb !important; border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important; padding: 11px 44px 11px 14px !important;
+  font-size: 14px; color: #111827; height: auto;
+}
+html.ilink-app body[data-profile-page="password"] .pf-pwd-field .il-form-input:focus {
+  background: #fff !important; border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,.12) !important;
+}
+.pf-pwd-toggle {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 32px; height: 32px; display: grid; place-items: center;
+  border: 0; background: transparent; color: #9ca3af; cursor: pointer; border-radius: 8px;
+}
+.pf-pwd-toggle:hover { color: #4b5563; background: #f3f4f6; }
+.pf-pwd-toggle svg { width: 18px; height: 18px; }
+/* 强度条 */
+.pf-strength { display: none; align-items: center; gap: 10px; margin-top: 9px; }
+.pf-strength.is-on { display: flex; }
+.pf-strength__track { flex: 1; height: 6px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
+.pf-strength__bar { height: 100%; width: 0; border-radius: 999px; background: #ef4444; transition: width .25s ease, background-color .25s ease; }
+.pf-strength__text { font-size: 12px; font-weight: 600; color: #9ca3af; min-width: 28px; text-align: right; }
+.pf-strength.is-weak .pf-strength__bar { width: 33%; background: #ef4444; }
+.pf-strength.is-weak .pf-strength__text { color: #ef4444; }
+.pf-strength.is-mid .pf-strength__bar { width: 66%; background: #f59e0b; }
+.pf-strength.is-mid .pf-strength__text { color: #f59e0b; }
+.pf-strength.is-strong .pf-strength__bar { width: 100%; background: #22c55e; }
+.pf-strength.is-strong .pf-strength__text { color: #16a34a; }
+/* 确认密码不一致 */
+.pf-pwd-field.is-mismatch .il-form-input,
+.pf-pwd-field.is-mismatch .il-form-input:focus {
+  background: #fef2f2 !important; border-color: #fca5a5 !important; box-shadow: 0 0 0 3px rgba(239,68,68,.1) !important;
+}
+.pf-match-msg { display: none; font-size: 12px; color: #ef4444; margin-top: 6px; }
+.pf-pwd-field.is-mismatch .pf-match-msg { display: block; }
+/* 底部操作：左提示 右按钮 */
+html.ilink-app body[data-profile-page="password"] #passwordForm > div:last-child {
+  display: flex !important; align-items: center; justify-content: space-between; flex-direction: row-reverse;
+  gap: 16px; margin-top: 6px !important; padding-top: 22px !important; border-top: 1px solid #e5e7eb !important;
+}
+html.ilink-app body[data-profile-page="password"] #passwordForm > div:last-child .il-btn-primary {
+  min-height: 44px; padding: 0 26px; border-radius: 12px; font-weight: 600;
+}
+
+/* =====================================================================
+ * 四、响应式
+ * ===================================================================== */
+@media (max-width: 900px) {
+  html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 18px 28px !important;
+  }
+  .pf-toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .pf-toolbar__divider { display: none; }
+  .pf-toolbar__filters { justify-content: stretch; }
+  .pf-toolbar__select { flex: 1; }
+}
+@media (max-width: 560px) {
+  html.ilink-app body[data-profile-page="password"] #passwordForm { padding: 22px 18px; }
+  html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-details-header,
+  html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-identity,
+  html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-section { padding: 18px !important; }
+  html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

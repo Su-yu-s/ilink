@@ -6,12 +6,10 @@
     <title>成果展示 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/gallery.css?v=4.7" rel="stylesheet">
-    <link href="/css/search-bar.css?v=1.9" rel="stylesheet">
-    <link href="/css/asset-publish.css?v=1.1" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.0/github-markdown.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link href="/css/md-editor.css?v=1.0" rel="stylesheet">
-    <link href="/css/portal-redesign.css?v=2.5" rel="stylesheet">
+    <link th:href="@{/css/gallery.css}" rel="stylesheet">
+    <link th:href="@{/css/search-bar.css}" rel="stylesheet">
+    <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
+    <link th:href="@{/css/demo-refresh.css}" rel="stylesheet">
 </head>
 <body data-app-page="gallery" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'gallery')"></div>
@@ -50,17 +48,13 @@
                 </select>
             </div>
 
-            <button type="button" class="il-search-bar__btn il-search-bar__btn--primary" id="searchBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                搜索
-            </button>
 
             <div class="il-search-bar__spacer"></div>
 
-            <button type="button" class="il-search-bar__btn il-search-bar__btn--ghost" onclick="GalleryApp.openPublish()">
+            <a href="/profile-asset-edit.html" class="il-search-bar__btn il-search-bar__btn--ghost">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                 发布成果
-            </button>
+            </a>
         </section>
 
         <!-- Card Grid -->
@@ -70,12 +64,9 @@
         <nav id="pagination" aria-label="成果分页"></nav>
     </main>
 
-    <div th:replace="fragments/asset-publish-modal :: modal"></div>
-    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=9.6"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
-    <script src="/js/asset-publish.js?v=2.1"></script>
-    <script src="/js/gallery.js?v=5.9"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/gallery.js}"></script>
+    <script th:src="@{/js/demo-refresh.js}"></script>
 </body>
 </html>

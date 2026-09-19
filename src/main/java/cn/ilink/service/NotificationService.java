@@ -45,4 +45,10 @@ public interface NotificationService {
 
     /** 标记指定用户的某条通知为已读（带所有权校验） */
     void markAsRead(Long notificationId, Long userId);
+
+    /**
+     * 把某个团队发给该用户的邀请通知全部标记已读。
+     * 邀请被同意/拒绝，或被团队解散作废时调用——通知只置读不删除，状态真相在 team_application。
+     */
+    void markInviteHandled(Long userId, Long teamId);
 }

@@ -23,8 +23,8 @@ spring:
       dev: local
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/ilink?useUnicode=true&characterEncoding=utf8&useSSL=${DB_USE_SSL:true}&serverTimezone=Asia/Shanghai
-    username: ${DB_USERNAME:root}
-#    username: ${DB_USERNAME:ilink}
+#    username: ${DB_USERNAME:root}
+    username: ${DB_USERNAME:ilink}
     password: ${DB_PASSWORD:changeme_in_production}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
@@ -50,8 +50,8 @@ spring:
       content-type: text/html
   servlet:
     multipart:
-      max-file-size: 20MB
-      max-request-size: 50MB
+      max-file-size: 50MB
+      max-request-size: 100MB
   mvc:
     throw-exception-if-no-handler-found: true
   web:
@@ -93,10 +93,15 @@ app:
     model: ${AGNES_MODEL:agnes-2.5-flash}
     max-tokens: 2048
     timeout-ms: 60000
-    daily-quota: ${AI_DAILY_QUOTA:20}
     # 联网搜索：Bing 公开网页搜索为 AI 答疑补充上下文（AI_SEARCH_ENABLED=false 可关闭）
     search-enabled: ${AI_SEARCH_ENABLED:true}
     search-max-results: ${AI_SEARCH_MAX_RESULTS:5}
+  feedback:
+    # 意见反馈推送到开发者微信（Server酱 https://sct.ftqq.com）。
+    # 同样不给默认值：dev 由不入库的 application-local.yml 提供，prod 必须用环境变量。
+    # 留空则只落库不推送，反馈功能本身不受影响。
+    serverchan-sendkey: ${SERVERCHAN_SENDKEY:}
+    enabled: ${FEEDBACK_PUSH_ENABLED:true}
 
 management:
   endpoints:

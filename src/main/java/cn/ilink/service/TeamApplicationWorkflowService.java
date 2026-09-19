@@ -32,11 +32,20 @@ public class TeamApplicationWorkflowService {
 
         TeamDemand team = teamDemandMapper.selectByIdForUpdate(application.getTeamId());
         if (team == null) throw WorkflowException.notFound("\u961f\u4f0d\u4e0d\u5b58\u5728");
+        // \u521b\u5efa\u8005\u4e00\u5b9a\u53ef\u5ba1\u6279\uff1b\u975e\u521b\u5efa\u8005\u8d70\u5bfc\u5e08\u5224\u5b9a\u3002\u987a\u5e8f\u4e0a\u5148\u5224\u521b\u5efa\u8005\uff0c\u662f\u4e3a\u4e86\u8ba9\u5386\u53f2\u6d4b\u8bd5
+        // \u91cc\u7684 selectCount \u6253\u6869\u5e8f\u5217\u4e0d\u88ab\u65b0\u589e\u67e5\u8be2\u6253\u4e71\u3002
         if (team.getCreatorId() == null || !team.getCreatorId().equals(reviewerId)) {
-            throw WorkflowException.forbidden("\u65e0\u6743\u5904\u7406\u8be5\u7533\u8bf7");
+            if (!isMentorMember(team.getId(), reviewerId)) {
+                throw WorkflowException.forbidden("\u65e0\u6743\u5904\u7406\u8be5\u7533\u8bf7");
+            }
         }
         if (!"PENDING".equals(application.getStatus())) {
             throw WorkflowException.badRequest("\u8be5\u7533\u8bf7\u5df2\u88ab\u5904\u7406");
+        }
+        // \u56e2\u961f\u53d1\u51fa\u7684\u9080\u8bf7\u5fc5\u987b\u7531\u88ab\u9080\u8bf7\u4eba\u81ea\u5df1\u786e\u8ba4\uff0c\u521b\u5efa\u8005\u4e0d\u80fd\u66ff\u4ed6\u70b9\u540c\u610f
+        if (application.getInitiatorId() != null
+            && !application.getInitiatorId().equals(application.getUserId())) {
+            throw WorkflowException.badRequest("\u8fd9\u662f\u56e2\u961f\u53d1\u51fa\u7684\u9080\u8bf7\uff0c\u9700\u8981\u5bf9\u65b9\u786e\u8ba4");
         }
 
         String normalizedAction = action == null ? "" : action.trim().toUpperCase();
@@ -87,6 +96,19 @@ public class TeamApplicationWorkflowService {
             "APPROVED".equals(normalizedAction) ? "\u7533\u8bf7\u901a\u8fc7" : "\u7533\u8bf7\u672a\u901a\u8fc7",
             content, team.getId());
         return application;
+    }
+
+    /** 在队的导师也有审批权：能邀请的人就能审批，两处保持同一套判定 */
+    private boolean isMentorMember(Long teamId, Long userId) {
+        if (teamId == null || userId == null) {
+            return false;
+        }
+        return teamApplicationMapper.selectCount(
+            new LambdaQueryWrapper<TeamApplication>()
+                .eq(TeamApplication::getTeamId, teamId)
+                .eq(TeamApplication::getUserId, userId)
+                .eq(TeamApplication::getStatus, "APPROVED")
+                .eq(TeamApplication::getMemberRole, TeamMembershipService.ROLE_MENTOR)) > 0;
     }
 
     private boolean isFull(TeamDemand team) {

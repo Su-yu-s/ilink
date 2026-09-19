@@ -6,7 +6,7 @@
     <title>个人成果 - iLink</title>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/profile.css?v=10.4" rel="stylesheet">
+    <link th:href="@{/css/profile.css}" rel="stylesheet">
 </head>
 <body data-profile-page="honors" th:data-user-id="${currentUser?.id}" class="ilink-page-bg">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -23,7 +23,7 @@
                         </div>
                         <div class="il-section-header__actions">
                             <button id="btnManage" class="il-btn il-btn-ghost il-btn-sm">管理成果</button>
-                            <a href="/gallery.html" class="il-btn il-btn-primary il-btn-sm">发布成果</a>
+                            <a href="/profile-asset-edit.html" class="il-btn il-btn-primary il-btn-sm">发布成果</a>
                         </div>
                     </div>
                     <div id="myAssetsList" style="min-height:120px;"></div>
@@ -33,8 +33,8 @@
         </div>
     </div>
 
-    <script src="/lib/bootstrap.bundle.min.js?v=5.0"></script>
-    <script src="/js/common.js?v=9.2"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
     <script>
     (function(){
         var PAGE_SIZE=12,cp=1,uid=document.body.getAttribute('data-user-id');
@@ -42,16 +42,21 @@
         function fd(d){if(!d)return'';var t=new Date(d);return isNaN(t.getTime())?'':t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
         function sc(d){
             var s = String(d||'');
-            var m = s.match(/^<!--md:[^>]+-->/);
-            if (m) s = s.replace(m[0], '');
+            var payload = markdownSourcePayload(s);
+            if (payload) s = decodeMarkdownSource(String(payload).split('|')[0]) || stripMarkdownSourceMarker(s);
+            else s = stripMarkdownSourceMarker(s);
             return s.replace(/（分类：[^）]*）/g,'').replace(/<[^>]+>/g, '').trim();
         }
 
         function renderCard(a){
             var cat=a.category||'其他',desc=sc(a.description),title=a.title||'未命名',id=a.id||'';
             desc=desc.length>80?desc.substring(0,80)+'…':desc;
+            // 上传过封面就显示封面，否则回退到分类文字占位
+            var cover=a.coverUrl
+                ?'<img class="honor-asset-card__cover-img" src="'+escapeHtml(a.coverUrl)+'" alt="封面" loading="lazy" decoding="async">'
+                :'<span class="honor-asset-card__cover-text">'+escapeHtml(cat)+'</span>';
             return '<div class="honor-asset-card'+(manageMode?' is-manage':'')+'" data-id="'+id+'" onclick="'+(manageMode?'event.stopPropagation();MyAssets.toggleSelect(this)':'location.href=\'/asset-detail.html?id='+id+'\'')+'">'
-                +'<div class="honor-asset-card__cover"><span class="honor-asset-card__cover-text">'+escapeHtml(cat)+'</span></div>'
+                +'<div class="honor-asset-card__cover">'+cover+'</div>'
                 +'<div class="honor-asset-card__body">'
                 +'<div class="honor-asset-card__meta"><span class="honor-asset-card__tag">'+escapeHtml(cat)+'</span><span class="honor-asset-card__date">'+fd(a.createdAt)+'</span></div>'
                 +'<h3 class="honor-asset-card__title">'+escapeHtml(title)+'</h3>'
@@ -75,7 +80,7 @@
                 if(d.code!==200){L.innerHTML='<p style="color:#ef4444;text-align:center;padding:32px;">'+escapeHtml(d.message||'加载失败')+'</p>';P.innerHTML='';return;}
                 var all=d.data||[],mine=all.filter(function(a){return a&&(String(a.userId)===String(uid)||(a.ownerPreview&&String(a.ownerPreview.id)===String(uid)));});
                 var total=mine.length,start=(cp-1)*PAGE_SIZE,items=mine.slice(start,start+PAGE_SIZE);
-                if(!items.length){L.innerHTML='<div style="text-align:center;padding:56px 0;"><p style="font-size:15px;font-weight:600;color:var(--ui-text-muted);margin:0 0 8px;">还没有发布成果</p><p style="font-size:13px;color:var(--ui-text-muted);margin:0 0 16px;">前往成果展示页面发布你的第一个成果</p><a href="/gallery.html" class="il-btn il-btn-primary il-btn-sm">去发布</a></div>';P.innerHTML='';return;}
+                if(!items.length){L.innerHTML='<div style="text-align:center;padding:56px 0;"><p style="font-size:15px;font-weight:600;color:var(--ui-text-muted);margin:0 0 8px;">还没有发布成果</p><p style="font-size:13px;color:var(--ui-text-muted);margin:0 0 16px;">发布你的第一个竞赛或项目成果</p><a href="/profile-asset-edit.html" class="il-btn il-btn-primary il-btn-sm">去发布</a></div>';P.innerHTML='';return;}
                 var h='<div class="honor-asset-grid">';
                 items.forEach(function(a){h+=renderCard(a);});
                 L.innerHTML=h+'</div>';

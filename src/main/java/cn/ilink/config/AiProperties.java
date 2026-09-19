@@ -30,9 +30,6 @@ public class AiProperties {
     /** 读取超时（毫秒） */
     private int timeoutMs = 60000;
 
-    /** 每用户每日调用上限 */
-    private int dailyQuota = 20;
-
     /** 联网搜索开关（AI 答疑时补充公开网页上下文） */
     private boolean searchEnabled = true;
 
@@ -101,14 +98,6 @@ public class AiProperties {
 
     public void setTimeoutMs(int timeoutMs) {
         this.timeoutMs = timeoutMs;
-    }
-
-    public int getDailyQuota() {
-        return dailyQuota;
-    }
-
-    public void setDailyQuota(int dailyQuota) {
-        this.dailyQuota = dailyQuota;
     }
 
     /** 配置是否完整可用 */

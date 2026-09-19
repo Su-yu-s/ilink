@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人资料 - iLink</title>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="/css/profile.css?v=10.7" rel="stylesheet">
+    <link th:href="@{/css/profile.css}" rel="stylesheet">
+    <link th:href="@{/css/profile-refresh.css}" rel="stylesheet">
 </head>
 <body data-profile-page="edit" th:data-user-id="${currentUser?.id}" class="ilink-page-bg">
     <input type="file" id="avatarFileInput" class="d-none" accept="image/jpeg,image/png,image/gif,image/webp">
@@ -43,9 +44,10 @@
                                     <img id="profileReadAvatarImg" alt="" hidden>
                                     <span id="profileReadAvatarFallback" aria-hidden="true">?</span>
                                 </div>
-                                <div>
+                                <div class="il-profile-read-identity__body">
                                     <strong class="il-profile-read-name" id="profileReadName">未填写</strong>
                                     <span class="il-profile-read-role" id="profileReadRole">学生</span>
+                                    <p class="il-profile-read-identity__meta" id="profileReadIdentityMeta">未填写</p>
                                 </div>
                             </div>
 
@@ -368,10 +370,11 @@
         </div>
     </div>
 
-    <script src="/lib/bootstrap.bundle.min.js?v=4.3"></script>
-    <script src="/js/common.js?v=9.6"></script>
-    <script src="/js/profile.js?v=5.5"></script>
-    <script src="/js/profile-edit.js?v=5.0"></script>
-    <script src="/js/profile-honors.js?v=1.2"></script>
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/profile.js}"></script>
+    <script th:src="@{/js/profile-edit.js}"></script>
+    <script th:src="@{/js/profile-honors.js}"></script>
+    <script th:src="@{/js/profile-refresh.js}"></script>
 </body>
 </html>

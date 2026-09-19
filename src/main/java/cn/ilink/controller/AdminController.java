@@ -22,6 +22,7 @@ import cn.ilink.vo.AdminDashboardVO;
 import static cn.ilink.common.ControllerUtils.safePage;
 import static cn.ilink.common.ControllerUtils.safeSize;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -801,6 +802,64 @@ public class AdminController {
         } catch (Exception e) {
             log.error("更新帖子失败", e);
             return Result.fail(500, "更新帖子失败，请稍后重试").toResponseEntity();
+        }
+    }
+
+    /** 置顶/取消置顶（只更新 is_pinned 单列，避免整行回写） */
+    @PutMapping("/community-post/{id}/pinned")
+    @ResponseBody
+    public ResponseEntity<Result<?>> setCommunityPostPinned(@PathVariable Long id,
+                                                            @RequestBody Map<String, Object> payload,
+                                                            HttpSession session,
+                                                            HttpServletRequest request) {
+        User user = ControllerUtils.requireUser(session);
+        if (!ControllerUtils.isAdmin(user)) {
+            return Result.forbidden().toResponseEntity();
+        }
+        try {
+            CommunityPost post = communityPostService.getById(id);
+            if (post == null) {
+                return Result.notFound("帖子不存在").toResponseEntity();
+            }
+            boolean pinned = Boolean.parseBoolean(String.valueOf(payload.get("pinned")));
+            communityPostService.update(new LambdaUpdateWrapper<CommunityPost>()
+                .set(CommunityPost::getIsPinned, pinned ? 1 : 0)
+                .eq(CommunityPost::getId, id));
+            adminAuditService.recordSafely(user, pinned ? "PIN" : "UNPIN", "COMMUNITY_POST", id,
+                "pinned=" + pinned, request);
+            return Result.ok(pinned ? "已置顶" : "已取消置顶", null).toResponseEntity();
+        } catch (Exception e) {
+            log.error("设置帖子置顶失败", e);
+            return Result.fail(500, "设置置顶失败，请稍后重试").toResponseEntity();
+        }
+    }
+
+    /** 成果置顶/取消置顶（只更新 is_pinned 单列，避免整行回写） */
+    @PutMapping("/asset/{id}/pinned")
+    @ResponseBody
+    public ResponseEntity<Result<?>> setAssetPinned(@PathVariable Long id,
+                                                    @RequestBody Map<String, Object> payload,
+                                                    HttpSession session,
+                                                    HttpServletRequest request) {
+        User user = ControllerUtils.requireUser(session);
+        if (!ControllerUtils.isAdmin(user)) {
+            return Result.forbidden().toResponseEntity();
+        }
+        try {
+            Asset asset = assetService.getById(id);
+            if (asset == null) {
+                return Result.notFound("成果不存在").toResponseEntity();
+            }
+            boolean pinned = Boolean.parseBoolean(String.valueOf(payload.get("pinned")));
+            assetService.update(new LambdaUpdateWrapper<Asset>()
+                .set(Asset::getIsPinned, pinned ? 1 : 0)
+                .eq(Asset::getId, id));
+            adminAuditService.recordSafely(user, pinned ? "PIN" : "UNPIN", "ASSET", id,
+                "pinned=" + pinned, request);
+            return Result.ok(pinned ? "已置顶" : "已取消置顶", null).toResponseEntity();
+        } catch (Exception e) {
+            log.error("设置成果置顶失败", e);
+            return Result.fail(500, "设置置顶失败，请稍后重试").toResponseEntity();
         }
     }
 

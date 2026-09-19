@@ -958,6 +958,16 @@ body[data-app-page="team-space"] .form-select:focus { border-color: var(--kb-tex
 /* 竞赛答疑 */
 .ai-collab-card--qa { min-height: 430px; }
 .ai-qa-messages { display: flex; flex: 1 1 auto; flex-direction: column; gap: 10px; min-height: 280px; padding: 4px 2px; overflow-y: auto; }
+/* 消息区是滚动容器，子项一律不许被压缩。
+   否则一旦总高超过容器，flex 会按 flex-shrink 把气泡挤扁——
+   .ai-qa-welcome 的 min-height:40px 会覆盖 flex 项的自动最小尺寸，
+   直接被压成 40px，正文溢出到下一个气泡上。 */
+.ai-qa-messages > * { flex: 0 0 auto; }
+/* 答疑区滚动条：细、浅、轨道透明，跟群聊区一致；默认那根粗灰条在浅灰底上太抢眼 */
+.ai-qa-messages::-webkit-scrollbar { width: 6px; height: 6px; }
+.ai-qa-messages::-webkit-scrollbar-track { background: transparent; }
+.ai-qa-messages::-webkit-scrollbar-thumb { background: rgb(17 24 39 / 14%); border-radius: 3px; }
+.ai-qa-messages::-webkit-scrollbar-thumb:hover { background: rgb(17 24 39 / 28%); }
 .ai-qa-welcome { max-width: 85%; align-self: flex-start; padding: 10px 14px; font-size: 13px; line-height: 1.6; color: var(--kb-text-secondary); background: var(--kb-subtle); border-radius: 4px 14px 14px 14px; }
 .ai-qa-bubble { max-width: 85%; padding: 10px 14px; font-size: 14px; line-height: 1.6; word-break: break-word; border-radius: 14px; }
 .ai-qa-bubble--user { align-self: flex-end; color: #fff; background: var(--kb-text); border-radius: 14px 4px 14px 14px; }
@@ -983,14 +993,49 @@ body[data-app-page="team-space"] .form-select:focus { border-color: var(--kb-tex
 .ai-qa-bubble--assistant tr:nth-child(even) td { background: rgb(0 0 0 / 2%); }
 .ai-qa-bubble--assistant a { color: var(--kb-text); text-decoration: underline; text-underline-offset: 2px; }
 .ai-qa-bubble--assistant hr { margin: 10px 0; border: 0; border-top: 1px solid var(--kb-border-strong); }
-.ai-qa-bubble--loading { display: flex; align-items: center; gap: 8px; color: var(--kb-text-muted); }
+/* 思考中：只保留跳动圆点 + 文案，视觉尽量安静；min-height 避免换成答案时气泡跳一下 */
+.ai-qa-bubble--loading { display: inline-flex; align-items: center; gap: 8px; min-height: 24px; font-size: 13px; color: var(--kb-text-muted); }
+
+/* 阶段提示文案：给个下限宽度，避免逐句推进时气泡宽度一伸一缩 */
+.ai-qa-stage { min-width: 10em; }
+
+/* ---------- 「已思考」折叠区：思考过程 + 检索来源 ---------- */
+.ai-qa-think { margin: 0 0 10px; padding-bottom: 8px; border-bottom: 1px solid var(--kb-border); }
+
+.ai-qa-think__head {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-left: -4px; padding: 2px 4px;
+    border: 0; border-radius: 6px; background: transparent;
+    color: var(--kb-text-secondary); font-family: inherit;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+}
+.ai-qa-think__head:hover { background: rgb(0 0 0 / 5%); color: var(--kb-text); }
+.ai-qa-think__spark { display: inline-flex; color: #6366f1; }
+.ai-qa-think__spark svg { width: 15px; height: 15px; }
+.ai-qa-think__chevron { width: 14px; height: 14px; transition: transform .18s ease; }
+.ai-qa-think.is-open .ai-qa-think__chevron { transform: rotate(180deg); }
+
+.ai-qa-think__body { padding: 6px 2px 2px 21px; }
+.ai-qa-think__reason { margin: 0 0 8px; color: var(--kb-text-secondary); font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+/* 流式首字未到时正文还是空的，别让它撑出一段空白 */
+.ai-qa-think__reason:empty { display: none; }
+.ai-qa-think__meta { color: var(--kb-text-muted); font-size: 12px; }
+.ai-qa-think__sources { margin: 6px 0 0; padding-left: 18px; }
+.ai-qa-think__sources li { margin: 3px 0; }
+.ai-qa-think__sources a { color: var(--kb-text-secondary); font-size: 13px; text-decoration: underline; text-underline-offset: 2px; }
+.ai-qa-think__sources a:hover { color: var(--kb-text); }
+
+/* 流式答疑：正文容器 + 中途失败时的提示条（已吐出的内容不抹掉） */
+.ai-qa-answer { display: block; }
+.ai-qa-stream-error { margin-top: 8px; padding: 6px 10px; font-size: 13px; color: #b91c1c; background: #fee2e2; border-radius: 8px; }
 
 /* 思考中：三个跳动圆点 */
-.ai-typing-dots { display: inline-flex; gap: 4px; }
-.ai-typing-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--kb-text-muted); animation: ai-dot-bounce 1.2s ease-in-out infinite; }
+.ai-typing-dots { display: inline-flex; align-items: center; gap: 4px; }
+.ai-typing-dots i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: ai-dot-bounce 1.2s ease-in-out infinite; }
 .ai-typing-dots i:nth-child(2) { animation-delay: .18s; }
 .ai-typing-dots i:nth-child(3) { animation-delay: .36s; }
-@keyframes ai-dot-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
+@keyframes ai-dot-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-3px); opacity: 1; } }
 
 /* 流式输出：每个块淡入上移，模拟逐段生成 */
 .ai-flow-block { animation: ai-block-in .28s ease-out; }
@@ -1022,4 +1067,108 @@ body[data-app-page="team-space"] .form-select:focus { border-color: var(--kb-tex
     .ai-collab-card--qa { min-height: 400px; }
     /* 单栏布局下恢复内嵌滚动上限，避免消息把整页撑得过长 */
     .ai-qa-messages { max-height: 46vh; }
+}
+
+/* ---------- 成员面板：角色标签与行内操作 ---------- */
+
+.member-role-chip {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--kb-text-secondary);
+    background: var(--kb-subtle);
+    border-radius: 999px;
+    vertical-align: 1px;
+}
+
+.member-role-chip--mentor {
+    color: var(--kb-surface);
+    background: var(--kb-text);
+}
+
+/* 邀请发出去了对方还没答应：虚线，和正式成员区分开 */
+.member-role-chip--pending {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.member-card--pending .member-card-avatar { opacity: .6; }
+
+.member-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.member-card-action {
+    padding: 5px 10px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--kb-text-secondary);
+    background: transparent;
+    border: 1px solid var(--kb-border);
+    border-radius: 6px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color .12s, background-color .12s, border-color .12s;
+}
+
+.member-card-action:hover {
+    color: var(--kb-text);
+    background: var(--kb-subtle);
+    border-color: var(--kb-border-strong);
+    text-decoration: none;
+}
+
+/* ---------- 通用二次确认弹窗（成员移除 / 转让 / 解散共用） ---------- */
+
+.ts-confirm {
+    border: 1px solid var(--kb-border);
+    border-radius: 16px;
+}
+
+.ts-confirm__header { padding: 18px 20px 8px; border-bottom: 0; }
+
+.ts-confirm__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--kb-text);
+}
+
+.ts-confirm__body { padding: 4px 20px 8px; }
+
+.ts-confirm__text {
+    margin: 0 0 12px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--kb-text-secondary);
+}
+
+.ts-confirm__input,
+.ts-confirm__select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--kb-text);
+    background: var(--kb-surface);
+    border: 1px solid var(--kb-border);
+    border-radius: 10px;
+}
+
+.ts-confirm__select { padding: 0 8px; }
+
+.ts-confirm__footer { padding: 12px 20px 18px; border-top: 0; gap: 8px; }
+
+@media (max-width: 768px) {
+    .member-card { flex-wrap: wrap; }
+    .member-card-actions { width: 100%; margin-left: 0; justify-content: flex-end; }
 }

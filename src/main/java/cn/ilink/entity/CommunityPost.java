@@ -25,5 +25,7 @@ public class CommunityPost {
     private Integer likeCount;
     /** 收藏数 */
     private Integer favoriteCount;
+    /** 是否置顶（管理后台设置，列表优先展示）0否 1是 */
+    private Integer isPinned;
     private Date createdAt;
 }

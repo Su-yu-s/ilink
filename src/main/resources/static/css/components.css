@@ -2383,6 +2383,63 @@ a.il-btn:focus-visible {
     border-radius: var(--radius-full);
 }
 
+/* ---------- 邀请通知的操作区（同意加入 / 拒绝）----------
+   .notification-item 是 nowrap 的 flex 行，操作区靠 flex-basis:100% 换到自己那一行，
+   因此父级必须允许换行；只对带按钮的卡片生效，不影响普通通知的排版。 */
+.notification-item:has(.notification-item__actions) {
+    flex-wrap: wrap;
+}
+
+.notification-item__actions {
+    flex: 0 0 100%;
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    /* 与文本左对齐：图标 36px + 行间距，避免按钮跑到图标正下方 */
+    padding-left: calc(36px + var(--space-3));
+}
+
+.notification-invite-btn {
+    padding: 5px 14px;
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.notification-invite-btn:hover:not(:disabled) {
+    background: var(--bg-muted);
+    border-color: var(--color-gray-300);
+}
+
+.notification-invite-btn--primary {
+    color: var(--text-white);
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.notification-invite-btn--primary:hover:not(:disabled) {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.notification-invite-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+/* 卡片变高之后，未读点不能再垂直居中，否则会压在按钮上 */
+.notification-item:has(.notification-item__actions) .notification-item__dot {
+    top: 18px;
+    transform: none;
+}
+
 @media (max-width: 767.98px) {
     .notification-dropdown {
         position: fixed;

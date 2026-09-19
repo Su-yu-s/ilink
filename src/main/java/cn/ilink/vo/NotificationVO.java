@@ -19,6 +19,11 @@ public class NotificationVO {
     private Boolean isRead;
     private Long relatedId;
     private String relatedType;
+    /**
+     * 邀请类通知对应的 team_application.id，前端据此调「同意加入 / 拒绝」。
+     * 非邀请通知为 null，已处理或已作废的邀请也为 null（此时不该再显示按钮）。
+     */
+    private Long invitationId;
     private Date createdAt;
     private String timeAgo;
 }

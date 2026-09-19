@@ -308,6 +308,8 @@ function renderTeacherList(teachers) {
                 '</div>';
         }
 
+        // 专业方向分色（软工=蓝 / 视觉图像=紫 / 人工智能=青）
+        var deptClass = /视觉|图像/.test(dept) ? ' mentor-dept--purple' : (/人工智能|机器学习|智能|数据|算法/.test(dept) ? ' mentor-dept--teal' : '');
         // 职称行
         var titleRowHtml = titleText ? '<div class="mentor-title-row">' + escapeHtml(titleText) + '</div>' : '';
 
@@ -332,7 +334,7 @@ function renderTeacherList(teachers) {
                 '<div class="mentor-info">' +
                     '<div class="mentor-name">' + escapeHtml(name) + '</div>' +
                     titleRowHtml +
-                    '<span class="mentor-dept">' + escapeHtml(dept) + '</span>' +
+                    '<span class="mentor-dept' + deptClass + '">' + escapeHtml(dept) + '</span>' +
                 '</div>' +
             '</div>' +
             '<div class="mentor-divider"></div>' +
