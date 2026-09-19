@@ -44,6 +44,8 @@ corruption_report.txt
 scripts/
 searchbar-demos/
 screenshots/
+# 宣传页 iLink-cn 的界面截图是正式交付内容，不忽略
+!iLink-cn/screenshots/
 
 # === 测试与覆盖率 ===
 *.exec
