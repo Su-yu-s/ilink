@@ -24,6 +24,22 @@ out/
 uploads/
 .pw-browsers/
 
+# === 数据库备份与本地会话工具（含账号哈希/密码，绝不提交） ===
+local_backup_*.sql
+server_dump_*.sql
+*.cookie
+loadtestworkdircreator.cookie
+.workbuddy/
+
+# === 压测临时产物 ===
+loadtest/workdir/
+loadtest/*.log
+
+# === Python 评测脚本的字节码缓存 ===
+__pycache__/
+*.pyc
+*.pyo
+
 # === 本地敏感配置（绝不提交） ===
 src/main/resources/application-local.yml
 src/main/resources/application-local.properties
@@ -44,6 +60,8 @@ corruption_report.txt
 scripts/
 searchbar-demos/
 screenshots/
+# brainstorming 技能的本地草稿与预览产物
+.superpowers/
 # 宣传页 iLink-cn 的界面截图是正式交付内容，不忽略
 !iLink-cn/screenshots/
 
@@ -58,5 +76,6 @@ test_screenshots/
 Thumbs.db
 desktop.ini
 *.tmp
+*.tmp.*
 *.bak
 *~

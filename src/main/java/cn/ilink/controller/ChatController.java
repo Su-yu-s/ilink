@@ -61,10 +61,14 @@ public class ChatController {
             return Result.fail(403, "你不是该团队成员，无权发送消息").toResponseEntity();
         }
 
-        String content = (String) request.get("content");
-        String type = (String) request.getOrDefault("type", "TEXT");
+        // 修复 D-P3-2：原强转 (String) 在 content/type 传数字或对象时抛 ClassCastException → 500
+        String content = stringify(request.get("content"));
+        String type = stringify(request.get("type"));
+        if (type.isEmpty()) {
+            type = "TEXT";
+        }
 
-        if (content == null || content.trim().isEmpty()) {
+        if (content.isEmpty() || content.trim().isEmpty()) {
             return Result.badRequest("消息内容不能为空").toResponseEntity();
         }
 
@@ -94,13 +98,21 @@ public class ChatController {
             throw new org.springframework.security.access.AccessDeniedException("Not a member of this team");
         }
 
-        String content = (String) payload.get("content");
-        String type = (String) payload.getOrDefault("type", "TEXT");
+        String content = stringify(payload.get("content"));
+        String type = stringify(payload.get("type"));
+        if (type.isEmpty()) {
+            type = "TEXT";
+        }
 
         if (content == null || content.trim().isEmpty()) {
             throw new IllegalArgumentException("消息内容不能为空");
         }
 
         return chatService.sendMessage(teamId, user.getId(), content.trim(), type);
+    }
+
+    /** 容错地把 JSON 字段转成字符串：null → 空串，非字符串类型走 String.valueOf */
+    private static String stringify(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 }

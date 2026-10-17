@@ -13,6 +13,7 @@ import cn.ilink.service.impl.AssetServiceImpl;
 import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.util.UserPreviewHelper;
+import cn.ilink.util.DisplayNameResolver;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +60,7 @@ public class TeacherController {
     @GetMapping("/list")
     @ResponseBody
     public ResponseEntity<Result<?>> listTeachers(@RequestParam(defaultValue = "1") Integer page,
-                                                           @RequestParam(defaultValue = "10") Integer size,
+                                                           @RequestParam(defaultValue = "12") Integer size,
                                                            @RequestParam(required = false) String keyword,
                                                            @RequestParam(required = false) String major,
                                                            @RequestParam(required = false) String title) {
@@ -134,7 +135,6 @@ public class TeacherController {
 
     @GetMapping("/{id}")
     @ResponseBody
-    @Cacheable(value = "teacherDetail", key = "#id")
     public ResponseEntity<Result<?>> getTeacher(@PathVariable Long id, HttpSession session) {
         TeacherApplication teacher = teacherApplicationService.getById(id);
         if (teacher == null) {
@@ -148,6 +148,9 @@ public class TeacherController {
                 return Result.notFound("导师不存在").toResponseEntity();
             }
         }
+        // 修复 D-P1-2：去掉 @Cacheable——原实现把"本人可见、他人 404"的会话语义按 #id 缓存，
+        // 会把未过审档案泄露给匿名访客（200 投毒）或把 404 投毒给本人。主键直查即可；
+        // 后续如需缓存，只能缓存 APPROVED 的公开 VO。
         return Result.ok("获取成功", teacherToMapWithStats(teacher, userService.getById(teacher.getUserId()))).toResponseEntity();
     }
 
@@ -371,6 +374,12 @@ public class TeacherController {
         teacher.setResearchDirection(researchDirection.isEmpty() ? null : researchDirection);
         teacher.setProfessionalTitle(professionalTitle.isEmpty() ? null : professionalTitle);
         teacher.setProjects(projects.isEmpty() ? null : projects);
+        // 修复 D-P1-3：REJECTED 表示管理员明确拒绝，不允许通过"编辑资料"自助改回 APPROVED/INCOMPLETE
+        // 绕过审核（管理员拒绝时也不降级角色，该用户仍是 TEACHER）。REJECTED 只能走管理员重审。
+        if ("REJECTED".equals(teacher.getStatus())) {
+            teacherApplicationService.updateById(teacher);
+            return Result.badRequest("该档案已被管理员拒绝，如需修改请联系管理员重新审核").toResponseEntity();
+        }
         teacher.setStatus(isProfileComplete(user, teacher) ? "APPROVED" : "INCOMPLETE");
         if (!teacherApplicationService.updateById(teacher)) {
             return Result.fail(500, "导师资料保存失败，请稍后重试").toResponseEntity();
@@ -452,13 +461,8 @@ public class TeacherController {
 
     private String displayName(User user) {
         if (user == null) return "用户";
-        if (user.getRealName() != null && !user.getRealName().trim().isEmpty()) {
-            return user.getRealName().trim();
-        }
-        if (user.getUsername() != null && !user.getUsername().trim().isEmpty()) {
-            return user.getUsername().trim();
-        }
-        return "用户";
+        // 显示名统一走解析器：不得回退到 username（可能是手机号/学号）
+        return DisplayNameResolver.resolve(user);
     }
 
     private Set<Long> findMatchingUsers(String value, boolean majorOnly) {

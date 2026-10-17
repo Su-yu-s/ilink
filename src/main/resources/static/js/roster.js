@@ -156,8 +156,8 @@
                 tagsMarkup(row) +
                 '<div class="roster-card__actions">' +
                     '<a class="il-btn il-btn-secondary" href="/user-profile.html?id=' + escape(row.userId) + '">查看主页</a>' +
-                    (side === 'mentors'
-                        ? '<a class="il-btn il-btn-primary" href="/teacher-detail.html?id=' + escape(row.userId) + '">进入交流空间</a>'
+                    (side === 'mentors' && row.teacherId
+                        ? '<a class="il-btn il-btn-primary" href="/teacher-detail.html?id=' + escape(row.teacherId) + '">' + escape(t('ui.teacherWall.viewMentorButton')) + '</a>'
                         : '') +
                 '</div>' +
             '</article>';

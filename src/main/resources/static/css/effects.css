@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Glassmorphism Effects v4.3
    macOS Liquid Glass Style
@@ -359,4 +360,6 @@ body[data-particles="true"] .particle-canvas {
 body[data-particles="true"] .particle-canvas--auth {
   opacity: 0.85;                       /* 覆盖父级 0.6，提升 auth 页粒子可见度 */
   transition: none;                    /* 禁止 opacity 渐变，避免 canvas 刚加载时全透明 */
+}
+
 }

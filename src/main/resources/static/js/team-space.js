@@ -16,6 +16,7 @@
     var pollingTimer = null;
     var emojiPickerEl = null;
     var editingTaskId = null;
+    var pendingReviewTaskId = null;
     var mobileActionTaskId = null;
     var activeMobileStatus = 'todo';
     var suppressTaskClick = false;
@@ -229,15 +230,18 @@
         var name = teamInfo.teamName || teamInfo.title || '团队空间';
         document.title = name + ' - iLink';
         setText('sidebarTeamName', name);
+        // 侧栏收窄后队名可能被省略号截断，补一个 hover 提示
+        var sidebarName = byId('sidebarTeamName');
+        if (sidebarName) sidebarName.title = name;
         setText('mobileProjectName', name);
-        setText('kanbanTeamName', name);
-        setText('chatTeamName', name);
-        setText('membersTeamName', name);
 
         var warning = byId('teamWarning');
         if (warning) warning.style.display = 'none';
 
         renderOverview(teamInfo);
+        // 批阅入口的显隐依赖 canReviewTasks（来自 /info）；任务列表可能先于这里加载完，
+        // 这里再同步一次，避免按钮因为竞态一直藏着
+        syncReviewBoardEntry();
     }
 
     /** 仅在确认当前用户为队长时才显示创建任务按钮 */
@@ -333,7 +337,9 @@
     function fillAssigneeSelect(selectedId) {
         var select = byId('newTaskAssignee');
         if (!select) return;
-        select.innerHTML = '<option value="">选择负责人</option>';
+        // hidden：占位项只在未选中时作为提示显示，不进可选列表（base-select 下用属性而非 CSS，
+        // Chrome 对 picker 里的 option 忽略作者样式的 display:none）
+        select.innerHTML = '<option value="" hidden>选择负责人</option>';
         members.forEach(function (member) {
             var option = document.createElement('option');
             option.value = member.userId || member.id || '';
@@ -651,6 +657,7 @@
             var data = await api('/tasks?teamId=' + encodeURIComponent(teamId), { silent: true });
             tasks = Array.isArray(data) ? data.map(adaptTask) : [];
             renderBoard();
+            syncReviewBoardEntry();
             return true;
         } catch (error) {
             console.warn('加载任务失败', error);
@@ -675,6 +682,9 @@
             assignedTo: task.assignedTo || task.assigneeId || null,
             assigneeName: task.assigneeName || task.assignee || '',
             assigneeAvatar: task.assigneeAvatar || '',
+            // 白名单映射漏字段会让详情页走错交付分支（需批阅的任务被当成免批阅直接完成）
+            requiresReview: task.requiresReview === true || Number(task.requiresReview) === 1,
+            parentTaskId: task.parentTaskId != null ? Number(task.parentTaskId) : null,
             createdBy: task.createdBy,
             creatorName: task.creatorName || '',
             createdAt: task.createdAt,
@@ -1026,6 +1036,8 @@
             if (!isConnected && !stompClient) connectWebSocket();
         } else if (currentPanelId === 'members-panel') {
             loadMembers();
+        } else if (currentPanelId === 'library-panel') {
+            loadLibraryTree(libraryTrashView);
         } else if (currentPanelId === 'ai-panel') {
             loadAiPanel();
         } else {
@@ -1145,7 +1157,7 @@
                 return;
             }
             list.innerHTML = recommendations.map(function (item) {
-                var name = item.realName || item.username || '候选成员';
+                var name = item.displayName || item.realName || '候选成员';
                 var reasons = Array.isArray(item.matchReasons) ? item.matchReasons.slice(0, 2).join(' · ') : '';
                 var skills = Array.isArray(item.skills) ? item.skills.slice(0, 3) : [];
                 var initials = escapeHtml(name).slice(0, 2).toUpperCase();
@@ -1221,6 +1233,49 @@
         });
     }
 
+    // AI 拆解权限：已分配任务仅被分配者本人可拆解；未分配任务仅队长兜底
+    function canAiBreakdown(task) {
+        if (!task) return false;
+        // 已完成/已取消的任务没有拆解的意义
+        var raw = String(task.status || '').toUpperCase();
+        if (raw === 'COMPLETED' || raw === 'CANCELLED') return false;
+        // 拆解只允许一层：子任务不能再拆；已经拆过的任务也不再提供入口，免得重复生成同一批
+        if (task.parentTaskId != null) return false;
+        if (hasSubtasks(task.id)) return false;
+        if (task.assignedTo == null) return currentUserIsLeader();
+        return Number(task.assignedTo) === Number(currentUserId);
+    }
+
+    /** 该任务是否已经拆解过（存在以它为父任务的子任务） */
+    function hasSubtasks(taskId) {
+        return tasks.some(function (t) { return Number(t.parentTaskId) === Number(taskId); });
+    }
+
+    // 批阅权限：与后端 /tasks/{id}/review 的判定一致（队长或已批准导师），由 /info 下发
+    function canReviewTasks() {
+        return !!(teamInfo && teamInfo.canReviewTasks);
+    }
+
+    /** 待批阅任务的条数，用于工作台入口的角标 */
+    function pendingReviewTasks() {
+        return tasks.filter(function (task) { return normalizeStatus(task.status) === 'review'; });
+    }
+
+    /** 批阅工作台是独立页面（team-review.html），带 taskId 指定先看哪一条 */
+    function reviewWorkbenchUrl(taskId) {
+        return '/team-review.html?id=' + encodeURIComponent(teamId) + '&taskId=' + Number(taskId);
+    }
+
+    /** 批阅工作台入口只对队长/导师显示，并带上待批阅条数 */
+    /** 批阅工作台入口只对队长/导师显示，并带上待批阅条数；没得批就收起来 */
+    function syncReviewBoardEntry() {
+        var btn = byId('reviewBoardBtn');
+        if (!btn) return;
+        var pending = pendingReviewTasks().length;
+        btn.hidden = !canReviewTasks() || pending === 0;
+        setText('reviewBoardBtnText', pending ? '批阅工作台 · ' + pending : '批阅工作台');
+    }
+
     function bindToolbarEvents() {
         var emojiBtn = document.querySelector('.chat-tool-btn[title="表情"]');
         var fileBtn = document.querySelector('.chat-tool-btn[title="文件"]');
@@ -1263,7 +1318,11 @@
     async function uploadChatFile(file, imageOnly) {
         var form = new FormData();
         form.append('file', file);
-        notify('上传中...', 'info');
+        // 加载态不自动关闭：上传结束（成功或失败）时由 closeLoading() 收回
+        var closeLoading = (typeof Toast !== 'undefined' && Toast.loading)
+            ? Toast.loading('上传中…', imageOnly ? '正在上传图片' : '正在上传文件')
+            : null;
+        if (!closeLoading) notify('上传中...', 'info');
         try {
             var response = await apiFetch('/api/upload/attachment?kind=chat', {
                 method: 'POST',
@@ -1288,9 +1347,11 @@
                 createdAt: new Date().toISOString()
             });
             await postChatMessage(content, type);
+            if (closeLoading) closeLoading();
             notify('上传成功', 'success');
         } catch (error) {
             console.error('上传失败', error);
+            if (closeLoading) closeLoading();
             notify(error.message || '上传失败', 'error');
         }
     }
@@ -1348,10 +1409,8 @@
 
     // ============ AI 协作面板（竞赛答疑 + 任务拆解） ============
     var aiCompetitions = [];
-    var aiQaBusy = false;
 
     async function loadAiPanel() {
-        setText('aiTeamName', teamInfo ? (teamInfo.teamName || '团队空间') : '团队空间');
         renderAiTaskPicker();
         if (!aiCompetitions.length) {
             try {
@@ -1365,6 +1424,8 @@
         return true;
     }
 
+    // AI 答疑上下文：隐藏 select 仍是状态源（agentic-chat 读写它的 value），
+    // 展示层换成自定义搜索下拉，避免原生 select 展开态与整体风格脱节
     function renderAiCompetitionSelect() {
         var select = byId('aiCompetitionSelect');
         if (!select) return;
@@ -1375,6 +1436,80 @@
             return '<option value="' + Number(c.id) + '">' + escapeHtml(name) + '</option>';
         }).join('');
         select.innerHTML = options;
+
+        var combo = byId('aiCompCombo');
+        if (!combo || combo.dataset.rendered) { syncComboLabel(); return; }
+        combo.dataset.rendered = '1';
+
+        var trigger = byId('aiCompComboTrigger');
+        var menu = byId('aiCompComboMenu');
+        var list = byId('aiCompComboList');
+        var search = byId('aiCompComboSearch');
+
+        function syncComboLabel() {
+            var label = byId('aiCompComboLabel');
+            if (!label || !select) return;
+            var opt = select.options[select.selectedIndex];
+            label.textContent = opt ? opt.textContent : '通用提问（不绑定竞赛）';
+        }
+
+        function comboItems(kw) {
+            var all = [{ value: '', name: '通用提问（不绑定竞赛）' }].concat(aiCompetitions.map(function (c) {
+                return { value: String(Number(c.id)), name: c.name || c.title || ('竞赛 ' + (c.id || '')), organizer: c.organizer || '' };
+            }));
+            kw = (kw || '').trim().toLowerCase();
+            return kw ? all.filter(function (it) {
+                return (it.name + ' ' + (it.organizer || '')).toLowerCase().indexOf(kw) >= 0;
+            }) : all;
+        }
+
+        function renderComboList(kw) {
+            var current = select.value;
+            var items = comboItems(kw);
+            list.innerHTML = items.length ? items.map(function (it) {
+                return '<button type="button" class="ai-comp-combo__item' +
+                    (it.value === current ? ' is-active' : '') +
+                    '" role="option" data-value="' + it.value + '">' +
+                    escapeHtml(it.name) +
+                    '</button>';
+            }).join('') : '<div class="ai-comp-combo__empty">没有匹配的竞赛，试试其他关键词</div>';
+            Array.prototype.forEach.call(list.querySelectorAll('.ai-comp-combo__item'), function (btn) {
+                btn.addEventListener('click', function () {
+                    select.value = btn.dataset.value;
+                    select.dispatchEvent(new Event('change'));
+                    syncComboLabel();
+                    closeMenu();
+                });
+            });
+        }
+
+        function openMenu() {
+            menu.hidden = false;
+            trigger.setAttribute('aria-expanded', 'true');
+            search.value = '';
+            renderComboList('');
+            setTimeout(function () { search.focus(); }, 0);
+        }
+
+        function closeMenu() {
+            menu.hidden = true;
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            menu.hidden ? openMenu() : closeMenu();
+        });
+        menu.addEventListener('click', function (e) { e.stopPropagation(); });
+        search.addEventListener('input', function () { renderComboList(search.value); });
+        search.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { closeMenu(); trigger.focus(); }
+        });
+        document.addEventListener('click', function (e) {
+            if (!menu.hidden && !combo.contains(e.target)) closeMenu();
+        });
+        select.addEventListener('change', syncComboLabel);
+        syncComboLabel();
     }
 
     function renderAiTaskPicker() {
@@ -1382,11 +1517,13 @@
         if (!box) return;
         var badge = byId('aiLeaderOnlyBadge');
         var isLeader = !!(teamInfo && teamInfo.isLeader);
-        if (badge) badge.hidden = !isLeader;
         var candidates = tasks.filter(function (t) {
             var s = normalizeStatus(t.status);
             return s === 'todo' || s === 'in_progress';
         });
+        // 存在别人负责的任务时提示"仅任务负责人可发起"，解释为何部分任务没有拆解按钮
+        var hasLocked = candidates.some(function (t) { return !canAiBreakdown(t); });
+        if (badge) badge.hidden = !hasLocked;
         if (!candidates.length) {
             box.innerHTML = '<div class="ai-task-empty">暂无待拆解的任务，先在任务看板创建任务</div>';
             return;
@@ -1397,7 +1534,7 @@
                     '<span class="ai-task-row__title">' + escapeHtml(t.taskTitle || '（无标题）') + '</span>' +
                     '<span class="ai-task-row__status">' + escapeHtml(statusLabel(t.status)) + '</span>' +
                 '</div>' +
-                (isLeader
+                (canAiBreakdown(t)
                     ? '<button type="button" class="btn btn-sm btn-outline-primary" onclick="teamSpace.openAiBreakdown(' + Number(t.id) + ')">AI 拆解</button>'
                     : '') +
                 '</div>';
@@ -1406,610 +1543,6 @@
 
     // 正在排队滚动的容器。每来一个 token 就读一次 scrollHeight 会强制同步回流，
     // 是流式输出卡顿的主要来源；同一帧内只滚一次，读到的是当帧最终高度。
-    var pendingScrollTargets = typeof WeakSet !== 'undefined' ? new WeakSet() : null;
-
-    function scrollAiQaToBottom(container) {
-        if (!container) return;
-        if (!pendingScrollTargets) {
-            container.scrollTop = container.scrollHeight;
-            return;
-        }
-        if (pendingScrollTargets.has(container)) return;
-        pendingScrollTargets.add(container);
-        window.requestAnimationFrame(function () {
-            pendingScrollTargets.delete(container);
-            container.scrollTop = container.scrollHeight;
-        });
-    }
-
-    // 轻量安全的 Markdown 渲染，先 HTML 转义（common.js 的 escapeHtml）防 XSS，再解析常见语法。
-    // 支持的语法：标题（#/##/###）、粗体、*斜体*、行内代码、代码块（```）、表格（|）链接（仅 http/https）、无序/有序列表、分隔线、换行。
-    function renderMarkdown(text) {
-        var raw = String(text == null ? '' : text).replace(/\r\n/g, '\n');
-        // 兜底：若后端清洗遗漏了 prompt 专用标签，前端再剥离一次后转义渲染
-        raw = raw.replace(/<\/?(?:question|competition_info|web_search_results)\s*>/gi, ' ');
-        var encoded = escapeHtml(raw);
-        var lines = encoded.split('\n');
-        var html = [];
-        var ul = null;
-        var ol = null;
-        var inCode = false;
-        var codeLines = [];
-
-        function closeLists() {
-            if (ul) { html.push('</ul>'); ul = null; }
-            if (ol) { html.push('</ol>'); ol = null; }
-        }
-
-        function closeCode() {
-            if (inCode) {
-                html.push('<pre><code>' + codeLines.join('\n') + '</code></pre>');
-                codeLines = [];
-                inCode = false;
-            }
-        }
-
-        function isTableRow(line) {
-            return /^\s*\|.*\|\s*$/.test(line);
-        }
-
-        function renderTable(startIndex) {
-            var rows = [];
-            var i = startIndex;
-            while (i < lines.length && isTableRow(lines[i])) {
-                rows.push(lines[i].trim().replace(/^\||\|$/g, ''));
-                i++;
-            }
-            if (rows.length < 2) return { html: null, end: startIndex };
-            // 跳过分隔行：| --- | :---: | 等
-            var header = rows[0];
-            var bodyStart = 1;
-            if (/^[\s:|-]+$/.test(rows[1])) {
-                bodyStart = 2;
-            }
-            if (bodyStart >= rows.length) return { html: null, end: startIndex };
-            var cellsOf = function (r) {
-                return r.split('|').map(function (c) { return renderInline(c.trim()); });
-            };
-            var headCells = cellsOf(header);
-            var out = '<table><thead><tr>';
-            for (var h = 0; h < headCells.length; h++) out += '<th>' + headCells[h] + '</th>';
-            out += '</tr></thead><tbody>';
-            for (var r = bodyStart; r < rows.length; r++) {
-                var cells = cellsOf(rows[r]);
-                out += '<tr>';
-                for (var c = 0; c < cells.length; c++) out += '<td>' + cells[c] + '</td>';
-                out += '</tr>';
-            }
-            out += '</tbody></table>';
-            return { html: out, end: i };
-        }
-
-        for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            var trimmed = line.replace(/^\s+|\s+$/g, '');
-            if (/^`{3,}/.test(trimmed)) {
-                if (inCode) {
-                    closeCode();
-                } else {
-                    closeLists();
-                    inCode = true;
-                    codeLines = [];
-                }
-                continue;
-            }
-            if (inCode) {
-                codeLines.push(line);
-                continue;
-            }
-            if (trimmed === '') { closeLists(); continue; }
-            if (isTableRow(trimmed)) {
-                var table = renderTable(i);
-                if (table.html) {
-                    closeLists();
-                    html.push(table.html);
-                    i = table.end - 1;
-                    continue;
-                }
-            }
-            var h = trimmed.match(/^(#{1,3})\s+(.*)$/);
-            if (h && h[2]) {
-                closeLists();
-                var level = h[1].length;
-                html.push('<h' + (level + 2) + '>' + renderInline(h[2]) + '</h' + (level + 2) + '>');
-                continue;
-            }
-            if (/^\s*---+$/.test(trimmed)) {
-                closeLists();
-                html.push('<hr>');
-                continue;
-            }
-            var ulMatch = trimmed.match(/^[-*]\s+(.*)$/);
-            if (ulMatch && ulMatch[1]) {
-                if (!ul) { closeLists(); html.push('<ul>'); ul = true; }
-                html.push('<li>' + renderInline(ulMatch[1]) + '</li>');
-                continue;
-            }
-            var olMatch = trimmed.match(/^\d+[.)]\s+(.*)$/);
-            if (olMatch && olMatch[1]) {
-                if (!ol) { closeLists(); html.push('<ol>'); ol = true; }
-                html.push('<li>' + renderInline(olMatch[1]) + '</li>');
-                continue;
-            }
-            closeLists();
-            html.push('<p>' + renderInline(trimmed) + '</p>');
-        }
-        closeCode();
-        closeLists();
-        return html.join('');
-    }
-
-    // 行内语法：代码、粗体、斜体、链接（在已转义的文本上进行安全替换）
-    function renderInline(text) {
-        var out = '';
-        var tokenRe = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\))/g;
-        var match;
-        var last = 0;
-        while ((match = tokenRe.exec(text)) !== null) {
-            out += text.slice(last, match.index);
-            var token = match[0];
-            if (token.charAt(0) === '`') {
-                out += '<code>' + token.slice(1, -1) + '</code>';
-            } else if (token.charAt(0) === '[') {
-                // 链接 [文本](url)
-                var linkMatch = token.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-                if (linkMatch) {
-                    var label = linkMatch[1];
-                    var href = linkMatch[2].replace(/&amp;/g, '&');
-                    if (/^(https?:\/\/|mailto:)/i.test(href)) {
-                        out += '<a href="' + href.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener noreferrer">' + label + '</a>';
-                    } else {
-                        out += label + '（不安全链接已省略）';
-                    }
-                } else {
-                    out += token;
-                }
-            } else if (token.indexOf('**') === 0) {
-                out += '<strong>' + token.slice(2, -2) + '</strong>';
-            } else if (token.charAt(0) === '*') {
-                out += '<em>' + token.slice(1, -1) + '</em>';
-            } else {
-                out += token;
-            }
-            last = tokenRe.lastIndex;
-        }
-        out += text.slice(last);
-        return out;
-    }
-
-    // 剥离 emoji/表情符号（AI 输出除非偶尔带表情，前端兜底清洗）
-    function stripEmoji(text) {
-        return String(text == null ? '' : text)
-            .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}\u{200D}]/gu, '')
-            .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '')
-            .replace(/[ \t]{2,}/g, ' ');
-    }
-
-    function formatAiAnswer(text) {
-        if (text == null || text === '') return '';
-        return renderMarkdown(stripEmoji(text));
-    }
-
-    /**
-     * 流式输出气泡：把 AI 的完整回答按块逐个追加到页面，
-     * 配合淡入上移动效与末尾光标，模拟"正在生成中"的交互体验。
-     */
-    var AI_THINK_SPARK =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        '<path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/></svg>';
-
-    /**
-     * 「已思考」面板外壳。返回各部件供调用方填充：
-     * 非流式一次性填满，流式则先插壳再把思考增量追进 reason。
-     */
-    function createThinkPanel() {
-        var panel = document.createElement('div');
-        panel.className = 'ai-qa-think';
-
-        var head = document.createElement('button');
-        head.type = 'button';
-        head.className = 'ai-qa-think__head';
-        head.setAttribute('aria-expanded', 'false');
-        head.innerHTML = '<span class="ai-qa-think__spark">' + AI_THINK_SPARK + '</span>' +
-            '<span class="ai-qa-think__label"></span>' +
-            '<svg class="ai-qa-think__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
-
-        var body = document.createElement('div');
-        body.className = 'ai-qa-think__body';
-        body.hidden = true;
-
-        // 模型自述按纯文本展示，不解析 Markdown（避免其中的标记被当成排版指令）
-        var reason = document.createElement('p');
-        reason.className = 'ai-qa-think__reason';
-        body.appendChild(reason);
-
-        var shell = {
-            panel: panel,
-            head: head,
-            label: head.querySelector('.ai-qa-think__label'),
-            body: body,
-            reason: reason
-        };
-        head.addEventListener('click', function () {
-            setThinkOpen(shell, body.hidden);
-        });
-
-        panel.appendChild(head);
-        panel.appendChild(body);
-        return shell;
-    }
-
-    function setThinkOpen(shell, open) {
-        shell.body.hidden = !open;
-        shell.head.setAttribute('aria-expanded', open ? 'true' : 'false');
-        shell.panel.classList.toggle('is-open', open);
-    }
-
-    /** 往面板正文末尾追加检索来源列表（流式与非流式共用）。 */
-    function appendThinkSources(body, sources) {
-        var links = [];
-        (Array.isArray(sources) ? sources : []).forEach(function (item) {
-            var url = String((item && item.url) || '').trim();
-            // 只放行 http(s)，挡掉 javascript: 之类的伪协议
-            if (!/^https?:\/\//i.test(url)) return;
-            links.push({ url: url, title: String((item && item.title) || url) });
-        });
-        if (!links.length) return;
-
-        var meta = document.createElement('div');
-        meta.className = 'ai-qa-think__meta';
-        meta.textContent = '搜索到 ' + links.length + ' 个网页';
-        body.appendChild(meta);
-
-        var ul = document.createElement('ul');
-        ul.className = 'ai-qa-think__sources';
-        links.forEach(function (link) {
-            var li = document.createElement('li');
-            var a = document.createElement('a');
-            a.href = link.url;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.textContent = link.title;
-            li.appendChild(a);
-            ul.appendChild(li);
-        });
-        body.appendChild(ul);
-    }
-
-    function appendAiQaMessage(container, text, role) {
-        var bubble = document.createElement('div');
-        bubble.className = 'ai-qa-bubble ai-qa-bubble--' + role;
-        if (role === 'user') {
-            bubble.textContent = text;
-        } else {
-            bubble.innerHTML = formatAiAnswer(text);
-        }
-        container.appendChild(bubble);
-        scrollAiQaToBottom(container);
-        return bubble;
-    }
-
-    async function sendAiQuestion() {
-        var input = byId('aiQaInput');
-        var select = byId('aiCompetitionSelect');
-        var messages = byId('aiQaMessages');
-        if (!input || !messages || aiQaBusy) return;
-        var question = input.value.trim();
-        if (!question) {
-            notify('请输入问题', 'warning');
-            return;
-        }
-        var competitionId = select ? select.value : '';
-        aiQaBusy = true;
-        var sendBtn = byId('aiQaSendBtn');
-        if (sendBtn) sendBtn.disabled = true;
-        appendAiQaMessage(messages, question, 'user');
-        input.value = '';
-        if (window.teamSpace && typeof window.teamSpace.autoResizeChatInput === 'function') {
-            window.teamSpace.autoResizeChatInput(input);
-        }
-        var answerBubble = appendAiQaMessage(messages, '', 'assistant');
-        answerBubble.classList.add('ai-qa-bubble--loading');
-        answerBubble.innerHTML =
-            '<span class="ai-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>' +
-            '<span class="ai-qa-stage">正在理解你的问题</span>';
-        var stopStages = startAiQaStages(answerBubble.querySelector('.ai-qa-stage'));
-        var renderer = createAiQaStreamRenderer(answerBubble, messages);
-        try {
-            var payload = { question: question };
-            // 选了竞赛才带上，留空走通用提问（后端会按问题本身联网检索）
-            if (competitionId) payload.competitionId = Number(competitionId);
-            var failure = null;
-            await readAiQaStream(payload, function (name, data) {
-                if (name === 'reasoning') {
-                    renderer.reasoning(asStreamText(data));
-                } else if (name === 'answer') {
-                    renderer.answer(asStreamText(data));
-                } else if (name === 'done') {
-                    renderer.finish(data);
-                } else if (name === 'error') {
-                    failure = new Error((data && data.message) || '回答失败，请稍后重试');
-                }
-            });
-            if (failure) throw failure;
-            renderer.finish(null);
-        } catch (error) {
-            renderer.fail(error.message || '回答失败，请稍后重试');
-            scrollAiQaToBottom(messages);
-        } finally {
-            stopStages();
-            aiQaBusy = false;
-            if (sendBtn) sendBtn.disabled = false;
-        }
-    }
-
-    /**
-     * 流式答疑渲染器：思考过程逐字追加，正文按累计文本重新渲染 Markdown。
-     * 真流式下不能再等全文到齐再假打字——那时用户等待期间气泡是空的。
-     */
-    function createAiQaStreamRenderer(bubble, messages) {
-        var shell = null;       // 「已思考」面板
-        var answerEl = null;    // 正文容器
-        var caret = null;
-        var raw = '';
-        var lastRendered = null;
-        var renderPending = false;
-        var lastRenderAt = 0;
-        var finished = false;
-        var startedAt = Date.now();
-
-        /**
-         * 正文重渲染间隔随篇幅放宽。
-         * 短回答每个 delta 都按帧画（最跟手）；长回答全量重解析 Markdown 变贵，
-         * 放宽到几十毫秒一次——肉眼看不出台阶，主线程也不会被压满。
-         */
-        function renderIntervalFor(textLength) {
-            if (textLength > 2500) return 120;
-            if (textLength > 800) return 60;
-            return 0;
-        }
-
-        function clearLoading() {
-            if (!bubble.classList.contains('ai-qa-bubble--loading')) return;
-            bubble.classList.remove('ai-qa-bubble--loading');
-            // loading 动效与阶段文案是 innerHTML 塞进去的，remove class 不会清掉；
-            // 不清就会在答案气泡顶部永久残留一行「内容较多，仍在生成中」
-            bubble.innerHTML = '';
-        }
-
-        function ensureShell() {
-            if (shell) return shell;
-            clearLoading();
-            shell = createThinkPanel();
-            // 面板恒在正文之上；正文可能已经建好了
-            bubble.insertBefore(shell.panel, answerEl);
-            return shell;
-        }
-
-        function ensureAnswer() {
-            if (answerEl) return answerEl;
-            clearLoading();
-            answerEl = document.createElement('div');
-            answerEl.className = 'ai-qa-answer';
-            bubble.appendChild(answerEl);
-            caret = document.createElement('span');
-            caret.className = 'ai-typing-caret';
-            caret.setAttribute('aria-hidden', 'true');
-            bubble.appendChild(caret);
-            return answerEl;
-        }
-
-        function renderAnswer() {
-            if (!answerEl) return;
-            // 收尾、补画、排队的帧可能撞在一起；文本没变就不必重排整段 Markdown
-            if (raw === lastRendered) return;
-            lastRendered = raw;
-            lastRenderAt = Date.now();
-            answerEl.innerHTML = formatAiAnswer(stripAiPromptTags(raw));
-            scrollAiQaToBottom(messages);
-        }
-
-        // 一个 token 一次 innerHTML 重排会把主线程压满，这里合并到「帧」上；
-        // 帧内多次请求只保留最后一次。收尾时由 finish 直接补画，不依赖这个回调。
-        function scheduleRender() {
-            if (renderPending) return;
-            renderPending = true;
-            var wait = Math.max(0, renderIntervalFor(raw.length) - (Date.now() - lastRenderAt));
-            window.setTimeout(function () {
-                // 先解锁再排帧：标签页被节流时 rAF 可能迟迟不触发，
-                // 若把解锁放在 rAF 里，后续所有增量都会被这一个卡住的帧挡掉
-                renderPending = false;
-                window.requestAnimationFrame(renderAnswer);
-            }, wait);
-        }
-
-        return {
-            reasoning: function (delta) {
-                if (finished || !delta) return;
-                var panel = ensureShell();
-                if (!panel.labelPlaced) {
-                    // 标题只需写一次；每个 token 都写 DOM 是白白的强制重排
-                    panel.label.textContent = '正在思考…';
-                    panel.labelPlaced = true;
-                    setThinkOpen(panel, true);
-                }
-                // appendChild 是 O(1)；textContent += 每次都要重建整段文本节点
-                panel.reason.appendChild(document.createTextNode(delta));
-                scrollAiQaToBottom(messages);
-            },
-
-            answer: function (delta) {
-                if (finished || !delta) return;
-                if (shell && shell.panel.classList.contains('is-open')) {
-                    // 开始作答说明思考结束了，收起过程让答案出现在视线内
-                    shell.label.textContent = '已思考';
-                    setThinkOpen(shell, false);
-                }
-                ensureAnswer();
-                raw += delta;
-                scheduleRender();
-            },
-
-            finish: function (data) {
-                if (finished) return;
-                finished = true;
-                clearLoading();
-                if (data) {
-                    if (data.reasoning && !shell) {
-                        ensureShell().reason.textContent = String(data.reasoning);
-                    }
-                    if (shell) {
-                        appendThinkSources(shell.body, data.sources);
-                    }
-                }
-                if (shell) {
-                    // 后端没给耗时（流被截断）时用本地计时兜底，免得标题停在「已思考」
-                    var elapsed = data && Number(data.elapsedMs) > 0 ? Number(data.elapsedMs) : Date.now() - startedAt;
-                    shell.label.textContent = '已思考（用时 ' + Math.max(1, Math.round(elapsed / 1000)) + ' 秒）';
-                    setThinkOpen(shell, false);
-                }
-                if (caret) {
-                    caret.remove();
-                    caret = null;
-                }
-                if (answerEl) {
-                    renderAnswer();
-                } else if (!shell) {
-                    // 既无思考也无正文：留一句兜底，避免出现空气泡
-                    answerEl = ensureAnswer();
-                    raw = '（本次没有返回内容，请换个问法再试）';
-                    renderAnswer();
-                }
-                scrollAiQaToBottom(messages);
-            },
-
-            fail: function (message) {
-                finished = true;
-                if (caret) {
-                    caret.remove();
-                    caret = null;
-                }
-                bubble.classList.remove('ai-qa-bubble--loading');
-                if (shell || answerEl) {
-                    // 已经吐出过内容（思考或部分答案），不要把已有内容抹掉，只补一条错误提示
-                    // 渲染节流可能还剩最后一批增量没落盘，先补画一次再挂提示
-                    renderAnswer();
-                    if (shell) {
-                        shell.label.textContent = '已思考（回答被中断）';
-                    }
-                    var notice = document.createElement('div');
-                    notice.className = 'ai-qa-stream-error';
-                    notice.textContent = message;
-                    bubble.appendChild(notice);
-                    scrollAiQaToBottom(messages);
-                    return;
-                }
-                bubble.classList.add('ai-qa-bubble--error');
-                bubble.innerHTML = formatAiAnswer(message);
-            }
-        };
-    }
-
-    /**
-     * 以 SSE 读取答疑流，逐个事件回调。校验失败等仍走 JSON 通道，这里统一转成异常抛出。
-     */
-    async function readAiQaStream(payload, onEvent) {
-        var response = await apiFetch('/api/ai/competition-qa/stream', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            // 答疑是分钟级的：检索本身可能就要几十秒，再叠上模型生成。
-            // 这里给得比服务端 SSE 超时（180s）宽，让服务端的超时先说话。
-            timeoutMs: 240000
-        });
-        var contentType = response.headers.get('content-type') || '';
-        if (contentType.indexOf('text/event-stream') < 0) {
-            var text = await response.text();
-            var body = null;
-            try { body = JSON.parse(text); } catch (e) { body = null; }
-            throw new Error((body && body.message) || '回答失败，请稍后重试');
-        }
-        var reader = response.body.getReader();
-        var decoder = new TextDecoder();
-        var buffer = '';
-        while (true) {
-            var chunk = await reader.read();
-            if (chunk.done) break;
-            buffer += decoder.decode(chunk.value, { stream: true });
-            var index;
-            while ((index = buffer.indexOf('\n\n')) >= 0) {
-                var frame = buffer.slice(0, index);
-                buffer = buffer.slice(index + 2);
-                var parsed = parseSseFrame(frame);
-                if (parsed) onEvent(parsed.name, parsed.data);
-            }
-        }
-    }
-
-    /** 增量载荷必须是字符串；协议异常时宁可丢这一块，也不要往气泡里写 [object Object]。 */
-    function asStreamText(value) {
-        return typeof value === 'string' ? value : '';
-    }
-
-    /** 解析一个 SSE 帧（事件名 + 可能多行的 data；data 为本项目 JSON 序列化的载荷）。 */
-    function parseSseFrame(frame) {
-        var name = 'message';
-        var dataLines = [];
-        frame.split('\n').forEach(function (line) {
-            if (line.indexOf('event:') === 0) {
-                name = line.slice(6).trim();
-            } else if (line.indexOf('data:') === 0) {
-                dataLines.push(line.slice(5).replace(/^ /, ''));
-            }
-        });
-        if (!dataLines.length) return null;
-        var raw = dataLines.join('\n');
-        var data = raw;
-        try { data = JSON.parse(raw); } catch (e) { /* 非 JSON 就按原文透传 */ }
-        return { name: name, data: data };
-    }
-
-    /**
-     * 剥离模型可能复读的 prompt 专用标签。
-     * 流式下只能对「累计文本」整体清洗——标签可能跨分片，逐块清洗会漏。
-     */
-    function stripAiPromptTags(text) {
-        if (!text) return '';
-        return text
-            .replace(/<\/?competition_info\s*>/gi, ' ')
-            .replace(/<\/?web_search_results\s*>/gi, ' ')
-            .replace(/<search(_results)?\s*>[\s\S]*?<\/search(_results)?\s*>/gi, ' ')
-            .replace(/<\/?search(_results)?\s*>/gi, ' ')
-            .replace(/<\/?question\s*>/gi, ' ');
-    }
-
-    // 等待期约 20~60 秒，一直停在同一句话会让人以为卡死。
-    // 这里按经验时间点推进文案（各句长度接近，避免气泡宽度来回跳）。
-    var AI_QA_STAGES = [
-        [2500, '正在联网检索资料'],
-        [8000, '正在阅读资料并整理答案'],
-        [22000, '内容较多，仍在生成中'],
-        [45000, '快好了，请再稍等片刻'],
-        // 检索慢的时候整体能到一分半以上，最后一句停太久又会被当成卡死
-        [70000, '网络有点慢，仍在等待模型返回']
-    ];
-
-    /** 返回一个停止函数，务必在请求结束时调用，避免定时器写到已被替换的节点上。 */
-    function startAiQaStages(label) {
-        if (!label) return function () {};
-        var timers = AI_QA_STAGES.map(function (stage) {
-            return setTimeout(function () { label.textContent = stage[1]; }, stage[0]);
-        });
-        return function () {
-            timers.forEach(function (id) { clearTimeout(id); });
-        };
-    }
-
     function showAiBreakdownPreview() {
         byId('aiBreakdownPreview').hidden = false;
         byId('aiBreakdownResult').hidden = true;
@@ -2019,6 +1552,14 @@
         confirmBtn.textContent = '确认拆解';
         byId('aiBreakdownRegenBtn').hidden = true;
         byId('aiCreateSubtasksBtn').hidden = true;
+    }
+
+    // 剥离 emoji/表情符号（AI 输出除非偶尔带表情，前端兜底清洗）
+    function stripEmoji(text) {
+        return String(text == null ? '' : text)
+            .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}\u{200D}]/gu, '')
+            .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '')
+            .replace(/[ \t]{2,}/g, ' ');
     }
 
     function reportTaskLine(item) {
@@ -2226,16 +1767,31 @@
 
             var footer = byId('detailFooter');
             if (footer) {
-                var advanceButton = normalizeStatus(task.status) === 'todo'
+                var statusKey = normalizeStatus(task.status);
+                var advanceButton = statusKey === 'todo'
                     ? '<button type="button" class="btn btn-primary" onclick="teamSpace.advanceTaskStatus(' + Number(task.id) + ')">开始任务</button>'
                     : '';
-                var aiButton = currentUserIsLeader()
+                // 进行中的任务要给被指派人一个出口：需批阅的先交材料，免批阅的直接标记完成
+                var deliverButton = '';
+                if (statusKey === 'in_progress' && Number(task.assignedTo) === Number(currentUserId)) {
+                    deliverButton = task.requiresReview
+                        ? '<button type="button" class="btn btn-primary" onclick="teamSpace.openSubmitReview(' + Number(task.id) + ')">提交审阅</button>'
+                        : '<button type="button" class="btn btn-primary" onclick="teamSpace.markTaskComplete(' + Number(task.id) + ')">标记完成</button>';
+                }
+                var aiButton = canAiBreakdown(task)
                     ? '<button type="button" class="btn btn-outline-primary" onclick="teamSpace.openAiBreakdown(' + Number(task.id) + ')">AI 拆解</button>'
+                    : '';
+                // 待审核的任务只对接队长/导师：批阅走团队详情页的完整工作台（材料预览 + 逐份点评）
+                var reviewButton = statusKey === 'review' && canReviewTasks()
+                    ? '<a class="btn btn-primary" href="/team-detail.html?id=' + encodeURIComponent(teamId) +
+                      '&reviewTaskId=' + Number(task.id) + '">批阅</a>'
                     : '';
                 footer.innerHTML =
                     '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>' +
                     aiButton +
                     advanceButton +
+                    deliverButton +
+                    reviewButton +
                     '<button type="button" class="btn btn-outline-secondary" onclick="teamSpace.deleteTask(' + Number(task.id) + ')">删除</button>';
             }
             bootstrap.Modal.getOrCreateInstance(byId('taskDetailModal')).show();
@@ -2258,8 +1814,84 @@
                 notify(error.message || '状态更新失败', 'error');
             }
         },
+        openSubmitReview: function (taskId) {
+            pendingReviewTaskId = Number(taskId);
+            var remark = byId('submitReviewRemark');
+            if (remark) remark.value = '';
+            var file = byId('submitReviewFile');
+            if (file) {
+                file.value = '';
+                // 用赋值而非 addEventListener：每次打开模态都重绑会累积监听器
+                file.onchange = function () {
+                    setText('submitReviewFileName', file.files && file.files[0] ? file.files[0].name : '');
+                };
+            }
+            setText('submitReviewFileName', '');
+            bootstrap.Modal.getOrCreateInstance(byId('submitReviewModal')).show();
+        },
+        submitReviewMaterial: async function () {
+            if (!pendingReviewTaskId) return;
+            var remark = byId('submitReviewRemark') ? byId('submitReviewRemark').value.trim() : '';
+            var fileInput = byId('submitReviewFile');
+            var file = fileInput && fileInput.files ? fileInput.files[0] : null;
+            if (!remark && !file) {
+                notify('请填写交付说明或上传附件', 'warning');
+                return;
+            }
+            var btn = byId('submitReviewBtn');
+            if (btn) btn.disabled = true;
+            try {
+                var attachments = [];
+                if (file) {
+                    var form = new FormData();
+                    form.append('file', file);
+                    var response = await apiFetch('/api/upload/attachment?kind=task', { method: 'POST', body: form });
+                    var result = await response.json();
+                    if (!response.ok || Number(result.code) !== 200) {
+                        throw new Error(result.message || '附件上传失败');
+                    }
+                    var uploaded = window.ILinkFiles.normalizeUploadResult(result.data || {}, file);
+                    attachments.push({ name: uploaded.name, url: uploaded.url });
+                }
+                await api('/tasks/' + pendingReviewTaskId + '/submit', {
+                    method: 'POST',
+                    body: JSON.stringify({ remark: remark, attachments: attachments })
+                });
+                bootstrap.Modal.getInstance(byId('submitReviewModal'))?.hide();
+                bootstrap.Modal.getInstance(byId('taskDetailModal'))?.hide();
+                await loadTasks();
+                notify('已提交，等待审核', 'success');
+            } catch (error) {
+                notify(error.message || '提交失败', 'error');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        },
+        markTaskComplete: async function (taskId) {
+            if (!uiConfirm('确认该任务已完成？')) return;
+            try {
+                await api('/tasks/' + taskId + '/complete', { method: 'POST' });
+                bootstrap.Modal.getInstance(byId('taskDetailModal'))?.hide();
+                await loadTasks();
+                notify('任务已完成', 'success');
+            } catch (error) {
+                notify(error.message || '操作失败', 'error');
+            }
+        },
+        openReviewBoard: function () {
+            var pending = pendingReviewTasks();
+            if (!pending.length) {
+                notify('当前没有待批阅的任务', 'warning');
+                return;
+            }
+            // 工作台是独立页面，不再借用组队详情页
+            window.location.href = reviewWorkbenchUrl(pending[0].id);
+        },
+        openReviewTask: function (taskId) {
+            window.location.href = reviewWorkbenchUrl(taskId);
+        },
         deleteTask: async function (taskId) {
-            if (!window.confirm('确定删除这个任务吗？')) return;
+            if (!uiConfirm('确定删除这个任务吗？')) return;
             try {
                 await api('/tasks/' + taskId, { method: 'DELETE' });
                 bootstrap.Modal.getInstance(byId('taskDetailModal'))?.hide();
@@ -2312,8 +1944,8 @@
                 notify('任务不存在', 'error');
                 return;
             }
-            if (!currentUserIsLeader()) {
-                notify('只有队长可以使用 AI 拆解', 'warning');
+            if (!canAiBreakdown(task)) {
+                notify('只有任务的被分配者本人可以使用 AI 拆解', 'warning');
                 return;
             }
             aiBreakdownTaskId = Number(taskId);
@@ -2330,7 +1962,8 @@
             var btn = byId('aiBreakdownConfirmBtn');
             if (!btn || btn.disabled) return;
             btn.disabled = true;
-            btn.textContent = 'AI 拆解中，约需 10~30 秒…';
+            // 加载态只留一个转圈：耗时长短不确定，写死秒数反而误导
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-label="AI 拆解中"></span>';
             try {
                 var list = await api('/team/' + teamId + '/ai/task-breakdown', {
                     method: 'POST',
@@ -2385,7 +2018,12 @@
                             priority: Number(item.priority || 2),
                             estimatedHours: Number(item.estimatedHours || 2),
                             deadline: parentTask && parentTask.deadline ? new Date(parentTask.deadline).toISOString() : null,
-                            assignedTo: currentUserId
+                            // 子任务归属原任务的被分配者（拆解人即被分配者本人），无归属时回落当前用户
+                            assignedTo: parentTask && parentTask.assignedTo != null
+                                ? Number(parentTask.assignedTo)
+                                : currentUserId,
+                            // 记下来源，后端据此挡住「子任务再拆」的无限套娃
+                            parentTaskId: Number(aiBreakdownTaskId)
                         })
                     });
                     created++;
@@ -2399,14 +2037,6 @@
                 if (btn) btn.disabled = false;
             }
         },
-        // ============ AI 协作面板 ============
-        handleAiQaKeyDown: function (event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendAiQuestion();
-            }
-        },
-        sendAiQuestion: sendAiQuestion,
         // ============ 团队周报（本地聚合） ============
         generateWeeklyReport: async function () {
             var body = byId('weeklyReportBody');
@@ -2437,8 +2067,762 @@
             } finally {
                 if (sendBtn) sendBtn.disabled = false;
             }
+        },
+        // ============ 团队资料库 ============
+        loadLibrary: function () {
+            return loadLibraryTree(libraryTrashView);
+        },
+        toggleLibraryTrash: function () {
+            libraryTrashView = !libraryTrashView;
+            loadLibraryTree(libraryTrashView);
+        },
+        libraryPickFiles: function () {
+            byId('libraryFileInput')?.click();
+        },
+        /** parentId 传入时按该目录创建（右键菜单用），否则用当前选中的文件夹 */
+        libraryNewFolder: async function (parentId) {
+            var targetId = parentId === undefined ? librarySelectedFolder : parentId;
+            var target = targetId == null ? null : libraryNodeById(libraryTreeData, targetId);
+            await libraryDialog({
+                title: '新建文件夹',
+                message: '创建在：' + escapeHtml(target ? target.name : '资料库（根目录）'),
+                placeholder: '文件夹名称',
+                okText: '创建',
+                onSubmit: async function (name) {
+                    try {
+                        await api('/team/' + teamId + '/library/folders', {
+                            method: 'POST',
+                            body: JSON.stringify({ parentId: targetId, name: name })
+                        });
+                    } catch (error) {
+                        return error.message || '创建失败';   // 留在弹窗里，改名即可重试
+                    }
+                    notify('文件夹「' + name + '」已创建', 'success');
+                    loadLibraryTree(libraryTrashView);
+                    return null;
+                }
+            });
+        },
+        /** parentId=null 表示移到根目录 */
+        libraryMove: async function (fileId, parentId) {
+            try {
+                await api('/team/' + teamId + '/library/files/' + Number(fileId) + '/move', {
+                    method: 'PUT',
+                    body: JSON.stringify({ parentId: parentId })
+                });
+                notify('已移动', 'success');
+                loadLibraryTree(libraryTrashView);
+            } catch (error) {
+                notify(error.message || '移动失败', 'error');
+            }
+        },
+        libraryDelete: async function (fileId, purge) {
+            if (purge) {
+                var confirmed = await libraryDialog({
+                    mode: 'confirm', title: '彻底删除',
+                    message: '彻底删除后不可恢复，文件将无法再下载或预览。确定继续？',
+                    okText: '彻底删除', danger: true
+                });
+                if (confirmed === null) return;
+            }
+            try {
+                var resp = await api('/team/' + teamId + '/library/files/' + Number(fileId) + (purge ? '?purge=true' : ''), {
+                    method: 'DELETE'
+                });
+                notify(resp && resp.message ? resp.message : '已删除', 'success');
+                if (librarySelectedFileId === Number(fileId)) clearLibraryPreview();
+                loadLibraryTree(libraryTrashView);
+            } catch (error) {
+                notify(error.message || '删除失败', 'error');
+            }
+        },
+        libraryRestore: async function (fileId) {
+            try {
+                await api('/team/' + teamId + '/library/files/' + Number(fileId) + '/restore', { method: 'PUT' });
+                notify('已恢复', 'success');
+                loadLibraryTree(libraryTrashView);
+            } catch (error) {
+                notify(error.message || '恢复失败', 'error');
+            }
         }
     };
+
+    // ============ 团队资料库实现 ============
+    var libraryTreeData = [];
+    var libraryTrashView = false;
+    var librarySelectedFileId = null;
+    var librarySelectedFolder = null;
+    var LIBRARY_CONFLICT_PREF_KEY = 'ilink_library_conflict_strategy';
+    var LIBRARY_PROGRESS_THRESHOLD = 20 * 1024 * 1024; // 大于 20MB 显示上传进度条（后端单文件上限 50MB）
+
+    function libraryNodeById(nodes, id) {
+        for (var i = 0; i < nodes.length; i++) {
+            if (Number(nodes[i].id) === Number(id)) return nodes[i];
+            var hit = nodes[i].children ? libraryNodeById(nodes[i].children, id) : null;
+            if (hit) return hit;
+        }
+        return null;
+    }
+
+    function libraryCanManage(node) {
+        return currentUserIsLeader() || Number(node.uploaderId) === Number(currentUserId);
+    }
+
+    function loadLibraryTree(trash) {
+        var box = byId('libraryTree');
+        if (!box) return Promise.resolve(false);
+        box.innerHTML = '<div class="panel-loading">加载中...</div>';
+        var trashBtn = byId('libraryTrashBtn');
+        if (trashBtn) {
+            trashBtn.hidden = !currentUserIsLeader();
+            trashBtn.textContent = trash ? '返回资料库' : '回收站';
+            trashBtn.classList.toggle('btn-warning', trash);
+        }
+        if (byId('libraryUploadBtn')) byId('libraryUploadBtn').hidden = trash;
+        if (byId('libraryNewFolderBtn')) byId('libraryNewFolderBtn').hidden = trash;
+        return api('/team/' + teamId + '/library' + (trash ? '?view=trash' : ''), { silent: true })
+            .then(function (list) {
+                libraryTreeData = Array.isArray(list) ? list : [];
+                librarySelectedFolder = null;
+                renderLibraryTree();
+                if (librarySelectedFileId) {
+                    var node = libraryNodeById(libraryTreeData, librarySelectedFileId);
+                    if (node && !node.isFolder) renderLibraryPreview(node);
+                    else clearLibraryPreview();
+                } else {
+                    clearLibraryPreview();
+                }
+                return true;
+            })
+            .catch(function (error) {
+                box.innerHTML = '<div class="library-empty">' + escapeHtml(error.message || '资料库加载失败') + '</div>';
+                return false;
+            });
+    }
+
+    function clearLibraryPreview() {
+        librarySelectedFileId = null;
+        if (byId('libraryPvHead')) byId('libraryPvHead').hidden = true;
+        if (byId('libraryPvCanvasWrap')) byId('libraryPvCanvasWrap').hidden = true;
+        if (byId('libraryPvEmpty')) byId('libraryPvEmpty').hidden = false;
+    }
+
+    function renderLibraryPreview(node) {
+        var head = byId('libraryPvHead');
+        if (!head) return;
+        librarySelectedFileId = Number(node.id);
+        var sub = window.ILinkPreview.typeLabel(node.fileType, node.name) +
+            (node.fileSize ? ' · ' + window.ILinkPreview.formatSize(node.fileSize) : '') +
+            ' · ' + (node.uploaderName || '') + (node.isMentor ? '（导师）' : '');
+        var actions = '<a class="library-pv-action" href="' + escapeHtml(node.fileUrl || '#') + '" download="' +
+            escapeHtml(node.name) + '">下载</a>';
+        if (libraryCanManage(node)) {
+            actions += '<button type="button" class="library-pv-action" onclick="teamSpace.libraryRenamePrompt(' + Number(node.id) + ')">重命名</button>' +
+                '<button type="button" class="library-pv-action library-pv-action--danger" onclick="libraryDeleteWithReferences(' + Number(node.id) + ')">删除</button>';
+        }
+        head.innerHTML =
+            '<div class="library-pv-icon">' + window.ILinkPreview.fileIcon(node.fileType, node.name) + '</div>' +
+            '<div class="library-pv-meta"><span class="library-pv-name" title="' + escapeHtml(node.name) + '">' + escapeHtml(node.name) + '</span>' +
+            '<span class="library-pv-sub">' + escapeHtml(sub) + '</span></div>' +
+            '<div class="library-pv-actions">' + actions + '</div>';
+        head.hidden = false;
+        byId('libraryPvEmpty').hidden = true;
+        var wrap = byId('libraryPvCanvasWrap');
+        wrap.hidden = false;
+        window.ILinkPreview.renderInto(byId('libraryPvCanvas'), node);
+    }
+
+    teamSpace.libraryRenamePrompt = function (fileId) {
+        var node = libraryNodeById(libraryTreeData, fileId);
+        if (!node) return;
+        libraryDialog({
+            title: '重命名',
+            message: node.isFolder ? '文件夹' : '文件',
+            value: node.name,
+            okText: '保存',
+            onSubmit: function (name) {
+                if (name === node.name) return null;   // 没改动，直接关掉
+                return api('/team/' + teamId + '/library/files/' + Number(fileId), {
+                    method: 'PUT',
+                    body: JSON.stringify({ name: name })
+                }).then(function () {
+                    notify('重命名成功', 'success');
+                    loadLibraryTree(libraryTrashView);
+                    return null;
+                }).catch(function (error) {
+                    return error.message || '重命名失败';
+                });
+            }
+        });
+    };
+
+    /** 移动到…：列出全部文件夹供选择（被移动的文件夹自身及其子树不出现，避免移进自己里面） */
+    teamSpace.libraryMovePrompt = function (fileId) {
+        var node = libraryNodeById(libraryTreeData, fileId);
+        if (!node) return;
+        var overlay = document.createElement('div');
+        overlay.className = 'library-conflict-mask';
+        overlay.innerHTML =
+            '<div class="library-conflict">' +
+                '<div class="library-conflict__title">移动「' + escapeHtml(node.name) + '」</div>' +
+                '<div class="library-conflict__existing">选择目标目录</div>' +
+                '<div class="library-move-list">' + libraryTargetFolders(fileId).map(function (opt) {
+                    var isCurrent = opt.id === null ? node.parentId == null : Number(node.parentId) === opt.id;
+                    return '<button type="button" class="library-move-item' + (isCurrent ? ' is-current' : '') + '"' +
+                        ' data-id="' + (opt.id === null ? '' : opt.id) + '"' + (isCurrent ? ' disabled' : '') +
+                        ' style="padding-left:' + (10 + opt.depth * 14) + 'px">' +
+                        (opt.id === null ? '' : window.ILinkPreview.icons.folder) +
+                        '<span>' + escapeHtml(opt.name) + '</span>' +
+                        (isCurrent ? '<span class="library-move-item__tag">当前目录</span>' : '') +
+                        '</button>';
+                }).join('') + '</div>' +
+                '<div class="library-conflict__foot">' +
+                    '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="cancel">取消</button>' +
+                    '<button type="button" class="btn btn-sm btn-primary" data-act="ok" disabled>移动到此处</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+        var selected = null;
+        function close() { overlay.remove(); }
+        overlay.querySelectorAll('.library-move-item').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                overlay.querySelectorAll('.library-move-item').forEach(function (b) { b.classList.remove('is-selected'); });
+                btn.classList.add('is-selected');
+                selected = btn.getAttribute('data-id');
+                overlay.querySelector('[data-act="ok"]').disabled = false;
+            });
+        });
+        overlay.querySelector('[data-act="cancel"]').addEventListener('click', close);
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
+        overlay.querySelector('[data-act="ok"]').addEventListener('click', function () {
+            if (selected === null) return;
+            close();
+            teamSpace.libraryMove(fileId, selected === '' ? null : Number(selected));
+        });
+    };
+
+    /** 可选目标目录：根目录 + 全部文件夹；跳过被移动节点本身（children 是嵌套结构，跳过即跳过整棵子树） */
+    function libraryTargetFolders(excludeId) {
+        var out = [{ id: null, name: '资料库（根目录）', depth: 0 }];
+        (function walk(nodes, depth) {
+            (nodes || []).forEach(function (n) {
+                if (!n.isFolder || Number(n.id) === Number(excludeId)) return;
+                out.push({ id: Number(n.id), name: n.name, depth: depth });
+                walk(n.children, depth + 1);
+            });
+        })(libraryTreeData, 1);
+        return out;
+    }
+
+    /**
+     * 资料库通用弹窗，替代 window.prompt / window.confirm：
+     * mode='input'（新建文件夹、重命名）或 mode='confirm'（删除确认）。
+     * onSubmit 返回错误文案时弹窗不关闭，直接显示错误让用户改；返回 Promise，取消得到 null。
+     */
+    function libraryDialog(opts) {
+        return new Promise(function (resolve) {
+            var isInput = opts.mode !== 'confirm';
+            var overlay = document.createElement('div');
+            overlay.className = 'library-conflict-mask';
+            overlay.innerHTML =
+                '<div class="library-conflict">' +
+                    '<div class="library-conflict__title">' + escapeHtml(opts.title) + '</div>' +
+                    (opts.message ? '<div class="library-conflict__existing library-dialog__message">' + opts.message + '</div>' : '') +
+                    (isInput ? '<input type="text" class="library-dialog__input" maxlength="100" autocomplete="off" ' +
+                        'placeholder="' + escapeHtml(opts.placeholder || '') + '" value="' + escapeHtml(opts.value || '') + '">' : '') +
+                    '<div class="library-dialog__error" hidden></div>' +
+                    '<div class="library-conflict__foot">' +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary" data-act="cancel">取消</button>' +
+                        '<button type="button" class="btn btn-sm btn-primary' + (opts.danger ? ' library-dialog__danger' : '') +
+                            '" data-act="ok">' + escapeHtml(opts.okText || '确定') + '</button>' +
+                    '</div>' +
+                '</div>';
+            document.body.appendChild(overlay);
+            var input = overlay.querySelector('.library-dialog__input');
+            var errorBox = overlay.querySelector('.library-dialog__error');
+            var okBtn = overlay.querySelector('[data-act="ok"]');
+            var busy = false;
+
+            function close(value) {
+                document.removeEventListener('keydown', onKey, true);
+                overlay.remove();
+                resolve(value);
+            }
+            function showError(message) {
+                errorBox.textContent = message;
+                errorBox.hidden = false;
+                busy = false;
+                okBtn.disabled = false;
+            }
+            function submit() {
+                if (busy) return;
+                var value = isInput ? input.value.trim() : true;
+                if (isInput && !value) { showError('名称不能为空'); input.focus(); return; }
+                errorBox.hidden = true;
+                busy = true;
+                okBtn.disabled = true;
+                Promise.resolve(opts.onSubmit ? opts.onSubmit(value) : value)
+                    .then(function (errorMessage) {
+                        // 只有字符串才算「校验/接口错误」；确认模式下 resolve 的是 true，不能当错误
+                        if (typeof errorMessage === 'string' && errorMessage) { showError(errorMessage); return; }
+                        close(value);
+                    })
+                    .catch(function (error) { showError((error && error.message) || '操作失败'); });
+            }
+            function onKey(event) {
+                if (event.key === 'Escape') { event.preventDefault(); close(null); }
+                else if (event.key === 'Enter' && isInput) { event.preventDefault(); submit(); }
+            }
+            overlay.querySelector('[data-act="cancel"]').addEventListener('click', function () { close(null); });
+            okBtn.addEventListener('click', submit);
+            overlay.addEventListener('click', function (e) { if (e.target === overlay) close(null); });
+            document.addEventListener('keydown', onKey, true);
+            setTimeout(function () { if (input) { input.focus(); input.select(); } else { okBtn.focus(); } }, 0);
+        });
+    }
+
+    /** 删除前查引用：被任务引用时列出影响范围再确认 */
+    function libraryDeleteWithReferences(fileId) {
+        var node = libraryNodeById(libraryTreeData, fileId);
+        if (!node) return;
+        function confirmDelete(message) {
+            return libraryDialog({
+                mode: 'confirm', title: '删除确认', message: message,
+                okText: '删除', danger: true
+            }).then(function (ok) { if (ok !== null) teamSpace.libraryDelete(fileId, false); });
+        }
+        api('/team/' + teamId + '/library/files/' + Number(fileId) + '/references', { silent: true })
+            .then(function (refs) {
+                if (Array.isArray(refs) && refs.length) {
+                    var lines = refs.map(function (r) {
+                        return '<div class="library-dialog__ref">· ' + escapeHtml(r.taskTitle || '任务') + '</div>';
+                    }).join('');
+                    confirmDelete('「' + escapeHtml(node.name) + '」已被 ' + refs.length + ' 个任务引用：' + lines +
+                        '<div class="library-dialog__note">删除后，这些任务的交付材料会显示为「文件已删除」。</div>');
+                } else {
+                    confirmDelete('「' + escapeHtml(node.name) + '」将进入回收站，30 天内可恢复。');
+                }
+            })
+            .catch(function () {
+                confirmDelete('确定删除「' + escapeHtml(node.name) + '」吗？');
+            });
+    }
+    window.libraryDeleteWithReferences = libraryDeleteWithReferences;
+
+    function renderLibraryTree() {
+        var container = byId('libraryTree');
+        if (!container) return;
+        var keyword = (byId('librarySearch')?.value || '').trim().toLowerCase();
+        container.innerHTML = '';
+        if (!libraryTreeData.length) {
+            container.innerHTML = '<div class="library-empty">' +
+                (libraryTrashView ? '回收站是空的' : (keyword ? '未找到匹配的文件' : '还没有文件，点击右上角上传')) + '</div>';
+            return;
+        }
+        (function renderNodes(nodes, parent, depth) {
+            nodes.forEach(function (node) {
+                var row = document.createElement('div');
+                row.className = 'library-row';
+                row.setAttribute('data-id', node.id);
+                if (node.isFolder) {
+                    var childCount = (node.children || []).length;
+                    var matchesChild = keyword && librarySubtreeHasMatch(node, keyword);
+                    var open = !!node.open || !!keyword;
+                    if (keyword && !matchesChild && !node.name.toLowerCase().includes(keyword)) return;
+                    row.innerHTML =
+                        '<span class="library-row__arrow' + (open ? ' open' : '') + '">' + window.ILinkPreview.icons.chevronRight + '</span>' +
+                        '<span class="library-row__icon library-row__icon--folder">' + (open ? window.ILinkPreview.icons.folderOpen : window.ILinkPreview.icons.folder) + '</span>' +
+                        '<span class="library-row__name" title="' + escapeHtml(node.name) + '">' + escapeHtml(node.name) + '</span>' +
+                        '<span class="library-row__badge">' + childCount + '</span>';
+                    row.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        if (keyword) return; // 搜索中禁用折叠
+                        node.open = !node.open;
+                        renderLibraryTree();
+                    });
+                    row.addEventListener('contextmenu', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showLibraryContextMenu(e, node);
+                    });
+                    bindLibraryDrag(row, node);
+                    bindLibraryRowDrop(row, node);
+                    parent.appendChild(row);
+                    if (node.children && (node.open || keyword)) {
+                        var wrap = document.createElement('div');
+                        wrap.className = 'library-children';
+                        parent.appendChild(wrap);
+                        renderNodes(node.children, wrap, depth + 1);
+                    }
+                } else {
+                    if (keyword && !node.name.toLowerCase().includes(keyword)) return;
+                    row.innerHTML =
+                        '<span class="library-row__arrow" style="visibility:hidden;"></span>' +
+                        '<span class="library-row__icon">' + window.ILinkPreview.fileIcon(node.fileType, node.name) + '</span>' +
+                        '<span class="library-row__name" title="' + escapeHtml(node.name) + '">' + escapeHtml(node.name) + '</span>' +
+                        (node.isMentor ? '<span class="library-row__mentor">导</span>' : '') +
+                        '<span class="library-row__size">' + escapeHtml(window.ILinkPreview.formatSize(node.fileSize) || '') + '</span>';
+                    if (Number(node.id) === Number(librarySelectedFileId)) row.classList.add('active');
+                    row.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        renderLibraryPreview(node);
+                        renderLibraryTree();
+                    });
+                    row.addEventListener('contextmenu', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showLibraryContextMenu(e, node);
+                    });
+                    bindLibraryDrag(row, node);
+                    parent.appendChild(row);
+                }
+            });
+        })(libraryTreeData, container, 0);
+    }
+
+    function librarySubtreeHasMatch(node, keyword) {
+        return (node.children || []).some(function (c) {
+            return c.name.toLowerCase().includes(keyword) || (c.isFolder && librarySubtreeHasMatch(c, keyword));
+        });
+    }
+
+    // ============ 拖拽移动（文件夹行 = 放进该目录，文件树空白处 = 移到根目录） ============
+    var libraryDraggingId = null;
+
+    function clearLibraryDropTargets() {
+        document.querySelectorAll('.library-row.is-drop-target, .library-tree-scroll.is-drop-target')
+            .forEach(function (el) { el.classList.remove('is-drop-target'); });
+    }
+
+    /** 能否拖：回收站内的不能动；需要上传者或队长权限（与服务端一致） */
+    function libraryDraggable(node) {
+        return !libraryTrashView && libraryCanManage(node);
+    }
+
+    /** 目标目录能否作为落点：不能是自己、不能是当前所在目录、不能是自己的子孙（会成环） */
+    function libraryCanDropInto(targetId) {
+        if (libraryDraggingId === null) return false;
+        var dragged = libraryNodeById(libraryTreeData, libraryDraggingId);
+        if (!dragged) return false;
+        if (targetId === null) return dragged.parentId != null;
+        if (Number(targetId) === Number(dragged.id)) return false;
+        if (Number(targetId) === Number(dragged.parentId)) return false;
+        return !libraryIsDescendantOf(dragged.id, targetId);
+    }
+
+    function libraryIsDescendantOf(ancestorId, candidateId) {
+        var ancestor = libraryNodeById(libraryTreeData, ancestorId);
+        if (!ancestor) return false;
+        var hit = false;
+        (function walk(nodes) {
+            (nodes || []).forEach(function (n) {
+                if (!n.isFolder) return;
+                if (Number(n.id) === Number(candidateId)) hit = true;
+                walk(n.children);
+            });
+        })(ancestor.children || []);
+        return hit;
+    }
+
+    function bindLibraryDrag(row, node) {
+        if (!libraryDraggable(node)) return;
+        row.draggable = true;
+        row.addEventListener('dragstart', function (e) {
+            libraryDraggingId = Number(node.id);
+            row.classList.add('is-dragging');
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', String(node.id));   // Firefox 不 setData 不会触发拖拽
+            }
+            hideLibraryContextMenu();
+        });
+        row.addEventListener('dragend', function () {
+            libraryDraggingId = null;
+            row.classList.remove('is-dragging');
+            clearLibraryDropTargets();
+        });
+    }
+
+    function bindLibraryRowDrop(row, node) {
+        if (!node.isFolder) return;
+        row.addEventListener('dragover', function (e) {
+            if (!libraryCanDropInto(node.id)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            clearLibraryDropTargets();
+            row.classList.add('is-drop-target');
+        });
+        row.addEventListener('drop', function (e) {
+            if (!libraryCanDropInto(node.id)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var movingId = libraryDraggingId;
+            libraryDraggingId = null;
+            clearLibraryDropTargets();
+            teamSpace.libraryMove(movingId, Number(node.id));
+        });
+    }
+
+    // 树容器空白处：拖到根目录（只挂一次，容器元素在多次重渲染间保持不变）
+    (function bindLibraryRootDrop() {
+        var tree = byId('libraryTree');
+        if (!tree) return;
+        tree.addEventListener('dragover', function (e) {
+            if (e.target.closest && e.target.closest('.library-row')) return;   // 行上有行自己的落点
+            if (!libraryCanDropInto(null)) return;
+            e.preventDefault();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+            tree.classList.add('is-drop-target');
+        });
+        tree.addEventListener('dragleave', function (e) {
+            if (e.target === tree) tree.classList.remove('is-drop-target');
+        });
+        tree.addEventListener('drop', function (e) {
+            if (e.target.closest && e.target.closest('.library-row')) return;
+            if (!libraryCanDropInto(null)) return;
+            e.preventDefault();
+            var movingId = libraryDraggingId;
+            libraryDraggingId = null;
+            tree.classList.remove('is-drop-target');
+            teamSpace.libraryMove(movingId, null);
+        });
+    })();
+
+    // 右键菜单：按权限与视图动态生成
+    function showLibraryContextMenu(event, node) {
+        hideLibraryContextMenu();
+        var menu = document.createElement('div');
+        menu.className = 'library-context-menu';
+        var items = [];
+        if (libraryTrashView) {
+            if (currentUserIsLeader()) {
+                items.push({ label: '恢复', fn: function () { teamSpace.libraryRestore(node.id); } });
+                items.push({ label: '彻底删除', danger: true, fn: function () { teamSpace.libraryDelete(node.id, true); } });
+            }
+        } else if (node.isFolder) {
+            items.push({ label: '新建文件夹', fn: function () { teamSpace.libraryNewFolder(node.id); } });
+            if (libraryCanManage(node)) {
+                items.push({ label: '重命名', fn: function () { teamSpace.libraryRenamePrompt(node.id); } });
+                items.push({ label: '移动到…', fn: function () { teamSpace.libraryMovePrompt(node.id); } });
+                items.push({ label: '删除文件夹', danger: true, fn: function () { libraryDeleteWithReferences(node.id); } });
+            }
+        } else {
+            items.push({ label: '预览', fn: function () { renderLibraryPreview(node); } });
+            items.push({ label: '下载', fn: function () { downloadLibraryFile(node); } });
+            if (libraryCanManage(node)) {
+                items.push({ label: '重命名', fn: function () { teamSpace.libraryRenamePrompt(node.id); } });
+                items.push({ label: '移动到…', fn: function () { teamSpace.libraryMovePrompt(node.id); } });
+                items.push({ label: '删除', danger: true, fn: function () { libraryDeleteWithReferences(node.id); } });
+            }
+        }
+        if (!items.length) return;
+        menu.innerHTML = items.map(function (item, i) {
+            return '<button type="button" data-index="' + i + '"' + (item.danger ? ' class="danger"' : '') + '>' + escapeHtml(item.label) + '</button>';
+        }).join('');
+        items.forEach(function (item, i) {
+            menu.querySelector('[data-index="' + i + '"]').addEventListener('click', function () {
+                hideLibraryContextMenu();
+                item.fn();
+            });
+        });
+        document.body.appendChild(menu);
+        var x = Math.min(event.clientX, window.innerWidth - menu.offsetWidth - 8);
+        var y = Math.min(event.clientY, window.innerHeight - menu.offsetHeight - 8);
+        menu.style.left = x + 'px';
+        menu.style.top = y + 'px';
+        setTimeout(function () {
+            document.addEventListener('click', hideLibraryContextMenu, { once: true });
+        }, 0);
+    }
+
+    function hideLibraryContextMenu() {
+        document.querySelectorAll('.library-context-menu').forEach(function (m) { m.remove(); });
+    }
+
+    function downloadLibraryFile(node) {
+        if (!node.fileUrl) return;
+        var a = document.createElement('a');
+        a.href = node.fileUrl;
+        a.download = node.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+
+    // 上传：kind=library 上传 → 登记（同名冲突处理）。>20MB 展示进度条。
+    var libraryFileInput = byId('libraryFileInput');
+    if (libraryFileInput) {
+        libraryFileInput.addEventListener('change', function () {
+            var files = libraryFileInput.files ? Array.from(libraryFileInput.files) : [];
+            libraryFileInput.value = '';
+            files.forEach(function (file) { uploadLibraryFile(file); });
+        });
+    }
+
+    function uploadLibraryFile(file) {
+        var parentId = librarySelectedFolder;
+        showLibraryProgress(file, 0);
+        uploadLibraryXhr(file, function (progress) {
+            showLibraryProgress(file, progress);
+        }, function (err, result) {
+            if (err) {
+                hideLibraryProgress();
+                notify(err.message || '「' + file.name + '」上传失败', 'error');
+                return;
+            }
+            registerLibraryFile(parentId, file, result, null);
+        });
+    }
+
+    function uploadLibraryXhr(file, onProgress, done) {
+        var xhr = new XMLHttpRequest();
+        var form = new FormData();
+        form.append('file', file);
+        form.append('kind', 'library');
+        xhr.open('POST', '/api/upload/attachment');
+        var token = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+        if (token) xhr.setRequestHeader('X-XSRF-TOKEN', decodeURIComponent(token[1]));
+        xhr.upload.addEventListener('progress', function (e) {
+            if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+        });
+        xhr.addEventListener('load', function () {
+            try {
+                var res = JSON.parse(xhr.responseText);
+                if (res && res.code === 200) {
+                    onProgress(100);
+                    done(null, res.data);
+                } else {
+                    done(new Error(res && res.message ? res.message : '上传失败'));
+                }
+            } catch (e) {
+                done(new Error('上传失败'));
+            }
+        });
+        xhr.addEventListener('error', function () { done(new Error('上传失败，请检查网络')); });
+        xhr.send(form);
+    }
+
+    function registerLibraryFile(parentId, file, uploaded, strategy) {
+        api('/team/' + teamId + '/library/files', {
+            method: 'POST',
+            body: JSON.stringify({
+                parentId: parentId,
+                name: file.name,
+                url: uploaded.url,
+                size: file.size,
+                conflictStrategy: strategy
+            })
+        }).then(function (resp) {
+            hideLibraryProgress();
+            if (resp && resp.data && resp.data.conflict) {
+                resolveLibraryConflict(parentId, file, uploaded, resp.data.existing);
+                return;
+            }
+            notify('「' + file.name + '」已上传', 'success');
+            loadLibraryTree(libraryTrashView);
+        }).catch(function (error) {
+            hideLibraryProgress();
+            notify(error.message || '「' + file.name + '」登记失败', 'error');
+        });
+    }
+
+    /** 同名冲突：记住的选择直接应用；否则弹轻量弹窗（替换/保留两者/取消） */
+    function resolveLibraryConflict(parentId, file, uploaded, existing) {
+        var saved = null;
+        try { saved = window.localStorage.getItem(LIBRARY_CONFLICT_PREF_KEY); } catch (e) { /* ignore */ }
+        if (saved === 'REPLACE' || saved === 'KEEP_BOTH') {
+            registerLibraryFile(parentId, file, uploaded, saved);
+            return;
+        }
+        var overlay = document.createElement('div');
+        overlay.className = 'library-conflict-mask';
+        overlay.innerHTML =
+            '<div class="library-conflict">' +
+                '<div class="library-conflict__title">已存在同名文件</div>' +
+                '<div class="library-conflict__existing">「' + escapeHtml(existing.name) + '」· ' +
+                    escapeHtml(window.ILinkPreview.formatSize(existing.fileSize) || '') + ' · ' +
+                    escapeHtml(existing.uploaderName || '') + '</div>' +
+                '<div class="library-conflict__choice"><label><input type="radio" name="libConflict" value="KEEP_BOTH" checked> 保留两者（新文件命名为 "' +
+                    escapeHtml(uniqueCandidateName(existing.name)) + '"）</label></div>' +
+                '<div class="library-conflict__choice"><label><input type="radio" name="libConflict" value="REPLACE"> 替换现有文件（旧版本进入回收站）</label></div>' +
+                '<div class="library-conflict__choice"><label><input type="radio" name="libConflict" value="CANCEL"> 取消上传</label></div>' +
+                '<label class="library-conflict__remember"><input type="checkbox" id="libConflictRemember"> 记住我的选择，以后同名时自动应用</label>' +
+                '<div class="library-conflict__foot">' +
+                    '<button type="button" class="btn btn-sm btn-secondary" data-act="cancel">取消</button>' +
+                    '<button type="button" class="btn btn-sm btn-primary" data-act="ok">确定</button>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+        overlay.querySelector('[data-act="cancel"]').addEventListener('click', function () {
+            hideLibraryProgress();
+            overlay.remove();
+        });
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) { hideLibraryProgress(); overlay.remove(); }
+        });
+        overlay.querySelector('[data-act="ok"]').addEventListener('click', function () {
+            var choice = overlay.querySelector('input[name="libConflict"]:checked').value;
+            var remember = overlay.querySelector('#libConflictRemember').checked;
+            overlay.remove();
+            if (choice === 'CANCEL') { hideLibraryProgress(); return; }
+            if (remember) {
+                try { window.localStorage.setItem(LIBRARY_CONFLICT_PREF_KEY, choice); } catch (e) { /* ignore */ }
+            }
+            registerLibraryFile(parentId, file, uploaded, choice);
+        });
+    }
+
+    function uniqueCandidateName(name) {
+        var dot = name.lastIndexOf('.');
+        var base = dot > 0 ? name.substring(0, dot) : name;
+        var ext = dot > 0 ? name.substring(dot) : '';
+        return base + ' (1)' + ext;
+    }
+
+    function showLibraryProgress(file, percent) {
+        var bar = byId('libraryProgressBar');
+        if (!bar) {
+            var tree = byId('libraryTree');
+            if (!tree || !tree.parentElement) return;
+            bar = document.createElement('div');
+            bar.id = 'libraryProgressBar';
+            bar.className = 'library-progress';
+            bar.innerHTML = '<div class="library-progress__label"></div><div class="library-progress__track"><div class="library-progress__fill"></div></div>';
+            tree.parentElement.insertBefore(bar, tree);
+        }
+        bar.querySelector('.library-progress__label').textContent = '上传中 ' + file.name + ' · ' + percent + '%';
+        bar.querySelector('.library-progress__fill').style.width = percent + '%';
+        if (percent >= 100) bar.querySelector('.library-progress__label').textContent = '「' + file.name + '」上传完成，正在登记…';
+    }
+
+    function hideLibraryProgress() {
+        var bar = byId('libraryProgressBar');
+        if (bar) setTimeout(function () { bar.remove(); }, 400);
+    }
+
+    // 搜索：输入即过滤（渲染时 kw 有值强制展开且禁折叠，清空即恢复）
+    (function bindLibrarySearch() {
+        var search = byId('librarySearch');
+        if (!search) return;
+        search.addEventListener('input', function () { renderLibraryTree(); });
+        search.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                search.value = '';
+                renderLibraryTree();
+                search.blur();
+            }
+        });
+    })();
+
+    // 选中文件夹作为上传目标（点击文件夹行时记录）
+    document.addEventListener('click', function (e) {
+        var row = e.target && e.target.closest ? e.target.closest('.library-row') : null;
+        if (!row) return;
+        var id = Number(row.getAttribute('data-id'));
+        var node = libraryNodeById(libraryTreeData, id);
+        if (node && node.isFolder) librarySelectedFolder = id;
+    });
 
     async function init() {
         if (!teamId) {

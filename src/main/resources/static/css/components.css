@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink UI Components v4.3
    Black & White Minimalism + Glassmorphism
@@ -163,6 +164,36 @@ a.il-link:active {
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+}
+
+.il-header__language-switch {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 42px;
+    height: 34px;
+    padding: 0 9px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    background: var(--glass-bg-light);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.il-header__language-switch:hover {
+    color: var(--text-primary);
+    border-color: var(--border-default);
+    background: var(--glass-bg);
+}
+
+.il-header__language-switch:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 /* User Link with Avatar */
@@ -691,8 +722,8 @@ html.ilink-app .il-header__dropdown-item:hover {
     }
 
     .il-header__drawer-action--primary {
-        color: #ffffff;
-        background: var(--primary);
+        color: var(--text-primary);
+        background: var(--bg-white);
         border-color: var(--primary);
     }
 
@@ -768,6 +799,7 @@ html.ilink-app .il-header__dropdown-item:hover {
     margin: 0 auto;
     display: flex;
     flex-wrap: wrap;
+    justify-content: space-between;
     gap: 80px;
 }
 
@@ -775,7 +807,8 @@ html.ilink-app .il-header__dropdown-item:hover {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    max-width: 280px;
+    /* 320px 是一句话简介刚好放下不折行的宽度（280px 会把「导师」拆成两行） */
+    max-width: 320px;
 }
 
 .il-footer-logo {
@@ -808,12 +841,12 @@ html.ilink-app .il-header__dropdown-item:hover {
     color: #9ca3af;
     font-size: 14px;
     line-height: 1.6;
-    max-width: 280px;
 }
 
 .il-footer-links {
     display: flex;
-    gap: 48px;
+    /* 照 deepseek 页脚的疏朗感：列间距明显大于列宽 */
+    gap: 96px;
 }
 
 .il-footer-section {
@@ -825,7 +858,8 @@ html.ilink-app .il-header__dropdown-item:hover {
 .il-footer-section-title {
     margin-bottom: 16px;
     color: #ffffff;
-    font-size: 15px;
+    /* 与 .il-footer-link 同号，只靠字重和颜色区分层级；差 1px 反而像没对齐 */
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.02em;
 }
@@ -836,12 +870,63 @@ html.ilink-app .il-header__dropdown-item:hover {
     color: #9ca3af;
     text-decoration: none;
     font-size: 14px;
+    /* 「意见反馈」是 <button>，需要抹掉浏览器默认外观才能和同列 <a> 对齐 */
+    font-family: inherit;
+    background: none;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
     transition: color 0.15s ease, transform 0.15s ease;
 }
 
 .il-footer-link:hover {
     color: #ffffff;
     transform: translateX(2px);
+}
+
+/* 底部左组：版权 + 备案，用细分隔线串成一行 */
+.il-footer-copy {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    line-height: 1.6;
+}
+
+/* 用 currentColor 画分隔线：页脚有深色/浅色两套主题，写死颜色总有一套看不见 */
+.il-footer-copy__sep {
+    width: 1px;
+    height: 12px;
+    background: currentColor;
+    opacity: 0.3;
+    flex-shrink: 0;
+}
+
+.il-footer-filing__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    /* 继承页脚文字色：页脚有深色/浅色两套主题，
+       写死颜色会在另一套主题下"消失"（如浅色页脚上白字不可见） */
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.il-footer-filing__link:hover,
+.il-footer-filing__link:focus-visible {
+    text-decoration: underline;
+}
+
+.il-footer-filing__icon {
+    display: block;
+    flex-shrink: 0;
+    /* 盾牌是内联 SVG，警徽是 36×40 的位图；同框 14×14 + contain，
+       两者视觉高度一致，盾牌描边又比实心警徽轻，不会互相抢 */
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    vertical-align: middle;
 }
 
 .il-footer-bottom {
@@ -851,11 +936,21 @@ html.ilink-app .il-header__dropdown-item:hover {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     color: #9ca3af;
     font-size: 13px;
-    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 24px;
 }
 
 .il-footer-bottom p {
     margin: 0;
+}
+
+/* 右端的楚辞题词：比版权更淡，作装饰性收尾 */
+.il-footer-slogan {
+    color: rgba(255, 255, 255, 0.32);
+    font-style: italic;
 }
 
 @media (max-width: 1024px) {
@@ -918,7 +1013,8 @@ html.ilink-app .il-header__dropdown-item:hover {
     .il-footer-section-title {
         margin: 0 0 4px;
         color: rgba(255, 255, 255, 0.92);
-        font-size: 13px;
+        /* 同桌面端：与链接同号，只靠字重和颜色分层 */
+        font-size: 12px;
         line-height: 1.3;
     }
 
@@ -932,6 +1028,26 @@ html.ilink-app .il-header__dropdown-item:hover {
         line-height: 1.2;
     }
 
+    /* 窄屏放不下「版权 | 备案 | 备案」一行，改为竖排三行，分隔线随之取消 */
+    .il-footer-copy {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        width: 100%;
+        color: rgba(255, 255, 255, 0.42);
+        font-size: 11px;
+    }
+
+    .il-footer-copy > * {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+    }
+
+    .il-footer-copy__sep {
+        display: none;
+    }
+
     .il-footer-bottom {
         margin: 12px 0 0;
         padding-top: 10px;
@@ -939,6 +1055,14 @@ html.ilink-app .il-header__dropdown-item:hover {
         color: rgba(255, 255, 255, 0.42);
         font-size: 11px;
         line-height: 1.3;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    /* 题词是纯装饰，窄屏只留版权与备案 */
+    .il-footer-slogan {
+        display: none;
     }
 }
 
@@ -1515,25 +1639,34 @@ html.ilink-app .il-header__dropdown-item:hover {
 
 /* ========================================
    11. TOAST NOTIFICATIONS
-   · 位置：屏幕上部中央
-   · 外观：白底卡片 + 状态色正文/图标/边框
-   · 比例：宽度 320~380px，高度随内容自适应（不再是极扁胶囊）
+   · 位置：视口顶部居中悬浮，脱离任何容器（不随页面滚动、不隶属卡片）
+   · 外观：白底卡片 + 状态色圆形图标 + 标题/描述双行
+   · 状态：success / error / warning / info / loading 五种
+   · 动效：进入 .32s 弹性落位，离开 .22s 快速收起
+   · 基准：用户提供的 demo.html（2026-10-03 定稿）
+   · 注意：状态色为组件私有变量（--il-toast-*），不改全局 --toast-*（后者服务 .alert-* 内联横幅）
    ======================================== */
-:root {
-    --toast-surface:     #FFFFFF;
-    --toast-border:      #EAEAEE;
-    --toast-text:        #282A2F;
-    --toast-text-muted:  #6A6E77;
-
-    --toast-success:     #2F8A64;
-    --toast-error:       #C95050;
-    --toast-warning:     #B37A1F;
-    --toast-info:        #5A606C;
-}
-
 .ilink-toast-host {
+    /* 组件私有令牌：容器作用域，避免污染全站色板 */
+    --il-toast-surface: #FFFFFF;
+    --il-toast-border: #ECEEF1;
+    --il-toast-title: #1F2328;
+    --il-toast-desc: #6B7280;
+    --il-toast-close: #B0B6BF;
+    --il-toast-close-hover-bg: #F4F5F7;
+    --il-toast-success: #0F9D63;
+    --il-toast-success-bg: #ECFDF5;
+    --il-toast-error: #DC2626;
+    --il-toast-error-bg: #FEF2F2;
+    --il-toast-warning: #D97706;
+    --il-toast-warning-bg: #FFFBEB;
+    --il-toast-info: #2563EB;
+    --il-toast-info-bg: #EFF6FF;
+    --il-toast-loading: #6B7280;
+    --il-toast-loading-bg: #F4F5F7;
+
     position: fixed;
-    top: calc(var(--header-height, 64px) + 16px);
+    top: calc(var(--header-height, 64px) + 12px);
     left: 50%;
     right: auto;
     transform: translateX(-50%);
@@ -1544,135 +1677,119 @@ html.ilink-app .il-header__dropdown-item:hover {
     gap: 10px;
     width: 380px;
     max-width: calc(100vw - 32px);
-    min-width: 320px;
     pointer-events: none;
 }
 
 .ilink-toast {
     position: relative;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    grid-template-areas: "icon body close";
-    align-items: flex-start;
-    column-gap: 10px;
-    row-gap: 2px;
     width: 100%;
-    padding: 12px 12px 12px 14px;
-    border-radius: 12px;
-    border: 1px solid var(--toast-border);
-    background: var(--toast-surface);
-    color: var(--toast-text);
-    box-shadow:
-        0 14px 34px rgba(17, 20, 30, 0.09),
-        0 2px 6px rgba(17, 20, 30, 0.05);
-    opacity: 0;
-    transform: translate3d(0, -8px, 0);
-    transition:
-        opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-        transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
-        border-color 0.2s ease;
-    pointer-events: auto;
-}
-
-.ilink-toast--visible {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-}
-
-.ilink-toast--out {
-    opacity: 0;
-    transform: translate3d(0, -6px, 0);
-}
-
-/* 状态色：正文与图标着色（白底不变） */
-.ilink-toast--success { border-color: color-mix(in srgb, var(--toast-success) 22%, var(--toast-border)); }
-.ilink-toast--success .ilink-toast__text,
-.ilink-toast--success .ilink-toast__label { color: var(--toast-success); }
-
-.ilink-toast--error   { border-color: color-mix(in srgb, var(--toast-error) 22%, var(--toast-border)); }
-.ilink-toast--error   .ilink-toast__text,
-.ilink-toast--error   .ilink-toast__label { color: var(--toast-error); }
-
-.ilink-toast--warning { border-color: color-mix(in srgb, var(--toast-warning) 22%, var(--toast-border)); }
-.ilink-toast--warning .ilink-toast__text,
-.ilink-toast--warning .ilink-toast__label { color: var(--toast-warning); }
-
-.ilink-toast--info    { border-color: color-mix(in srgb, var(--toast-info) 22%, var(--toast-border)); }
-.ilink-toast--info    .ilink-toast__text,
-.ilink-toast--info    .ilink-toast__label { color: var(--toast-info); }
-
-.ilink-toast__icon {
-    grid-area: icon;
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    margin-top: 1px;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 14px 13px 16px;
+    border: 1px solid var(--il-toast-border);
+    border-radius: 12px;
+    background: var(--il-toast-surface);
+    box-shadow:
+        0 1px 2px rgba(20, 25, 40, 0.04),
+        0 12px 32px -12px rgba(20, 25, 40, 0.16);
+    pointer-events: auto;
+    animation: il-toast-in 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
-.ilink-toast__svg { display: block; width: 16px; height: 16px; }
+@keyframes il-toast-in {
+    from { opacity: 0; transform: translateY(-16px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 
-.ilink-toast--success .ilink-toast__icon { background: color-mix(in srgb, var(--toast-success) 14%, transparent); color: var(--toast-success); }
-.ilink-toast--error   .ilink-toast__icon { background: color-mix(in srgb, var(--toast-error)   16%, transparent); color: var(--toast-error);   }
-.ilink-toast--warning .ilink-toast__icon { background: color-mix(in srgb, var(--toast-warning) 18%, transparent); color: var(--toast-warning); }
-.ilink-toast--info    .ilink-toast__icon { background: color-mix(in srgb, var(--toast-info)    16%, transparent); color: var(--toast-info);    }
+.ilink-toast.hiding {
+    animation: il-toast-out 0.22s ease forwards;
+}
+
+@keyframes il-toast-out {
+    to { opacity: 0; transform: translateY(-12px) scale(0.96); }
+}
+
+/* 状态色只作用于图标与关闭按钮悬浮态；标题/描述保持中性色，保证白底上的可读性 */
+.ilink-toast__icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    margin-top: 1px;
+    background: var(--il-toast-loading-bg);
+    color: var(--il-toast-loading);
+}
+
+.ilink-toast__icon svg {
+    display: block;
+    width: 11px;
+    height: 11px;
+}
+
+.ilink-toast--success .ilink-toast__icon { background: var(--il-toast-success-bg); color: var(--il-toast-success); }
+.ilink-toast--error   .ilink-toast__icon { background: var(--il-toast-error-bg);   color: var(--il-toast-error);   }
+.ilink-toast--warning .ilink-toast__icon { background: var(--il-toast-warning-bg); color: var(--il-toast-warning); }
+.ilink-toast--info    .ilink-toast__icon { background: var(--il-toast-info-bg);    color: var(--il-toast-info);    }
+.ilink-toast--loading .ilink-toast__icon { background: var(--il-toast-loading-bg); color: var(--il-toast-loading); }
+
+.ilink-toast--loading .ilink-toast__icon svg {
+    animation: il-toast-spin 0.9s linear infinite;
+}
+
+@keyframes il-toast-spin {
+    to { transform: rotate(360deg); }
+}
 
 .ilink-toast__body {
-    grid-area: body;
+    flex: 1;
     min-width: 0;
-    padding-top: 1px;
-    padding-right: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
 }
 
-.ilink-toast__label {
-    display: block;
+.ilink-toast__title {
     font-size: 13px;
     font-weight: 600;
-    line-height: 1.35;
-    letter-spacing: 0;
-    margin: 0 0 2px;
-}
-
-.ilink-toast__text {
-    font-size: 13px;
-    font-weight: 400;
-    margin: 0;
-    line-height: 1.5;
-    letter-spacing: .01em;
+    line-height: 1.3;
+    color: var(--il-toast-title);
     word-break: break-word;
 }
-/* 若正文是通用信息但正文没有特殊含义，保留深灰可读的"正文灰"兜底 */
-.ilink-toast--info .ilink-toast__text { color: var(--toast-text); }
 
-/* 进度条已移除（用户要求） */
+.ilink-toast__desc {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--il-toast-desc);
+    word-break: break-word;
+}
 
 .ilink-toast__close {
-    grid-area: close;
-    align-self: flex-start;
-    justify-self: end;
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    margin-top: 1px;
     border: none;
-    border-radius: 999px;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--il-toast-close);
     cursor: pointer;
-    color: var(--toast-text-muted);
-    opacity: 0.9;
-    transition: opacity .16s ease, background .16s ease, color .16s ease;
-    margin-top: -3px;
-    margin-right: -4px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ilink-toast__close svg {
+    display: block;
+    width: 11px;
+    height: 11px;
 }
 
 .ilink-toast__close:hover {
-    opacity: 1;
-    background: #F1F1F5;
-    color: var(--toast-text);
+    background: var(--il-toast-close-hover-bg);
+    color: var(--il-toast-title);
 }
 
 .ilink-toast__close:focus-visible {
@@ -1680,6 +1797,19 @@ html.ilink-app .il-header__dropdown-item:hover {
     outline-offset: 2px;
 }
 
+@media (max-width: 479.98px) {
+    .ilink-toast-host {
+        top: calc(env(safe-area-inset-top, 0px) + var(--header-height, 64px) + 10px);
+        width: min(360px, calc(100vw - 24px));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ilink-toast,
+    .ilink-toast--loading .ilink-toast__icon svg {
+        animation: none;
+    }
+}
 /* 表单内联校验（登录/注册等），避免用 Toast 打断输入 */
 .il-field-hint,
 .error-message.il-field-hint {
@@ -1705,31 +1835,20 @@ select.il-input-invalid {
 
 @media (max-width: 479.98px) {
     .ilink-toast-host {
-        top: calc(env(safe-area-inset-top, 0px) + var(--header-height, 64px) + 12px);
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
+        top: calc(env(safe-area-inset-top, 0px) + var(--header-height, 64px) + 10px);
         width: min(360px, calc(100vw - 24px));
-        min-width: auto;
     }
 
-    .ilink-toast { padding: 11px 12px 11px 12px; }
-    .ilink-toast__icon { width: 26px; height: 26px; }
-    .ilink-toast__svg  { width: 15px; height: 15px; }
-    .ilink-toast__label { font-size: 12.5px; }
-    .ilink-toast__text  { font-size: 12.5px; line-height: 1.5; }
+    .ilink-toast { padding: 11px 12px 11px 14px; }
+    .ilink-toast__title { font-size: 12.5px; }
+    .ilink-toast__desc  { font-size: 12px; }
     .ilink-toast__close { width: 24px; height: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .ilink-toast {
-        transition: opacity 0.15s ease;
-        transform: none;
-    }
-
-    .ilink-toast--visible,
-    .ilink-toast--out {
-        transform: none;
+    .ilink-toast,
+    .ilink-toast--loading .ilink-toast__icon svg {
+        animation: none;
     }
 }
 
@@ -1849,6 +1968,30 @@ select.il-input-invalid {
 @keyframes skeleton-loading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+}
+
+/* 本项目引用的 bootstrap 构建不含 spinners 组件，.spinner-border 一直是空类，
+   而多处加载态都在用它（团队空间 AI 拆解、团队详情、个人主页等）。
+   这里按 bootstrap 同名类的尺寸补齐，颜色跟 currentColor 走，深浅底都可见。 */
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: -0.125em;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: il-spinner-rotate 0.75s linear infinite;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.2em;
+}
+
+@keyframes il-spinner-rotate {
+    to { transform: rotate(360deg); }
 }
 
 .il-spinner {
@@ -3440,11 +3583,11 @@ a.il-btn:focus-visible {
     white-space: nowrap;
 }
 .il-btn-primary {
-    background: #111827;
-    color: #fff;
+    background: var(--ui-surface-subtle, #f1f1f2);
+    color: var(--ui-text, #282a2f);
 }
 .il-btn-primary:hover {
-    background: #374151;
+    background: var(--ui-border, #e5e5e7);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
@@ -3520,9 +3663,9 @@ a.il-btn:focus-visible {
     cursor: not-allowed;
 }
 .il-pagination .page-btn--active {
-    background: var(--primary) !important;
-    color: var(--text-white) !important;
-    border-color: var(--primary) !important;
+    background: var(--ui-surface-subtle, #f1f1f2) !important;
+    color: var(--ui-text, #282a2f) !important;
+    border-color: var(--ui-border-strong, #d7d8db) !important;
     box-shadow: var(--shadow-xs);
 }
 .il-pagination .page-info {
@@ -3899,4 +4042,48 @@ body[data-app-page="teacher-detail"] .detail-view__header .detail-view__title {
   width: 48px;
   height: 48px;
   font-size: 18px;
+}
+
+/* ═══════════════════════════════════════════
+   HEADER — English layout adaptation
+   英文导航文案（Team Market / Competitions …）比中文长约 30%，
+   ≤1024px 时中文排得下，英文会把语言切换按钮挤出视口并触发横向滚动。
+   这里只收紧英文的字号与间距，中文头部排版完全不受影响。
+   选择器带 html[lang="en"]，优先级高于各页面的 body[data-app-page] 覆写。
+   ═══════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1024px) {
+  html[lang="en"] body .il-header__inner {
+    padding-inline: 14px;
+    gap: 10px;
+  }
+
+  html[lang="en"] body .il-header__title {
+    display: none;
+  }
+
+  html[lang="en"] body .il-header__nav {
+    gap: 0;
+    margin-inline: 0;
+  }
+
+  html[lang="en"] body .il-header__link {
+    padding-inline: 5px;
+    font-size: 12px;
+  }
+
+  html[lang="en"] body .il-header__actions {
+    gap: 4px;
+  }
+
+  html[lang="en"] body .il-header__auth-link,
+  html[lang="en"] body .il-header__auth-btn {
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+
+  html[lang="en"] body .il-header__language-switch {
+    padding-inline: 8px;
+  }
+}
+
 }

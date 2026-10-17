@@ -1,3 +1,4 @@
+@layer legacy {
 /* ============================================================
    iLink · demo-refresh
    浏览/检索页统一中性灰视觉层（严格对齐高保真 demo）
@@ -300,18 +301,18 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn svg { width: 16px !important; height: 16px !important; }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--ghost,
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--solid {
-    background: var(--dr-gray-900) !important;
-    color: #fff !important;
-    border: 1px solid var(--dr-gray-900) !important;
-    box-shadow: 0 1px 2px rgba(17,24,39,.12) !important;
+    background: var(--ui-surface-subtle, #f1f1f2) !important;
+    color: var(--ui-text, #282a2f) !important;
+    border: 1px solid var(--ui-border-strong, #d7d8db) !important;
+    box-shadow: none !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--ghost:hover,
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--solid:hover {
-    background: #000 !important;
-    border-color: #000 !important;
-    color: #fff !important;
+    background: var(--ui-border, #e5e5e7) !important;
+    border-color: var(--ui-border-strong, #d7d8db) !important;
+    color: var(--ui-text, #282a2f) !important;
     transform: none !important;
-    box-shadow: 0 1px 2px rgba(17,24,39,.12) !important;
+    box-shadow: none !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn:active { transform: scale(0.95) !important; }
 /* 主操作按钮前竖分隔线 */
@@ -872,7 +873,7 @@ html.ilink-app .pagination .page-link {
     margin:0 2px;
 }
 html.ilink-app .pagination .page-item.active .page-link {
-    background:var(--dr-gray-900) !important; color:#fff !important; border-color:var(--dr-gray-900) !important;
+    background:var(--ui-surface-subtle, #f1f1f2) !important; color:var(--ui-text, #282a2f) !important; border-color:var(--ui-border-strong, #d7d8db) !important;
 }
 html.ilink-app .pagination .page-item.disabled .page-link { opacity:.5; }
 html.ilink-app body[data-app-page="gallery"] .pagination-wrap {
@@ -913,6 +914,27 @@ html.ilink-app body[data-app-page="gallery"] .page-info { font-size:13px; color:
     html.ilink-app body[data-app-page="gallery"] .gc-grid,
     html.ilink-app body[data-app-page="competitions"] .competition-grid,
     html.ilink-app body[data-app-page="competitions"] #competitionGrid { grid-template-columns: minmax(0,1fr) !important; }
+}
+
+/* 英文社区搜索栏：中文一行排得下（频道 + 排序 + 写文章 + 刷新），英文同样几个控件
+   需要多出约 110px，768–900px 会把搜索框挤成 24px 并顶出横向滚动条。
+   这里只对英文社区放宽为「搜索框独占一行、其余控件换行」，中文布局不变。 */
+@media (max-width: 900px) {
+    html[lang="en"] body[data-app-page="community"] .il-search-bar {
+        flex-wrap: wrap !important;
+    }
+    html[lang="en"] body[data-app-page="community"] .il-search-bar .il-search-field,
+    html[lang="en"] body[data-app-page="community"] .il-search-bar .il-search-bar__input-wrap {
+        flex: 1 1 100% !important;
+    }
+    /* 与 ≤767px 的移动端一致：下拉与按钮换行后各自撑满一行，不再挤成一排。 */
+    html[lang="en"] body[data-app-page="community"] .il-search-bar__select {
+        flex: 1 1 auto !important;
+    }
+    html[lang="en"] body[data-app-page="community"] .il-search-bar__btn {
+        flex: 1 1 auto !important;
+        justify-content: center !important;
+    }
 }
 
 /* ============ 社区列表紧凑双列卡片（2026-09 方案定稿：GitHub pinned 风格） ============
@@ -1155,4 +1177,6 @@ html.ilink-app body[data-app-page="gallery"] .gallery-tag.gc-tag-pin {
     background: var(--dr-gray-900, #111827) !important;
     color: #fff !important;
     font-weight: 600 !important;
+}
+
 }

@@ -1,12 +1,20 @@
+@layer legacy {
 /* iLink personal centre
  * Consolidated profile layout and visual system.
  * Desktop presentation is preserved; responsive behavior is owned here only.
  */
 
 /* Functional declarations retained from the former base layer. */
+/* 修复 P2-1：入场动画只动 opacity，禁止在 body 上产生 transform。
+ * 祖先存在 transform 时会成为 position:fixed 后代的包含块——body 上由
+ * animation-fill-mode:forwards 常驻的终帧 transform 会使全站右下角的
+ * 关闭态 AI 抽屉（.kgd-drawer，right:0 + translateX(102%)）不再相对视口
+ * 定位，其右移量计入 documentElement.scrollWidth，个人中心各页在
+ * <1320px 视口下出现约 551px 的页面级横向滚动条。
+ * opacity/visibility 不改变包含块，故渐显效果保留、位移装饰取消。 */
 @keyframes pf-page-enter {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes pf-panel-enter {
@@ -3105,16 +3113,16 @@ html.ilink-app body[data-profile-page] .btn {
 
 html.ilink-app body[data-profile-page] .il-btn-primary,
 html.ilink-app body[data-profile-page] .btn-primary {
-  color: var(--ui-surface) !important;
-  background: var(--ui-text) !important;
-  border-color: var(--ui-text) !important;
+  color: var(--ui-text, #282a2f) !important;
+  background: var(--ui-surface-subtle, #f1f1f2) !important;
+  border-color: var(--ui-border-strong, #d7d8db) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-btn-primary:hover,
 html.ilink-app body[data-profile-page] .btn-primary:hover {
-  color: var(--ui-surface) !important;
-  background: var(--primary-dark) !important;
-  border-color: var(--primary-dark) !important;
+  color: var(--ui-text, #282a2f) !important;
+  background: var(--ui-border, #e5e5e7) !important;
+  border-color: var(--ui-border-strong, #d7d8db) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-btn-ghost,
@@ -4100,4 +4108,6 @@ html.ilink-app body[data-profile-page] .modal-title {
 
 @media (max-width: 768px) {
   .ilink-app body[data-profile-page] .il-team-card__status { justify-content: flex-start; }
+}
+
 }

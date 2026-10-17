@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <footer class="il-footer" th:fragment="footer(showFooter)" th:if="${showFooter != null and showFooter}">
@@ -8,24 +8,50 @@
         <div class="il-footer-logo-mark">iL</div>
         <span class="il-footer-title">iLink</span>
       </div>
-      <p class="il-footer-desc">高校竞赛协作平台 — 找人 · 找项目 · 找导师</p>
+      <p class="il-footer-desc" th:text="#{footer.description}">高校竞赛协作平台 — 找人 · 找项目 · 找导师</p>
     </div>
     <div class="il-footer-links">
       <div class="il-footer-section">
-        <h4 class="il-footer-section-title">平台</h4>
-        <a href="/team-market.html" class="il-footer-link">组队大厅</a>
-        <a href="/teacher-wall.html" class="il-footer-link">导师招贤</a>
-        <a href="/community.html" class="il-footer-link">交流社区</a>
+        <h4 class="il-footer-section-title" th:text="#{footer.platform}">平台</h4>
+        <a href="/team-market.html" class="il-footer-link" th:text="#{nav.team}">组队大厅</a>
+        <a href="/teacher-wall.html" class="il-footer-link" th:text="#{nav.teacher}">导师招贤</a>
+        <a href="/community.html" class="il-footer-link" th:text="#{nav.community}">交流社区</a>
       </div>
       <div class="il-footer-section">
-        <h4 class="il-footer-section-title">资源</h4>
-        <a href="/competitions.html" class="il-footer-link">竞赛目录</a>
-        <a href="/gallery.html" class="il-footer-link">成果展示</a>
+        <h4 class="il-footer-section-title" th:text="#{footer.resources}">资源</h4>
+        <a href="/competitions.html" class="il-footer-link" th:text="#{nav.competition}">竞赛目录</a>
+        <a href="/gallery.html" class="il-footer-link" th:text="#{nav.gallery}">成果展示</a>
+        <a href="/roster.html" class="il-footer-link" th:text="#{footer.roster}">团队名录</a>
+      </div>
+      <div class="il-footer-section">
+        <h4 class="il-footer-section-title" th:text="#{footer.about}">关于</h4>
+        <!-- 复用全局反馈组件的委托监听（feedback.js 监听 document 上的 [data-fbk-open]） -->
+        <button type="button" class="il-footer-link" data-fbk-open th:text="#{nav.feedback}">意见反馈</button>
+        <a href="/privacy.html" class="il-footer-link" th:text="#{footer.privacy}">隐私政策</a>
+        <a href="/terms.html" class="il-footer-link" th:text="#{footer.terms}">服务条款</a>
       </div>
     </div>
   </div>
   <div class="il-footer-bottom">
-    <p>&copy; 2026 iLink. All rights reserved.</p>
+    <div class="il-footer-copy">
+      <span>&copy; 2026 iLink. All rights reserved.</span>
+      <span class="il-footer-copy__sep" aria-hidden="true"></span>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer nofollow" class="il-footer-filing__link">
+        <!-- 工信部备案没有官方徽章，用描边盾牌与公安的实心警徽配对：一描一实、同尺寸同间距。
+             viewBox 收窄到路径实际范围（原 0 0 24 24 四周留白会让盾牌只有 9px 宽，
+             比警徽小一圈）；收窄后与警徽一样撑满 14px 框高。 -->
+        <svg class="il-footer-filing__icon" viewBox="4 2 16 20" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>苏ICP备2026076102号-1</span>
+      </a>
+      <span class="il-footer-copy__sep" aria-hidden="true"></span>
+      <a href="https://beian.mps.gov.cn/#/query/webSearch?code=32032402000708" target="_blank" rel="noopener noreferrer nofollow" class="il-footer-filing__link">
+        <img th:src="@{/img/beian-gongan.png}" src="/img/beian-gongan.png" alt="" class="il-footer-filing__icon" loading="lazy" onerror="this.style.display='none'">
+        <span>苏公网安备32032402000708号</span>
+      </a>
+    </div>
     <p class="il-footer-slogan">路漫漫其修远兮，吾将上下而求索。</p>
   </div>
 </footer>

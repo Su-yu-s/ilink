@@ -1,3 +1,4 @@
+@layer legacy {
 /**
  * 公开用户主页（user-profile.html）
  * 只被该页加载：卡片栈式概览（身份 / 基本信息 / 简介 / 发布内容 / 成果荣誉）。
@@ -487,4 +488,6 @@ a.pub-row__thumb:hover {
     flex-direction: column;
     gap: var(--space-1);
   }
+}
+
 }

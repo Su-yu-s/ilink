@@ -18,7 +18,6 @@ public class TaskParticipant {
     private BigDecimal contributionHours;
     private BigDecimal contributionRate;
     private Date joinedAt;
-    private Date leftAt;
     private String status;
 
     public enum ParticipantRole {

@@ -23,6 +23,9 @@ public class TeamTask {
     private Date deadline;
     private Long assignedTo;
     private Long createdBy;
+    private Boolean requiresReview;
+    /** 父任务 ID（AI 拆解来源）；非空表示这是子任务，不可再拆 */
+    private Long parentTaskId;
     private Date createdAt;
     private Date updatedAt;
     private Date completedAt;

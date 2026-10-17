@@ -1,4 +1,4 @@
-﻿class UserSkillManager {
+class UserSkillManager {
     constructor() {
         this.skills = [];
         this.baselineSkills = [];
@@ -128,7 +128,7 @@
     }
 
     async deleteSkill(skillId) {
-        if (!confirm('确定要删除该技能吗？')) {
+        if (!uiConfirm('确定要删除该技能吗？')) {
             return;
         }
 
@@ -215,27 +215,30 @@
     }
 
     showMessage(message, type = 'info') {
+        // 全局 showMessage 来自 common.js（内部走 Toast 组件）；缺失时只在控制台留痕，
+        // 不再用阻塞式 alert() 打断用户。
         if (typeof showMessage === 'function') {
             showMessage(message, type);
-        } else {
-            alert(message);
+        } else if (typeof console !== 'undefined' && console.warn) {
+            console.warn('[profile-edit]', message);
         }
     }
 }
 
-/** 从用户对象或表单字段值取首字（绝不读 label 文案），与顶部导航保持一致：优先用户名 */
+/**
+ * 从用户对象或表单字段值取首字（绝不读 label 文案），与顶部导航保持一致：
+ * 优先后端解析好的 avatarInitial / displayName，其次表单里的姓名。
+ */
 function resolveAvatarInitial(userOrFields) {
     const sources = userOrFields
-        ? [userOrFields.username, userOrFields.realName, userOrFields.nickname]
+        ? [userOrFields.avatarInitial, userOrFields.displayName, userOrFields.realName, userOrFields.nickname]
         : [];
     for (let i = 0; i < sources.length; i++) {
         const s = sources[i] != null ? String(sources[i]).trim() : '';
         if (s) return s.charAt(0).toUpperCase();
     }
     const realNameEl = document.getElementById('realName');
-    const usernameEl = document.getElementById('username');
     const formSources = [
-        usernameEl ? usernameEl.value : '',
         realNameEl ? realNameEl.value : ''
     ];
     for (let j = 0; j < formSources.length; j++) {
@@ -286,14 +289,12 @@ class AvatarUploader {
         }
 
         const realNameEl = document.getElementById('realName');
-        const usernameEl = document.getElementById('username');
         const onNameChange = () => {
             if (!this.hasAvatarUrl()) {
                 this.showFallback(resolveAvatarInitial(null));
             }
         };
         if (realNameEl) realNameEl.addEventListener('input', onNameChange);
-        if (usernameEl) usernameEl.addEventListener('input', onNameChange);
 
         this.loadUserAvatar();
     }
@@ -423,7 +424,6 @@ class AvatarUploader {
                     return;
                 }
                 this.setAvatar(url, resolveAvatarInitial({
-                    username: document.getElementById('username')?.value,
                     realName: document.getElementById('realName')?.value
                 }));
 
@@ -434,10 +434,8 @@ class AvatarUploader {
                 this.showHint('上传成功', 'success');
 
                 if (typeof applyAccountMenuFromUser === 'function') {
-                    const uEl = document.getElementById('username');
                     const rEl = document.getElementById('realName');
                     applyAccountMenuFromUser({
-                        username: uEl ? uEl.value : '',
                         realName: rEl ? rEl.value : '',
                         avatar: url,
                         role: ''
@@ -511,17 +509,14 @@ class AvatarUploader {
     selectBuiltin(url) {
         if (!url) return;
         this.setAvatar(url, resolveAvatarInitial({
-            username: document.getElementById('username')?.value,
             realName: document.getElementById('realName')?.value
         }));
         if (this.hiddenInput) this.hiddenInput.value = url;
         this.showHint('已选择内置头像，保存后生效', 'success');
         this.renderBuiltinGrid();
         if (typeof applyAccountMenuFromUser === 'function') {
-            const uEl = document.getElementById('username');
             const rEl = document.getElementById('realName');
             applyAccountMenuFromUser({
-                username: uEl ? uEl.value : '',
                 realName: rEl ? rEl.value : '',
                 avatar: url,
                 role: ''
@@ -634,7 +629,7 @@ class ProfileDetailsController {
         }
         if (moveFocus) {
             if (editing) {
-                window.requestAnimationFrame(() => document.getElementById('username')?.focus());
+                window.requestAnimationFrame(() => document.getElementById('realName')?.focus());
             } else {
                 window.requestAnimationFrame(() => this.title?.focus());
             }
@@ -669,8 +664,7 @@ class ProfileDetailsController {
             if (element) element.textContent = value(input);
         };
 
-        setText('profileReadName', user.realName || user.username);
-        setText('profileReadUsername', user.username);
+        setText('profileReadName', user.displayName || user.realName);
         setText('profileReadEmail', user.email);
         setText('profileReadRealName', user.realName);
         setText('profileReadSchool', user.school);

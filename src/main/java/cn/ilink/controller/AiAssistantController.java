@@ -42,7 +42,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import cn.ilink.util.DisplayNameResolver;
 
 /**
  * 团队空间 AI 助手。
@@ -65,12 +69,18 @@ public class AiAssistantController {
     /**
      * SSE 推送线程池。答疑是长阻塞调用，必须与容器线程解耦；
      * 用有界池而不是 cached，避免并发提问时把外部 AI 连接打爆。
+     * 修复 D-P1-7：固定线程池 + 无界队列会把超员请求静默挂起（emitter 已返回却无任何事件，
+     * 直到超时"永久转圈"）。改为有界队列 + AbortPolicy，拒绝时立即经 emitter 报错。
      */
-    private final ExecutorService sseExecutor = Executors.newFixedThreadPool(4, runnable -> {
-        Thread thread = new Thread(runnable, "ai-qa-sse");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private final ExecutorService sseExecutor = new ThreadPoolExecutor(
+        4, 8, 60L, TimeUnit.SECONDS,
+        new LinkedBlockingQueue<>(16),
+        runnable -> {
+            Thread thread = new Thread(runnable, "ai-qa-sse");
+            thread.setDaemon(true);
+            return thread;
+        },
+        new ThreadPoolExecutor.AbortPolicy());
 
     @PreDestroy
     void shutdownSseExecutor() {
@@ -113,6 +123,9 @@ public class AiAssistantController {
         if (user == null) {
             return Result.unauthorized().toResponseEntity();
         }
+        if (payload == null) {
+            return Result.badRequest("请求内容不能为空").toResponseEntity();
+        }
         Long taskId = payload.get("taskId") == null ? null : Long.valueOf(String.valueOf(payload.get("taskId")));
         if (taskId == null) {
             return Result.badRequest("缺少任务ID").toResponseEntity();
@@ -127,6 +140,13 @@ public class AiAssistantController {
         TeamTask task = teamTaskService.getById(taskId);
         if (task == null || !Objects.equals(task.getTeamId(), teamId)) {
             return Result.notFound("任务不存在").toResponseEntity();
+        }
+        // 拆解权限：已分配任务仅被分配者本人可拆解；未分配任务仅队长可拆解
+        boolean isAssignee = task.getAssignedTo() != null
+            && Objects.equals(task.getAssignedTo(), user.getId());
+        boolean isLeader = team.getCreatorId() != null && team.getCreatorId().equals(user.getId());
+        if (task.getAssignedTo() != null ? !isAssignee : !isLeader) {
+            return Result.forbidden().toResponseEntity();
         }
 
         ResponseEntity<Result<?>> guard = aiGuard();
@@ -157,7 +177,9 @@ public class AiAssistantController {
         if (user == null) {
             return Result.unauthorized().toResponseEntity();
         }
-        String question = payload.get("question") == null ? "" : String.valueOf(payload.get("question")).trim();
+        // 修复 D-P3-2：请求体为 JSON 字面 null 时 payload 为 null，直接 get 会 NPE
+        String question = payload == null || payload.get("question") == null
+            ? "" : String.valueOf(payload.get("question")).trim();
         if (question.isEmpty()) {
             return Result.badRequest("问题不能为空").toResponseEntity();
         }
@@ -292,7 +314,9 @@ public class AiAssistantController {
         if (user == null) {
             return failedStream(401, "未登录或登录已过期");
         }
-        String question = payload.get("question") == null ? "" : String.valueOf(payload.get("question")).trim();
+        // 修复 D-P3-2：请求体为 JSON 字面 null 时 payload 为 null，直接 get 会 NPE
+        String question = payload == null || payload.get("question") == null
+            ? "" : String.valueOf(payload.get("question")).trim();
         if (question.isEmpty()) {
             return failedStream(400, "问题不能为空");
         }
@@ -318,7 +342,12 @@ public class AiAssistantController {
 
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         // 答疑是几十秒级的长阻塞调用，必须离开容器线程，否则并发几个问题就把 Tomcat 线程占满
-        sseExecutor.execute(() -> runQaStream(emitter, user, question, competition));
+        try {
+            sseExecutor.execute(() -> runQaStream(emitter, user, question, competition));
+        } catch (RejectedExecutionException e) {
+            // 修复 D-P1-7：池满时明确拒绝，而不是让前端挂到超时
+            return failedStream(503, "当前答疑人数较多，请稍后再试");
+        }
         return emitter;
     }
 
@@ -411,7 +440,7 @@ public class AiAssistantController {
             return Result.fail(503, "AI 功能已关闭").toResponseEntity();
         }
         if (!aiAssistantService.isConfigured()) {
-            return Result.fail(503, "AI 服务未配置，请联系管理员设置 AGNES_API_KEY").toResponseEntity();
+            return Result.fail(503, "AI 服务未配置，请联系管理员设置 DASHSCOPE_API_KEY").toResponseEntity();
         }
         return null;
     }
@@ -450,7 +479,7 @@ public class AiAssistantController {
         if (task.getAssignedTo() != null) {
             User assignee = userService.getById(task.getAssignedTo());
             map.put("assigneeName", assignee == null ? null
-                : (assignee.getRealName() != null ? assignee.getRealName() : assignee.getUsername()));
+                : DisplayNameResolver.resolve(assignee));
         }
         return map;
     }

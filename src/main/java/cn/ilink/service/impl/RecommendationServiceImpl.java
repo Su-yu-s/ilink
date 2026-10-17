@@ -10,7 +10,9 @@ import cn.ilink.mapper.TeamDemandMapper;
 import cn.ilink.mapper.TeamApplicationMapper;
 import cn.ilink.mapper.UserMapper;
 import cn.ilink.service.RecommendationService;
+import cn.ilink.util.DisplayNameResolver;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.slf4j.Logger;
@@ -45,7 +47,8 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
     private TeamApplicationMapper teamApplicationMapper;
 
     @Override
-    @Cacheable(value = "recommendedUsers", key = "{#teamId, #limit}")
+    // 修复 D-P0-2：缓存 key 必须包含 requesterId，否则非队长用户会命中队长的缓存结果、绕过方法体鉴权
+    @Cacheable(value = "recommendedUsers", key = "{#requesterId, #teamId, #limit}")
     public List<RecommendedUserVO> getRecommendedUsers(Long requesterId, Long teamId, int limit) {
         int safeLimit = normalizeLimit(limit);
         TeamDemand team = teamDemandMapper.selectById(teamId);
@@ -72,33 +75,152 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
                 .orderByDesc(User::getCreatedAt)
         ).getRecords();
 
+        // 修复 D-P0-1（压测 LT-3）：原先循环内每候选用户 5 条 SQL（重查 User、历史、活跃度、评分、逐条日志），
+        // 200 候选 ≈ 1000 条 SQL 且每次未命中写 200 行日志（实测单请求 650ms）。改为：
+        //   1) User 对象直接复用，不再按 id 重查；
+        //   2) 历史/活跃度/评分三项改为按 userId 集合的 3 次批量 IN 查询；
+        //   3) 推荐日志只为实际返回（排序截断后）的候选写入，200 条 INSERT → ≤20 条。
+        List<User> pool = allUsers.stream()
+            .filter(u -> !u.getId().equals(team.getCreatorId()))
+            .collect(Collectors.toList());
+        List<Long> candidateIds = pool.stream().map(User::getId).collect(Collectors.toList());
+
+        Map<Long, Double> historyScores = loadHistoryScores(candidateIds, team.getId());
+        Map<Long, Long> activityCounts = loadActivityCounts(candidateIds);
+        Map<Long, Long> acceptedCounts = loadAcceptedCounts(candidateIds);
+
         List<RecommendedUserVO> recommendations = new ArrayList<>();
+        for (User user : pool) {
+            double historyScore = historyScores.getOrDefault(user.getId(), 100.0);
+            double activityScore = activityScoreOf(activityCounts.getOrDefault(user.getId(), 0L));
 
-        for (User user : allUsers) {
-            if (user.getId().equals(team.getCreatorId())) {
-                continue;
-            }
+            MatchResult matchResult = calculateMatchScoreInternal(user, team, user.getId(),
+                team.getId(), historyScore, activityScore);
 
-            MatchResult matchResult = calculateMatchScoreInternal(user.getId(), team);
             RecommendedUserVO vo = new RecommendedUserVO();
-            vo.setLogId(recordRecommendation(requesterId, user.getId(), teamId, matchResult.getTotalScore(),
-                String.join(",", matchResult.getMatchReasons())));
             vo.setUserId(user.getId());
-            vo.setUsername(user.getUsername());
+            vo.setDisplayName(DisplayNameResolver.resolve(user));
             vo.setRealName(user.getRealName());
             vo.setSchool(user.getSchool());
             vo.setAvatar(user.getAvatar());
             vo.setMatchScore(matchResult.getTotalScore());
             vo.setMatchReasons(matchResult.getMatchReasons());
             vo.setSkills(parseSkills(user.getBio()));
-            vo.setRating(calculateUserRating(user.getId()));
+            vo.setRating(ratingOf(acceptedCounts.getOrDefault(user.getId(), 0L)));
             recommendations.add(vo);
         }
 
-        return recommendations.stream()
+        List<RecommendedUserVO> top = recommendations.stream()
             .sorted(Comparator.comparing(RecommendedUserVO::getMatchScore).reversed())
             .limit(safeLimit)
             .collect(Collectors.toList());
+
+        for (RecommendedUserVO vo : top) {
+            vo.setLogId(recordRecommendation(requesterId, vo.getUserId(), teamId, vo.getMatchScore(),
+                String.join(",", vo.getMatchReasons())));
+        }
+        return top;
+    }
+
+    /** 批量取每个候选用户在该团队上的最近一条推荐日志并折算历史评分，缺失/异常时按默认 100.0 */
+    private Map<Long, Double> loadHistoryScores(List<Long> userIds, Long teamId) {
+        if (userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<RecommendationLog> logs = baseMapper.selectList(
+                new LambdaQueryWrapper<RecommendationLog>()
+                    .eq(RecommendationLog::getRecommendedTeamId, teamId)
+                    .in(RecommendationLog::getUserId, userIds)
+                    .orderByDesc(RecommendationLog::getCreatedAt));
+            Map<Long, RecommendationLog> latest = new HashMap<>();
+            for (RecommendationLog logRow : logs) {
+                latest.putIfAbsent(logRow.getUserId(), logRow);
+            }
+            Map<Long, Double> scores = new HashMap<>();
+            for (Map.Entry<Long, RecommendationLog> e : latest.entrySet()) {
+                String action = e.getValue().getAction();
+                if ("ACCEPTED".equals(action)) {
+                    scores.put(e.getKey(), 80.0);
+                } else if ("VIEWED".equals(action)) {
+                    scores.put(e.getKey(), 60.0);
+                } else if ("DISMISSED".equals(action)) {
+                    scores.put(e.getKey(), 30.0);
+                } else {
+                    scores.put(e.getKey(), 50.0);
+                }
+            }
+            return scores;
+        } catch (DataAccessException e) {
+            log.warn("推荐日志批量读取失败，历史评分使用默认值：{}", rootMessage(e));
+            return Collections.emptyMap();
+        }
+    }
+
+    /** 批量统计各候选用户近 30 天的推荐日志条数（单条 GROUP BY 查询替代逐用户 count） */
+    private Map<Long, Long> loadActivityCounts(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        long cutoffTime = System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000);
+        try {
+            QueryWrapper<RecommendationLog> qw = new QueryWrapper<>();
+            qw.select("user_id", "COUNT(*) AS cnt")
+                .in("user_id", userIds)
+                .ge("created_at", new Date(cutoffTime))
+                .groupBy("user_id");
+            Map<Long, Long> counts = new HashMap<>();
+            for (Map<String, Object> row : baseMapper.selectMaps(qw)) {
+                Object uid = row.get("user_id");
+                Object cnt = row.get("cnt");
+                if (uid != null && cnt != null) {
+                    counts.put(Long.parseLong(String.valueOf(uid)), Long.parseLong(String.valueOf(cnt)));
+                }
+            }
+            return counts;
+        } catch (DataAccessException e) {
+            log.warn("推荐日志批量统计失败，活跃度评分使用默认值：{}", rootMessage(e));
+            return Collections.emptyMap();
+        }
+    }
+
+    /** 批量统计各候选用户被 ACCEPT 的推荐次数（单条 IN 查询 + 内存计数，替代逐用户 list） */
+    private Map<Long, Long> loadAcceptedCounts(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            List<RecommendationLog> logs = baseMapper.selectList(
+                new LambdaQueryWrapper<RecommendationLog>()
+                    .eq(RecommendationLog::getAction, "ACCEPTED")
+                    .in(RecommendationLog::getRecommendedUserId, userIds));
+            Map<Long, Long> counts = new HashMap<>();
+            for (RecommendationLog logRow : logs) {
+                counts.merge(logRow.getRecommendedUserId(), 1L, Long::sum);
+            }
+            return counts;
+        } catch (DataAccessException e) {
+            log.warn("推荐日志评分批量读取失败，用户评分使用默认值：{}", rootMessage(e));
+            return Collections.emptyMap();
+        }
+    }
+
+    private double activityScoreOf(long logCount) {
+        if (logCount >= 10) {
+            return 100.0;
+        } else if (logCount >= 5) {
+            return 80.0;
+        } else if (logCount >= 2) {
+            return 60.0;
+        } else if (logCount >= 1) {
+            return 40.0;
+        }
+        return 20.0;
+    }
+
+    private Double ratingOf(long acceptedCount) {
+        double rating = 4.5 + Math.min(acceptedCount * 0.1, 0.5);
+        return Math.round(rating * 10.0) / 10.0;
     }
 
     @Override
@@ -120,6 +242,30 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
     }
 
     private MatchResult calculateMatchScoreInternal(User user, TeamDemand team, Long userId, Long teamId) {
+        double historyScore = calculateHistoryScore(userId, teamId);
+        double activityScore = calculateActivityScore(userId);
+        return calculateMatchScoreInternal(user, team, userId, teamId, historyScore, activityScore);
+    }
+
+    /** 单用户活跃度评分：仅 {@link #calculateMatchScore} 单点路径使用；批量列表走 loadActivityCounts */
+    private double calculateActivityScore(Long userId) {
+        long cutoffTime = System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000);
+        long logCount;
+        try {
+            logCount = count(
+                new LambdaQueryWrapper<RecommendationLog>()
+                    .eq(RecommendationLog::getUserId, userId)
+                    .ge(RecommendationLog::getCreatedAt, new Date(cutoffTime))
+            );
+        } catch (DataAccessException e) {
+            log.warn("推荐日志统计失败，活跃度评分使用默认值：{}", rootMessage(e));
+            return 20.0;
+        }
+        return activityScoreOf(logCount);
+    }
+
+    private MatchResult calculateMatchScoreInternal(User user, TeamDemand team, Long userId, Long teamId,
+                                                    double historyScore, double activityScore) {
 
         MatchResult result = new MatchResult();
         List<String> reasons = new ArrayList<>();
@@ -135,8 +281,6 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
 
         double skillScore = calculateSkillScore(user, team, reasons);
         double urgencyScore = calculateUrgencyScore(team);
-        double historyScore = calculateHistoryScore(userId, teamId);
-        double activityScore = calculateActivityScore(userId);
         double locationScore = calculateLocationScore(user, team);
 
         double totalScore = skillScore * SKILL_WEIGHT
@@ -184,8 +328,8 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
             return score;
         }
 
-        String userBio = user.getBio().toLowerCase();
-        String requiredSkills = team.getRequiredSkills().toLowerCase();
+        String userBio = user.getBio().toLowerCase(Locale.ROOT);
+        String requiredSkills = team.getRequiredSkills().toLowerCase(Locale.ROOT);
 
         String[] skills = requiredSkills.split("[,，;；、]");
         int matchCount = 0;
@@ -258,35 +402,6 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
         return 50.0;
     }
 
-    private double calculateActivityScore(Long userId) {
-        long recentDays = 30;
-        long cutoffTime = System.currentTimeMillis() - (recentDays * 24 * 60 * 60 * 1000);
-
-        long logCount;
-        try {
-            logCount = count(
-                new LambdaQueryWrapper<RecommendationLog>()
-                    .eq(RecommendationLog::getUserId, userId)
-                    .ge(RecommendationLog::getCreatedAt, new Date(cutoffTime))
-            );
-        } catch (DataAccessException e) {
-            log.warn("推荐日志统计失败，活跃度评分使用默认值：{}", rootMessage(e));
-            return 20.0;
-        }
-
-        if (logCount >= 10) {
-            return 100.0;
-        } else if (logCount >= 5) {
-            return 80.0;
-        } else if (logCount >= 2) {
-            return 60.0;
-        } else if (logCount >= 1) {
-            return 40.0;
-        }
-
-        return 20.0;
-    }
-
     private double calculateLocationScore(User user, TeamDemand team) {
         if (user.getSchool() == null) {
             return 50.0;
@@ -305,27 +420,6 @@ public class RecommendationServiceImpl extends ServiceImpl<cn.ilink.mapper.Recom
             .filter(s -> !s.isEmpty())
             .limit(5)
             .collect(Collectors.toList());
-    }
-
-    private Double calculateUserRating(Long userId) {
-        List<RecommendationLog> logs;
-        try {
-            logs = list(
-                new LambdaQueryWrapper<RecommendationLog>()
-                    .eq(RecommendationLog::getRecommendedUserId, userId)
-                    .eq(RecommendationLog::getAction, "ACCEPTED")
-            );
-        } catch (DataAccessException e) {
-            log.warn("推荐日志评分读取失败，用户评分使用默认值：{}", rootMessage(e));
-            return 4.5;
-        }
-
-        if (logs.isEmpty()) {
-            return 4.5;
-        }
-
-        double rating = 4.5 + Math.min(logs.size() * 0.1, 0.5);
-        return Math.round(rating * 10.0) / 10.0;
     }
 
     private Long recordRecommendation(Long userId, Long recommendedUserId, Long teamId, Double score, String reasons) {

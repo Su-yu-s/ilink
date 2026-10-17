@@ -32,12 +32,31 @@ function isTeamLeaderForTasks() {
     return currentTeamData && currentTaskUserId && Number(currentTeamData.creatorId) === Number(currentTaskUserId);
 }
 
+function isMentorForTasks() {
+    return currentTeamMembers.some(function (m) {
+        const id = m.userId || m.id;
+        return Number(id) === Number(currentTaskUserId) &&
+            (m.memberRole === 'MENTOR' || m.role === '导师' || m.role === 'MENTOR');
+    });
+}
+
+function canReviewTasks() {
+    return isTeamLeaderForTasks() || isMentorForTasks();
+}
+
 async function loadCurrentUserForTasks() {
-    const user = await request('/user/profile', { silent: true });
+    // 匿名访客返回 null，不发请求（核实报告 P2-6）；登录态复用页面级缓存，避免重复拉取资料
+    const user = await loadCurrentUserOnce();
     if (user && user.id) currentTaskUserId = user.id;
 }
 
 async function loadTeamMembers() {
+    // 成员列表接口要求登录，匿名访客请求必然 401（控制台红色报错）。
+    // 任务区本来就只对成员/队长开放，这里直接跳过请求（核实报告 P2-6 同类）。
+    if (typeof isAnonymousVisitor === 'function' && isAnonymousVisitor()) {
+        currentTeamMembers = [];
+        return;
+    }
     try {
         const data = await request('/team/' + teamIdNum + '/members', { silent: true });
         currentTeamMembers = Array.isArray(data) ? data : [];
@@ -50,11 +69,11 @@ async function loadTeamMembers() {
 function fillMemberSelect(selectedId) {
     const select = document.getElementById('assignMemberSelect');
     if (!select) return;
-    select.innerHTML = '<option value="">选择队员</option>';
+    select.innerHTML = '<option value="" hidden>选择队员</option>';   // hidden：占位项不进可选列表
     currentTeamMembers.forEach(function(member) {
         const option = document.createElement('option');
         option.value = member.userId || member.id || '';
-        option.textContent = `${member.username || member.realName || '队员'}${member.role ? '（' + member.role + '）' : ''}`;
+        option.textContent = `${member.displayName || member.username || member.realName || '队员'}${member.role ? '（' + member.role + '）' : ''}`;
         if (selectedId && Number(selectedId) === Number(option.value)) option.selected = true;
         select.appendChild(option);
     });
@@ -89,17 +108,20 @@ function renderTaskCard(task) {
     if (isLeader) {
         actions.push(`<button type="button" class="btn btn-sm btn-ilink-ghost" onclick="openTaskForm(${Number(task.id)})">编辑</button>`);
         actions.push(`<button type="button" class="btn btn-sm btn-ilink-danger-ghost" onclick="deleteTask(${Number(task.id)})">删除</button>`);
-        if (normalizedStatus === 'REVIEW') {
-            actions.push(`<button type="button" class="btn btn-sm btn-ilink-success" onclick="reviewTask(${Number(task.id)}, 'COMPLETED')">确认完成</button>`);
-            actions.push(`<button type="button" class="btn btn-sm btn-ilink-warning" onclick="reviewTask(${Number(task.id)}, 'RETURNED')">退回修改</button>`);
+        if (normalizedStatus === 'REVIEW' && canReviewTasks()) {
+            actions.push(`<button type="button" class="btn btn-sm btn-ilink-primary" onclick="openReviewWorkbench(${Number(task.id)})">批阅</button>`);
         }
     }
     if (isAssignee && normalizedStatus === 'PENDING') {
         actions.push(`<button type="button" class="btn btn-sm btn-ilink-primary" onclick="startTask(${Number(task.id)})">开始任务</button>`);
     } else if (isAssignee && normalizedStatus === 'IN_PROGRESS') {
-        actions.push(`<button type="button" class="btn btn-sm btn-ilink-primary" onclick="openSubmitModal(${Number(task.id)})">提交材料</button>`);
-    } else if (isAssignee && normalizedStatus === 'REVIEW' && !isLeader) {
-        actions.push('<span class="badge-ilink badge-ilink--line">待队长审核</span>');
+        if (task.requiresReview === false) {
+            actions.push(`<button type="button" class="btn btn-sm btn-ilink-success" onclick="completeTaskDirectly(${Number(task.id)})">标记完成</button>`);
+        } else {
+            actions.push(`<button type="button" class="btn btn-sm btn-ilink-primary" onclick="openSubmitModal(${Number(task.id)})">提交审阅</button>`);
+        }
+    } else if (isAssignee && normalizedStatus === 'REVIEW' && !canReviewTasks()) {
+        actions.push('<span class="badge-ilink badge-ilink--line">待队长/导师批阅</span>');
     }
 
     return `<article class="il-task-card" data-task-id="${Number(task.id)}">
@@ -167,7 +189,8 @@ async function submitTaskForm() {
         taskTitle: taskName,
         taskDescription: taskDesc,
         deadline: deadline || null,
-        assignedTo: parseInt(memberId, 10)
+        assignedTo: parseInt(memberId, 10),
+        requiresReview: document.getElementById('assignTaskRequiresReview')?.checked !== false
     };
 
     if (currentEditingTaskId) {
@@ -189,7 +212,7 @@ async function submitTaskForm() {
 }
 
 async function deleteTask(taskId) {
-    if (!confirm('确定删除这个任务吗？')) return;
+    if (!uiConfirm('确定删除这个任务吗？')) return;
     await request('/tasks/' + taskId, { method: 'DELETE' });
     showMessage('任务已删除', 'success');
     await loadTasks();
@@ -204,7 +227,41 @@ async function viewTaskDetail(taskId) {
     document.getElementById('taskDetailDeadline').textContent = task.deadline ? new Date(task.deadline).toLocaleDateString('zh-CN') : '无截止日期';
     document.getElementById('taskDetailCreated').textContent = task.createdAt ? formatTime(task.createdAt) : '-';
     await loadSubmissions(taskId);
+    await loadReviewTimeline(taskId);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('taskDetailModal')).show();
+}
+
+/** 批阅记录时间线（挂在提交记录下方） */
+async function loadReviewTimeline(taskId) {
+    const container = document.getElementById('taskReviews');
+    if (!container) return;
+    try {
+        const reviews = await request('/tasks/' + taskId + '/reviews', { silent: true });
+        if (!Array.isArray(reviews) || reviews.length === 0) {
+            container.innerHTML = '';
+            return;
+        }
+        container.innerHTML = '<div class="il-review-timeline__title">批阅记录</div>' + reviews.map(function (r) {
+            const cls = r.verdict === 'PASS' ? 'approve' : (r.verdict === 'REJECT' ? 'reject' : 'comment');
+            const label = r.verdict === 'PASS' ? '通过' : (r.verdict === 'REJECT' ? '驳回' : '补充点评');
+            let fileComments = [];
+            try { fileComments = r.fileComments ? JSON.parse(r.fileComments) : []; } catch (e) { fileComments = []; }
+            const fcHtml = Array.isArray(fileComments) ? fileComments.map(function (fc) {
+                return `<div class="il-review-file-comment"><strong>${window.ILinkPreview.escapeHtml(fc.fileName || '文件')}</strong>${window.ILinkPreview.escapeHtml(fc.comment || '')}</div>`;
+            }).join('') : '';
+            return `<div class="il-review-round ${cls}">
+                <div class="il-review-round__head">
+                    <span class="il-review-round__name">${window.ILinkPreview.escapeHtml(r.reviewerName || '批阅者')}</span>
+                    <span class="il-review-round__action ${cls}">${label}</span>
+                    <span class="il-review-round__time">${r.createdAt ? formatTime(r.createdAt) : ''}</span>
+                </div>
+                ${r.overall ? `<div class="il-review-round__text">${window.ILinkPreview.escapeHtml(r.overall)}</div>` : ''}
+                ${fcHtml}
+            </div>`;
+        }).join('');
+    } catch (error) {
+        container.innerHTML = '';
+    }
 }
 
 async function loadSubmissions(taskId) {
@@ -248,12 +305,68 @@ function renderSubmission(item) {
     </div>`;
 }
 
+const libraryPickerSelection = [];
+
 function openSubmitModal(taskId) {
     currentTaskIdForSubmit = taskId;
     document.getElementById('submitRemark').value = '';
     document.getElementById('submitFile').value = '';
+    libraryPickerSelection.length = 0;
     renderTaskSelectedFile(null);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('submitMaterialModal')).show();
+    loadLibraryPicker();
+}
+
+/** 完成弹窗：从资料库选择交付材料（层级平铺多选） */
+async function loadLibraryPicker() {
+    const box = document.getElementById('libraryPickerList');
+    if (!box) return;
+    try {
+        const tree = await request('/team/' + teamIdNum + '/library', { silent: true });
+        const rows = [];
+        (function walk(nodes, depth) {
+            (nodes || []).forEach(function (node) {
+                if (node.isFolder) {
+                    rows.push({ folder: true, name: node.name, depth: depth });
+                    walk(node.children, depth + 1);
+                } else {
+                    rows.push({ folder: false, node: node, depth: depth });
+                }
+            });
+        })(Array.isArray(tree) ? tree : [], 0);
+        if (!rows.filter(r => !r.folder).length) {
+            box.innerHTML = '<div class="text-muted small">资料库还没有文件，可直接上传附件提交。</div>';
+            return;
+        }
+        box.innerHTML = rows.map(function (row) {
+            if (row.folder) {
+                return `<div class="library-picker-folder" style="padding-left:${row.depth * 14 + 8}px">${window.ILinkPreview.escapeHtml(row.name)}</div>`;
+            }
+            const picked = libraryPickerSelection.some(item => Number(item.libraryFileId) === Number(row.node.id));
+            return `<label class="library-picker-item${picked ? ' picked' : ''}" style="padding-left:${row.depth * 14 + 8}px">
+                <input type="checkbox" data-id="${Number(row.node.id)}" ${picked ? 'checked' : ''}>
+                <span class="library-picker-icon">${window.ILinkPreview.fileIcon(row.node.fileType, row.node.name)}</span>
+                <span class="library-picker-name">${window.ILinkPreview.escapeHtml(row.node.name)}</span>
+                <span class="library-picker-meta">${window.ILinkPreview.escapeHtml(window.ILinkPreview.formatSize(row.node.fileSize) || '')}</span>
+            </label>`;
+        }).join('');
+        box.querySelectorAll('input[type="checkbox"]').forEach(function (input) {
+            input.addEventListener('change', function () {
+                const id = Number(input.dataset.id);
+                const row = rows.find(r => !r.folder && Number(r.node.id) === id);
+                if (!row) return;
+                const at = libraryPickerSelection.findIndex(item => Number(item.libraryFileId) === id);
+                if (input.checked && at < 0) {
+                    libraryPickerSelection.push({ libraryFileId: id, url: row.node.fileUrl, name: row.node.name });
+                } else if (!input.checked && at >= 0) {
+                    libraryPickerSelection.splice(at, 1);
+                }
+                input.closest('.library-picker-item').classList.toggle('picked', input.checked);
+            });
+        });
+    } catch (error) {
+        box.innerHTML = '<div class="text-muted small">资料库加载失败，可直接上传附件提交。</div>';
+    }
 }
 
 async function uploadTaskAttachment(file) {
@@ -300,7 +413,13 @@ async function submitTaskMaterial() {
     submitBtn.disabled = true;
     try {
         const attachments = [];
+        libraryPickerSelection.forEach(function (item) { attachments.push(item); });
         if (file) attachments.push(await uploadTaskAttachment(file));
+        if (!attachments.length) {
+            showMessage('请至少选择一份交付材料或上传附件', 'warning');
+            submitBtn.disabled = false;
+            return;
+        }
         await request('/tasks/' + currentTaskIdForSubmit + '/submit', {
             method: 'POST',
             body: JSON.stringify({
@@ -318,17 +437,19 @@ async function submitTaskMaterial() {
     }
 }
 
-async function reviewTask(taskId, action) {
-    const confirmText = action === 'COMPLETED' ? '确认这个任务已经完成？' : '退回给队员继续修改？';
-    if (!confirm(confirmText)) return;
-    await request('/tasks/' + taskId + '/review', {
-        method: 'PUT',
-        body: JSON.stringify({ action: action })
-    });
-    showMessage('操作成功', 'success');
-    await loadTasks();
+// 直接完成通道（requires_review=0 的任务）
+async function completeTaskDirectly(taskId) {
+    if (!uiConfirm('确认该任务已经完成？')) return;
+    try {
+        await request('/tasks/' + taskId + '/complete', { method: 'POST' });
+        showMessage('任务已完成', 'success');
+        await loadTasks();
+    } catch (error) {
+        showMessage(error.message || '操作失败', 'error');
+    }
 }
 
+// ---------- 批阅工作台 ----------
 async function loadTaskSection() {
     if (!teamIdNum) return;
     if (!currentTeamData || !currentTeamData.id) {
@@ -368,10 +489,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-if (typeof checkCreatorAccess === 'function') {
-    const originalCheckCreatorAccess = checkCreatorAccess;
+/** 工作台（公共脚本）关闭后刷新本页的任务列表 */
+window.onReviewWorkbenchClosed = function () {
+    loadTasks();
+};
+
+if (typeof checkCreatorAccess === 'function') {    const originalCheckCreatorAccess = checkCreatorAccess;
     checkCreatorAccess = async function(teamData) {
         await originalCheckCreatorAccess(teamData);
         await loadTaskSection();
+        await openReviewWorkbenchFromUrl();
     };
 }
+
+/** 批阅工作台是从团队空间的任务看板跳进来的吗（URL 带 reviewTaskId） */

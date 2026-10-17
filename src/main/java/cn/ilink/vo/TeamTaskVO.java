@@ -25,6 +25,9 @@ public class TeamTaskVO {
     private String assigneeName;
     private String assigneeAvatar;
     private Long createdBy;
+    private Boolean requiresReview;
+    /** 父任务 ID；前端据此判断该任务是否还能被 AI 拆解 */
+    private Long parentTaskId;
     private String creatorName;
     private String creatorAvatar;
     private Date createdAt;

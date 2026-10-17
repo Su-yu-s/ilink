@@ -8,22 +8,28 @@ import javax.validation.constraints.Size;
 
 @Data
 public class RegisterRequest {
-    @Size(min = 2, max = 50, message = "用户名需在 2-50 个字符之间")
+    @Size(min = 2, max = 50, message = "{validation.username.size}")
     private String username;
 
     private Long studentId;
 
-    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式错误")
+    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "{validation.phone.format}")
     private String phoneNumber;
 
-    @NotBlank(message = "密码不能为空")
-    @Size(min = 6, max = 100, message = "密码长度需在 6-100 之间")
+    @NotBlank(message = "{validation.password.required}")
+    @Size(min = 6, max = 100, message = "{validation.password.length}")
     private String password;
 
+    @NotBlank(message = "{validation.email.required}")
+    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "{validation.email.format}")
     private String email;
 
-    @NotBlank(message = "请选择身份")
-    @Pattern(regexp = "STUDENT|TEACHER", message = "身份只能为学生或教师")
+    @NotBlank(message = "{validation.emailCode.required}")
+    @Pattern(regexp = "^\\d{6}$", message = "{validation.emailCode.format}")
+    private String emailCode;
+
+    @NotBlank(message = "{validation.role.required}")
+    @Pattern(regexp = "STUDENT|TEACHER", message = "{validation.role.invalid}")
     private String role;
 
     private String gender;

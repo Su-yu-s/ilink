@@ -1,34 +1,139 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户协议 - iLink</title>
+    <title th:text="#{legal.terms.title} + ' - iLink'">用户协议 - iLink</title>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link th:href="@{/css/legal.css}" rel="stylesheet">
 </head>
 <body data-app-page="legal" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
-    <main class="legal-page">
-        <p class="legal-page__eyebrow">平台规则</p>
-        <h1>用户协议</h1>
-        <section>
-            <h2>账号与身份</h2>
-            <p>请使用真实、可联系的身份信息参与组队、导师申请和成果发布。冒用他人身份、发布虚假招募信息或恶意干扰协作，平台可限制相关账号操作。</p>
-        </section>
-        <section>
-            <h2>内容与协作</h2>
-            <p>你发布的文字、成果、组队需求应与高校竞赛协作相关，并确保不侵犯他人知识产权、隐私权或其他合法权益。</p>
-        </section>
-        <section>
-            <h2>责任边界</h2>
-            <p>iLink 提供信息连接与协作管理工具，不对竞赛结果、队伍线下行为或第三方赛事规则变化作保证。报名与参赛请以赛事官方信息为准。</p>
-        </section>
-        <div class="legal-page__actions">
-            <a href="/register.html" class="il-btn il-btn-primary">回到注册</a>
-            <a href="/index.html" class="il-btn il-btn-secondary">返回首页</a>
+
+    <main class="lg-shell">
+
+        <!-- 文档头 -->
+        <div class="lg-head">
+            <p class="lg-eyebrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                <span th:text="#{legal.terms.eyebrow}">平台规则</span>
+            </p>
+            <h1 class="lg-h1" th:text="#{legal.terms.title}">用户协议</h1>
+            <p class="lg-lead" th:text="#{legal.terms.lead}">这份协议说明在 iLink 上你能做什么、需要遵守哪些约定，以及当你遇到问题时平台会怎样处理。</p>
+            <div class="lg-meta">
+                <span><b th:text="#{legal.updated}">最后更新</b> <span th:text="#{legal.lastUpdated}">2026 年 10 月 16 日</span></span>
+                <span class="lg-sep" aria-hidden="true"></span>
+                <span><b th:text="#{legal.version}">版本</b> v1.0</span>
+                <span class="lg-sep" aria-hidden="true"></span>
+                <span><b th:text="#{legal.applies}">适用于</b> <span th:text="#{legal.allUsers}">全部注册用户</span></span>
+            </div>
+        </div>
+
+        <div class="lg-grid">
+
+            <!-- 目录 -->
+            <aside class="lg-toc">
+                <p class="lg-toc__title" th:text="#{legal.terms.toc}">本页目录</p>
+                <nav class="lg-toc__list" th:attr="aria-label=#{legal.terms.toc}">
+                    <a href="#t1" th:text="#{legal.terms.s1}">这份协议说明什么</a>
+                    <a href="#t2" th:text="#{legal.terms.s2}">账号与身份</a>
+                    <a href="#t3" th:text="#{legal.terms.s3}">发布内容的约定</a>
+                    <a href="#t4" th:text="#{legal.terms.s4}">组队与导师协作</a>
+                    <a href="#t5" th:text="#{legal.terms.s5}">内容的知识产权</a>
+                    <a href="#t6" th:text="#{legal.terms.s6}">平台的角色与边界</a>
+                    <a href="#t7" th:text="#{legal.terms.s7}">违规行为的处理</a>
+                    <a href="#t8" th:text="#{legal.terms.s8}">协议更新与联系方式</a>
+                </nav>
+                <p class="lg-toc__foot"><span th:text="#{legal.alsoRead}">也请阅读</span> <a href="/privacy.html" th:text="#{legal.readPrivacy}">隐私政策</a><span th:text="#{legal.terms.tocFoot}">，其中说明了平台如何保存和使用你的信息。</span></p>
+            </aside>
+
+            <article>
+
+                <section class="lg-sec" id="t1">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">01</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.terms.s1}">这份协议说明什么</h2>
+                    </div>
+                    <th:block th:utext="#{legal.terms.t1.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="t2">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">02</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.terms.s2}">账号与身份</h2>
+                    </div>
+                    <th:block th:utext="#{legal.terms.t2.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="t3">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">03</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.terms.s3}">发布内容的约定</h2>
+                    </div>
+                    <th:block th:utext="#{legal.terms.t3.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="t4">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">04</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.terms.s4}">组队与导师协作</h2>
+                    </div>
+                    <th:block th:utext="#{legal.terms.t4.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="t5">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">05</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.terms.s5}">内容的知识产权</h2>
+                    </div>
+                    <th:block th:utext="#{legal.terms.t5.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="t6">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">06</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.terms.s6}">平台的角色与边界</h2>
+                    </div>
+                    <th:block th:utext="#{legal.terms.t6.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="t7">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">07</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.terms.s7}">违规行为的处理</h2>
+                    </div>
+                    <th:block th:utext="#{legal.terms.t7.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="t8">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">08</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.terms.s8}">协议更新与联系方式</h2>
+                    </div>
+                    <th:block th:utext="#{legal.terms.t8.body}"></th:block>
+                </section>
+
+                <div class="lg-foot">
+                    <p class="lg-foot__rel"><span th:text="#{legal.related}">相关文档：</span><a href="/privacy.html" th:text="#{legal.readPrivacy}">隐私政策</a></p>
+                    <a href="/register.html" class="lg-btn lg-btn--p" th:text="#{legal.backRegister}">回到注册</a>
+                    <a href="/index.html" class="lg-btn lg-btn--s" th:text="#{legal.backHome}">返回首页</a>
+                </div>
+
+            </article>
         </div>
     </main>
+
+    <a href="#" class="lg-top" th:attr="title=#{legal.returnTop}, aria-label=#{legal.returnTop}" aria-hidden="true" tabindex="-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+    </a>
+
     <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
     <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/legal.js}"></script>
 </body>
 </html>

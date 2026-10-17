@@ -23,25 +23,31 @@ public class NotificationController {
 
     @GetMapping
     public ResponseEntity<Result<?>> getList(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             @RequestParam(defaultValue = "20") int limit,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
-        if (!user.getId().equals(userId)) {
+        // userId 可省略：置空时直接按当前会话推导；显式传了别人的才拒绝
+        if (userId == null) {
+            userId = user.getId();
+        } else if (!user.getId().equals(userId)) {
             return Result.forbidden().toResponseEntity();
         }
-        List<NotificationVO> list = notificationService.getByUser(userId, limit);
+        // 修复 D-P2-8：limit 封顶，防止 limit=100000 拉全量
+        List<NotificationVO> list = notificationService.getByUser(userId, ControllerUtils.safeSize(limit, 100));
         return Result.ok(list).toResponseEntity();
     }
 
     @GetMapping("/unread-count")
     public ResponseEntity<Result<?>> getUnreadCount(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
-        if (!user.getId().equals(userId)) {
+        if (userId == null) {
+            userId = user.getId();
+        } else if (!user.getId().equals(userId)) {
             return Result.forbidden().toResponseEntity();
         }
         int count = notificationService.getUnreadCount(userId);
@@ -65,11 +71,13 @@ public class NotificationController {
 
     @PutMapping("/read-all")
     public ResponseEntity<Result<?>> markAllAsRead(
-            @RequestParam Long userId,
+            @RequestParam(required = false) Long userId,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
-        if (!user.getId().equals(userId)) {
+        if (userId == null) {
+            userId = user.getId();
+        } else if (!user.getId().equals(userId)) {
             return Result.forbidden().toResponseEntity();
         }
         notificationService.markAllAsRead(userId);
@@ -80,18 +88,19 @@ public class NotificationController {
     public ResponseEntity<Result<?>> create(@RequestBody NotificationDTO dto, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
+        // 修复 D-P2-8：业务错误原来走 Result.error → HTTP 500，污染错误监控；改为正确的 400/403
         if (dto.getUserId() == null) {
-            return Result.error("用户ID不能为空").toResponseEntity();
+            return Result.badRequest("用户ID不能为空").toResponseEntity();
         }
         // C-02: 校验权限——只有系统管理员才能给他人发通知，普通用户只能给自己发
         if (!user.getId().equals(dto.getUserId()) && !"ADMIN".equals(user.getRole())) {
-            return Result.error("无权限创建通知").toResponseEntity();
+            return Result.forbidden().toResponseEntity();
         }
         boolean success = notificationService.createNotification(dto);
         if (success) {
             return Result.ok("通知已创建", null).toResponseEntity();
         } else {
-            return Result.error("创建通知失败").toResponseEntity();
+            return Result.badRequest("创建通知失败").toResponseEntity();
         }
     }
 }

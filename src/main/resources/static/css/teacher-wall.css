@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Teacher Wall — 导师招贤 (Editorial)
    ======================================== */
@@ -1096,4 +1097,6 @@ body[data-app-page="teacher-wall"] .il-search-bar__spacer {
     body[data-app-page="teacher-wall"] .il-search-bar__btn--ghost {
         margin-left: auto;
     }
+}
+
 }

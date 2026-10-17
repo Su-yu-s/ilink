@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+  Agentic GraphRAG 全站悬浮入口（与意见反馈同款接入方式）。
+  用法：<th:block th:replace="fragments/agentic-drawer :: widget"></th:block>
+  已由 fragments/header.html 统一引入（覆盖全部带页头的页面）。
+  含内嵌实例时（如 team-space 中央卡片）组件会自动隐藏本入口，避免双入口重复。
+-->
+<th:block th:fragment="widget">
+    <link rel="stylesheet" th:href="@{/css/agentic-chat.css}">
+    <div id="agcFabRoot" data-agc-instance="fab">
+        <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+            <symbol id="kgd-i-spark" viewBox="0 0 24 24"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></symbol>
+            <symbol id="kgd-i-bolt" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></symbol>
+            <symbol id="kgd-i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></symbol>
+            <symbol id="kgd-i-thought" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+            <symbol id="kgd-i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></symbol>
+            <symbol id="kgd-i-eye" viewBox="0 0 24 24"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><circle cx="12" cy="12" r="3"/></symbol>
+            <symbol id="kgd-i-check" viewBox="0 0 24 24"><path d="M4.5 12.75l6 6 9-13.5"/></symbol>
+            <symbol id="kgd-i-send" viewBox="0 0 24 24"><path d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></symbol>
+            <symbol id="kgd-i-clip" viewBox="0 0 24 24"><path d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13"/></symbol>
+            <symbol id="kgd-i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+            <symbol id="kgd-i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></symbol>
+            <symbol id="kgd-i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></symbol>
+            <symbol id="kgd-i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/></symbol>
+            <symbol id="kgd-i-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+            <symbol id="kgd-i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0018 0V5"/><path d="M3 12a9 3 0 0018 0"/></symbol>
+            <symbol id="kgd-i-close" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></symbol>
+        </svg>
+
+        <!-- 悬浮按钮 -->
+        <button type="button" class="kgd-fab" data-agc-ref="fab" title="AI 深度搜索" aria-label="打开 AI 深度搜索">
+            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-spark"/></svg>
+        </button>
+
+        <!-- 遮罩 -->
+        <div class="kgd-mask" data-agc-ref="mask" data-agc-action="close"></div>
+
+        <!-- 右侧抽屉面板 -->
+        <aside class="kgd-drawer" data-agc-ref="drawer" role="dialog" aria-modal="true" aria-label="AI 深度搜索">
+            <div class="kgd-head">
+                <div class="kgd-head-left">
+                    <div class="kgd-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-spark"/></svg></div>
+                    <div class="kgd-head-title">AI 协作助手 · 深度搜索</div>
+                </div>
+                <button type="button" class="kgd-close" data-agc-action="close" aria-label="关闭">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-close"/></svg>
+                </button>
+            </div>
+
+            <div class="kgd-toolbar">
+                <div class="kgd-toolbar-row">
+                    <div class="kgd-mode" role="group" aria-label="问答模式切换">
+                        <button type="button" data-agc-ref="modeFast">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-bolt"/></svg>
+                            快速答疑
+                        </button>
+                        <button type="button" data-agc-ref="modeDeep" class="kgd-active">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-search"/></svg>
+                            深度搜索
+                        </button>
+                    </div>
+                    <select class="kgd-context" data-agc-ref="context" aria-label="选择提问上下文">
+                        <option value="">通用提问（不绑定竞赛）</option>
+                    </select>
+                </div>
+                <div class="kgd-hint" data-agc-ref="hint">Agent 会自主探索知识图谱，多轮检索后给出可追溯的答案</div>
+            </div>
+
+            <div class="kgd-chatwrap">
+                <div class="kgd-chat" data-agc-ref="chat">
+                    <div class="kgd-row" data-agc-ref="welcome">
+                        <div class="kgd-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-spark"/></svg></div>
+                        <div class="kgd-bubble">
+                            <div class="kgd-bubble-text" data-agc-ref="welcomeText">你好，我会在知识图谱里逐层探索，每一步推理过程都会展示给你看。选中上方竞赛可从该赛事开始探索。</div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="kgd-scrollbadge" data-agc-ref="scrollbadge" data-agc-action="jump" aria-label="回到底部">
+                    <span class="kgd-count" data-agc-ref="badgeCount">1</span>
+                    <svg fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-down"/></svg>
+                </button>
+            </div>
+
+            <div class="kgd-composer">
+                <div class="kgd-error" data-agc-ref="error"></div>
+                <div class="kgd-inputwrap">
+                    <div class="kgd-inputbox">
+                        <textarea data-agc-ref="input" rows="1" maxlength="500" placeholder="描述你的复杂问题，我会深度探索…" aria-label="问题输入框"></textarea>
+                        <div class="kgd-tplmenu" data-agc-ref="tplmenu">
+                            <div class="kgd-tplitem" data-agc-tpl="请总结这段内容的三个要点">总结这段内容的三个要点 <span class="kgd-k">/sum</span></div>
+                            <div class="kgd-tplitem" data-agc-tpl="请生成三个不同的替代版本">生成三个不同的替代版本 <span class="kgd-k">/alt</span></div>
+                            <div class="kgd-tplitem" data-agc-tpl="请以表格形式重新组织上述内容">以表格形式重新组织 <span class="kgd-k">/table</span></div>
+                            <div class="kgd-tplitem" data-agc-tpl="请从读者视角指出其中的论证漏洞">从读者视角指出论证漏洞 <span class="kgd-k">/crit</span></div>
+                        </div>
+                    </div>
+                    <button type="button" class="kgd-sendbtn" data-agc-ref="send">
+                        发送
+                        <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-send"/></svg>
+                    </button>
+                </div>
+                <div class="kgd-foot">
+                    <span class="kgd-lockhint">
+                        <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-lock"/></svg>
+                        仅发送问题与公开竞赛信息，不泄露聊天记录。
+                    </span>
+                    <span><span data-agc-ref="footMode">深度搜索 · 多轮探索</span></span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 实体浮层（全局唯一） -->
+    <div class="kgd-pop" id="agcEntityPop"><div id="agcEntityPopBody"></div></div>
+
+    <script th:src="@{/lib/preview/purify.min.js}"></script>
+    <script th:src="@{/lib/marked.min.js}"></script>
+    <script th:src="@{/js/agentic-chat.js}" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.agenticChat) { window.agenticChat.mountFab(); }
+        });
+    </script>
+</th:block>
+</body>
+</html>

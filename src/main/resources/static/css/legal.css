@@ -1,0 +1,643 @@
+@layer pages {
+/* ============================================================
+   iLink Legal Pages — privacy.html / terms.html
+   ------------------------------------------------------------
+   命名空间 .lg-*，仅这两个页面加载。
+   全部存量 CSS（含 bootstrap）都包在 @layer legacy 内，
+   本文件进 pages 层天然优先，因此不使用 !important。
+   颜色一律消费 design-tokens，不新增调色板。
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. 页面容器与文档头
+   ------------------------------------------------------------ */
+.lg-shell {
+  max-width: var(--container-max, 1200px);
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6) 72px;
+}
+
+.lg-head {
+  padding-bottom: 26px;
+  margin-bottom: 34px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.lg-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--radius-full);
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--ui-text-muted);
+  margin-bottom: 18px;
+}
+
+.lg-eyebrow svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.lg-h1 {
+  font-size: var(--font-size-4xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ui-text);
+  margin: 0 0 12px;
+}
+
+.lg-lead {
+  font-size: var(--font-size-base);
+  line-height: 1.7;
+  color: var(--ui-text-secondary);
+  max-width: 640px;
+  margin: 0 0 20px;
+}
+
+.lg-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  font-size: 13px;
+  color: var(--ui-text-muted);
+}
+
+.lg-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lg-meta b {
+  font-weight: 500;
+  color: var(--ui-text-secondary);
+}
+
+.lg-meta .lg-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--ui-border-strong);
+  padding: 0;
+}
+
+/* ------------------------------------------------------------
+   2. 两栏网格
+   ------------------------------------------------------------ */
+.lg-grid {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 56px;
+  align-items: start;
+}
+
+/* ------------------------------------------------------------
+   3. 左侧粘性目录
+   ------------------------------------------------------------ */
+.lg-toc {
+  position: sticky;
+  top: 124px;
+}
+
+.lg-toc__title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--ui-text-muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+}
+
+.lg-toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--ui-border);
+}
+
+.lg-toc__list a {
+  display: block;
+  padding: 7px 0 7px 14px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ui-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.lg-toc__list a:hover {
+  color: var(--ui-text);
+}
+
+.lg-toc__list a.is-active {
+  color: var(--ui-text);
+  font-weight: 600;
+  border-left-color: var(--ui-text);
+}
+
+.lg-toc__list a:focus-visible {
+  outline: none;
+  border-radius: var(--radius-xs);
+  box-shadow: var(--ui-ring);
+}
+
+.lg-toc__foot {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ui-border);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ui-text-muted);
+}
+
+.lg-toc__foot a {
+  color: var(--ui-text-secondary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ui-border-strong);
+}
+
+.lg-toc__foot a:hover {
+  color: var(--ui-text);
+}
+
+/* ------------------------------------------------------------
+   4. 正文各节
+   ------------------------------------------------------------ */
+.lg-sec {
+  padding-bottom: 34px;
+  margin-bottom: 34px;
+  border-bottom: 1px solid var(--ui-border);
+  scroll-margin-top: 96px;
+}
+
+.lg-sec:last-of-type {
+  border-bottom: 0;
+  margin-bottom: 0;
+  padding-bottom: 8px;
+}
+
+.lg-sec__head {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.lg-sec__num {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.lg-sec__h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  color: var(--ui-text);
+  margin: 0;
+}
+
+.lg-p {
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--ui-text-secondary);
+  margin: 0 0 12px;
+}
+
+.lg-p:last-child {
+  margin-bottom: 0;
+}
+
+.lg-p b {
+  font-weight: 600;
+  color: var(--ui-text);
+}
+
+.lg-list {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+.lg-list:last-child {
+  margin-bottom: 0;
+}
+
+.lg-list li {
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 9px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ui-text-secondary);
+}
+
+.lg-list li:last-child {
+  margin-bottom: 0;
+}
+
+.lg-list li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 12px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ui-border-strong);
+}
+
+.lg-list li b {
+  font-weight: 600;
+  color: var(--ui-text);
+}
+
+/* ------------------------------------------------------------
+   5. 定义型条目（键值对照）
+   ------------------------------------------------------------ */
+.lg-def {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+}
+
+.lg-def__row {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.lg-def__k {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.8;
+  color: var(--ui-text);
+}
+
+.lg-def__v {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ui-text-secondary);
+}
+
+/* ------------------------------------------------------------
+   6. 提示块
+   ------------------------------------------------------------ */
+.lg-note {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-left: 3px solid var(--ui-text);
+  border-radius: var(--ui-radius-surface, 12px);
+  padding: 16px 18px;
+  margin: 18px 0 4px;
+}
+
+.lg-note__t {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ui-text);
+  margin-bottom: 6px;
+}
+
+.lg-note__t svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.lg-note p {
+  font-size: var(--font-size-sm);
+  line-height: 1.75;
+  color: var(--ui-text-secondary);
+  margin: 0;
+}
+
+/* ------------------------------------------------------------
+   7. 状态标签
+   颜色只作辅助，文字始终存在（PRODUCT.md 交互原则 3）
+   浅底 + 深字 + 1px 边框，与全站状态药丸（team-market / detail-refresh）保持一致
+   ------------------------------------------------------------ */
+.lg-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  line-height: 1;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.lg-tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 6px;
+}
+
+.lg-tag--public {
+  background: var(--dr-green-50, #f0fdf4);
+  color: #15803d;
+  border-color: var(--dr-green-200, #bbf7d0);
+}
+
+.lg-tag--private {
+  background: var(--color-gray-100, #f1f1f2);
+  color: var(--ui-text-secondary);
+  border-color: var(--color-gray-200, #e5e5e7);
+}
+
+.lg-tag--stop {
+  background: var(--ui-danger-soft, #fef2f2);
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+/* ------------------------------------------------------------
+   8. 页脚操作区
+   操作按钮一律左对齐：右下角常驻三枚悬浮按钮
+   （.fbk-fabs / .kgd-fab / .lg-top）占住页面右下角约 76px 宽、
+   256px 高的区域，右对齐的按钮在滚到底部时会被它们盖住。
+   ------------------------------------------------------------ */
+.lg-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px 22px;
+  margin-top: 44px;
+  padding-top: 26px;
+  border-top: 1px solid var(--ui-border);
+}
+
+.lg-foot__rel {
+  font-size: 13.5px;
+  color: var(--ui-text-muted);
+}
+
+.lg-foot__rel a {
+  color: var(--ui-text-secondary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ui-border-strong);
+}
+
+.lg-foot__rel a:hover {
+  color: var(--ui-text);
+}
+
+.lg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: var(--ui-radius-control, 8px);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.lg-btn--p {
+  background: var(--ui-text);
+  color: var(--color-white, #fcfcfd);
+}
+
+.lg-btn--p:hover {
+  background: var(--primary-dark);
+  color: var(--color-white, #fcfcfd);
+}
+
+.lg-btn--s {
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border-strong);
+}
+
+.lg-btn--s:hover {
+  border-color: var(--ui-text-muted);
+  color: var(--ui-text);
+}
+
+.lg-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-ring);
+}
+
+/* ------------------------------------------------------------
+   9. 返回顶部
+   右下角已有两枚悬浮入口，返回顶部必须落在整列之上：
+     桌面：.fbk-fabs bottom 24px + 高 116px（两枚 52px + 12px 间距）
+           → 顶边距底 140px
+           .kgd-fab  bottom 152px + 高 52px → 顶边距底 204px
+     移动（≤768px）：.fbk-fabs bottom 16px + 高 104px → 顶边距底 120px
+           .kgd-fab  bottom 132px + 高 46px → 顶边距底 178px
+   取整列顶边 + 12px 间距。
+   ------------------------------------------------------------ */
+.lg-top {
+  position: fixed;
+  right: var(--space-6);
+  bottom: 216px;
+  z-index: var(--z-fixed);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border-strong);
+  color: var(--ui-text-secondary);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity var(--transition-normal), transform var(--transition-normal),
+    visibility var(--transition-normal), color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.lg-top.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.lg-top:hover {
+  color: var(--ui-text);
+  border-color: var(--ui-text-muted);
+}
+
+.lg-top:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-md), var(--ui-ring);
+}
+
+/* ------------------------------------------------------------
+   10. 平板
+   ------------------------------------------------------------ */
+@media (max-width: 1024px) {
+  .lg-grid {
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 36px;
+  }
+}
+
+/* ------------------------------------------------------------
+   11. 移动端：目录降级为顶部卡片
+   ------------------------------------------------------------ */
+@media (max-width: 860px) {
+  .lg-shell {
+    padding: var(--space-8) var(--space-4) 56px;
+  }
+
+  .lg-h1 {
+    font-size: 28px;
+  }
+
+  .lg-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .lg-toc {
+    position: static;
+    background: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-panel, 16px);
+    padding: 16px 18px;
+    margin-bottom: 32px;
+  }
+
+  .lg-toc__list {
+    border-left: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 20px;
+  }
+
+  .lg-toc__list a {
+    padding: 6px 0;
+    margin-left: 0;
+    border-left: 0;
+  }
+
+  .lg-toc__list a.is-active {
+    border-left: 0;
+  }
+
+  .lg-toc__foot {
+    display: none;
+  }
+
+  .lg-def__row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
+/* ------------------------------------------------------------
+   12. 小屏
+   ------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .lg-top {
+    right: var(--space-4);
+    bottom: 190px;
+  }
+}
+
+@media (max-width: 560px) {
+  .lg-toc__list {
+    grid-template-columns: 1fr;
+  }
+
+  .lg-sec__h2 {
+    font-size: 16.5px;
+  }
+
+  .lg-foot {
+    gap: 12px;
+  }
+
+  .lg-foot__rel {
+    flex-basis: 100%;
+    margin-right: 0;
+  }
+}
+
+/* ------------------------------------------------------------
+   13. 减少动效
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .lg-toc__list a,
+  .lg-btn,
+  .lg-top {
+    transition: none;
+  }
+
+  .lg-top {
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   14. 打印 / 另存为 PDF
+   ------------------------------------------------------------ */
+@media print {
+  .il-header,
+  .lg-toc,
+  .lg-top,
+  .lg-foot,
+  .fbk-fabs,
+  .agc-fab-root {
+    display: none !important;
+  }
+
+  .lg-shell {
+    max-width: none;
+    padding: 0;
+  }
+
+  .lg-grid {
+    display: block;
+  }
+
+  .lg-head {
+    border-bottom-color: #000;
+  }
+
+  .lg-h1,
+  .lg-sec__h2,
+  .lg-p,
+  .lg-list li,
+  .lg-def__k,
+  .lg-def__v {
+    color: #000;
+  }
+
+  .lg-sec {
+    break-inside: avoid;
+  }
+}
+}

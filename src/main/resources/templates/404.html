@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>页面未找到 - iLink</title>
+    <title th:text="#{error.404.title} + ' - iLink'">页面未找到 - iLink</title>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
 </head>
 <body class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
@@ -13,9 +13,9 @@
         <div class="il-error-card">
             <div class="il-error-brand" aria-hidden="true">iL</div>
             <p class="il-error-code">404</p>
-            <h1 class="il-error-title">页面未找到</h1>
-            <p class="il-error-desc">抱歉，您访问的页面不存在或已被移除。</p>
-            <a href="/" class="il-btn il-btn-primary">返回首页</a>
+            <h1 class="il-error-title" th:text="#{error.404.title}">页面未找到</h1>
+            <p class="il-error-desc" th:text="#{error.404.hint}">你访问的页面可能已被移除，或链接地址有误。</p>
+            <a href="/" class="il-btn il-btn-primary" th:text="#{legal.backHome}">返回首页</a>
         </div>
     </div>
 

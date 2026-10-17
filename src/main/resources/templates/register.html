@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>用户注册 - iLink</title>
+    <title th:text="#{auth.register.title}">注册 iLink</title>
     <th:block th:replace="fragments/head-assets :: auth"></th:block>
 </head>
 <body class="auth-page--register">
+    <button type="button" id="languageSwitch" class="auth-language-switch" th:text="#{language.switch}" th:attr="aria-label=#{language.switchLabel}">EN</button>
     <div class="floating-shapes" aria-hidden="true">
         <div class="shape shape--1"></div>
         <div class="shape shape--2"></div>
@@ -18,15 +19,10 @@
     <!-- Auth Card -->
     <div class="auth-wrapper">
         <div class="auth-card">
-            <!-- Brand Logo -->
-            <div class="brand-logo">
-                <div class="brand-logo__icon">iL</div>
-            </div>
-
             <!-- Header -->
             <div class="auth-card__header">
-                <h1 class="auth-card__title">创建账号</h1>
-                <p class="auth-card__subtitle">加入 iLink，开启竞赛之旅</p>
+                <h1 class="auth-card__title" th:text="#{auth.register.heading}">加入 iLink</h1>
+                <p class="auth-card__subtitle" th:text="#{auth.register.subtitle}">连接师生，让竞赛协作从这里开始</p>
             </div>
 
             <!-- Form -->
@@ -34,39 +30,58 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <!-- 身份选择 -->
                 <div class="form-group">
-                    <label>身份</label>
+                    <label th:text="#{auth.register.role}">身份</label>
                     <div class="identifier-toggle">
-                        <button type="button" class="identifier-toggle__btn active" data-identity="student" id="toggleStudent" onclick="switchIdentity('STUDENT')">学生</button>
-                        <button type="button" class="identifier-toggle__btn" data-identity="teacher" id="toggleTeacher" onclick="switchIdentity('TEACHER')">教师</button>
+                        <button type="button" class="identifier-toggle__btn active" data-identity="student" id="toggleStudent" onclick="switchIdentity('STUDENT')" th:text="#{auth.register.student}">学生</button>
+                        <button type="button" class="identifier-toggle__btn" data-identity="teacher" id="toggleTeacher" onclick="switchIdentity('TEACHER')" th:text="#{auth.register.teacher}">教师</button>
                     </div>
                     <div class="error-message il-field-hint" id="identityError"></div>
                 </div>
 
                 <!-- Identifier Type Toggle -->
                 <div class="form-group">
-                    <label id="identifierGroupLabel">手机号 / 学号</label>
+                    <label id="identifierGroupLabel" th:text="#{auth.register.phoneGroup.student}">手机号 / 学号</label>
                     <div class="identifier-toggle">
-                        <button type="button" class="identifier-toggle__btn active" id="togglePhone" onclick="switchIdentifierType('phone')">手机号注册</button>
-                        <button type="button" class="identifier-toggle__btn" id="toggleStudentId" onclick="switchIdentifierType('studentId')">学号注册</button>
+                        <button type="button" class="identifier-toggle__btn active" id="togglePhone" onclick="switchIdentifierType('phone')" th:text="#{auth.register.phoneMode}">手机号注册</button>
+                        <button type="button" class="identifier-toggle__btn" id="toggleStudentId" onclick="switchIdentifierType('studentId')" th:text="#{auth.register.studentIdMode}">学号注册</button>
                     </div>
                     <div class="input-wrapper" id="phoneWrapper">
                         <input type="tel" id="phone" name="phone"
-                               placeholder="请输入手机号" autocomplete="tel">
+                               placeholder="请输入手机号" th:attr="placeholder=#{auth.register.phone.placeholder}" autocomplete="tel">
                     </div>
                     <div class="input-wrapper" id="studentIdWrapper" style="display:none;">
                         <input type="text" id="studentId" name="studentId"
-                               placeholder="请输入学号">
+                               placeholder="请输入学号" th:attr="placeholder=#{auth.register.studentId.placeholder}">
                     </div>
                     <div class="error-message il-field-hint" id="identifierError"></div>
                 </div>
 
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" th:text="#{auth.register.email}">邮箱</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="email" name="email" placeholder="用于接收验证码，也是登录与找回密码的凭据" th:attr="placeholder=#{auth.register.email.placeholder}" required autocomplete="email" maxlength="100">
+                    </div>
+                    <div class="error-message il-field-hint" id="emailError"></div>
+                </div>
+
+                <!-- Email verification code -->
+                <div class="form-group">
+                    <label for="emailCode" th:text="#{auth.register.emailCode}">邮箱验证码</label>
+                    <div class="input-wrapper code-row">
+                        <input type="text" id="emailCode" name="emailCode" inputmode="numeric" maxlength="6" placeholder="6 位数字" th:attr="placeholder=#{auth.register.emailCode.placeholder}" required autocomplete="one-time-code">
+                        <button type="button" class="code-btn" id="sendEmailCodeBtn" th:text="#{auth.register.sendCode}">获取验证码</button>
+                    </div>
+                    <div class="error-message il-field-hint" id="emailCodeError"></div>
+                </div>
+
                 <!-- Password -->
                 <div class="form-group">
-                    <label for="password">密码</label>
+                    <label for="password" th:text="#{auth.register.password}">密码</label>
                     <div class="input-wrapper">
                         <input type="password" id="password" name="password"
-                               placeholder="8-32位，含字母和数字" required minlength="8" autocomplete="new-password">
-                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', 'eyeIcon1', 'eyeOffIcon1')" aria-label="显示/隐藏密码">
+                               placeholder="8-32位，含字母和数字" th:attr="placeholder=#{auth.register.password.placeholder}" required minlength="8" autocomplete="new-password">
+                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', 'eyeIcon1', 'eyeOffIcon1')" th:attr="aria-label=#{auth.toggle.showPassword}">
                             <svg id="eyeIcon1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
@@ -82,11 +97,11 @@
 
                 <!-- 确认密码 -->
                 <div class="form-group">
-                    <label for="confirmPassword">确认密码</label>
+                    <label for="confirmPassword" th:text="#{auth.register.passwordConfirm}">确认密码</label>
                     <div class="input-wrapper">
                         <input type="password" id="confirmPassword" name="confirmPassword"
-                               placeholder="请再次输入密码" required minlength="8" autocomplete="new-password">
-                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword', 'eyeIcon2', 'eyeOffIcon2')" aria-label="显示/隐藏密码">
+                               placeholder="请再次输入密码" th:attr="placeholder=#{auth.register.passwordConfirm.placeholder}" required minlength="8" autocomplete="new-password">
+                        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword', 'eyeIcon2', 'eyeOffIcon2')" th:attr="aria-label=#{auth.toggle.showPassword}">
                             <svg id="eyeIcon2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                                 <circle cx="12" cy="12" r="3"/>
@@ -103,17 +118,17 @@
                 <!-- Agreement -->
                 <div class="agreement-wrapper">
                     <input type="checkbox" id="agreement" name="agreement" required>
-                    <span>我已阅读并同意 <a href="/terms.html" target="_blank" class="il-link" rel="noopener">用户协议</a> 和 <a href="/privacy.html" target="_blank" class="il-link" rel="noopener">隐私政策</a></span>
+                    <span><span th:text="#{auth.legal.prefix}">我已阅读并同意</span> <a href="/terms.html" target="_blank" class="il-link" rel="noopener" th:text="#{auth.legal.terms}">用户协议</a> <span th:text="#{auth.legal.and}">和</span> <a href="/privacy.html" target="_blank" class="il-link" rel="noopener" th:text="#{auth.legal.privacy}">隐私政策</a></span>
                 </div>
 
-                <button type="submit" class="btn-submit" id="registerBtn">注册</button>
+                <button type="submit" class="btn-submit" id="registerBtn" th:text="#{auth.register.submit}">创建账号</button>
 
                 <div id="errorMessage" class="alert"></div>
             </form>
 
             <!-- Footer -->
             <div class="auth-card__footer">
-                已有账号？<a href="/login" class="il-link">立即登录</a>
+                <span th:text="#{auth.register.loginPrompt}">已有账号？</span><a href="/login" class="il-link" th:text="#{auth.register.loginLink}">登录</a>
             </div>
         </div>
     </div>
@@ -129,10 +144,14 @@
                 input.type = 'text';
                 eyeIcon.style.display = 'none';
                 eyeOffIcon.style.display = 'block';
+                const toggle = input.closest('.input-wrapper').querySelector('.toggle-password');
+                if (toggle) toggle.setAttribute('aria-label', t('auth.toggle.hidePassword'));
             } else {
                 input.type = 'password';
                 eyeIcon.style.display = 'block';
                 eyeOffIcon.style.display = 'none';
+                const toggle = input.closest('.input-wrapper').querySelector('.toggle-password');
+                if (toggle) toggle.setAttribute('aria-label', t('auth.toggle.showPassword'));
             }
         }
 
@@ -184,18 +203,18 @@
 
         function syncRegistrationIdentityLabels() {
             const isTeacher = window.currentIdentity === 'TEACHER';
-            const identityLabel = isTeacher ? '工号' : '学号';
+            const identityLabel = isTeacher ? t('auth.register.staffId') : t('auth.register.studentIdLabel');
             const groupLabel = document.getElementById('identifierGroupLabel');
             const idToggle = document.getElementById('toggleStudentId');
             const idInput = document.getElementById('studentId');
             const subtitle = document.querySelector('.auth-card__subtitle');
-            if (groupLabel) groupLabel.textContent = '手机号 / ' + identityLabel;
-            if (idToggle) idToggle.textContent = identityLabel + '注册';
-            if (idInput) idInput.placeholder = '请输入' + identityLabel;
+            if (groupLabel) groupLabel.textContent = t(isTeacher ? 'auth.register.phoneGroup.teacher' : 'auth.register.phoneGroup.student');
+            if (idToggle) idToggle.textContent = t(isTeacher ? 'auth.register.staffIdMode' : 'auth.register.studentIdMode');
+            if (idInput) idInput.placeholder = t(isTeacher ? 'auth.register.staffId.placeholder' : 'auth.register.studentId.placeholder');
             if (subtitle) {
                 subtitle.textContent = isTeacher
-                    ? '创建教师账号，注册后即拥有导师身份'
-                    : '加入 iLink，开启竞赛之旅';
+                    ? t('auth.register.teacherSubtitle')
+                    : t('auth.register.subtitle');
             }
         }
     </script>

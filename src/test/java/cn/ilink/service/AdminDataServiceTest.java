@@ -1,5 +1,7 @@
 package cn.ilink.service;
 
+import cn.ilink.common.UserSessionRegistry;
+import cn.ilink.entity.Asset;
 import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.TeamTask;
 import cn.ilink.mapper.ChatMessageMapper;
@@ -12,6 +14,7 @@ import cn.ilink.mapper.RecommendationLogMapper;
 import cn.ilink.mapper.TaskCommentMapper;
 import cn.ilink.mapper.TaskParticipantMapper;
 import cn.ilink.mapper.TaskSubmissionMapper;
+import cn.ilink.mapper.TeamLibraryFileMapper;
 import cn.ilink.mapper.TeamTaskMapper;
 import cn.ilink.mapper.UserSkillMapper;
 import cn.ilink.service.impl.AssetServiceImpl;
@@ -54,6 +57,7 @@ class AdminDataServiceTest {
     private TaskSubmissionMapper taskSubmissionMapper;
     private ProjectMilestoneMapper projectMilestoneMapper;
     private ChatMessageMapper chatMessageMapper;
+    private TeamLibraryFileMapper teamLibraryFileMapper;
     private RecommendationLogMapper recommendationLogMapper;
     private NotificationMapper notificationMapper;
     private UserSkillMapper userSkillMapper;
@@ -78,6 +82,7 @@ class AdminDataServiceTest {
         taskSubmissionMapper = mock(TaskSubmissionMapper.class);
         projectMilestoneMapper = mock(ProjectMilestoneMapper.class);
         chatMessageMapper = mock(ChatMessageMapper.class);
+        teamLibraryFileMapper = mock(TeamLibraryFileMapper.class);
         recommendationLogMapper = mock(RecommendationLogMapper.class);
         notificationMapper = mock(NotificationMapper.class);
         userSkillMapper = mock(UserSkillMapper.class);
@@ -85,8 +90,10 @@ class AdminDataServiceTest {
             teacherApplicationService, projectApplicationService, assetService, assetLifecycleService,
             communityPostService, communityCommentMapper, communityPostLikeMapper,
             communityPostFavoriteMapper, teamTaskMapper, taskParticipantMapper, taskCommentMapper,
-            taskSubmissionMapper, projectMilestoneMapper, chatMessageMapper, recommendationLogMapper,
-            notificationMapper, userSkillMapper);
+            taskSubmissionMapper, projectMilestoneMapper, chatMessageMapper, teamLibraryFileMapper,
+            recommendationLogMapper,
+            notificationMapper, userSkillMapper,
+            mock(RememberMeService.class), mock(UserSessionRegistry.class));
     }
 
     @Test
@@ -101,7 +108,7 @@ class AdminDataServiceTest {
         when(teamTaskMapper.selectList(any())).thenReturn(List.of(first, second));
         when(teamDemandService.removeById(7L)).thenReturn(true);
 
-        service.deleteTeam(7L);
+        service.deleteTeam(7L, "测试删除原因");
 
         verify(taskSubmissionMapper).delete(any());
         verify(taskCommentMapper).delete(any());
@@ -109,6 +116,8 @@ class AdminDataServiceTest {
         verify(teamTaskMapper).deleteBatchIds(argThat(ids -> ids.size() == 2 && ids.containsAll(List.of(11L, 12L))));
         verify(projectMilestoneMapper).delete(any());
         verify(chatMessageMapper).delete(any());
+        // 核实报告 P2-4：资料库文件必须随队伍一起清理，否则留下 team_id 指向空队伍的孤儿记录
+        verify(teamLibraryFileMapper).delete(any());
         verify(teamApplicationService).remove(any(Wrapper.class));
         verify(recommendationLogMapper).delete(any());
         verify(notificationMapper).delete(any());
@@ -119,7 +128,7 @@ class AdminDataServiceTest {
     void deletingMissingTeamDoesNotTouchChildren() {
         when(teamDemandService.getById(404L)).thenReturn(null);
 
-        assertThrows(NoSuchElementException.class, () -> service.deleteTeam(404L));
+        assertThrows(NoSuchElementException.class, () -> service.deleteTeam(404L, "x"));
 
         verify(teamTaskMapper, never()).selectList(any());
         verify(teamDemandService, never()).removeById(404L);
@@ -127,7 +136,13 @@ class AdminDataServiceTest {
 
     @Test
     void deletingAssetUsesLifecycleServiceSoFileIsRemovedToo() {
-        service.deleteAsset(21L);
+        Asset asset = new Asset();
+        asset.setId(21L);
+        asset.setUserId(9L);
+        asset.setTitle("测试成果");
+        when(assetService.getById(21L)).thenReturn(asset);
+
+        service.deleteAsset(21L, "测试删除原因");
 
         verify(assetLifecycleService).deleteAssetAsAdmin(21L);
     }

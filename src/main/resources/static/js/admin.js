@@ -27,9 +27,24 @@ const AdminState = {
     allCompetitions: [],
     filteredCompetitions: [],
     competitionEditModal: null,
-    userPage: 1
+    userPage: 1,
+    userTotal: 0,
+    teamPage: 1,
+    teamTotal: 0,
+    teacherPage: 1,
+    teacherTotal: 0,
+    assetPage: 1,
+    assetTotal: 0,
+    communityPostPage: 1,
+    communityPostTotal: 0,
+    auditPage: 1,
+    auditTotal: 0
 };
 const ADMIN_USER_PAGE_SIZE = 10;
+// 组队 / 导师 / 成果 / 审计日志等服务端分页页签的每页条数
+const ADMIN_PAGE_SIZE = 20;
+// 社区帖子单独用 10 条：帖子列表最常翻，一页少一点更好扫
+const ADMIN_COMMUNITY_PAGE_SIZE = 10;
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', async function() {
@@ -43,7 +58,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         loadTeachers(),
         loadAssets(),
         loadCommunityPosts(),
-        loadCompetitionsAdmin()
+        loadCompetitionsAdmin(),
+        loadAuditLogs()
     ]);
 
     const modalEl = document.getElementById('adminUserEditModal');
@@ -75,6 +91,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (saveBtn) {
         saveBtn.addEventListener('click', saveUserEditFromModal);
     }
+    document.getElementById('adminEditStatus')?.addEventListener('change', function () {
+        const group = document.getElementById('adminEditDisabledReasonGroup');
+        if (group) group.hidden = this.value !== 'DISABLED';
+    });
     document.getElementById('adminTeamSaveBtn')?.addEventListener('click', saveTeamEditFromModal);
     document.getElementById('adminTeacherSaveBtn')?.addEventListener('click', saveTeacherEditFromModal);
     document.getElementById('adminAssetSaveBtn')?.addEventListener('click', saveAssetEditFromModal);
@@ -86,17 +106,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
 
     bindAdminSearch('userSearchInput', 'userSearchBtn', function() {
-        AdminState.userPage = 1;
-        applyUserSearchAndRender();
+        loadUsers(1);
     });
-    bindAdminSearch('teamSearchInput', 'teamSearchBtn', applyTeamSearchAndRender);
-    bindAdminSearch('teacherSearchInput', 'teacherSearchBtn', applyTeacherSearchAndRender);
-    bindAdminSearch('assetSearchInput', 'assetSearchBtn', applyAssetSearchAndRender);
-    bindAdminSearch('communitySearchInput', 'communitySearchBtn', applyCommunityPostSearchAndRender);
+    document.getElementById('userRoleFilter')?.addEventListener('change', function() { loadUsers(1); });
+    bindAdminSearch('teamSearchInput', 'teamSearchBtn', function() { loadTeams(1); });
+    document.getElementById('teamStatusFilter')?.addEventListener('change', function() { loadTeams(1); });
+    bindAdminSearch('teacherSearchInput', 'teacherSearchBtn', function() { loadTeachers(1); });
+    bindAdminSearch('assetSearchInput', 'assetSearchBtn', function() { loadAssets(1); });
+    bindAdminSearch('communitySearchInput', 'communitySearchBtn', function() { loadCommunityPosts(1); });
     bindAdminSearch('competitionSearchInput', 'competitionSearchBtn', function() {
         AdminState.competitionPage = 1;
-        applyCompetitionSearchAndRender();
+        loadCompetitionsAdmin();
     });
+    bindAdminSearch('auditSearchInput', 'auditSearchBtn', function() { loadAuditLogs(1); });
+    document.getElementById('auditActionFilter')?.addEventListener('change', function() { loadAuditLogs(1); });
 });
 
 function bindBootstrapModal(modalId) {
@@ -110,8 +133,9 @@ function bindBootstrapModal(modalId) {
 function bindAdminSearch(inputId, searchBtnId, renderFn) {
     const input = document.getElementById(inputId);
     const searchBtn = document.getElementById(searchBtnId);
+    const debounced = adminDebounce(renderFn, 350);
     if (input) {
-        input.addEventListener('input', renderFn);
+        input.addEventListener('input', debounced);
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -124,13 +148,75 @@ function bindAdminSearch(inputId, searchBtnId, renderFn) {
     }
 }
 
-function matchesKeyword(values, keyword) {
-    const kw = String(keyword || '').trim().toLowerCase();
-    if (!kw) return true;
-    return values
-        .map(v => String(v == null ? '' : v).toLowerCase())
-        .join(' ')
-        .includes(kw);
+/** 输入防抖：管理端搜索改为服务端过滤后，避免每个按键都打一次接口 */
+function adminDebounce(fn, wait) {
+    let timer = null;
+    return function() {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(fn, wait);
+    };
+}
+
+/** 组装服务端分页参数 */
+function adminSearchParams(page, size) {
+    const params = new URLSearchParams();
+    params.set('page', String(page || 1));
+    params.set('size', String(size));
+    return params;
+}
+
+/** 把搜索框的关键词并入查询参数 */
+function adminKeywordParams(params, inputId) {
+    const kw = document.getElementById(inputId)?.value.trim();
+    if (kw) params.set('keyword', kw);
+    return params;
+}
+
+function adminSelectValue(id) {
+    const el = document.getElementById(id);
+    return el && el.value ? el.value : '';
+}
+
+/** 服务端分页器：所有列表页签共用，翻页回调由调用方传入 */
+function renderAdminServerPager(pagerId, page, size, total, onPage) {
+    const pager = document.getElementById(pagerId);
+    if (!pager) return;
+    const maxPage = Math.max(1, Math.ceil(total / size));
+    if (total <= size) {
+        pager.innerHTML = '';
+        return;
+    }
+    const prevDisabled = page <= 1 ? ' disabled' : '';
+    const nextDisabled = page >= maxPage ? ' disabled' : '';
+    const pages = [];
+    for (let p = 1; p <= maxPage; p++) {
+        if (p === 1 || p === maxPage || Math.abs(p - page) <= 1) {
+            pages.push(p);
+        } else if (pages[pages.length - 1] !== '...') {
+            pages.push('...');
+        }
+    }
+    let html = '<ul class="pagination pagination-sm mb-0">';
+    html += `<li class="page-item${prevDisabled}"><a class="page-link" href="#" data-page="${page - 1}">上一页</a></li>`;
+    pages.forEach(p => {
+        if (p === '...') {
+            html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        } else {
+            const active = p === page ? ' active' : '';
+            html += `<li class="page-item${active}"><a class="page-link" href="#" data-page="${p}">${p}</a></li>`;
+        }
+    });
+    html += `<li class="page-item${nextDisabled}"><a class="page-link" href="#" data-page="${page + 1}">下一页</a></li>`;
+    html += '</ul>';
+    pager.innerHTML = html;
+    pager.querySelectorAll('a.page-link[data-page]').forEach(a => {
+        a.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = Number(this.getAttribute('data-page'));
+            if (!Number.isFinite(target) || target < 1 || target > maxPage || target === page) return;
+            onPage(target);
+        });
+    });
 }
 
 function setTableRowCells(tr, cells) {
@@ -150,7 +236,7 @@ function getUserLabelById(userId) {
     if (!id) return '未设置';
     const user = AdminState.usersById.get(id);
     if (!user) return `用户 #${id}`;
-    const name = String(user.realName || user.username || '').trim() || `用户 #${id}`;
+    const name = String(user.displayName || user.realName || '').trim() || `用户 #${id}`;
     return `${name}（ID:${id}）`;
 }
 
@@ -160,6 +246,7 @@ function getStatusDisplayName(status, type) {
         if (value === 'OPEN') return '招募中';
         if (value === 'TEAMING') return '已组队';
         if (value === 'CLOSED') return '已结束';
+        if (value === 'DISSOLVED') return '已解散';
     }
     if (type === 'teacher') {
         if (value === 'PENDING') return '待审核';
@@ -167,6 +254,25 @@ function getStatusDisplayName(status, type) {
         if (value === 'REJECTED') return '已拒绝';
     }
     return value || '未设置';
+}
+
+/**
+ * 账号状态：正常 / 已暂停。
+ * 后端把 status 为 null 视为 ACTIVE（兼容迁移前数据），这里保持同一判据。
+ */
+function isUserDisabled(user) {
+    const status = user && user.status ? String(user.status).trim().toUpperCase() : '';
+    return status === 'DISABLED';
+}
+
+function renderUserStatusCell(user) {
+    if (!user) return '-';
+    if (isUserDisabled(user)) {
+        const reason = user.disabledReason ? String(user.disabledReason).trim() : '';
+        const title = reason ? ` title="${escapeHtml(reason)}"` : '';
+        return `<span class="admin-status-badge admin-status-badge--danger"${title}>已暂停</span>`;
+    }
+    return '<span class="admin-status-badge admin-status-badge--muted">正常</span>';
 }
 
 function renderStatusBadge(status, type) {
@@ -346,14 +452,19 @@ async function loadDashboardData() {
     }
 }
 
-// 加载用户列表
-async function loadUsers() {
+// 加载用户列表（服务端分页 + 关键词/角色筛选）
+async function loadUsers(page) {
+    page = page || 1;
     try {
-        const response = await apiFetch('/api/admin/users');
+        const params = adminSearchParams(page, ADMIN_USER_PAGE_SIZE);
+        adminKeywordParams(params, 'userSearchInput');
+        const role = adminSelectValue('userRoleFilter');
+        if (role) params.set('role', role);
+        const response = await apiFetch('/api/admin/users?' + params.toString());
         const result = await response.json();
-        
+
         if (result.code === 200) {
-            renderUserList(result.data);
+            renderUserList(result.data, (result.extra && result.extra.pagination) || null);
         } else if (result.code === 403) {
             console.error('无权限访问用户列表');
         } else {
@@ -364,47 +475,19 @@ async function loadUsers() {
     }
 }
 
-// 渲染用户列表
-function renderUserList(users) {
+// 渲染用户列表（rows 已是服务端当前页）
+function renderUserList(users, pagination) {
     const tbody = document.getElementById('userTableBody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    AdminState.usersById = new Map((users || []).map(u => [String(u.id), u]));
-    AdminState.allUsers = Array.isArray(users) ? users.slice() : [];
-    AdminState.userPage = 1;
-    
-    applyUserSearchAndRender();
-}
+    const rows = Array.isArray(users) ? users : [];
+    // 合并而非覆盖：其它模块（组队/成果等）要用用户 id 反查姓名
+    rows.forEach(u => AdminState.usersById.set(String(u.id), u));
+    AdminState.allUsers = rows.slice();
+    AdminState.filteredUsers = rows.slice();
+    AdminState.userPage = pagination ? (pagination.page || 1) : 1;
+    AdminState.userTotal = pagination ? (pagination.total || rows.length) : rows.length;
 
-function applyUserSearchAndRender() {
-    const kw = (document.getElementById('userSearchInput')?.value || '').trim().toLowerCase();
-    if (!kw) {
-        AdminState.filteredUsers = AdminState.allUsers.slice();
-    } else {
-        AdminState.filteredUsers = AdminState.allUsers.filter(user => {
-            const roleText = getUserRoleDisplayName(user.role || '');
-            const haystack = [
-                user.id,
-                user.username,
-                user.realName,
-                user.email,
-                user.phoneNumber,
-                user.studentId,
-                user.gender,
-                user.grade,
-                user.major,
-                user.school,
-                user.college,
-                user.role,
-                roleText
-            ]
-                .map(v => String(v == null ? '' : v).toLowerCase())
-                .join(' ');
-            return haystack.includes(kw);
-        });
-    }
-    const maxPage = Math.max(1, Math.ceil(AdminState.filteredUsers.length / ADMIN_USER_PAGE_SIZE));
-    if (AdminState.userPage > maxPage) AdminState.userPage = maxPage;
     renderUserPage(AdminState.userPage);
 }
 
@@ -413,32 +496,33 @@ function renderUserPage(page) {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const total = AdminState.filteredUsers.length;
+    const rows = AdminState.filteredUsers; // 服务端已分页，这里就是当前页
+    const total = AdminState.userTotal || rows.length;
     if (total === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center admin-empty-cell">暂无匹配用户</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center admin-empty-cell">暂无匹配用户</td></tr>';
         renderUserPagination(0, 1);
         updateUserListHint(0, 0, 0);
         return;
     }
 
-    const maxPage = Math.max(1, Math.ceil(total / ADMIN_USER_PAGE_SIZE));
+    const size = ADMIN_USER_PAGE_SIZE;
+    const maxPage = Math.max(1, Math.ceil(total / size));
     const safePage = Math.min(Math.max(1, page), maxPage);
     AdminState.userPage = safePage;
-    const start = (safePage - 1) * ADMIN_USER_PAGE_SIZE;
-    const end = Math.min(start + ADMIN_USER_PAGE_SIZE, total);
-    const pageItems = AdminState.filteredUsers.slice(start, end);
+    const start = (safePage - 1) * size;
 
-    pageItems.forEach(user => {
+    rows.forEach(user => {
         const accountName = user && user.username ? String(user.username).trim() : '';
         const userNameForList = accountName || '-';
         const realName = user && user.realName ? String(user.realName).trim() : '';
         const tr = document.createElement('tr');
         setTableRowCells(tr, [
-            { label: '用户名', html: escapeHtml(userNameForList) },
+            { label: '账号标识', html: escapeHtml(userNameForList) },
             { label: '姓名', html: renderUserCell(realName) },
             { label: '学号', html: renderUserCell(user.studentId != null ? user.studentId : '') },
             { label: '学校', html: renderUserCell(user.school) },
             { label: '角色', html: escapeHtml(getUserRoleDisplayName(user.role)) },
+            { label: '状态', html: renderUserStatusCell(user) },
             {
                 label: '操作',
                 className: 'admin-user-actions admin-row-actions',
@@ -453,7 +537,7 @@ function renderUserPage(page) {
     });
 
     renderUserPagination(total, safePage);
-    updateUserListHint(total, start + 1, end);
+    updateUserListHint(total, start + 1, start + rows.length);
 }
 
 function renderUserPagination(total, currentPage) {
@@ -498,7 +582,7 @@ function renderUserPagination(total, currentPage) {
             const target = Number(this.getAttribute('data-page'));
             if (!Number.isFinite(target)) return;
             if (target < 1 || target > maxPage || target === AdminState.userPage) return;
-            renderUserPage(target);
+            loadUsers(target);
         });
     });
 }
@@ -644,6 +728,9 @@ function openUserEditModal(userId) {
     const majorEl = document.getElementById('adminEditMajor');
     const schoolEl = document.getElementById('adminEditSchool');
     const collegeEl = document.getElementById('adminEditCollege');
+    const statusEl = document.getElementById('adminEditStatus');
+    const reasonEl = document.getElementById('adminEditDisabledReason');
+    const reasonGroup = document.getElementById('adminEditDisabledReasonGroup');
 
     if (idEl) idEl.value = String(user.id || '');
     if (usernameEl) usernameEl.value = user.username || '';
@@ -657,6 +744,14 @@ function openUserEditModal(userId) {
     if (majorEl) majorEl.value = user.major || '';
     if (schoolEl) schoolEl.value = user.school || '';
     if (collegeEl) collegeEl.value = user.college || '';
+    if (statusEl) statusEl.value = isUserDisabled(user) ? 'DISABLED' : 'ACTIVE';
+    if (reasonEl) reasonEl.value = user.disabledReason || '';
+    if (reasonGroup) reasonGroup.hidden = !isUserDisabled(user);
+    const currentUserId = document.body?.dataset.userId || '';
+    const isSelf = currentUserId && String(currentUserId) === String(user.id);
+    if (statusEl) statusEl.disabled = !!isSelf;
+    if (reasonEl) reasonEl.disabled = !!isSelf;
+    if (statusEl) statusEl.title = isSelf ? '不能修改当前管理员自己的账号状态' : '';
 
     if (AdminState.userEditModal) {
         AdminState.userEditModal.show();
@@ -673,8 +768,18 @@ async function saveUserEditFromModal() {
         return;
     }
     const userId = idEl.value;
+    const user = AdminState.usersById.get(String(userId));
+    const statusEl = document.getElementById('adminEditStatus');
+    const reasonEl = document.getElementById('adminEditDisabledReason');
+    const requestedStatus = statusEl ? statusEl.value : (isUserDisabled(user) ? 'DISABLED' : 'ACTIVE');
+    const reason = reasonEl ? reasonEl.value.trim() : '';
+    if (requestedStatus === 'DISABLED' && !reason) {
+        showMessage('暂停账号时必须填写原因', 'warning');
+        reasonEl?.focus();
+        return;
+    }
+    // username 是系统内部标识，服务端不再接受修改，这里也不提交
     const payload = {
-        username: (document.getElementById('adminEditUsername')?.value || '').trim(),
         email: (document.getElementById('adminEditEmail')?.value || '').trim(),
         role: (document.getElementById('adminEditRole')?.value || '').trim(),
         realName: (document.getElementById('adminEditRealName')?.value || '').trim(),
@@ -686,10 +791,6 @@ async function saveUserEditFromModal() {
         school: (document.getElementById('adminEditSchool')?.value || '').trim(),
         college: (document.getElementById('adminEditCollege')?.value || '').trim()
     };
-    if (!payload.username) {
-        showMessage('用户名不能为空', 'warning');
-        return;
-    }
     if (!payload.studentId) {
         payload.studentId = null;
     }
@@ -702,6 +803,21 @@ async function saveUserEditFromModal() {
         });
         const result = await response.json();
         if (result.code === 200) {
+            const currentStatus = isUserDisabled(user) ? 'DISABLED' : 'ACTIVE';
+            if (requestedStatus !== currentStatus || (requestedStatus === 'DISABLED' && reason !== String(user?.disabledReason || '').trim())) {
+                const statusResponse = await apiFetch(`/api/admin/user/${encodeURIComponent(String(userId))}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ status: requestedStatus, reason: reason })
+                });
+                const statusResult = await statusResponse.json();
+                if (statusResult.code !== 200) {
+                    showMessage((statusResult.message || '账号资料已保存，但状态更新失败') + '；请重新打开编辑窗口确认', 'error');
+                    loadUsers();
+                    return;
+                }
+            }
             showMessage('用户信息更新成功', 'success');
             if (AdminState.userEditModal) AdminState.userEditModal.hide();
             loadUsers();
@@ -743,7 +859,7 @@ function getGenderDisplayName(gender) {
 
 // 删除用户
 async function deleteUser(userId) {
-    if (!confirm('确定要删除该用户吗？')) {
+    if (!uiConfirm('确定要删除该用户吗？')) {
         return;
     }
     
@@ -801,13 +917,18 @@ function openAdminRecordDetailModal(title, summaryName, subtitle, fields) {
 }
 
 // 加载团队列表
-async function loadTeams() {
+async function loadTeams(page) {
+    page = page || 1;
     try {
-        const response = await apiFetch('/api/admin/teams');
+        const params = adminSearchParams(page, ADMIN_PAGE_SIZE);
+        adminKeywordParams(params, 'teamSearchInput');
+        const status = adminSelectValue('teamStatusFilter');
+        if (status) params.set('status', status);
+        const response = await apiFetch('/api/admin/teams?' + params.toString());
         const result = await response.json();
 
         if (result.code === 200) {
-            renderTeamList(result.data);
+            renderTeamList(result.data, (result.extra && result.extra.pagination) || null);
         } else if (result.code === 403) {
             console.error('无权限访问团队列表');
         } else {
@@ -818,28 +939,21 @@ async function loadTeams() {
     }
 }
 
-function renderTeamList(teams) {
-    AdminState.allTeams = Array.isArray(teams) ? teams.slice() : [];
-    AdminState.teamsById = new Map(AdminState.allTeams.map(team => [String(team.id), team]));
+function renderTeamList(teams, pagination) {
+    const rows = Array.isArray(teams) ? teams : [];
+    rows.forEach(team => AdminState.teamsById.set(String(team.id), team));
+    AdminState.allTeams = rows.slice();
+    AdminState.filteredTeams = rows.slice();
+    AdminState.teamPage = pagination ? (pagination.page || 1) : 1;
+    AdminState.teamTotal = pagination ? (pagination.total || rows.length) : rows.length;
     applyTeamSearchAndRender();
 }
 
 function applyTeamSearchAndRender() {
-    const keyword = document.getElementById('teamSearchInput')?.value || '';
-    AdminState.filteredTeams = AdminState.allTeams.filter(team => matchesKeyword([
-        team.id,
-        team.title,
-        team.description,
-        team.requiredSkills,
-        team.competitionId,
-        team.status,
-        getStatusDisplayName(team.status, 'team'),
-        team.creatorId,
-        getUserLabelById(team.creatorId),
-        formatTime(team.createdAt)
-    ], keyword));
+    // 筛选已由服务端完成（关键词 + 状态），这里只负责渲染当前页
     renderTeamRows(AdminState.filteredTeams);
-    updateAdminListHint('teamListHint', AdminState.filteredTeams.length);
+    renderAdminServerPager('teamPager', AdminState.teamPage, ADMIN_PAGE_SIZE, AdminState.teamTotal, loadTeams);
+    updateAdminListHint('teamListHint', AdminState.teamTotal);
 }
 
 function renderTeamRows(teams) {
@@ -964,36 +1078,86 @@ async function saveTeamEditFromModal() {
     }
 }
 
-async function deleteTeam(teamId) {
-    if (!confirm('确定要删除该团队吗？')) return;
 
-    try {
-        const response = await apiFetch(`/api/admin/team/${encodeURIComponent(String(teamId))}`, {
-            method: 'DELETE'
-        });
-        const result = await response.json();
+// ============================================================
+// 通用删除原因弹窗：删除不可恢复，原因必填；确认后回调执行真正的删除请求，
+// 服务端会把删除事实与原因通知内容所有者。
+// ============================================================
+let adminDeleteReasonCallback = null;
 
-        if (result.code === 200) {
-            showMessage('删除成功', 'success');
-            loadTeams();
-            loadDashboardData();
-        } else {
-            showMessage('删除失败: ' + result.message, 'error');
+function openDeleteReasonModal(title, onConfirm) {
+    const modalEl = document.getElementById('adminDeleteReasonModal');
+    if (!modalEl) return;
+    document.getElementById('adminDeleteReasonTitle').textContent = title;
+    const input = document.getElementById('adminDeleteReasonInput');
+    const errorEl = document.getElementById('adminDeleteReasonError');
+    if (input) input.value = '';
+    if (errorEl) errorEl.classList.add('d-none');
+    adminDeleteReasonCallback = onConfirm;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+    if (input) input.focus();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const confirmBtn = document.getElementById('adminDeleteReasonConfirmBtn');
+    const input = document.getElementById('adminDeleteReasonInput');
+    const errorEl = document.getElementById('adminDeleteReasonError');
+    if (!confirmBtn || !input) return;
+    confirmBtn.addEventListener('click', function () {
+        const reason = (input.value || '').trim();
+        if (!reason) {
+            if (errorEl) errorEl.classList.remove('d-none');
+            return;
         }
-    } catch (error) {
-        console.error('删除团队异常:', error);
-        showMessage('删除失败，请稍后重试', 'error');
-    }
+        if (reason.length > 200) {
+            if (errorEl) { errorEl.textContent = '删除原因不能超过 200 字'; errorEl.classList.remove('d-none'); }
+            return;
+        }
+        if (errorEl) errorEl.classList.add('d-none');
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminDeleteReasonModal'));
+        modal.hide();
+        const cb = adminDeleteReasonCallback;
+        adminDeleteReasonCallback = null;
+        if (typeof cb === 'function') cb(reason);
+    });
+});
+
+async function deleteTeam(teamId) {
+    openDeleteReasonModal('删除组队需求', async function (reason) {
+        try {
+            const response = await apiFetch(`/api/admin/team/${encodeURIComponent(String(teamId))}?reason=` + encodeURIComponent(reason), {
+                method: 'DELETE'
+            });
+            const result = await response.json();
+
+            if (result.code === 200) {
+                showMessage('删除成功，已通知创建者', 'success');
+                loadTeams();
+                loadDashboardData();
+            } else {
+                showMessage('删除失败: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('删除团队异常:', error);
+            showMessage('删除失败，请稍后重试', 'error');
+        }
+    });
 }
 
 // 加载导师列表
-async function loadTeachers() {
+async function loadTeachers(page) {
+    page = page || 1;
     try {
-        const response = await apiFetch('/api/admin/teachers');
+        const params = adminSearchParams(page, ADMIN_PAGE_SIZE);
+        adminKeywordParams(params, 'teacherSearchInput');
+        const status = adminSelectValue('teacherStatusFilter');
+        if (status) params.set('status', status);
+        const response = await apiFetch('/api/admin/teachers?' + params.toString());
         const result = await response.json();
 
         if (result.code === 200) {
-            renderTeacherList(result.data);
+            renderTeacherList(result.data, (result.extra && result.extra.pagination) || null);
         } else if (result.code === 403) {
             console.error('无权限访问导师列表');
         } else {
@@ -1004,27 +1168,20 @@ async function loadTeachers() {
     }
 }
 
-function renderTeacherList(teachers) {
-    AdminState.allTeachers = Array.isArray(teachers) ? teachers.slice() : [];
-    AdminState.teachersById = new Map(AdminState.allTeachers.map(teacher => [String(teacher.id), teacher]));
+function renderTeacherList(teachers, pagination) {
+    const rows = Array.isArray(teachers) ? teachers : [];
+    rows.forEach(teacher => AdminState.teachersById.set(String(teacher.id), teacher));
+    AdminState.allTeachers = rows.slice();
+    AdminState.filteredTeachers = rows.slice();
+    AdminState.teacherPage = pagination ? (pagination.page || 1) : 1;
+    AdminState.teacherTotal = pagination ? (pagination.total || rows.length) : rows.length;
     applyTeacherSearchAndRender();
 }
 
 function applyTeacherSearchAndRender() {
-    const keyword = document.getElementById('teacherSearchInput')?.value || '';
-    AdminState.filteredTeachers = AdminState.allTeachers.filter(teacher => matchesKeyword([
-        teacher.id,
-        teacher.userId,
-        getUserLabelById(teacher.userId),
-        teacher.introduction,
-        teacher.researchDirection,
-        teacher.projects,
-        teacher.status,
-        getStatusDisplayName(teacher.status, 'teacher'),
-        formatTime(teacher.createdAt)
-    ], keyword));
     renderTeacherRows(AdminState.filteredTeachers);
-    updateAdminListHint('teacherListHint', AdminState.filteredTeachers.length);
+    renderAdminServerPager('teacherPager', AdminState.teacherPage, ADMIN_PAGE_SIZE, AdminState.teacherTotal, loadTeachers);
+    updateAdminListHint('teacherListHint', AdminState.teacherTotal);
 }
 
 function renderTeacherRows(teachers) {
@@ -1178,7 +1335,7 @@ async function approveTeacher(teacherId) {
 }
 
 async function deleteTeacher(teacherId) {
-    if (!confirm('确定要删除该导师申请吗？')) return;
+    if (!uiConfirm('确定要删除该导师申请吗？')) return;
 
     try {
         const response = await apiFetch(`/api/admin/teacher/${encodeURIComponent(String(teacherId))}`, {
@@ -1200,13 +1357,16 @@ async function deleteTeacher(teacherId) {
 }
 
 // 加载成果列表
-async function loadAssets() {
+async function loadAssets(page) {
+    page = page || 1;
     try {
-        const response = await apiFetch('/api/admin/assets');
+        const params = adminSearchParams(page, ADMIN_PAGE_SIZE);
+        adminKeywordParams(params, 'assetSearchInput');
+        const response = await apiFetch('/api/admin/assets?' + params.toString());
         const result = await response.json();
 
         if (result.code === 200) {
-            renderAssetList(result.data);
+            renderAssetList(result.data, (result.extra && result.extra.pagination) || null);
         } else if (result.code === 403) {
             console.error('无权限访问成果列表');
         } else {
@@ -1217,26 +1377,20 @@ async function loadAssets() {
     }
 }
 
-function renderAssetList(assets) {
-    AdminState.allAssets = Array.isArray(assets) ? assets.slice() : [];
-    AdminState.assetsById = new Map(AdminState.allAssets.map(asset => [String(asset.id), asset]));
+function renderAssetList(assets, pagination) {
+    const rows = Array.isArray(assets) ? assets : [];
+    rows.forEach(asset => AdminState.assetsById.set(String(asset.id), asset));
+    AdminState.allAssets = rows.slice();
+    AdminState.filteredAssets = rows.slice();
+    AdminState.assetPage = pagination ? (pagination.page || 1) : 1;
+    AdminState.assetTotal = pagination ? (pagination.total || rows.length) : rows.length;
     applyAssetSearchAndRender();
 }
 
 function applyAssetSearchAndRender() {
-    const keyword = document.getElementById('assetSearchInput')?.value || '';
-    AdminState.filteredAssets = AdminState.allAssets.filter(asset => matchesKeyword([
-        asset.id,
-        asset.title,
-        asset.description,
-        asset.fileUrl,
-        asset.userId,
-        getUserLabelById(asset.userId),
-        asset.viewCount,
-        formatTime(asset.createdAt)
-    ], keyword));
     renderAssetRows(AdminState.filteredAssets);
-    updateAdminListHint('assetListHint', AdminState.filteredAssets.length);
+    renderAdminServerPager('assetPager', AdminState.assetPage, ADMIN_PAGE_SIZE, AdminState.assetTotal, loadAssets);
+    updateAdminListHint('assetListHint', AdminState.assetTotal);
 }
 
 function renderAssetRows(assets) {
@@ -1343,25 +1497,25 @@ async function saveAssetEditFromModal() {
 }
 
 async function deleteAsset(assetId) {
-    if (!confirm('确定要删除该成果吗？')) return;
+    openDeleteReasonModal('删除成果', async function (reason) {
+        try {
+            const response = await apiFetch(`/api/admin/asset/${encodeURIComponent(String(assetId))}?reason=` + encodeURIComponent(reason), {
+                method: 'DELETE'
+            });
+            const result = await response.json();
 
-    try {
-        const response = await apiFetch(`/api/admin/asset/${encodeURIComponent(String(assetId))}`, {
-            method: 'DELETE'
-        });
-        const result = await response.json();
-
-        if (result.code === 200) {
-            showMessage('删除成功', 'success');
-            loadAssets();
-            loadDashboardData();
-        } else {
-            showMessage('删除失败: ' + result.message, 'error');
+            if (result.code === 200) {
+                showMessage('删除成功，已通知所有者', 'success');
+                loadAssets();
+                loadDashboardData();
+            } else {
+                showMessage('删除失败: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('删除成果异常:', error);
+            showMessage('删除失败，请稍后重试', 'error');
         }
-    } catch (error) {
-        console.error('删除成果异常:', error);
-        showMessage('删除失败，请稍后重试', 'error');
-    }
+    });
 }
 
 const COMMUNITY_CATEGORY_LABELS = {
@@ -1371,13 +1525,16 @@ const COMMUNITY_CATEGORY_LABELS = {
     resource: '资源分享'
 };
 
-async function loadCommunityPosts() {
+async function loadCommunityPosts(page) {
+    page = page || 1;
     try {
-        const response = await apiFetch('/api/admin/community-posts');
+        const params = adminSearchParams(page, ADMIN_COMMUNITY_PAGE_SIZE);
+        adminKeywordParams(params, 'communitySearchInput');
+        const response = await apiFetch('/api/admin/community-posts?' + params.toString());
         const result = await response.json();
 
         if (result.code === 200) {
-            renderCommunityPostList(result.data);
+            renderCommunityPostList(result.data, (result.extra && result.extra.pagination) || null);
         } else if (result.code === 403) {
             console.error('无权限访问社区帖子列表');
         } else {
@@ -1392,30 +1549,20 @@ function getCommunityCategoryLabel(category) {
     return COMMUNITY_CATEGORY_LABELS[category] || category || '未设置';
 }
 
-function renderCommunityPostList(posts) {
-    AdminState.allCommunityPosts = Array.isArray(posts) ? posts.slice() : [];
-    AdminState.communityPostsById = new Map(AdminState.allCommunityPosts.map(post => [String(post.id), post]));
+function renderCommunityPostList(posts, pagination) {
+    const rows = Array.isArray(posts) ? posts : [];
+    rows.forEach(post => AdminState.communityPostsById.set(String(post.id), post));
+    AdminState.allCommunityPosts = rows.slice();
+    AdminState.filteredCommunityPosts = rows.slice();
+    AdminState.communityPostPage = pagination ? (pagination.page || 1) : 1;
+    AdminState.communityPostTotal = pagination ? (pagination.total || rows.length) : rows.length;
     applyCommunityPostSearchAndRender();
 }
 
 function applyCommunityPostSearchAndRender() {
-    const keyword = document.getElementById('communitySearchInput')?.value || '';
-    AdminState.filteredCommunityPosts = AdminState.allCommunityPosts.filter(post => matchesKeyword([
-        post.id,
-        post.category,
-        getCommunityCategoryLabel(post.category),
-        post.title,
-        post.content,
-        post.attachments,
-        post.authorId,
-        getUserLabelById(post.authorId),
-        post.viewCount,
-        post.likeCount,
-        post.favoriteCount,
-        formatTime(post.createdAt)
-    ], keyword));
     renderCommunityPostRows(AdminState.filteredCommunityPosts);
-    updateAdminListHint('communityListHint', AdminState.filteredCommunityPosts.length);
+    renderAdminServerPager('communityPager', AdminState.communityPostPage, ADMIN_COMMUNITY_PAGE_SIZE, AdminState.communityPostTotal, loadCommunityPosts);
+    updateAdminListHint('communityListHint', AdminState.communityPostTotal);
 }
 
 function renderCommunityPostRows(posts) {
@@ -1452,7 +1599,7 @@ function renderCommunityPostRows(posts) {
 }
 
 async function toggleCommunityPostPinned(postId, pinned) {
-    if (!window.confirm(pinned ? '确认置顶该帖子？置顶帖在社区列表所有排序下都排在最前。' : '确认取消置顶该帖子？')) {
+    if (!uiConfirm(pinned ? '确认置顶该帖子？置顶帖在社区列表所有排序下都排在最前。' : '确认取消置顶该帖子？')) {
         return;
     }
     try {
@@ -1475,7 +1622,7 @@ async function toggleCommunityPostPinned(postId, pinned) {
 }
 
 async function toggleAssetPinned(assetId, pinned) {
-    if (!window.confirm(pinned ? '确认置顶该成果？置顶成果在成果列表所有排序下都排在最前。' : '确认取消置顶该成果？')) {
+    if (!uiConfirm(pinned ? '确认置顶该成果？置顶成果在成果列表所有排序下都排在最前。' : '确认取消置顶该成果？')) {
         return;
     }
     try {
@@ -1589,25 +1736,25 @@ async function saveCommunityPostEditFromModal() {
 }
 
 async function deleteCommunityPost(postId) {
-    if (!confirm('确定要删除该帖子吗？')) return;
+    openDeleteReasonModal('删除社区帖子', async function (reason) {
+        try {
+            const response = await apiFetch(`/api/admin/community-post/${encodeURIComponent(String(postId))}?reason=` + encodeURIComponent(reason), {
+                method: 'DELETE'
+            });
+            const result = await response.json();
 
-    try {
-        const response = await apiFetch(`/api/admin/community-post/${encodeURIComponent(String(postId))}`, {
-            method: 'DELETE'
-        });
-        const result = await response.json();
-
-        if (result.code === 200) {
-            showMessage('删除成功', 'success');
-            loadCommunityPosts();
-            loadDashboardData();
-        } else {
-            showMessage('删除失败: ' + result.message, 'error');
+            if (result.code === 200) {
+                showMessage('删除成功，已通知作者', 'success');
+                loadCommunityPosts();
+                loadDashboardData();
+            } else {
+                showMessage('删除失败: ' + result.message, 'error');
+            }
+        } catch (error) {
+            console.error('删除社区帖子异常:', error);
+            showMessage('删除失败，请稍后重试', 'error');
         }
-    } catch (error) {
-        console.error('删除社区帖子异常:', error);
-        showMessage('删除失败，请稍后重试', 'error');
-    }
+    });
 }
 
 const ADMIN_COMPETITION_TRACKS = {
@@ -1621,13 +1768,20 @@ const ADMIN_COMPETITION_TRACKS = {
 
 async function loadCompetitionsAdmin() {
     try {
-        const response = await apiFetch('/api/admin/competitions');
+        const params = new URLSearchParams();
+        const kw = document.getElementById('competitionSearchInput')?.value.trim();
+        if (kw) params.set('keyword', kw);
+        const status = adminSelectValue('competitionStatusFilter');
+        if (status) params.set('status', status);
+        const track = adminSelectValue('competitionTrackFilter');
+        if (track) params.set('track', track);
+        const qs = params.toString();
+        const response = await apiFetch('/api/admin/competitions' + (qs ? '?' + qs : ''));
         const result = await response.json();
         if (result.code !== 200) throw new Error(result.message || '获取竞赛目录失败');
         AdminState.allCompetitions = Array.isArray(result.data) ? result.data.slice() : [];
-        AdminState.competitionsById = new Map(
-            AdminState.allCompetitions.map(item => [String(item.id), item])
-        );
+        AdminState.allCompetitions.forEach(item =>
+            AdminState.competitionsById.set(String(item.id), item));
         applyCompetitionSearchAndRender();
     } catch (error) {
         console.error('获取竞赛目录异常:', error);
@@ -1638,18 +1792,75 @@ async function loadCompetitionsAdmin() {
 
 const COMPETITION_PAGE_SIZE = 10;
 
+// ==================== 审计日志（A6：此前只写不读） ====================
+
+const ADMIN_AUDIT_ACTION_LABELS = {
+    CREATE: '新增', UPDATE: '更新', DELETE: '删除', APPROVE: '审批',
+    PIN: '置顶', UNPIN: '取消置顶'
+};
+
+const ADMIN_AUDIT_TARGET_LABELS = {
+    USER: '用户', TEAM: '队伍', TEACHER_PROFILE: '导师', ASSET: '成果',
+    COMMUNITY_POST: '帖子', COMPETITION: '竞赛', IDENTITY: '身份'
+};
+
+async function loadAuditLogs(page) {
+    page = page || 1;
+    try {
+        const params = adminSearchParams(page, ADMIN_PAGE_SIZE);
+        adminKeywordParams(params, 'auditSearchInput');
+        const action = adminSelectValue('auditActionFilter');
+        if (action) params.set('action', action);
+        const response = await apiFetch('/api/admin/audit-logs?' + params.toString());
+        const result = await response.json();
+        if (result.code !== 200) {
+            if (result.code === 403) {
+                console.error('无权限访问审计日志');
+            } else {
+                console.error('获取审计日志失败:', result.message);
+            }
+            return;
+        }
+        const rows = Array.isArray(result.data) ? result.data : [];
+        const pagination = (result.extra && result.extra.pagination) || {};
+        renderAuditRows(rows);
+        AdminState.auditPage = pagination.page || 1;
+        AdminState.auditTotal = pagination.total || rows.length;
+        renderAdminServerPager('auditPager', AdminState.auditPage, ADMIN_PAGE_SIZE, AdminState.auditTotal, loadAuditLogs);
+        updateAdminListHint('auditListHint', AdminState.auditTotal);
+    } catch (error) {
+        console.error('获取审计日志异常:', error);
+    }
+}
+
+function renderAuditRows(rows) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    if (!rows.length) {
+        renderEmptyRow(tbody, 6, '暂无审计记录');
+        return;
+    }
+    rows.forEach(row => {
+        const tr = document.createElement('tr');
+        const actionLabel = ADMIN_AUDIT_ACTION_LABELS[String(row.action || '').toUpperCase()] || row.action || '';
+        const targetLabel = ADMIN_AUDIT_TARGET_LABELS[String(row.targetType || '').toUpperCase()] || row.targetType || '';
+        const target = targetLabel + (row.targetId ? ' #' + row.targetId : '');
+        setTableRowCells(tr, [
+            { label: '时间', html: escapeHtml(formatTime(row.createdAt)) },
+            { label: '操作人', html: escapeHtml(row.adminName || ('用户#' + row.adminUserId)) },
+            { label: '动作', html: escapeHtml(actionLabel) },
+            { label: '对象', html: escapeHtml(target) },
+            { label: '详情', html: renderUserCell(row.details) },
+            { label: 'IP', html: escapeHtml(row.ipAddress || '') }
+        ]);
+        tbody.appendChild(tr);
+    });
+}
+
 function applyCompetitionSearchAndRender() {
-    const keyword = document.getElementById('competitionSearchInput')?.value || '';
-    AdminState.filteredCompetitions = AdminState.allCompetitions.filter(item => matchesKeyword([
-        item.name,
-        item.organizer,
-        item.track,
-        ADMIN_COMPETITION_TRACKS[item.track],
-        item.levelClass,
-        item.scope,
-        item.status === 'ACTIVE' ? '已发布' : '已停用',
-        ...(Array.isArray(item.tags) ? item.tags : [])
-    ], keyword));
+    // 关键词 / 状态 / 赛道筛选已由服务端完成，这里只做本地分页展示
+    AdminState.filteredCompetitions = AdminState.allCompetitions.slice();
     const total = AdminState.filteredCompetitions.length;
     const totalPages = Math.max(1, Math.ceil(total / COMPETITION_PAGE_SIZE));
     if (AdminState.competitionPage > totalPages) AdminState.competitionPage = totalPages;
@@ -1793,7 +2004,7 @@ async function saveCompetitionFromModal() {
 }
 
 async function deleteCompetitionAdmin(competitionId) {
-    if (!confirm('确定删除这条竞赛目录记录吗？')) return;
+    if (!uiConfirm('确定删除这条竞赛目录记录吗？')) return;
     try {
         const response = await apiFetch('/api/admin/competitions/' + encodeURIComponent(String(competitionId)), {
             method: 'DELETE'

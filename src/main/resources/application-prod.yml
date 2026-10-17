@@ -19,7 +19,8 @@ logging:
 app:
   public-base-url: ${APP_PUBLIC_BASE_URL:}
   mail:
-    from: ${APP_MAIL_FROM:}
+    from: "${APP_MAIL_FROM:iLink <noreply@ilink.work>}"
+    resend-api-key: ${RESEND_API_KEY:}
   api:
     expose-error-detail: false
 

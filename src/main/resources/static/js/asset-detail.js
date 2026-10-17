@@ -48,17 +48,6 @@ function originalDisplayName(asset) {
     return null;
 }
 
-function fileIconClass(name) {
-    const lower = String(name).toLowerCase();
-    if (lower.endsWith('.pdf')) return 'fa-file-pdf';
-    if (lower.endsWith('.zip') || lower.endsWith('.rar')) return 'fa-file-zipper';
-    if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif')) {
-        return 'fa-file-image';
-    }
-    if (lower.endsWith('.csv') || lower.endsWith('.xlsx')) return 'fa-file-lines';
-    return 'fa-file';
-}
-
 // 分类标签颜色映射
 const ASSET_DETAIL_CATEGORY_COLORS = {
     '技术开发': 'tech',
@@ -220,8 +209,9 @@ async function setupOwnerActions(asset) {
     if (!editBtn) return;
     let meId = null;
     try {
-        // 成果详情是公开页面。未登录时这里只是隐藏编辑入口，不能触发全局登录跳转。
-        const me = await request('/user/profile', { silent: true });
+        // 成果详情是公开页面。未登录时这里只是隐藏编辑入口，不能触发全局登录跳转；
+        // loadCurrentUserOnce 在匿名访客下直接返回 null，不发请求（核实报告 P2-6）
+        const me = await loadCurrentUserOnce();
         meId = me && me.id != null ? me.id : null;
     } catch (e) {
         editBtn.hidden = true;

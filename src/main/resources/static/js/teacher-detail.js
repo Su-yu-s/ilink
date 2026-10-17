@@ -1,4 +1,4 @@
-﻿// 导师详情页面JavaScript
+// 导师详情页面JavaScript
 
 // 获取URL参数
 const urlParams = new URLSearchParams(window.location.search);
@@ -85,7 +85,7 @@ function renderTeacherDetail(teacher) {
     const avSlot = document.getElementById('teacherHeaderAvatar');
     if (avSlot) {
         if (typeof publisherAvatarHtml === 'function' && teacher.userPreview && teacher.userPreview.id != null) {
-            avSlot.innerHTML = publisherAvatarHtml(teacher.userPreview, 'publisher-avatar--lg', { preferRealName: true });
+            avSlot.innerHTML = publisherAvatarHtml(teacher.userPreview, 'publisher-avatar--lg');
         } else {
             avSlot.innerHTML = '';
         }
@@ -94,8 +94,8 @@ function renderTeacherDetail(teacher) {
     const pv = teacher.userPreview;
     const display =
         pv &&
-        ((pv.username && String(pv.username).trim()) || (pv.realName && String(pv.realName).trim()))
-            ? (pv.username && String(pv.username).trim()) || pv.realName
+        ((pv.displayName && String(pv.displayName).trim()) || (pv.realName && String(pv.realName).trim()))
+            ? (pv.displayName && String(pv.displayName).trim()) || pv.realName
             : '';
     document.getElementById('teacherName').textContent = display ? display + ' · 导师' : `导师 #${teacher.id}`;
     
@@ -143,9 +143,9 @@ async function initProjectApplySection(teacher) {
     const btn = document.getElementById('projectApplyBtn');
 
     try {
-        const prof = await apiFetch('/api/user/profile');
-        const profJson = await prof.json();
-        if (profJson.code !== 200) {
+        // 匿名访客不发资料请求（避免控制台 401，核实报告 P2-6），直接按未登录处理
+        const currentUser = await loadCurrentUserOnce();
+        if (!currentUser) {
             if (hint) hint.textContent = '请先登录后再提交申请。';
             if (textarea) textarea.disabled = true;
             if (btn) {
@@ -155,7 +155,6 @@ async function initProjectApplySection(teacher) {
             }
             return;
         }
-        const currentUser = profJson.data || {};
         const isOwner = currentUser.id != null && teacher.userId != null
             && String(currentUser.id) === String(teacher.userId);
         if (isOwner) {
@@ -262,7 +261,7 @@ function renderTeacherPendingApplications(applications) {
         };
         const name = application.applicantName || '学生用户';
         const avatar = typeof publisherAvatarHtml === 'function'
-            ? publisherAvatarHtml(preview, 'publisher-avatar--md', { preferRealName: true })
+            ? publisherAvatarHtml(preview, 'publisher-avatar--md')
             : '<span class="teacher-detail__pending-fallback">' + escapeHtml(name.charAt(0) || '学') + '</span>';
         return '<article class="teacher-detail__pending-card" data-application-id="' + escapeHtml(application.id) + '">' +
             '<div class="teacher-detail__pending-user">' + avatar +

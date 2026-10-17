@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Competitions — 竞赛目录
    Bento Grid Layout
@@ -510,4 +511,6 @@ body[data-app-page="competitions"] .competition-toolbar {
     min-height: 60px;
     padding: 10px 16px;
     gap: 10px;
+}
+
 }

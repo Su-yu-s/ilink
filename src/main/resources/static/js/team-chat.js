@@ -31,18 +31,16 @@ class ChatManager {
 
     async loadCurrentUser() {
         try {
-            const response = await apiFetch('/api/user/profile');
-            const result = await response.json();
-            if (result.code !== 200 || !result.data) {
+            // 匿名访客不发资料请求（避免控制台 401，核实报告 P2-6），直接按未登录处理
+            const user = await loadCurrentUserOnce();
+            if (!user) {
                 showMessage('请先登录', 'warning');
                 setTimeout(() => { window.location.href = '/login.html'; }, 1200);
                 return false;
             }
-            const user = result.data;
             this.currentUser = {
                 id: user.id || user.userId,
-                displayName: user.displayName || user.realName || user.username || '用户',
-                username: user.username || '',
+                displayName: user.displayName || user.realName || '用户',
                 realName: user.realName || '',
                 role: user.role || '成员'
             };
@@ -58,8 +56,8 @@ class ChatManager {
     normalizeMember(raw) {
         return {
             id: raw.userId || raw.id,
-            username: raw.username || '',
             displayName: raw.displayName || raw.username || '成员',
+            avatarInitial: raw.avatarInitial || '',
             role: raw.role || '成员'
         };
     }

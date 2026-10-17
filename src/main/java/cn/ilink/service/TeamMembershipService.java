@@ -7,8 +7,11 @@ import cn.ilink.mapper.TeamApplicationMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 团队角色与状态的统一判定。
@@ -82,6 +85,20 @@ public class TeamMembershipService {
         return team != null && isMentorMember(team.getId(), userId);
     }
 
+    /** 批量版导师成员判定：一次查询用户在多个团队中的 APPROVED 导师身份（创建者判定无需查库，调用方自行短路） */
+    public Set<Long> mentorTeamIds(Long userId, List<Long> teamIds) {
+        if (userId == null || teamIds == null || teamIds.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return teamApplicationMapper.selectList(new LambdaQueryWrapper<TeamApplication>()
+                .select(TeamApplication::getTeamId)
+                .eq(TeamApplication::getUserId, userId)
+                .eq(TeamApplication::getStatus, STATUS_APPROVED)
+                .eq(TeamApplication::getMemberRole, ROLE_MENTOR)
+                .in(TeamApplication::getTeamId, teamIds))
+            .stream().map(TeamApplication::getTeamId).collect(Collectors.toSet());
+    }
+
     /** 能否移除某个成员：创建者可移任何人（除自己），导师只能移学生 */
     public boolean canRemove(TeamDemand team, Long operatorId, Long targetUserId, String targetRole) {
         if (isOwner(team, operatorId)) {
@@ -102,15 +119,17 @@ public class TeamMembershipService {
     }
 
     /**
-     * 队伍是否已满。创建者不占名额，因此只统计 APPROVED。
-     * 与 {@code TeamApplicationWorkflowService#isFull} 同一口径，邀请和审批共用一条上限。
+     * 队伍是否已满。{@code requiredMemberCount} 是「队伍总人数」口径，
+     * 创建者也算一名成员，因此这里用「已通过申请数 + 1」与上限比较，
+     * 与工作台展示的 memberCount（approvedCount + 1）保持同一口径。
+     * 与 {@code TeamApplicationWorkflowService#isFull} 一致，邀请和审批共用一条上限。
      */
     public boolean isFull(TeamDemand team) {
         Integer required = team == null ? null : team.getRequiredMemberCount();
         if (required == null || required <= 0) {
             return false;
         }
-        return approvedCount(team.getId()) >= required;
+        return approvedCount(team.getId()) + 1 >= required;
     }
 
     public long approvedCount(Long teamId) {

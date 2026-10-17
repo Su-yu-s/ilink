@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Community Feed — 交流社区
    Feed cards and compose flow are owned by this module.
@@ -606,4 +607,6 @@ body[data-app-page="community"] #submitPostBtn.il-btn-primary {
   body[data-app-page="community"] .il-modal-footer button {
     flex: 1 1 0;
   }
+}
+
 }

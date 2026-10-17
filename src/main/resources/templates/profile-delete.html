@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{account.delete.title}">注销账号 - iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link th:href="@{/css/profile.css}" rel="stylesheet">
+    <link th:href="@{/css/profile-refresh.css}" rel="stylesheet">
+</head>
+<body data-profile-page="delete" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+    <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
+
+    <div class="il-page-wrapper">
+        <div class="il-profile-layout">
+            <div th:replace="~{fragments/profile-sidebar :: sidebar (active='delete')}"></div>
+
+            <div class="il-profile-content">
+                <div class="il-section-card">
+                    <div class="il-section-header">
+                        <div>
+                            <h2 class="il-section-title" th:text="#{account.delete.title}">注销账号</h2>
+                            <p class="il-section-subtitle" th:text="#{account.delete.warning}">注销后账号与全部内容将被永久删除，无法恢复</p>
+                        </div>
+                    </div>
+
+                    <div class="acct-delete">
+                        <ol class="acct-delete__steps" th:attr="aria-label=#{account.delete.aria}">
+                            <li class="acct-delete__step is-active" data-step-indicator="1">
+                                <span class="acct-delete__step-index">1</span>
+                                <span class="acct-delete__step-label" th:text="#{account.delete.step1}">了解后果</span>
+                            </li>
+                            <li class="acct-delete__step" data-step-indicator="2">
+                                <span class="acct-delete__step-index">2</span>
+                                <span class="acct-delete__step-label" th:text="#{account.delete.step2}">验证密码</span>
+                            </li>
+                            <li class="acct-delete__step" data-step-indicator="3">
+                                <span class="acct-delete__step-index">3</span>
+                                <span class="acct-delete__step-label" th:text="#{account.delete.step3}">确认注销</span>
+                            </li>
+                        </ol>
+
+                        <!-- 第一步：后果说明 -->
+                        <section class="acct-delete__panel" data-step="1">
+                            <div class="acct-delete__notice" role="note">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 9v4"/>
+                                    <path d="M12 17h.01"/>
+                                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                </svg>
+                                <div>
+                                    <strong th:text="#{account.delete.review}">请先确认你了解以下后果</strong>
+                                    <p th:text="#{account.delete.irreversible}">注销是不可逆操作，执行后无法通过任何方式找回。</p>
+                                </div>
+                            </div>
+
+                            <ul class="acct-delete__list">
+                                <li th:utext="#{account.delete.content1}">你发布的<strong>文章、成果</strong>及其附件会被一并删除，公开页面上不再可见。</li>
+                                <li th:utext="#{account.delete.content2}">你创建的<strong>团队</strong>会被解散，队内成员将失去该团队的任务、里程碑与资料库。</li>
+                                <li th:utext="#{account.delete.content3}">你在团队中的<strong>任务、提交、评论与协作记录</strong>会被移除。</li>
+                                <li th:utext="#{account.delete.content4}">你的<strong>私聊消息、通知、收藏与点赞</strong>会被清理。</li>
+                                <li th:utext="#{account.delete.content5}">你填写的<strong>个人资料、技能标签与荣誉奖项</strong>会被删除。</li>
+                                <li th:utext="#{account.delete.content6}">注销后<strong>无法再登录</strong>，如需继续使用需重新注册，且历史数据无法关联。</li>
+                            </ul>
+
+                            <p class="acct-delete__hint" th:text="#{account.delete.leaveAlternative}">如果你只是想暂时离开，可以改用「退出登录」；如果只是不想公开某些内容，也可以单独删除对应的文章或成果。</p>
+
+                            <div class="acct-delete__actions">
+                                <button type="button" class="il-btn il-btn--primary" data-delete-next="2" th:text="#{account.delete.next}">我已了解，继续</button>
+                                <a th:href="@{/profile.html}" class="il-btn il-btn--ghost" th:text="#{account.delete.backProfile}">返回个人中心</a>
+                            </div>
+                        </section>
+
+                        <!-- 第二步：密码验证 -->
+                        <section class="acct-delete__panel" data-step="2" hidden>
+                            <div class="acct-delete__field">
+                                <label class="il-form-label" for="acctDeletePassword" th:text="#{account.delete.currentPassword}">当前密码</label>
+                                <input type="password" class="il-form-input" id="acctDeletePassword"
+                                       autocomplete="current-password" placeholder="请输入当前登录密码" th:attr="placeholder=#{account.delete.passwordPlaceholder}">
+                                <p class="acct-delete__field-hint" th:text="#{account.delete.passwordHint}">用于确认操作者是你本人。</p>
+                            </div>
+
+                            <div class="acct-delete__actions">
+                                <button type="button" class="il-btn il-btn--primary" data-delete-next="3" th:text="#{account.delete.nextStep}">下一步</button>
+                                <button type="button" class="il-btn il-btn--ghost" data-delete-back="1" th:text="#{account.delete.previousStep}">上一步</button>
+                            </div>
+                        </section>
+
+                        <!-- 第三步：二次确认 -->
+                        <section class="acct-delete__panel" data-step="3" hidden>
+                            <div class="acct-delete__field">
+                                <label class="il-form-label" for="acctDeleteConfirm">
+                                    <span th:text="#{account.delete.confirmLabel}">请输入「注销」二字以确认</span>
+                                </label>
+                                <input type="text" class="il-form-input" id="acctDeleteConfirm"
+                                       autocomplete="off" placeholder="注销" th:attr="placeholder=#{account.delete.confirmPlaceholder}">
+                            </div>
+
+                            <p class="acct-delete__warning" id="acctDeleteSummary">
+                                <span th:text="#{account.delete.finalWarning}">确认后，你的账号与全部内容将被永久删除。</span>
+                            </p>
+
+                            <div class="acct-delete__actions">
+                                <button type="button" class="il-btn il-btn--danger" id="acctDeleteSubmit" th:text="#{account.delete.submit}">永久注销我的账号</button>
+                                <button type="button" class="il-btn il-btn--ghost" data-delete-back="2" th:text="#{account.delete.previousStep}">上一步</button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/profile.js}"></script>
+    <script th:src="@{/js/profile-delete.js}"></script>
+</body>
+</html>

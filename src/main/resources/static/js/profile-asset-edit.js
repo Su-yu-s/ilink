@@ -44,6 +44,11 @@ document.addEventListener('DOMContentLoaded', function () {
     initDirtyTracking();
     document.addEventListener('keydown', handleSaveShortcut);
     window.addEventListener('beforeunload', guardUnsavedChanges);
+    // 站内跳转走应用内弹窗；关标签页/刷新只能是浏览器原生提示（样式改不了）
+    window.ILinkLeaveGuard.install({
+        isDirty: () => isDirty,
+        message: '草稿已自动保存在本地，离开后回来可以点右下角「恢复草稿」接着写。'
+    });
     if (assetId) {
         loadAsset();
     } else {
@@ -232,18 +237,19 @@ function applyMarkdownAction(ta, action) {
     let rep = '', start = start0, end = end0;
 
     const markers = {
-        bold: { wrap: '**', label: '粗体' },
-        italic: { wrap: '*', label: '斜体' },
-        strikethrough: { wrap: '~~', label: '删除线' },
-        code: { wrap: '`', label: '代码' },
-        h2: { prefix: '## ', label: '标题' },
-        h3: { prefix: '### ', label: '小标题' },
-        ul: { prefix: '- ', label: '列表' },
-        ol: { prefix: '1. ', label: '有序' },
-        quote: { prefix: '> ', label: '引用' },
-        link: { prefix: '[', suffix: '](url)', label: '链接', selectLabel: '链接文字' },
-        image: { prefix: '![', suffix: '](url)', label: '图片', selectLabel: '图片描述' },
-        table: { line: '\n| 表头 | 表头 |\n| --- | --- |\n| 内容 | 内容 |\n' },
+        // 未选中文本时会把 label 插进正文，所以要按当前语言取值
+        bold: { wrap: '**', label: t('editor.markdown.bold') },
+        italic: { wrap: '*', label: t('editor.markdown.italic') },
+        strikethrough: { wrap: '~~', label: t('editor.markdown.strikethrough') },
+        code: { wrap: '`', label: t('editor.markdown.code') },
+        h2: { prefix: '## ', label: t('editor.markdown.h2') },
+        h3: { prefix: '### ', label: t('editor.markdown.h3') },
+        ul: { prefix: '- ', label: t('editor.markdown.ul') },
+        ol: { prefix: '1. ', label: t('editor.markdown.ol') },
+        quote: { prefix: '> ', label: t('editor.markdown.quote') },
+        link: { prefix: '[', suffix: '](url)', label: t('editor.markdown.link'), selectLabel: t('editor.markdown.linkText') },
+        image: { prefix: '![', suffix: '](url)', label: t('editor.markdown.image'), selectLabel: t('editor.markdown.imageAlt') },
+        table: { line: t('editor.markdown.table') },
         hr: { line: '\n---\n' },
     };
 

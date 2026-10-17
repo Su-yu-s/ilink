@@ -1,5 +1,6 @@
 package cn.ilink.security;
 
+import cn.ilink.common.UserSessionRegistry;
 import cn.ilink.entity.User;
 import cn.ilink.service.RememberMeService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,9 +18,11 @@ import java.util.List;
 
 public class RememberMeAuthenticationFilter extends OncePerRequestFilter {
     private final RememberMeService rememberMeService;
+    private final UserSessionRegistry sessionRegistry;
 
-    public RememberMeAuthenticationFilter(RememberMeService rememberMeService) {
+    public RememberMeAuthenticationFilter(RememberMeService rememberMeService, UserSessionRegistry sessionRegistry) {
         this.rememberMeService = rememberMeService;
+        this.sessionRegistry = sessionRegistry;
     }
 
     @Override
@@ -51,7 +54,12 @@ public class RememberMeAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(user.getUsername(), null,
                         List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole())));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                request.getSession(true).setAttribute("user", user);
+                HttpSession newSession = request.getSession(true);
+                newSession.setAttribute("user", user);
+                // 修复 D-P1-1：remember-me 自动登录的会话同样登记归属，保证改角色/删号可吊销
+                if (sessionRegistry != null) {
+                    sessionRegistry.register(user.getId(), newSession);
+                }
             }
         }
         filterChain.doFilter(request, response);

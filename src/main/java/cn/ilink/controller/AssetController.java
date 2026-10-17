@@ -67,6 +67,9 @@ public class AssetController {
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private cn.ilink.service.kg.KgIndexService kgIndexService;
+
     @GetMapping("/list")
     @ResponseBody
     public ResponseEntity<Result<?>> listAssets(@RequestParam(defaultValue = "1") Integer page,
@@ -256,6 +259,9 @@ public class AssetController {
                     .category(normalizedCategory)
                     .file(resolveOptionalUploadFile(request, "file"))
                     .cover(resolveOptionalUploadFile(request, "cover")));
+            // 成果入知识图谱索引队列（公开可见；失败不影响发布，enqueue 内部已兜底）
+            kgIndexService.enqueue("ASSET", asset.getId(), asset.getTitle(),
+                asset.getDescription(), cn.ilink.entity.KgEntity.SCOPE_GLOBAL, 0L, user.getId());
             return Result.ok("发布成功", asset).toResponseEntity();
         } catch (IllegalArgumentException e) {
             return Result.badRequest(e.getMessage()).toResponseEntity();

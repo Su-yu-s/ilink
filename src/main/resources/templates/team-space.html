@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/team-space.css}">
     <link rel="stylesheet" th:href="@{/css/team-space-refresh.css}">
     <link rel="stylesheet" th:href="@{/css/team-invite.css}">
+    <link rel="stylesheet" th:href="@{/css/agentic-chat.css}">
 </head>
 <body data-app-page="team-space" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -86,6 +87,12 @@
                         </svg>
                         <span>成员</span>
                     </button>
+                    <button class="sidebar-nav-item" data-panel="library-panel" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                        </svg>
+                        <span>团队资料</span>
+                    </button>
                     <button class="sidebar-nav-item" data-panel="ai-panel" type="button">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/>
@@ -103,17 +110,26 @@
                             </span>
                         </div>
                     </div>
+
+                    <button class="sidebar-weekly-btn" type="button" onclick="teamSpace.generateWeeklyReport()"
+                            title="本地聚合任务进度，生成团队周报">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        周报
+                    </button>
                 </nav>
             </aside>
 
             <section class="main-content-area">
-                <section class="workspace-panel active" id="kanban-panel" aria-labelledby="kanbanTitle">
+                <section class="workspace-panel active" id="kanban-panel" aria-label="任务看板">
                     <div class="panel-header">
-                        <div class="panel-heading">
-                            <span class="panel-team-name" id="kanbanTeamName">团队空间</span>
-                            <h1 class="panel-title" id="kanbanTitle">任务看板</h1>
-                        </div>
                         <div class="panel-actions" id="kanbanActions">
+                            <button class="btn btn-sm btn-outline-primary" id="reviewBoardBtn" type="button" onclick="teamSpace.openReviewBoard()" hidden>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M9 11l3 3L22 4"/>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                                </svg>
+                                <span id="reviewBoardBtnText">批阅工作台</span>
+                            </button>
                             <button class="btn btn-sm btn-primary" id="createTaskBtn" type="button" onclick="teamSpace.openCreateModal()" hidden>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path d="M12 5V19M5 12H19"/>
@@ -164,15 +180,8 @@
                     </div>
                 </section>
 
-                <section class="workspace-panel chat-window-panel" id="chat-panel" aria-labelledby="chatTitle">
+                <section class="workspace-panel chat-window-panel" id="chat-panel" aria-label="团队群聊">
                     <div class="panel-header">
-                        <div class="panel-heading">
-                            <span class="panel-team-name" id="chatTeamName">团队空间</span>
-                            <h1 class="panel-title" id="chatTitle">团队群聊</h1>
-                        </div>
-                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="teamSpace.generateWeeklyReport()" title="本地聚合任务进度，生成团队周报">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>周报
-                        </button>
                     </div>
                     <div class="chat-messages-area" id="chatMessagesArea">
                         <div class="panel-loading">加载中...</div>
@@ -199,12 +208,8 @@
                     </div>
                 </section>
 
-                <section class="workspace-panel" id="members-panel" aria-labelledby="membersTitle">
+                <section class="workspace-panel" id="members-panel" aria-label="团队成员">
                     <div class="panel-header">
-                        <div class="panel-heading">
-                            <span class="panel-team-name" id="membersTeamName">团队空间</span>
-                            <h1 class="panel-title" id="membersTitle">团队成员</h1>
-                        </div>
                         <!-- 操作按当前用户角色渲染，由 team-space.js 填充 -->
                         <div class="panel-actions" id="membersActions"></div>
                     </div>
@@ -223,37 +228,133 @@
                     </section>
                 </section>
 
-                <section class="workspace-panel" id="ai-panel" aria-labelledby="aiPanelTitle">
-                    <div class="panel-header">
-                        <div class="panel-heading">
-                            <span class="panel-team-name" id="aiTeamName">团队空间</span>
-                            <h1 class="panel-title" id="aiPanelTitle">AI 协作</h1>
+                <!-- 团队资料：左文件树 + 右预览（搜索框嵌在文件树标题行） -->
+                <section class="workspace-panel" id="library-panel" aria-label="团队资料">
+                    <div class="library-layout">
+                        <aside class="library-tree-panel">
+                            <div class="library-tree-head">
+                                <span class="library-tree-label">文件目录</span>
+                                <div class="library-tree-search">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                                    <input type="text" id="librarySearch" placeholder="搜索…" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="library-tree-scroll" id="libraryTree">
+                                <div class="panel-loading">加载中...</div>
+                            </div>
+                            <!-- 操作区固定在文件目录下方（原在面板标题栏） -->
+                            <div class="library-tree-actions">
+                                <button class="btn btn-sm btn-primary" id="libraryUploadBtn" type="button" onclick="teamSpace.libraryPickFiles()">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/>
+                                    </svg>
+                                    上传文件
+                                </button>
+                                <div class="library-tree-actions__row">
+                                    <button class="btn btn-sm btn-outline-secondary" id="libraryNewFolderBtn" type="button" onclick="teamSpace.libraryNewFolder()">新建文件夹</button>
+                                    <button class="btn btn-sm btn-outline-secondary" id="libraryTrashBtn" type="button" hidden onclick="teamSpace.toggleLibraryTrash()">回收站</button>
+                                </div>
+                            </div>
+                            <input type="file" id="libraryFileInput" multiple hidden>
+                            <input type="text" id="libraryRenameField" class="library-rename-field" hidden>
+                        </aside>
+                        <div class="library-preview-panel">
+                            <div class="library-pv-head" id="libraryPvHead" hidden></div>
+                            <div class="library-pv-canvas-wrap" id="libraryPvCanvasWrap" hidden>
+                                <div class="library-pv-canvas" id="libraryPvCanvas"></div>
+                            </div>
+                            <div class="library-pv-empty" id="libraryPvEmpty">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                                <div class="library-pv-empty__title">未选择文件</div>
+                                <div class="library-pv-empty__sub">从左侧文件树中点击任意文件查看内容</div>
+                            </div>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="teamSpace.generateWeeklyReport()" title="本地聚合任务进度，生成团队周报">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>周报
+                    </div>
+                </section>
+
+                <section class="workspace-panel" id="ai-panel" aria-label="AI 协作">
+                    <div class="panel-header">
+                    </div>
+                    <!-- AI 答疑（左）+ 任务拆解（右）：沿用原双栏布局 -->
+                    <div class="ai-collab-grid">
+                <section class="ai-collab-card ai-collab-card--qa" id="agcInline" data-agc-instance="inline" aria-labelledby="aiQaTitle">
+                    <div class="ai-collab-card__header">
+                        <h2 class="ai-collab-card__title" id="aiQaTitle">AI 智能答疑</h2>
+                        <div class="kgd-mode" style="margin-left:8px;" role="group" aria-label="问答模式切换">
+                            <button type="button" data-agc-ref="modeFast">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-bolt"/></svg>
+                                快速答疑
+                            </button>
+                            <button type="button" data-agc-ref="modeDeep" class="kgd-active">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-search"/></svg>
+                                深度搜索
+                            </button>
+                        </div>
+                        <select class="d-none" id="aiCompetitionSelect" data-agc-ref="context" aria-hidden="true" tabindex="-1">
+                            <option value="">加载竞赛中...</option>
+                        </select>
+                        <div class="ai-comp-combo" id="aiCompCombo">
+                            <button type="button" class="ai-comp-combo__trigger" id="aiCompComboTrigger"
+                                    aria-haspopup="listbox" aria-expanded="false" aria-label="选择提问上下文">
+                                <svg class="ai-comp-combo__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                                <span class="ai-comp-combo__label" id="aiCompComboLabel">通用提问（不绑定竞赛）</span>
+                                <svg class="ai-comp-combo__chev" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                            </button>
+                            <div class="ai-comp-combo__menu" id="aiCompComboMenu" hidden>
+                                <div class="ai-comp-combo__searchwrap">
+                                    <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                                    <input type="text" class="ai-comp-combo__search" id="aiCompComboSearch"
+                                           placeholder="搜索竞赛名称…" autocomplete="off">
+                                </div>
+                                <div class="ai-comp-combo__list" id="aiCompComboList" role="listbox" aria-label="竞赛候选"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kgd-hint" data-agc-ref="hint" style="margin:0 0 12px;">Agent 会自主探索知识图谱，多轮检索后给出可追溯的答案</div>
+                    <div class="kgd-chatwrap">
+                        <div class="kgd-chat" data-agc-ref="chat">
+                            <div class="kgd-row" data-agc-ref="welcome">
+                                <div class="kgd-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-spark"/></svg></div>
+                                <div class="kgd-bubble">
+                                    <div class="kgd-bubble-text" data-agc-ref="welcomeText">你好，我会在知识图谱里逐层探索，每一步推理过程都会展示给你看。选中上方竞赛可从该赛事开始探索，也可以问我报名条件、赛程节点、评审规则等问题。</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="kgd-scrollbadge" data-agc-ref="scrollbadge" aria-label="回到底部">
+                            <span class="kgd-count" data-agc-ref="badgeCount">1</span>
+                            <svg fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-down"/></svg>
                         </button>
                     </div>
-                    <div class="ai-collab-grid">
-                        <section class="ai-collab-card ai-collab-card--qa" aria-labelledby="aiQaTitle">
-                            <div class="ai-collab-card__header">
-                                <h2 class="ai-collab-card__title" id="aiQaTitle">AI 智能答疑</h2>
-                                <select class="form-select form-select-sm ai-competition-select" id="aiCompetitionSelect" aria-label="选择竞赛，可留空按通用提问">
-                                    <option value="">加载竞赛中...</option>
-                                </select>
+                    <div class="kgd-composer">
+                        <div class="kgd-error" data-agc-ref="error"></div>
+                        <div class="kgd-inputwrap">
+                            <div class="kgd-inputbox">
+                                <textarea data-agc-ref="input" rows="1" maxlength="500" placeholder="描述你的复杂问题，我会深度探索…" aria-label="问题输入框"></textarea>
+                                <div class="kgd-tplmenu" data-agc-ref="tplmenu">
+                                    <div class="kgd-tplitem" data-agc-tpl="请总结这段内容的三个要点">总结这段内容的三个要点 <span class="kgd-k">/sum</span></div>
+                                    <div class="kgd-tplitem" data-agc-tpl="请生成三个不同的替代版本">生成三个不同的替代版本 <span class="kgd-k">/alt</span></div>
+                                    <div class="kgd-tplitem" data-agc-tpl="请以表格形式重新组织上述内容">以表格形式重新组织 <span class="kgd-k">/table</span></div>
+                                    <div class="kgd-tplitem" data-agc-tpl="请从读者视角指出其中的论证漏洞">从读者视角指出论证漏洞 <span class="kgd-k">/crit</span></div>
+                                </div>
                             </div>
-                            <div class="ai-qa-messages" id="aiQaMessages" aria-live="polite">
-                                <div class="ai-qa-welcome">你好，我是团队的 AI 助手，会联网检索资料后作答。选中上方竞赛可针对该赛事提问，留空则按通用问题处理。可以问我报名条件、赛程节点、评审规则、材料准备等问题。</div>
-                            </div>
-                            <div class="ai-qa-composer">
-                                <textarea id="aiQaInput" class="ai-qa-input" rows="2" maxlength="500" placeholder="向 AI 提问竞赛相关问题..." onkeydown="teamSpace.handleAiQaKeyDown(event)" oninput="teamSpace.autoResizeChatInput(this)"></textarea>
-                                <button class="chat-send-btn" id="aiQaSendBtn" type="button" onclick="teamSpace.sendAiQuestion()">发送</button>
-                            </div>
-                            <p class="ai-privacy-note">仅发送问题与公开竞赛信息，不泄露聊天记录。</p>
-                        </section>
+                            <button type="button" class="kgd-sendbtn" data-agc-ref="send">
+                                发送
+                                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-send"/></svg>
+                            </button>
+                        </div>
+                        <div class="kgd-foot">
+                            <span class="kgd-lockhint">
+                                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-lock"/></svg>
+                                仅发送问题与公开竞赛信息，不泄露聊天记录。
+                            </span>
+                            <span><span data-agc-ref="footMode">深度搜索 · 多轮探索</span></span>
+                        </div>
+                    </div>
+                </section>
                         <section class="ai-collab-card ai-collab-card--tasks" aria-labelledby="aiTasksTitle">
                             <div class="ai-collab-card__header">
                                 <h2 class="ai-collab-card__title" id="aiTasksTitle">任务拆解</h2>
-                                <span class="ai-leader-only" id="aiLeaderOnlyBadge" hidden>仅队长可发起</span>
+                                <span class="ai-leader-only" id="aiLeaderOnlyBadge" hidden>仅任务负责人可发起</span>
                             </div>
                             <p class="ai-collab-hint">选择一个待办或进行中的任务，AI 会给出子任务建议，勾选确认后创建，负责人默认为你自己。</p>
                             <div class="ai-task-picker" id="aiTaskPicker">
@@ -265,6 +366,16 @@
             </section>
         </div>
     </main>
+
+    <!-- 中央 AI 答疑卡接入 Agentic GraphRAG（内嵌实例；挂载后全站悬浮入口自动隐藏，避免双入口） -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.agenticChat) {
+                var el = document.getElementById('agcInline');
+                if (el) { window.agenticChat.mountInline(el); }
+            }
+        });
+    </script>
 
     <button class="create-task-fab" id="createTaskFab" type="button" onclick="teamSpace.openCreateModal()" aria-label="创建任务" hidden>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -343,7 +454,7 @@
                             <input type="datetime-local" class="form-control" id="newTaskDeadline">
                         </div>
                         <div class="col-6">
-                            <label class="form-label" for="newTaskHours">预计工时</label>
+                            <label class="form-label" for="newTaskHours">预计用时（小时）</label>
                             <input type="number" class="form-control" id="newTaskHours" placeholder="0" min="0" step="0.5">
                         </div>
                     </div>
@@ -433,6 +544,34 @@
         </div>
     </div>
 
+    <!-- 提交审阅：需批阅的任务由被指派人交付材料 -->
+    <div class="modal fade" id="submitReviewModal" tabindex="-1" aria-labelledby="submitReviewTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="submitReviewTitle">提交审阅</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">提交后由队长或导师批阅，通过后任务才算完成。</p>
+                    <div class="mb-3">
+                        <label class="form-label" for="submitReviewRemark">交付说明</label>
+                        <textarea class="form-control" id="submitReviewRemark" rows="3" placeholder="说明完成了哪些内容"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="submitReviewFile">附件 <span class="text-muted small">（选填，最大 50MB）</span></label>
+                        <input type="file" class="form-control" id="submitReviewFile">
+                        <small class="text-muted" id="submitReviewFileName"></small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitReviewBtn" onclick="teamSpace.submitReviewMaterial()">提交审阅</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 团队周报（本地聚合，零数据出站） -->
     <div class="modal fade" id="weeklyReportModal" tabindex="-1" aria-labelledby="weeklyReportTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
@@ -451,13 +590,13 @@
             </div>
         </div>
     </div>
-
-    <script defer src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script defer th:src="@{/lib/sockjs.min.js}"></script>
+    <script defer th:src="@{/lib/stomp.min.js}"></script>
     <div th:replace="fragments/team-invite-modal :: modal"></div>
 
     <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
     <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/file-preview.js}"></script>
     <script th:src="@{/js/team-invite.js}"></script>
     <script th:src="@{/js/team-space.js}"></script>
 </body>

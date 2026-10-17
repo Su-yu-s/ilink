@@ -3,9 +3,11 @@ package cn.ilink.controller;
 import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import cn.ilink.dto.ProjectMilestoneDTO;
+import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.User;
 import cn.ilink.service.ProjectMilestoneService;
 import cn.ilink.service.TeamAccessService;
+import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.vo.ProjectMilestoneVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +22,17 @@ import java.util.Map;
 @RequestMapping("/api")
 public class ProjectMilestoneController {
 
+    /** 里程碑与任务看板口径一致：仅在队伍进入 TEAMING（组队已成形）后启用 */
+    private static final String STATUS_TEAMING = "TEAMING";
+
     @Autowired
     private ProjectMilestoneService projectMilestoneService;
 
     @Autowired
     private TeamAccessService teamAccessService;
+
+    @Autowired
+    private TeamDemandServiceImpl teamDemandService;
 
     @GetMapping("/team/{teamId}/milestones")
     @ResponseBody
@@ -71,9 +79,15 @@ public class ProjectMilestoneController {
         if (!isTeamMember(teamId, user)) {
             return Result.fail(403, "您不是该团队成员，无法创建里程碑").toResponseEntity();
         }
+        // 与任务看板同一状态门槛，避免同一个工作台里两套规则
+        TeamDemand team = teamDemandService.getById(teamId);
+        if (team == null || !STATUS_TEAMING.equals(team.getStatus())) {
+            return Result.badRequest("里程碑功能仅在队伍组队成功后启用").toResponseEntity();
+        }
 
-        if (dto.getMilestoneName() == null || dto.getMilestoneName().trim().isEmpty()) {
-            return Result.badRequest("里程碑名称不能为空").toResponseEntity();
+        String fieldError = validateMilestoneFields(dto, true);
+        if (fieldError != null) {
+            return Result.badRequest(fieldError).toResponseEntity();
         }
 
         dto.setTeamId(teamId);
@@ -107,6 +121,11 @@ public class ProjectMilestoneController {
         // C-04: 校验用户是否为团队成员
         if (!isTeamMember(milestone.getTeamId(), user)) {
             return Result.fail(403, "您不是该团队成员，无权编辑里程碑").toResponseEntity();
+        }
+
+        String fieldError = validateMilestoneFields(dto, false);
+        if (fieldError != null) {
+            return Result.badRequest(fieldError).toResponseEntity();
         }
 
         boolean success = projectMilestoneService.update(id, dto);
@@ -166,6 +185,11 @@ public class ProjectMilestoneController {
         if (!isTeamMember(milestone.getTeamId(), user)) {
             return Result.fail(403, "您不是该团队成员，无权删除里程碑").toResponseEntity();
         }
+        // 删除是不可逆操作，口径与任务看板一致：只有队长或里程碑创建者可以删
+        if (!isTeamLeader(milestone.getTeamId(), user)
+                && !user.getId().equals(milestone.getCreatedBy())) {
+            return Result.fail(403, "只有队长或里程碑创建者可以删除里程碑").toResponseEntity();
+        }
 
         boolean success = projectMilestoneService.delete(id);
         if (success) {
@@ -178,5 +202,44 @@ public class ProjectMilestoneController {
     /** C-04: 校验用户是否为指定团队的成员 */
     private boolean isTeamMember(Long teamId, User user) {
         return user != null && teamAccessService.isTeamParticipant(teamId, user.getId());
+    }
+
+    /** 队长判定：与任务看板、解散队伍等入口使用同一字段（team_demand.creator_id） */
+    private boolean isTeamLeader(Long teamId, User user) {
+        if (teamId == null || user == null || user.getId() == null) {
+            return false;
+        }
+        TeamDemand team = teamDemandService.getById(teamId);
+        return team != null && user.getId().equals(team.getCreatorId());
+    }
+
+    /**
+     * 里程碑字段校验。返回 null 表示通过。
+     * {@code dueDate} 在库里是 NOT NULL，{@code completion_rate} 是 TINYINT(0-100)，
+     * 缺值或越界原先都会以「数据库访问失败」500 返回，这里前置成 400。
+     *
+     * @param creating true 表示新建（名称、截止时间必填），false 表示更新（只校验传入的字段）
+     */
+    private String validateMilestoneFields(ProjectMilestoneDTO dto, boolean creating) {
+        if (dto == null) {
+            return "请求内容不能为空";
+        }
+        boolean namePresent = dto.getMilestoneName() != null && !dto.getMilestoneName().trim().isEmpty();
+        if (creating && !namePresent) {
+            return "里程碑名称不能为空";
+        }
+        String error = ControllerUtils.checkMaxLength(
+            dto.getMilestoneName(), ControllerUtils.MILESTONE_NAME_MAX, "里程碑名称");
+        if (error != null) {
+            return error;
+        }
+        if (creating && dto.getDueDate() == null) {
+            return "计划完成日期不能为空";
+        }
+        Integer rate = dto.getCompletionRate();
+        if (rate != null && (rate < 0 || rate > 100)) {
+            return "完成进度需在 0-100 之间";
+        }
+        return null;
     }
 }

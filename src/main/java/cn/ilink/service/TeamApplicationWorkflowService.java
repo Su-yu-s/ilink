@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.Locale;
 
 @Service
 public class TeamApplicationWorkflowService {
@@ -40,6 +41,13 @@ public class TeamApplicationWorkflowService {
             }
         }
         if (!"PENDING".equals(application.getStatus())) {
+            // 幂等：重复提交同一审批（队长连点、页面重放）时，只要目标状态已经达成就算成功，
+            // 不再回 400「该申请已被处理」——避免客户端把双击当成失败（核实报告 P3-5）。
+            // 注意：这里仍然不会重复发通知，也不改库。
+            String normalizedTarget = action == null ? "" : action.trim().toUpperCase(Locale.ROOT);
+            if (normalizedTarget.equals(application.getStatus())) {
+                return application;
+            }
             throw WorkflowException.badRequest("\u8be5\u7533\u8bf7\u5df2\u88ab\u5904\u7406");
         }
         // \u56e2\u961f\u53d1\u51fa\u7684\u9080\u8bf7\u5fc5\u987b\u7531\u88ab\u9080\u8bf7\u4eba\u81ea\u5df1\u786e\u8ba4\uff0c\u521b\u5efa\u8005\u4e0d\u80fd\u66ff\u4ed6\u70b9\u540c\u610f
@@ -48,7 +56,7 @@ public class TeamApplicationWorkflowService {
             throw WorkflowException.badRequest("\u8fd9\u662f\u56e2\u961f\u53d1\u51fa\u7684\u9080\u8bf7\uff0c\u9700\u8981\u5bf9\u65b9\u786e\u8ba4");
         }
 
-        String normalizedAction = action == null ? "" : action.trim().toUpperCase();
+        String normalizedAction = action == null ? "" : action.trim().toUpperCase(Locale.ROOT);
         if (!"APPROVED".equals(normalizedAction) && !"REJECTED".equals(normalizedAction)) {
             throw WorkflowException.badRequest("\u65e0\u6548\u7684\u5ba1\u6279\u64cd\u4f5c");
         }
@@ -61,8 +69,14 @@ public class TeamApplicationWorkflowService {
             throw WorkflowException.badRequest("\u5907\u6ce8\u4e0d\u80fd\u8d85\u8fc7 500 \u5b57");
         }
 
-        if ("APPROVED".equals(normalizedAction) && isFull(team)) {
-            throw WorkflowException.badRequest("\u961f\u4f0d\u5df2\u6ee1\uff0c\u65e0\u6cd5\u901a\u8fc7\u66f4\u591a\u7533\u8bf7");
+        if ("APPROVED".equals(normalizedAction)) {
+            // 修复 D-P2-4：CLOSED / DISSOLVED 的团队不再批准入队申请，与 invite/joinTeam/邀请接受口径统一
+            if (!"OPEN".equals(team.getStatus()) && !"TEAMING".equals(team.getStatus())) {
+                throw WorkflowException.badRequest("\u8be5\u56e2\u961f\u5df2\u7ed3\u675f\u62db\u52df\u6216\u5df2\u89e3\u6563\uff0c\u65e0\u6cd5\u901a\u8fc7\u7533\u8bf7");
+            }
+            if (isFull(team)) {
+                throw WorkflowException.badRequest("\u961f\u4f0d\u5df2\u6ee1\uff0c\u65e0\u6cd5\u901a\u8fc7\u66f4\u591a\u7533\u8bf7");
+            }
         }
 
         application.setStatus(normalizedAction);
@@ -118,7 +132,10 @@ public class TeamApplicationWorkflowService {
             new LambdaQueryWrapper<TeamApplication>()
                 .eq(TeamApplication::getTeamId, team.getId())
                 .eq(TeamApplication::getStatus, "APPROVED"));
-        return approved != null && approved >= requiredCount;
+        // requiredMemberCount 是「队伍总人数（含队长）」的口径，与工作台展示的 memberCount 一致，
+        // 所以这里要加上创建者。只比 approved 会让满员队伍永远转不了 TEAMING。
+        long totalMembers = (approved == null ? 0L : approved) + 1L;
+        return totalMembers >= requiredCount;
     }
 
     public static class WorkflowException extends RuntimeException {

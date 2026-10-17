@@ -1,3 +1,4 @@
+@layer legacy {
 
 /* ========================================
    iLink Gallery — 成果展示 (Editorial v3)
@@ -482,4 +483,6 @@ body[data-app-page="gallery"] .il-search-bar__spacer {
     body[data-app-page="gallery"] .il-search-bar__btn--ghost {
         margin-left: auto;
     }
+}
+
 }

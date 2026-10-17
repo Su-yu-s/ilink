@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Pages — 通用页面级样式
    组队大厅 / 导师招贤 / 交流社区 / 竞赛目录 / 成果展示
@@ -390,3 +391,5 @@
 .ilink-reveal--stagger > *:nth-child(8) { animation-delay: 560ms; }
 .ilink-reveal--stagger > *:nth-child(9) { animation-delay: 640ms; }
 .ilink-reveal--stagger > *:nth-child(10) { animation-delay: 720ms; }
+
+}

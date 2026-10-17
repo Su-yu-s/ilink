@@ -99,6 +99,9 @@ public class AiClient {
         }
         body.put("max_tokens", maxTokens);
         body.put("temperature", 0.3);
+        // Qwen 3.7 系列默认开思考模式（单次 6~7 秒起步，且思考内容破坏结构化输出格式）。
+        // 关闭后 0.5 秒级。该参数为 DashScope 专属，其他 OpenAI 兼容端点若不认识可移除此行。
+        body.put("enable_thinking", false);
         return body;
     }
 

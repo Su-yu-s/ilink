@@ -29,6 +29,10 @@ import java.util.stream.Collectors;
 @Service
 public class NotificationServiceImpl implements NotificationService {
 
+    /** 与 db/migration/V4、sql/schema.sql 中 notification.title / content 的列宽保持一致 */
+    private static final int TITLE_MAX = 200;
+    private static final int CONTENT_MAX = 1000;
+
     @Autowired
     private NotificationMapper notificationMapper;
 
@@ -103,8 +107,8 @@ public class NotificationServiceImpl implements NotificationService {
         n.setUserId(dto.getUserId());
         n.setSenderId(dto.getSenderId());
         n.setType(dto.getType());
-        n.setTitle(dto.getTitle());
-        n.setContent(dto.getContent());
+        n.setTitle(truncate(dto.getTitle(), TITLE_MAX));
+        n.setContent(truncate(dto.getContent(), CONTENT_MAX));
         n.setRelatedId(dto.getRelatedId());
         n.setRelatedType(dto.getRelatedType());
         n.setIsRead(false);
@@ -171,8 +175,10 @@ public class NotificationServiceImpl implements NotificationService {
         n.setUserId(userId);
         n.setSenderId(senderId);
         n.setType(type);
-        n.setTitle(title);
-        n.setContent(content);
+        n.setTitle(truncate(title, TITLE_MAX));
+        // 通知正文由「昵称 + 文案 + 文章标题 + 用户输入」拼成，用户输入可能很长，
+        // 不截断会撞 content VARCHAR(1000)，导致调用方整体报错（长评论评论已落库却返回 500）。
+        n.setContent(truncate(content, CONTENT_MAX));
         n.setRelatedId(relatedId);
         n.setIsRead(false);
         n.setCreatedAt(new Date());
@@ -217,8 +223,15 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    private List<NotificationVO> convertToVO(List<Notification> notifications) {
-        List<NotificationVO> vos = notifications.stream().map(n -> {
+    /** 按列宽截断，避免超长文本导致整条通知写入失败 */
+    private static String truncate(String value, int max) {
+        if (value == null || value.length() <= max) {
+            return value;
+        }
+        return value.substring(0, max);
+    }
+
+    private List<NotificationVO> convertToVO(List<Notification> notifications) {        List<NotificationVO> vos = notifications.stream().map(n -> {
             NotificationVO vo = new NotificationVO();
             BeanUtils.copyProperties(n, vo);
             vo.setTimeAgo(formatTimeAgo(n.getCreatedAt()));

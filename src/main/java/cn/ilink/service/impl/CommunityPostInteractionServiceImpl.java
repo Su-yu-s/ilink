@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import cn.ilink.util.DisplayNameResolver;
 
 @Service
 public class CommunityPostInteractionServiceImpl implements CommunityPostInteractionService {
@@ -104,22 +105,28 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> toggleLike(Long postId, Long userId) {
-        CommunityPost post = communityPostService.getById(postId);
+        // 修复 P2-2：事务首句对帖子行加排他锁（SELECT ... FOR UPDATE），把同一帖子的
+        // 点赞/取消串行化。此前 DELETE/INSERT community_post_like（唯一键记录锁与 gap 锁）
+        // 与 UPDATE community_post 行锁在并发事务中以不同顺序获取，InnoDB 检测到循环等待
+        // 即回滚败者（DeadlockLoserDataAccessException → 500）。统一以帖子行锁为第一把锁后，
+        // 同帖的 like 表操作不再交错；不同帖子锁不同行，互不阻塞。
+        CommunityPost post = communityPostService.getOne(
+            new LambdaQueryWrapper<CommunityPost>()
+                .eq(CommunityPost::getId, postId)
+                .last("FOR UPDATE"));
         if (post == null) {
             return null;
         }
-        long exist = communityPostLikeMapper.selectCount(
+        // 修复 D-P2-1（压测 LT-5）：原先 selectCount 判断后 delete 不看影响行数就扣减，
+        // 并发同用户 unlike 会导致 like_count 双扣漂移，且长持锁窗口触发 InnoDB 死锁。
+        // 改为 delete 优先、按影响行数决定分支，计数增减均为原子 SQL，回滚时一并撤销。
+        long removed = communityPostLikeMapper.delete(
             new LambdaQueryWrapper<CommunityPostLike>()
                 .eq(CommunityPostLike::getPostId, postId)
                 .eq(CommunityPostLike::getUserId, userId)
         );
         boolean nowLiked;
-        if (exist > 0) {
-            communityPostLikeMapper.delete(
-                new LambdaQueryWrapper<CommunityPostLike>()
-                    .eq(CommunityPostLike::getPostId, postId)
-                    .eq(CommunityPostLike::getUserId, userId)
-            );
+        if (removed > 0) {
             communityPostService.update(
                 new LambdaUpdateWrapper<CommunityPost>()
                     .setSql("like_count = GREATEST(IFNULL(like_count, 0) - 1, 0)")
@@ -132,9 +139,16 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
             row.setUserId(userId);
             row.setCreatedAt(new Date());
             try {
-                communityPostLikeMapper.insert(row);
+                if (communityPostLikeMapper.insert(row) <= 0) {
+                    // 插入未生效：不加计数（修复前 insert 失败仍 +1，同样造成计数漂移）
+                    post = communityPostService.getById(postId);
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("liked", false);
+                    m.put("likeCount", likeCountOf(post));
+                    return m;
+                }
             } catch (DuplicateKeyException e) {
-                // 唯一索引兜底：并发重复插入时，视为已点赞
+                // 唯一索引兜底：并发重复插入时，视为已点赞，不重复计数
                 post = communityPostService.getById(postId);
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("liked", true);
@@ -170,22 +184,23 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Map<String, Object> toggleFavorite(Long postId, Long userId) {
-        CommunityPost post = communityPostService.getById(postId);
+        // 修复 P2-2：与 toggleLike 同理，收藏/取消收藏同样以帖子行排他锁串行化，
+        // 消除 community_post_favorite 表与 community_post 行锁的交叉等待。
+        CommunityPost post = communityPostService.getOne(
+            new LambdaQueryWrapper<CommunityPost>()
+                .eq(CommunityPost::getId, postId)
+                .last("FOR UPDATE"));
         if (post == null) {
             return null;
         }
-        long exist = communityPostFavoriteMapper.selectCount(
+        // 修复 D-P2-1：同 toggleLike，delete 优先、按影响行数决定分支
+        long removed = communityPostFavoriteMapper.delete(
             new LambdaQueryWrapper<CommunityPostFavorite>()
                 .eq(CommunityPostFavorite::getPostId, postId)
                 .eq(CommunityPostFavorite::getUserId, userId)
         );
         boolean nowFavorited;
-        if (exist > 0) {
-            communityPostFavoriteMapper.delete(
-                new LambdaQueryWrapper<CommunityPostFavorite>()
-                    .eq(CommunityPostFavorite::getPostId, postId)
-                    .eq(CommunityPostFavorite::getUserId, userId)
-            );
+        if (removed > 0) {
             communityPostService.update(
                 new LambdaUpdateWrapper<CommunityPost>()
                     .setSql("favorite_count = GREATEST(IFNULL(favorite_count, 0) - 1, 0)")
@@ -198,7 +213,14 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
             row.setUserId(userId);
             row.setCreatedAt(new Date());
             try {
-                communityPostFavoriteMapper.insert(row);
+                if (communityPostFavoriteMapper.insert(row) <= 0) {
+                    // 插入未生效：不加计数
+                    post = communityPostService.getById(postId);
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("favorited", false);
+                    m.put("favoriteCount", favoriteCountOf(post));
+                    return m;
+                }
             } catch (DuplicateKeyException e) {
                 // 唯一索引兜底：并发重复插入时，视为已收藏
                 post = communityPostService.getById(postId);
@@ -235,9 +257,8 @@ public class CommunityPostInteractionServiceImpl implements CommunityPostInterac
 
     private String displayName(User user) {
         if (user == null) return "某位用户";
-        if (user.getRealName() != null && !user.getRealName().trim().isEmpty()) return user.getRealName().trim();
-        if (user.getUsername() != null && !user.getUsername().trim().isEmpty()) return user.getUsername().trim();
-        return "某位用户";
+        // 显示名统一走解析器：不得回退到 username（可能是手机号/学号）
+        return DisplayNameResolver.resolve(user);
     }
 
     private static int likeCountOf(CommunityPost p) {

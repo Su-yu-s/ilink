@@ -147,9 +147,9 @@ async function loadMyFavorites(page) {
                         <div class="profile-post-card__meta" role="list">
                             <span class="profile-post-card__chip" role="listitem">${escapeHtml(badge)}</span>
                             <span role="listitem">发布时间 ${escapeHtml(timeStr)}</span>
-                            <span role="listitem">阅读 <strong>${views}</strong> 次</span>
-                            <span role="listitem">点赞 <strong>${likes}</strong></span>
-                            <span role="listitem">收藏 <strong>${favs}</strong></span>
+                            <span role="listitem">${escapeHtml(t('ui.community.views', { count: views }))}</span>
+                            <span role="listitem">${escapeHtml(t('ui.community.like'))} <strong>${likes}</strong></span>
+                            <span role="listitem">${escapeHtml(t('ui.community.favorite'))} <strong>${favs}</strong></span>
                         </div>
                     </div>
                     <div class="profile-post-card__actions">

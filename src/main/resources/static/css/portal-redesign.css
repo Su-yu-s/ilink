@@ -1,3 +1,4 @@
+@layer legacy {
 /*
  * iLink public portal v1
  * The portal stays navigation-led. Team Space is intentionally the only
@@ -769,8 +770,7 @@ html.ilink-app .community-article-comments__body {
 }
 
 html.ilink-app .detail-view__row,
-html.ilink-app .teacher-detail__apply,
-html.ilink-app .community-article-compose {
+html.ilink-app .teacher-detail__apply {
   border-color: var(--ui-border) !important;
 }
 
@@ -1328,6 +1328,10 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   top: calc(100% + 8px) !important;
   left: 0 !important;
   min-width: 100% !important;
+  /* 收起时按触发器宽度收窄并裁掉菜单项：菜单项是 nowrap 的，
+     英文选项比中文长，若按内容撑开会把文档撑出横向滚动条。 */
+  width: 100% !important;
+  overflow: hidden !important;
   background: #ffffff !important;
   border: 1px solid #e8e8e6 !important;
   border-radius: 12px !important;
@@ -1340,6 +1344,8 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   z-index: 30 !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.open .cs-dropdown {
+  width: auto !important;
+  overflow: visible !important;
   opacity: 1 !important;
   visibility: visible !important;
   transform: translateY(0) !important;
@@ -1653,9 +1659,9 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   font-size: 14px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
-  border: none !important;
-  background: #1f2937 !important;
-  color: #ffffff !important;
+  border: 1px solid var(--ui-border-strong, #d7d8db) !important;
+  background: var(--ui-surface-subtle, #f1f1f2) !important;
+  color: var(--ui-text, #282a2f) !important;
   margin-left: 8px !important;
   white-space: nowrap !important;
   transition: all .2s ease !important;
@@ -1667,9 +1673,9 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   height: 16px !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--solid:hover {
-  background: #374151 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 6px 16px rgba(31,41,55,0.25) !important;
+  background: var(--ui-border, #e5e5e7) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 /* community 刷新按钮(secondary改ghost)统一描边胶囊 */
 html.ilink-app body[data-app-page="community"] .il-search-bar .il-search-bar__btn--secondary {
@@ -2122,7 +2128,15 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot
   box-shadow: 0 4px 14px rgba(17,24,39,0.10) !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot img {
-  width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important;
+  /* display 不能加 !important：onerror 会写内联 display:none 让位给文字头像，
+     加了 !important 会把这个兜底顶掉，结果坏图占半格、文字头像被挤到另一边 */
+  width: 100% !important; height: 100% !important; object-fit: cover !important; display: block;
+}
+/* 图片加载失败时的统一兜底：行内 display:none 一律生效（顺带覆盖其它头像组件） */
+html.ilink-app .publisher-avatar__img[style*="display: none"],
+html.ilink-app .il-publisher-avatar__img[style*="display: none"],
+html.ilink-app .teacher-detail__avatar-slot img[style*="display: none"] {
+  display: none !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__title-wrap .detail-view__title { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply {
@@ -2271,26 +2285,431 @@ html.ilink-app body[data-app-page="community-article"] .community-article-commen
 html.ilink-app body[data-app-page="community-article"] .community-article-comments__title { font-size: 18px !important; font-weight: 700 !important; color:#1f2937 !important; }
 html.ilink-app body[data-app-page="community-article"] .community-article-comments__hint { font-size: 13px !important; color:#9ca3af !important; }
 html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding: 18px 34px 28px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article-compose__label {
-  display:block !important; font-size: 13.5px !important; font-weight: 600 !important; color:#374151 !important; margin-bottom:9px !important;
+html.ilink-app body[data-app-page="community-article"] .community-article-comment-list { margin-top: 0 !important; }
+
+/* ====== 评论区：三态编辑器（收起态 / 展开态 / 提交中） ====== */
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  padding: 0 0 20px !important;
+  margin-bottom: 20px !important;
+  border-bottom: 1px solid #f3f4f6 !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-compose__textarea {
-  min-height: 108px !important; padding: 13px 15px !important; border: 1px solid #e3e4e0 !important; border-radius: 12px !important;
-  background:#fff !important; font-size: 14.5px !important; line-height:1.65 !important; transition: border-color .18s ease, box-shadow .18s ease !important;
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar {
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  background: #f1f1f3 !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-compose__textarea:focus {
-  outline:none !important; border-color:#1f2937 !important; box-shadow:0 0 0 3px rgba(31,41,55,0.08) !important;
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar img,
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar .il-avatar-fallback {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  color: #6b7280 !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-compose__actions {
-  display:flex !important; justify-content:flex-end !important; margin-top: 12px !important;
+
+/* 收起态：假输入框 */
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-height: 44px !important;
+  padding: 10px 14px !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  color: #9ca3af !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  text-align: left !important;
+  cursor: text !important;
+  transition: background-color .15s ease, border-color .15s ease !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-compose__actions .il-btn {
-  height:42px !important; padding:0 22px !important; border-radius:11px !important; font-weight:600 !important;
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 16px !important;
+  color: #b6b8bd !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-comment-list { margin-top: 22px !important; }
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger[hidden] {
+  display: none !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger:hover {
+  background: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger:focus-visible {
+  outline: none !important;
+  border-color: #1f2937 !important;
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, .06) !important;
+}
+
+/* 展开态：输入区 + 工具栏共用一个圆角容器 */
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__editor {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  animation: ilCommentEditorIn .18s ease both;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__editor[hidden] {
+  display: none !important;
+}
+
+@keyframes ilCommentEditorIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea {
+  display: block !important;
+  width: 100% !important;
+  min-height: 96px !important;
+  max-height: 320px !important;
+  padding: 12px 16px 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #1f2937 !important;
+  font-family: inherit !important;
+  font-size: 13.5px !important;
+  line-height: 1.7 !important;
+  resize: vertical !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea:focus {
+  outline: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea::placeholder {
+  color: #9ca3af !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__toolbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  min-height: 40px !important;
+  padding: 6px 10px !important;
+  border-top: 1px solid #eceef1 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tools {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  min-width: 0 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-tool {
+  width: 28px !important;
+  height: 28px !important;
+  flex: 0 0 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 6px !important;
+  color: #9ca3af !important;
+  cursor: pointer !important;
+  transition: background-color .15s ease, color .15s ease !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-tool svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-tool:hover {
+  background: #eceef1 !important;
+  color: #4b5563 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin-left: auto !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count {
+  font-size: 10.5px !important;
+  font-weight: 500 !important;
+  color: #9ca3af !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count[hidden] {
+  display: none !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count.is-warn {
+  color: #d97706 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count.is-over {
+  color: #dc2626 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-cancel {
+  height: 30px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+  color: #6b7280 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background-color .15s ease, color .15s ease !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-cancel:hover {
+  background: #eceef1 !important;
+  color: #1f2937 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-submit {
+  height: 30px !important;
+  padding: 0 16px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background: #e5e7eb !important;
+  color: #9ca3af !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: not-allowed !important;
+  transition: background-color .15s ease, color .15s ease, transform .1s ease !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready {
+  background: var(--ui-surface-subtle, #f1f1f2) !important;
+  color: var(--ui-text, #282a2f) !important;
+  cursor: pointer !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready:hover {
+  background: var(--ui-border, #e5e5e7) !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready:active {
+  transform: scale(.97) !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-loading {
+  background: #1f2937 !important;
+  color: #ffffff !important;
+  cursor: progress !important;
+}
+
+/* 评论条目：悬停整条淡出删除按钮 */
+html.ilink-app body[data-app-page="community-article"] .community-article-comment {
+  padding: 14px 12px !important;
+  margin: 0 -12px !important;
+  border-radius: 10px !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+  transition: background-color .15s ease !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment:last-child {
+  border-bottom: 0 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment:hover {
+  background: rgba(249, 250, 251, .6) !important;
+}
+
+/* 评论操作区（回复 / 删除）：默认隐藏，悬停整条或键盘聚焦时淡入 */
+html.ilink-app body[data-app-page="community-article"] .community-article-comment__actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  opacity: 0 !important;
+  transition: opacity .15s ease !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment:hover .community-article-comment__actions,
+html.ilink-app body[data-app-page="community-article"] .community-article-comment__actions:focus-within {
+  opacity: 1 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment__action {
+  padding: 2px 8px !important;
+  border: 0 !important;
+  background: transparent !important;
+  border-radius: 6px !important;
+  color: #9ca3af !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  transition: background-color .15s ease, color .15s ease !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment__action:hover {
+  background: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment__delete:hover {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+/* 回复列表：单层缩进，左侧细引导线 */
+html.ilink-app body[data-app-page="community-article"] .il-comment-replies {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  margin-top: 10px !important;
+  padding-left: 12px !important;
+  border-left: 2px solid #f3f4f6 !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply {
+  padding: 8px 10px !important;
+  margin: 0 !important;
+  border-bottom: 0 !important;
+  border-radius: 8px !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply .community-article-comment__avatar {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply .community-article-comment__author {
+  font-size: 12.5px !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply .community-article-comment__body {
+  font-size: 13px !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comment__reply-to {
+  margin-right: 3px !important;
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+}
+
+/* 内联回复框 */
+html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box {
+  margin-top: 10px !important;
+  padding: 8px 10px !important;
+  background: #f9fafb !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  animation: ilCommentEditorIn .18s ease both;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box__input {
+  display: block !important;
+  width: 100% !important;
+  min-height: 52px !important;
+  padding: 4px 2px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #1f2937 !important;
+  font-family: inherit !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+  resize: vertical !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box__input:focus {
+  outline: none !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box__actions {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 6px !important;
+}
+
+/* 加载更多 */
+html.ilink-app body[data-app-page="community-article"] .il-comment-more {
+  display: flex !important;
+  justify-content: center !important;
+  padding: 16px 0 4px !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-more[hidden] {
+  display: none !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn {
+  height: 34px !important;
+  padding: 0 18px !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 9px !important;
+  background: #ffffff !important;
+  color: #6b7280 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease !important;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+  color: #1f2937 !important;
+}
+
+/* 平板：隐藏工具栏尾部提示；移动端：精简图标、头像缩小 */
+@media (max-width: 767.98px) {
+  html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar {
+    flex-basis: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+}
+
+@media (max-width: 639.98px) {
+  html.ilink-app body[data-app-page="community-article"] .il-comment-tool[data-tool="image"],
+  html.ilink-app body[data-app-page="community-article"] .il-comment-tool[data-tool="code"],
+  html.ilink-app body[data-app-page="community-article"] .il-comment-tool[data-tool="mention"] {
+    display: none !important;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea {
+    min-height: 80px !important;
+  }
+}
 html.ilink-app body[data-app-page="community-article"] .community-article-comment-list__empty {
-  padding: 26px !important; text-align:center !important; color:#9ca3af !important; font-size:14px !important;
-  background:#f8f8f6 !important; border-radius:12px !important;
+  padding: 22px !important; text-align:center !important; color:#9ca3af !important; font-size:13.5px !important;
+  background:#f9fafb !important; border:1px solid #f3f4f6 !important; border-radius:12px !important;
 }
 @media (max-width: 700px) {
   html.ilink-app body[data-app-page="community-article"] .community-article-card__header,
@@ -2313,4 +2732,146 @@ html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-det
 html.ilink-app body[data-app-page="team-publish"] .il-btn.d-none,
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply .il-btn.d-none {
   display: none !important;
+}
+
+/* ============================================================
+   参赛竞赛选择器：目录搜索下拉 + 自填切换
+   （发布页 team-publish 与团队详情编辑页 team-detail 共用）
+   ============================================================ */
+html.ilink-app .tp-comp-anchor {
+  position: relative;
+}
+html.ilink-app .tp-comp-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  background: #ffffff;
+  border: 1px solid #e3e4e0;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px -10px rgba(20, 25, 40, 0.18);
+  padding: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+html.ilink-app .tp-comp-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #1f2937;
+  text-align: left;
+  transition: background-color .14s ease;
+}
+html.ilink-app .tp-comp-item:hover {
+  background: #f4f4f2;
+}
+html.ilink-app .tp-comp-name {
+  font-weight: 500;
+}
+html.ilink-app .tp-comp-org {
+  font-size: 12px;
+  color: #8a8c87;
+  flex-shrink: 0;
+}
+html.ilink-app .tp-comp-empty {
+  padding: 12px;
+  font-size: 12.5px;
+  color: #8a8c87;
+  text-align: center;
+}
+html.ilink-app .tp-comp-toggle {
+  border: 0;
+  background: transparent;
+  padding: 6px 0;
+  margin-top: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #52555c;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+html.ilink-app .tp-comp-toggle:hover {
+  color: #282a2f;
+}
+
+/* 组队大厅卡片：参赛竞赛一行 */
+html.ilink-app .il-team-competition {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #52555c;
+  overflow-wrap: anywhere;
+}
+html.ilink-app .il-team-competition svg {
+  flex-shrink: 0;
+  color: #8a8c87;
+}
+
+}
+
+/* ============================================================
+   发布页 helper 行（参考 demo）：灰字提示 + 靛蓝链接按钮（带 SVG），
+   hover 底边线；替代原先的灰色下划线文字按钮。
+   ============================================================ */
+html.ilink-app .tp-helper-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+html.ilink-app .tp-helper-hint {
+  color: #9aa1ab;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+html.ilink-app .tp-helper-hint svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+html.ilink-app .tp-comp-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  padding: 2px 0;
+  margin-top: 0;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #6366f1;
+  cursor: pointer;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+html.ilink-app .tp-comp-toggle svg {
+  width: 12px;
+  height: 12px;
+}
+
+html.ilink-app .tp-comp-toggle:hover {
+  color: #4f46e5;
+  border-bottom-color: #6366f1;
 }

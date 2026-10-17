@@ -1,3 +1,4 @@
+@layer legacy {
 /* ============================================================
    iLink 沉浸式发布工作台（写文章 / 发布成果）
    严格对齐高保真原型：全屏沉浸、页面不滚动、编辑区内部滚动、
@@ -361,7 +362,9 @@ body[data-publishing-workspace] .md-edit-pane textarea {
   font-size: 14px;
   line-height: 1.65;
   resize: none;
-  scroll-behavior: smooth;
+  /* 不要给 textarea 开平滑滚动：左右同步滚动是程序化写 scrollTop，
+     smooth 会让每次写入变成一段动画，滚动事件成倍增加并互相追着跑（滚轮一卡一卡） */
+  scroll-behavior: auto;
 }
 body[data-publishing-workspace] .md-edit-pane textarea::placeholder { color: var(--ws-gray-300); }
 body[data-publishing-workspace] .md-preview-pane {
@@ -499,6 +502,51 @@ body[data-publishing-workspace] .publishing-workspace__field .form-select:focus 
   border-color: var(--ws-gray-900);
   box-shadow: none;
   outline: none;
+}
+
+/* 分类下拉：全局 html.ilink-app .form-select 用 !important 给了一层深色描边 + 44px 高 + 系统控件外观，
+   这里按发布工作台的灰阶重做（自绘箭头，去掉原生外观，高度对齐本页其它控件） */
+html.ilink-app body[data-publishing-workspace] .publishing-workspace__field select.form-select {
+  /* 支持 base-select 时交给它，展开的下拉列表才能跟着本页灰阶走；
+     不支持的浏览器退回自绘箭头（下面的 background-image） */
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 34px 8px 12px;
+  color: var(--ws-gray-800) !important;
+  background-color: #fff !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 11px center !important;
+  background-size: 15px 15px !important;
+  border: 1px solid var(--ws-gray-200) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font-family: inherit !important;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+html.ilink-app body[data-publishing-workspace] .publishing-workspace__field select.form-select:hover {
+  border-color: var(--ws-gray-300) !important;
+}
+html.ilink-app body[data-publishing-workspace] .publishing-workspace__field select.form-select:focus {
+  border-color: var(--ws-gray-900) !important;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08) !important;
+  outline: none;
+}
+html.ilink-app body[data-publishing-workspace] .publishing-workspace__field select.form-select option {
+  color: var(--ws-gray-800);
+  background: #fff;
+}
+
+@supports (appearance: base-select) {
+  html.ilink-app body[data-publishing-workspace] .publishing-workspace__field select.form-select {
+    appearance: base-select;
+    padding-right: 12px;
+    background-image: none !important;   /* 箭头由全局 ::picker-icon 提供 */
+  }
 }
 
 /* 虚线拖拽上传 */
@@ -762,4 +810,49 @@ body[data-publishing-workspace="article"] .community-compose-attachments .il-upl
   body[data-publishing-workspace] .md-pane-wrap { min-height: 400px; }
   .publishing-workspace__editor-footer { flex-wrap: wrap; gap: 6px; padding: 8px 14px; }
   .publishing-workspace__editor-footer .ws-stats { gap: 12px; flex-wrap: wrap; }
+}
+
+/* ---------- 离开确认（站内跳转用，替代浏览器原生 beforeunload） ---------- */
+.ws-leave-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(17, 24, 39, 0.45);
+  backdrop-filter: blur(2px);
+}
+.ws-leave-mask[hidden] { display: none; }
+.ws-leave {
+  width: 400px;
+  max-width: 100%;
+  padding: 24px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 48px rgba(17, 24, 39, 0.22);
+  animation: wsModalIn 0.16s ease both;
+}
+.ws-leave__title { margin: 0 0 8px; font-size: 17px; font-weight: 700; color: var(--ws-gray-900); }
+.ws-leave__text { margin: 0 0 20px; font-size: 13.5px; line-height: 1.7; color: var(--ws-gray-600); }
+.ws-leave__foot { display: flex; justify-content: flex-end; gap: 10px; }
+.ws-leave__foot .il-btn-primary,
+.ws-leave__stay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+.ws-leave__foot .il-btn-primary { border: 1px solid #111827; }
+.ws-leave__stay { color: #374151; background: #fff; border: 1px solid #e5e7eb; }
+.ws-leave__stay:hover { background: #f9fafb; border-color: #d1d5db; color: var(--ws-gray-900); }
+
 }

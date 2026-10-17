@@ -1,7 +1,8 @@
 // 导师招贤页面JavaScript (Editorial)
 
 let currentPage = 1;
-const pageSize = 10;
+// 导师招贤每页 12 张卡片（与组队大厅保持一致）
+const pageSize = 12;
 
 function openApplyModal() {
     const modal = document.getElementById('applyModal');
@@ -153,8 +154,15 @@ async function loadTeacherList() {
         var result = await response.json();
 
         if (result.code === 200) {
-            renderTeacherList(result.data);
             var pagination = (result.extra && result.extra.pagination) || result.pagination;
+            // 空页回退：当前页超出总页数（如数据被删、每页条数调整）时自动回退到末页重载，避免空白页
+            var p = pagination || {};
+            var totalPages = Math.max(1, Math.ceil((p.total || 0) / (p.size || pageSize)));
+            if (currentPage > totalPages && currentPage > 1) {
+                currentPage = totalPages;
+                return loadTeacherList();
+            }
+            renderTeacherList(result.data);
             renderPagination(pagination);
         } else {
             console.error('获取导师列表失败:', result.message);
@@ -279,7 +287,7 @@ function renderTeacherList(teachers) {
         var char = '导';
         var avatarUrl = null;
         if (prev && prev.id != null) {
-            name = (prev.realName && String(prev.realName).trim()) || (prev.username && String(prev.username).trim()) || name;
+            name = (prev.displayName && String(prev.displayName).trim()) || (prev.realName && String(prev.realName).trim()) || name;
             char = name.charAt(0).toUpperCase();
             avatarUrl = prev.avatar || null;
         }
@@ -315,7 +323,7 @@ function renderTeacherList(teachers) {
 
         // 详情链接
         var detailUrl = '/teacher-detail.html?id=' + encodeURIComponent(String(teacher.id));
-        shell.setAttribute('aria-label', '查看导师详情：' + name);
+        shell.setAttribute('aria-label', t('ui.teacherWall.viewMentor', { name: name }));
 
         // 研究方向标签
         var tagsHtml = tags.length > 0

@@ -1,3 +1,4 @@
+@layer legacy {
 /* iLink team detail - scoped detail shell and avatar containment */
 body[data-app-page="team-detail"] {
     --team-surface: #ffffff;
@@ -596,3 +597,170 @@ body[data-app-page="team-detail"] .profile-overlay__avatar-fallback {
 .task-submit-file__body small { color: #9ca3af; font-size: 12px; }
 .task-submit-file__remove { min-height: 34px; padding: 5px 8px; border: 0; border-radius: 8px; color: #6b7280; background: transparent; font-size: 12px; }
 .task-submit-file__remove:hover { color: #b91c1c; background: #fef2f2; }
+
+}
+
+/* ============================================================
+   申请人资料弹窗（profile-overlay，由 team-detail.js 动态生成）。
+   此前只有头像样式，头部/技能/近期发布没有任何布局定义，导致内容挤成一列。
+   ============================================================ */
+body[data-app-page="team-detail"] .profile-overlay__header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+body[data-app-page="team-detail"] .profile-overlay__info {
+    min-width: 0;
+}
+
+body[data-app-page="team-detail"] .profile-overlay__name {
+    margin: 0 0 4px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+body[data-app-page="team-detail"] .profile-overlay__subtitle {
+    margin: 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+body[data-app-page="team-detail"] .profile-section {
+    margin-bottom: 18px;
+}
+
+body[data-app-page="team-detail"] .profile-section:last-child {
+    margin-bottom: 0;
+}
+
+body[data-app-page="team-detail"] .profile-section h6 {
+    margin: 0 0 10px;
+    padding-left: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.2;
+    border-left: 3px solid #2563eb;
+}
+
+body[data-app-page="team-detail"] .profile-bio {
+    margin: 0;
+    word-break: break-all;
+}
+
+body[data-app-page="team-detail"] .profile-skill-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    margin-bottom: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fafbfc;
+}
+
+body[data-app-page="team-detail"] .profile-skill-item:last-child {
+    margin-bottom: 0;
+}
+
+body[data-app-page="team-detail"] .profile-skill-item .skill-name {
+    font-weight: 600;
+}
+
+body[data-app-page="team-detail"] .profile-skill-item .skill-stars {
+    color: #f59e0b;
+    letter-spacing: 2px;
+    white-space: nowrap;
+}
+
+body[data-app-page="team-detail"] .profile-skill-item .skill-cat {
+    margin-left: auto;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+body[data-app-page="team-detail"] .profile-post-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px;
+    margin-bottom: 2px;
+    border-radius: 8px;
+}
+
+body[data-app-page="team-detail"] .profile-post-item:nth-child(odd) {
+    background: #f9fafb;
+}
+
+body[data-app-page="team-detail"] .profile-post-item:hover {
+    background: #eef2ff;
+}
+
+body[data-app-page="team-detail"] .profile-post-index {
+    flex: 0 0 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e0e7ff;
+    color: #4f46e5;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+body[data-app-page="team-detail"] .profile-post-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #111827;
+    font-weight: 500;
+}
+
+body[data-app-page="team-detail"] .profile-post-item:hover .profile-post-title {
+    color: #2563eb;
+}
+
+body[data-app-page="team-detail"] .profile-post-date {
+    flex: 0 0 auto;
+    color: #9ca3af;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* 申请人资料弹窗滚动条：细化 + 半透明（默认滚动条太粗太显眼） */
+body[data-app-page="team-detail"] #profileOverlay,
+body[data-app-page="team-detail"] #profileOverlay .modal-dialog {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(107, 114, 128, 0.35) transparent;
+}
+
+body[data-app-page="team-detail"] #profileOverlay::-webkit-scrollbar,
+body[data-app-page="team-detail"] #profileOverlay .modal-dialog::-webkit-scrollbar {
+    width: 6px;
+}
+
+body[data-app-page="team-detail"] #profileOverlay::-webkit-scrollbar-track,
+body[data-app-page="team-detail"] #profileOverlay .modal-dialog::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body[data-app-page="team-detail"] #profileOverlay::-webkit-scrollbar-thumb,
+body[data-app-page="team-detail"] #profileOverlay .modal-dialog::-webkit-scrollbar-thumb {
+    background: rgba(107, 114, 128, 0.3);
+    border-radius: 3px;
+}
+
+body[data-app-page="team-detail"] #profileOverlay::-webkit-scrollbar-thumb:hover,
+body[data-app-page="team-detail"] #profileOverlay .modal-dialog::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.55);
+}
+
+body[data-app-page="team-detail"] #profileOverlay::-webkit-scrollbar-corner,
+body[data-app-page="team-detail"] #profileOverlay .modal-dialog::-webkit-scrollbar-corner {
+    background: transparent;
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批阅工作台 | iLink</title>
+
+    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link th:href="@{/css/review-workbench.css}" rel="stylesheet">
+</head>
+<body data-app-page="team-review" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
+
+    <!-- 批阅工作台：左材料列表 / 中预览 / 右批阅 -->
+    <div class="review-workbench" id="reviewWorkbench" hidden>
+        <div class="rw-topbar">
+            <button type="button" class="rw-back" id="rwBackBtn" title="返回">&#8592;</button>
+            <div class="rw-title-block">
+                <div class="rw-title" id="rwTitle">批阅任务</div>
+                <div class="rw-title-sub" id="rwSubtitle"></div>
+            </div>
+            <button type="button" class="btn btn-sm btn-secondary" id="rwCancelBtn">取消</button>
+        </div>
+        <div class="rw-body">
+            <aside class="rw-materials">
+                <div class="rw-mat-head"><span>交付材料</span><span class="rw-mat-progress" id="rwProgress">0 / 0 已点评</span></div>
+                <div class="rw-mat-list" id="rwMatList"></div>
+            </aside>
+            <div class="rw-preview">
+                <div class="rw-pv-head" id="rwPvHead"></div>
+                <div class="rw-pv-canvas-wrap" id="rwPvScroll"><div class="library-pv-canvas" id="rwPvCanvas"></div></div>
+            </div>
+            <aside class="rw-review">
+                <div class="rw-review-head"><span class="rw-review-title">批阅 <span class="rw-review-badge" id="rwReviewBadge">0/0</span></span></div>
+                <div class="rw-review-body">
+                    <div class="rw-current-file" id="rwCurrentFile"></div>
+                    <div class="rw-section">
+                        <div class="rw-section-label"><span>针对此文件的点评</span><span class="rw-section-hint" id="rwFileCommentHint">未填写</span></div>
+                        <textarea id="rwFileComment" placeholder="写针对这个文件的修改建议…"></textarea>
+                    </div>
+                    <div class="rw-section">
+                        <div class="rw-section-label"><span>整体点评</span><span class="rw-section-hint">选填</span></div>
+                        <textarea id="rwOverallComment" placeholder="对整份提交的综合意见…"></textarea>
+                    </div>
+                    <div class="rw-section">
+                        <div class="rw-section-label"><span>批阅结论</span></div>
+                        <div class="rw-verdict">
+                            <div class="rw-verdict-btns">
+                                <button type="button" class="rw-verdict-pass" id="rwVdPass">通过</button>
+                                <button type="button" class="rw-verdict-reject" id="rwVdReject">驳回</button>
+                            </div>
+                            <div class="rw-verdict-hint" id="rwVerdictHint">通过后任务完成；驳回后任务回到进行中。</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rw-foot">
+                    <button type="button" class="btn btn-sm btn-secondary" id="rwCancelBtn2">取消</button>
+                    <button type="button" class="btn btn-sm btn-primary" id="rwSubmitBtn" disabled>提交批阅</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/file-preview.js}"></script>
+    <script th:src="@{/js/review-workbench.js}"></script>
+    <script>
+        // 独立的工作台页面：进来就展开，?taskId= 指定先看哪一条（不传则看第一条待批阅）
+        (function () {
+            var taskId = Number(new URLSearchParams(location.search).get('taskId')) || null;
+            openReviewWorkbench(taskId);
+        })();
+    </script>
+</body>
+</html>

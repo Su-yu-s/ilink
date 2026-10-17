@@ -61,6 +61,7 @@ public class AttachmentUploadController {
         if ("community".equalsIgnoreCase(kind)) return "community";
         if ("task".equalsIgnoreCase(kind)) return "tasks";
         if ("chat".equalsIgnoreCase(kind)) return "chat";
+        if ("library".equalsIgnoreCase(kind)) return "library";
         if (kind == null || kind.trim().isEmpty() || "proof".equalsIgnoreCase(kind)) return "proofs";
         throw new IllegalArgumentException("不支持的附件用途");
     }

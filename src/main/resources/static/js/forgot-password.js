@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         const account = document.getElementById('resetAccount')?.value.trim() || '';
         if (!account) {
-            showMessage('请输入账号信息', 'warning');
+            showMessage(t('auth.forgot.validation.account'), 'warning');
             return;
         }
         await submitResetRequest(event.currentTarget, account);
@@ -20,11 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('resetNewPassword')?.value || '';
         const confirmation = document.getElementById('resetConfirmPassword')?.value || '';
         if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,32}$/.test(password)) {
-            showMessage('密码须为 8-32 位，且同时包含大写字母、小写字母和数字', 'warning');
+            showMessage(t('auth.forgot.validation.password'), 'warning');
             return;
         }
         if (password !== confirmation) {
-            showMessage('两次输入的密码不一致', 'warning');
+            showMessage(t('auth.forgot.validation.passwordMismatch'), 'warning');
             return;
         }
         await submitNewPassword(event.currentTarget, token, password);
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function submitResetRequest(form, account) {
     const button = form.querySelector('button[type="submit"]');
-    setSubmitting(button, true, '发送中…');
+    setSubmitting(button, true, t('auth.forgot.submitting'));
     try {
         const response = await apiFetch('/api/password-reset/request', {
             method: 'POST',
@@ -41,11 +41,11 @@ async function submitResetRequest(form, account) {
             body: JSON.stringify({ account })
         });
         const result = await response.json();
-        if (!response.ok || result.code !== 200) throw new Error(result.message || '请求失败');
+        if (!response.ok || result.code !== 200) throw new Error(result.message || t('common.error'));
         showMessage(result.message, 'success');
         form.reset();
     } catch (error) {
-        showMessage(error.message || '发送失败，请稍后重试', 'error');
+        showMessage(error.message || t('auth.forgot.sendFailed'), 'error');
     } finally {
         setSubmitting(button, false);
     }
@@ -53,7 +53,7 @@ async function submitResetRequest(form, account) {
 
 async function submitNewPassword(form, token, newPassword) {
     const button = form.querySelector('button[type="submit"]');
-    setSubmitting(button, true, '重置中…');
+    setSubmitting(button, true, t('auth.forgot.submitting'));
     try {
         const response = await apiFetch('/api/password-reset/confirm', {
             method: 'POST',
@@ -61,11 +61,11 @@ async function submitNewPassword(form, token, newPassword) {
             body: JSON.stringify({ token, newPassword })
         });
         const result = await response.json();
-        if (!response.ok || result.code !== 200) throw new Error(result.message || '重置失败');
+        if (!response.ok || result.code !== 200) throw new Error(result.message || t('common.error'));
         showMessage(result.message, 'success');
         setTimeout(() => window.location.replace('/login.html'), 1000);
     } catch (error) {
-        showMessage(error.message || '重置失败，请重新申请链接', 'error');
+        showMessage(error.message || t('auth.forgot.resetFailed'), 'error');
     } finally {
         setSubmitting(button, false);
     }

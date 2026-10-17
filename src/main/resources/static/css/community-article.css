@@ -1,3 +1,4 @@
+@layer legacy {
 /* Community article detail — centered reading layout (#111827 / #F9FAFB) */
 
 body[data-app-page="community-article"].community-article-page {
@@ -412,56 +413,7 @@ body[data-app-page="community-article"] .community-article-comments__body {
   padding: 1.25rem 1.5rem 1.5rem;
 }
 
-body[data-app-page="community-article"] .community-article-compose {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-light, #e5e7eb);
-}
-
-body[data-app-page="community-article"] .community-article-compose__label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-}
-
-body[data-app-page="community-article"] .community-article-compose__textarea {
-  display: block;
-  width: 100%;
-  min-height: 96px;
-  padding: 0.75rem 0.875rem;
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--text-primary, #111827);
-  background: #fff;
-  border: 1px solid var(--border-normal, #d1d5db);
-  border-radius: 10px;
-  resize: vertical;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-body[data-app-page="community-article"] .community-article-compose__textarea::placeholder {
-  color: #9ca3af;
-}
-
-body[data-app-page="community-article"] .community-article-compose__textarea:focus {
-  outline: none;
-  border-color: #111827;
-  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
-}
-
-body[data-app-page="community-article"] .community-article-compose__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 0.65rem;
-}
-
-body[data-app-page="community-article"] .community-article-compose__actions .il-btn {
-  min-height: 38px;
-  padding: 0.45rem 1rem;
-  font-size: 0.8125rem;
-}
+/* Comment composer 的三态样式在 portal-redesign.css 覆盖层里（il-comment-* 系列） */
 
 /* Comment list */
 body[data-app-page="community-article"] .community-article-comment-list {
@@ -745,4 +697,6 @@ body[data-app-page="community-article"] .community-article__content {
   }
 
   body[data-app-page="community-article"] .community-article-attachment-item { flex-basis: 168px; }
+}
+
 }

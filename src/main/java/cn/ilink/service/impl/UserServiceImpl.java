@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.Date;
 
 @Service
@@ -32,6 +33,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private TeacherApplicationServiceImpl teacherApplicationService;
+
+    /**
+     * username 随机字符集：剔除易混的 0 / 1 / i / l / o，共 31 个字符。
+     * 8 位随机串的空间为 31^8 ≈ 8.5×10^11，远超校园规模下的碰撞概率。
+     */
+    private static final char[] USERNAME_ALPHABET =
+        "23456789abcdefghjkmnpqrstuvwxyz".toCharArray();
+    private static final int USERNAME_RANDOM_LENGTH = 8;
+    private static final int USERNAME_MAX_ATTEMPTS = 5;
+
+    private final SecureRandom secureRandom = new SecureRandom();
+
+    /**
+     * 生成内部用户名：{@code u} + 8 位随机字符。
+     *
+     * <p>username 只作内部标识与登录凭据载体，对用户不可见、不参与展示，
+     * 因此不携带任何身份信息（历史实现用手机号或 {@code s}+学号，会把注册凭据泄露到公开接口）。
+     * 连续冲突超过 {@value #USERNAME_MAX_ATTEMPTS} 次视为异常情况，返回 null 由调用方失败退出。
+     */
+    private String generateUsername() {
+        for (int attempt = 0; attempt < USERNAME_MAX_ATTEMPTS; attempt++) {
+            StringBuilder sb = new StringBuilder(USERNAME_RANDOM_LENGTH + 1);
+            sb.append('u');
+            for (int i = 0; i < USERNAME_RANDOM_LENGTH; i++) {
+                sb.append(USERNAME_ALPHABET[secureRandom.nextInt(USERNAME_ALPHABET.length)]);
+            }
+            String candidate = sb.toString();
+            if (userMapper.findByUsername(candidate) == null) {
+                return candidate;
+            }
+            log.warn("用户名生成冲突，重试第 {} 次", attempt + 1);
+        }
+        return null;
+    }
 
     private boolean matchesPassword(User user, String rawPassword) {
         if (user == null || rawPassword == null) {
@@ -63,20 +98,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
         }
 
-        String username = registerRequest.getUsername();
-        if (username == null || username.isBlank()) {
-            if (registerRequest.getPhoneNumber() != null && !registerRequest.getPhoneNumber().trim().isEmpty()) {
-                username = registerRequest.getPhoneNumber().trim();
-            } else if (registerRequest.getStudentId() != null) {
-                username = "s" + registerRequest.getStudentId();
-            } else {
-                return false;
-            }
-        }
-
-        User existingUser = userMapper.findByUsername(username);
-        if (existingUser != null) {
-            log.debug("注册失败：用户名已存在");
+        // username 一律随机生成：不再用手机号/学号推导，避免注册凭据经公开接口泄露。
+        // 请求体里即便带了 username 也一律忽略。
+        String username = generateUsername();
+        if (username == null) {
+            log.error("用户名生成失败：连续 {} 次冲突", USERNAME_MAX_ATTEMPTS);
             return false;
         }
 
@@ -90,7 +116,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setRole(resolvedRole);
         // 注册即按角色随机分配一个内置头像
         user.setAvatar(BuiltinAvatarCatalog.randomForRole(resolvedRole));
-        user.setRealName(username);
+        // real_name 留空，由用户在个人资料页自行填写；显示名走 DisplayNameResolver 的角色占位。
+        // 历史上这里填的是注册标识（手机号/学号），使同一个凭据经 realName 再次泄露到公开页面。
         user.setGender(registerRequest.getGender());
 
         user.setCreatedAt(new Date());
@@ -155,6 +182,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         if (user != null && matchesPassword(user, loginRequest.getPassword())) {
+            // 被禁用的账号即便密码正确也不放行。返回 user 由调用方判断状态，
+            // 这样 AuthController 能区分「密码错误」和「账号已暂停」两种提示。
             return user;
         }
         return null;
@@ -168,17 +197,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return false;
         }
 
-        if (profileRequest.getUsername() != null) {
-            String nextUsername = profileRequest.getUsername().trim();
-            if (nextUsername.isEmpty()) {
-                return false;
-            }
-            User exists = userMapper.findByUsername(nextUsername);
-            if (exists != null && exists.getId() != null && !exists.getId().equals(userId)) {
-                return false;
-            }
-            user.setUsername(nextUsername);
-        }
+        // username 为内部标识，不接受任何修改：它是随机生成的，且不用于展示。
+        // 允许修改会重新打开「把 username 改成手机号」的泄露路径，因此直接忽略请求中的该字段。
 
         if (profileRequest.getEmail() != null) {
             user.setEmail(profileRequest.getEmail());
@@ -261,5 +281,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPassword(passwordEncoder.encode(newPassword));
         updateById(user);
         return true;
+    }
+
+    @Override
+    public boolean checkPassword(Long userId, String rawPassword) {
+        if (userId == null) {
+            return false;
+        }
+        return matchesPassword(getById(userId), rawPassword);
     }
 }

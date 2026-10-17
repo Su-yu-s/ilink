@@ -12,11 +12,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Date;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,14 +45,66 @@ class PasswordResetServiceTest {
         when(userMapper.findByEmail("student@example.com")).thenReturn(user);
         ArgumentCaptor<PasswordResetToken> tokenCaptor = ArgumentCaptor.forClass(PasswordResetToken.class);
         ArgumentCaptor<String> rawCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> recipientCaptor = ArgumentCaptor.forClass(String.class);
 
         service.requestReset("student@example.com", "127.0.0.1");
 
         verify(tokenMapper).insert(tokenCaptor.capture());
-        verify(mailService).sendResetLink(eq(user), rawCaptor.capture());
+        verify(mailService).sendResetLink(recipientCaptor.capture(), rawCaptor.capture());
+        assertEquals("student@example.com", recipientCaptor.getValue());
         assertNotEquals(rawCaptor.getValue(), tokenCaptor.getValue().getTokenHash());
-        org.junit.jupiter.api.Assertions.assertEquals(
+        assertEquals(
             SecureTokenSupport.hash(rawCaptor.getValue()), tokenCaptor.getValue().getTokenHash());
+    }
+
+    /**
+     * 回归：账号未绑定邮箱时不得发信、更不得签发 token。
+     * 历史缺陷是把重置链接发到「请求者自填」的邮箱，导致任何人可接管他人账号。
+     */
+    @Test
+    void unboundAccountNeverSendsAMail() {
+        User user = user(7L);
+        user.setEmail(null);
+        when(userMapper.findByUsername("susu")).thenReturn(user);
+
+        service.requestReset("susu", "10.0.0.1");
+
+        verify(mailService, never()).sendResetLink(any(), any());
+        verify(tokenMapper, never()).insert(any());
+    }
+
+    @Test
+    void unboundAccountWithBlankEmailNeverSendsAMail() {
+        User user = user(7L);
+        user.setEmail("   ");
+        when(userMapper.findByUsername("susu")).thenReturn(user);
+
+        service.requestReset("susu", "10.0.0.1");
+
+        verify(mailService, never()).sendResetLink(any(), any());
+        verify(tokenMapper, never()).insert(any());
+    }
+
+    @Test
+    void boundEmailIsTheOnlyRecipient() {
+        User user = user(7L);
+        when(userMapper.findByUsername("susu")).thenReturn(user);
+        ArgumentCaptor<String> recipientCaptor = ArgumentCaptor.forClass(String.class);
+
+        service.requestReset("susu", "10.0.0.1");
+
+        verify(mailService).sendResetLink(recipientCaptor.capture(), any());
+        assertEquals("student@example.com", recipientCaptor.getValue());
+    }
+
+    @Test
+    void unknownAccountSendsNothing() {
+        when(userMapper.findByUsername("ghost")).thenReturn(null);
+
+        service.requestReset("ghost", "10.0.0.1");
+
+        verify(mailService, never()).sendResetLink(any(), any());
+        verify(tokenMapper, never()).insert(any());
     }
 
     @Test

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="dictionary">
+    <!--
+      全站文案字典。放在独立、同源、可缓存的 JS 文件里（服务端出口见 I18nCatalogController）：
+      · 目录规模已达数千条，逐页内联会让每个 HTML 多出约 250KB
+      · 该请求带 ETag，命中缓存只回 304
+      下面一行内联兜底保证脚本 404 时页面仍能正常渲染（此时只显示文案 key）。
+    -->
+    <script>window.__I18N__ = window.__I18N__ || {}; window.__I18N_SOURCE__ = window.__I18N_SOURCE__ || {};</script>
+    <script th:src="@{/i18n/catalog.js}"></script>
+</th:block>
+</body>
+</html>

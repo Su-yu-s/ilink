@@ -115,8 +115,11 @@ async function loadCompetitions() {
         empty?.classList.toggle('d-none', rows.length > 0);
         if (rows.length === 0) grid.innerHTML = '';
         if (hint) {
-            hint.textContent = '当前第 ' + currentPage + ' / ' + totalPages +
-                ' 页 · 共收录 ' + total + ' 项（由管理员持续维护）';
+            hint.textContent = t('ui.competitions.pageCount', {
+                page: currentPage,
+                totalPages: totalPages,
+                count: total
+            });
         }
         renderPager(total);
     } catch (error) {

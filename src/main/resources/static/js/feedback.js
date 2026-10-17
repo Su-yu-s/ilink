@@ -11,7 +11,7 @@
 (function () {
     'use strict';
 
-    var AUTHOR_URL = 'https://su-yu-s.github.io/portfolio/';
+    var AUTHOR_URL = 'https://su-yu-s.github.io/iLink-cn/';
     var MAX_FILES = 5;
     var MAX_FILE_SIZE = 5 * 1024 * 1024;
     var MAX_DESC = 500;
@@ -196,7 +196,7 @@
             var remove = document.createElement('button');
             remove.type = 'button';
             remove.className = 'fbk-preview__remove';
-            remove.setAttribute('aria-label', '移除 ' + file.name);
+            remove.setAttribute('aria-label', t('feedback.removeFile', { name: file.name }));
             remove.textContent = '✕';
             remove.addEventListener('click', function () {
                 selectedFiles.splice(index, 1);
@@ -215,11 +215,11 @@
         for (var i = 0; i < incoming.length; i += 1) {
             var file = incoming[i];
             if (!file.type || file.type.indexOf('image/') !== 0) {
-                rejection = '「' + file.name + '」不是图片文件';
+                rejection = t('feedback.invalidImage', { name: file.name });
                 continue;
             }
             if (file.size > MAX_FILE_SIZE) {
-                rejection = '「' + file.name + '」超过 5MB';
+                rejection = t('feedback.fileTooLarge', { name: file.name });
                 continue;
             }
             accepted.push(file);
@@ -241,7 +241,7 @@
             }
         });
         if (merged.length > MAX_FILES) {
-            showError('最多上传 ' + MAX_FILES + ' 张截图');
+            showError(t('feedback.maxFiles', { count: MAX_FILES }));
             merged = merged.slice(0, MAX_FILES);
         } else if (rejection) {
             // 有文件被拒时不要用 clearError 把原因冲掉
@@ -334,7 +334,7 @@
             ? '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">'
                 + '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"/>'
                 + '<path d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor"/>'
-                + '</svg>正在上传并生成页面…'
+                + '</svg>' + t('feedback.uploading')
             : SUBMIT_LABEL;
     }
 
@@ -372,7 +372,7 @@
             }
             var description = descInput ? descInput.value.trim() : '';
             if (!description) {
-                showError('请填写详细描述');
+                showError(t('feedback.requiredDescription'));
                 if (descInput) {
                     descInput.focus();
                 }
@@ -394,11 +394,11 @@
                 .then(function () {
                     resetForm();
                     closeModal();
-                    showMessage('已推送至开发者微信并生成记录', 'success');
+                    showMessage(t('feedback.submitSuccess'), 'success');
                 })
                 .catch(function (error) {
                     // request() 已统一提示；这里额外做表单内联提示，且保留全部输入与已选截图
-                    showError((error && error.message) || '提交失败，请稍后重试');
+                    showError((error && error.message) || t('feedback.submitFailed'));
                 })
                 .then(function () {
                     setSubmitting(false);

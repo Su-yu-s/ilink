@@ -510,7 +510,8 @@ function honorProofAsideHtml(proofUrl, proofName) {
 function profileSummaryAvatarHtml(userLike) {
     const u = userLike || {};
     const seed =
-        (u.username && String(u.username).trim()) ||
+        (u.avatarInitial && String(u.avatarInitial).trim()) ||
+        (u.displayName && String(u.displayName).trim()) ||
         (u.realName && String(u.realName).trim()) ||
         '用';
     const initials = String(seed).charAt(0).toUpperCase();
@@ -766,21 +767,19 @@ function renderOverview(user, honorsList, activity) {
     const avatarHtml = profileSummaryAvatarHtml(user);
 
     const displayName = escapeHtml(
-        (user.username && String(user.username).trim()) || user.realName || '用户'
+        (user.displayName && String(user.displayName).trim()) || user.realName || '用户'
     );
     const identityTitle = `${displayName} · ${escapeHtml(roleLabel)}`;
     const emailLine = user.email ? escapeHtml(user.email) : '未填写邮箱';
     const basicRows = role === 'TEACHER'
         ? [
             { label: '姓名', value: user.realName || '' },
-            { label: '用户名', value: user.username || '' },
             { label: '专业领域', value: user.major || '' },
             { label: '任职单位', value: user.school || '' },
             { label: '院系 / 部门', value: user.college || '' }
         ]
         : [
             { label: '姓名', value: user.realName || '' },
-            { label: '用户名', value: user.username || '' },
             { label: '年级', value: user.grade || '' },
             { label: '专业', value: user.major || '' },
             { label: '学校', value: user.school || '' },
@@ -920,7 +919,9 @@ function renderPublicOverview(vo, honorsList) {
         '<h3 class="pub-card__title">' + icon + escapeHtml(text) + '</h3>';
 
     // ---------- 1. 个人资料 ----------
-    const displayName = escapeHtml((vo.username && String(vo.username).trim()) || vo.realName || '用户');
+    const displayName = escapeHtml(
+        (vo.displayName && String(vo.displayName).trim()) || vo.realName || '用户'
+    );
     const avatarHtml = profileSummaryAvatarHtml(vo);
     const badgeClass = isTeacher ? 'pub-role-badge pub-role-badge--teacher'
         : (isAdmin ? 'pub-role-badge pub-role-badge--admin' : 'pub-role-badge');
@@ -944,14 +945,12 @@ function renderPublicOverview(vo, honorsList) {
     const basicRows = isTeacher
         ? [
             { label: '姓名', value: vo.realName || '' },
-            { label: '用户名', value: vo.username || '' },
             { label: '专业领域', value: vo.major || '' },
             { label: '任职单位', value: vo.school || '' },
             { label: '院系 / 部门', value: vo.college || '' }
         ]
         : [
             { label: '姓名', value: vo.realName || '' },
-            { label: '用户名', value: vo.username || '' },
             { label: '年级', value: vo.grade || '' },
             { label: '专业', value: vo.major || '' },
             { label: '学校', value: vo.school || '' },
@@ -1254,9 +1253,9 @@ async function renderJoinedTeams() {
                     if (metaEl) {
                         metaEl.innerHTML = '<span>加入于 ' + joined + '</span>' +
                             ' <span class="il-team-card__meta-sep">·</span>' +
-                            '<span class="il-team-card__stat">成员 <span class="il-team-card__stat-value">' + members.length + '</span> 人</span>' +
+                            '<span class="il-team-card__stat">' + t('ui.profile.teamStatMembers') + ' <span class="il-team-card__stat-value">' + members.length + '</span>' + t('ui.common.countSuffix') + '</span>' +
                             ' <span class="il-team-card__meta-sep">·</span>' +
-                            '<span class="il-team-card__stat">待办 <span class="il-team-card__stat-value">' + pendingTask + '</span> 个</span>';
+                            '<span class="il-team-card__stat">' + t('ui.teamSpace.todo') + ' <span class="il-team-card__stat-value">' + pendingTask + '</span>' + t('ui.common.itemSuffix') + '</span>';
                     }
                 });
             })(teamId);
@@ -1402,7 +1401,6 @@ function formatDateOnlyProfile(value) {
 }
 function applyUserToProfileForm(user) {
     if (!user) return;
-    const usernameElem = document.getElementById('username');
     const emailElem = document.getElementById('email');
     const realNameElem = document.getElementById('realName');
     const avatarElem = document.getElementById('avatar');
@@ -1414,7 +1412,6 @@ function applyUserToProfileForm(user) {
     const collegeElem = document.getElementById('college');
     const bioElem = document.getElementById('bio');
     const phoneElem = document.getElementById('phoneDisplay');
-    if (usernameElem) usernameElem.value = user.username || '';
     if (emailElem) emailElem.value = user.email || '';
     if (realNameElem) realNameElem.value = user.realName || '';
     if (avatarElem) avatarElem.value = user.avatar || '';
@@ -1433,7 +1430,6 @@ function applyUserToProfileForm(user) {
 }
 
 async function saveProfilePayload(includeHonors) {
-    const usernameElem = document.getElementById('username');
     const emailElem = document.getElementById('email');
     const realNameElem = document.getElementById('realName');
     const avatarElem = document.getElementById('avatar');
@@ -1445,7 +1441,7 @@ async function saveProfilePayload(includeHonors) {
     const bioElem = document.getElementById('bio');
     const profileData = {};
     // 仅提交当前页面存在的字段，避免在成果页把资料字段误清空
-    if (usernameElem) profileData.username = usernameElem.value;
+    // username 是内部标识，不接受前端修改，这里刻意不提交
     if (emailElem) profileData.email = emailElem.value;
     if (realNameElem) profileData.realName = realNameElem.value;
     if (avatarElem) profileData.avatar = avatarElem.value;
@@ -1718,11 +1714,11 @@ function renderTeamActivityLists(activity) {
                             '<span>截止：' + formatDateOnlyProfile(team.deadline) + '</span>' +
                         '</div>' +
                         '<div class="il-team-card__meta">' +
-                            '<span class="il-team-card__stat">报名 <span class="il-team-card__stat-value">' + applicationCount + '</span> 人</span>' +
+                            '<span class="il-team-card__stat">' + t('ui.profile.teamStatApplications') + ' <span class="il-team-card__stat-value">' + applicationCount + '</span>' + t('ui.common.countSuffix') + '</span>' +
                             '<span class="il-team-card__meta-sep">·</span>' +
-                            '<span class="il-team-card__stat">已加入 <span class="il-team-card__stat-value">' + approvedCount + '</span> 人</span>' +
+                            '<span class="il-team-card__stat">' + t('ui.profile.teamStatApproved') + ' <span class="il-team-card__stat-value">' + approvedCount + '</span>' + t('ui.common.countSuffix') + '</span>' +
                             '<span class="il-team-card__meta-sep">·</span>' +
-                            '<span class="il-team-card__stat">需求 <span class="il-team-card__stat-value">' + requiredCount + '</span> 人</span>' +
+                            '<span class="il-team-card__stat">' + t('ui.profile.teamStatOpenings') + ' <span class="il-team-card__stat-value">' + requiredCount + '</span>' + t('ui.common.countSuffix') + '</span>' +
                         '</div>' +
                     '</div>' +
                     '<span class="il-team-card__badge ' + teamDemandStatusBadgeClass(team.status) + '">' + escapeHtml(teamDemandStatusLabel(team.status)) + '</span>' +
@@ -1801,12 +1797,12 @@ async function handleProfileTeamAction(id, action) {
     };
     try {
         if (action === 'delete') {
-            if (!confirm('确认删除该组队需求？删除后不可恢复。')) return;
+            if (!uiConfirm('确认删除该组队需求？删除后不可恢复。')) return;
             await request(`/team/${id}`, { method: 'DELETE' });
             showMessage('删除成功', 'success');
         } else if (actionConfig[action]) {
             const config = actionConfig[action];
-            if (!confirm(config.confirmText)) return;
+            if (!uiConfirm(config.confirmText)) return;
             await request(`/team/${id}/status`, {
                 method: 'PUT',
                 body: JSON.stringify({ status: config.status })
@@ -2008,7 +2004,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     })
                     .filter(Boolean);
                 if (!ids.length) return;
-                if (!confirm('确定删除选中的 ' + ids.length + ' 条成果？')) return;
+                if (!uiConfirm('确定删除选中的 ' + ids.length + ' 条成果？')) return;
                 honorsState = honorsState.filter(function (h) {
                     return ids.indexOf(String(h.id)) === -1;
                 });
@@ -2157,11 +2153,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     clearBtn && clearBtn.classList.remove('d-none');
                     showMessage('头像已上传，保存资料后将在全站生效', 'success');
                     if (typeof applyAccountMenuFromUser === 'function') {
-                        const uEl = document.getElementById('username');
                         const rEl = document.getElementById('realName');
                         const roleEl = document.getElementById('role');
                         applyAccountMenuFromUser({
-                            username: uEl ? uEl.value : '',
                             realName: rEl ? rEl.value : '',
                             avatar: url,
                             role: roleEl ? roleEl.value : ''
@@ -2186,11 +2180,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                 clearBtn.classList.add('d-none');
                 if (hint) hint.textContent = '';
                 if (typeof applyAccountMenuFromUser === 'function') {
-                    const uEl = document.getElementById('username');
                     const rEl = document.getElementById('realName');
                     const roleEl = document.getElementById('role');
                     applyAccountMenuFromUser({
-                        username: uEl ? uEl.value : '',
                         realName: rEl ? rEl.value : '',
                         avatar: '',
                         role: roleEl ? roleEl.value : ''

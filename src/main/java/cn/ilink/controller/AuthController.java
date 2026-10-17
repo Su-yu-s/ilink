@@ -1,18 +1,21 @@
 package cn.ilink.controller;
 
 import cn.ilink.common.Result;
+import cn.ilink.common.UserSessionRegistry;
 import cn.ilink.dto.LoginRequest;
 import cn.ilink.dto.RegisterRequest;
 import cn.ilink.entity.User;
 import cn.ilink.security.LoginAttemptService;
+import cn.ilink.service.EmailVerificationService;
 import cn.ilink.service.HomeStatsService;
 import cn.ilink.service.RememberMeService;
 import cn.ilink.service.UserService;
 import cn.ilink.util.PasswordPolicy;
 import cn.ilink.util.ClientIpResolver;
+import cn.ilink.util.I18nMessageResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,17 +27,20 @@ import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Controller;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.validation.Valid;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -46,17 +52,27 @@ public class AuthController {
     private final LoginAttemptService loginAttemptService;
     private final HomeStatsService homeStatsService;
     private final RememberMeService rememberMeService;
+    private final EmailVerificationService emailVerificationService;
+    /** 切片测试等上下文可能未装配注册表，用 ObjectProvider 允许缺省 */
+    private final UserSessionRegistry sessionRegistry;
+
+    @Autowired(required = false)
+    private I18nMessageResolver i18nMessages;
 
     /** 读取登录前访问的地址，登录成功后跳回原页面。 */
     private final RequestCache requestCache = new HttpSessionRequestCache();
 
     public AuthController(UserService userService, LoginAttemptService loginAttemptService,
                           @Autowired(required = false) HomeStatsService homeStatsService,
-                          RememberMeService rememberMeService) {
+                          RememberMeService rememberMeService,
+                          EmailVerificationService emailVerificationService,
+                          ObjectProvider<UserSessionRegistry> sessionRegistryProvider) {
         this.userService = userService;
         this.loginAttemptService = loginAttemptService;
         this.homeStatsService = homeStatsService;
         this.rememberMeService = rememberMeService;
+        this.emailVerificationService = emailVerificationService;
+        this.sessionRegistry = sessionRegistryProvider.getIfAvailable();
     }
 
     @GetMapping("/login")
@@ -68,7 +84,7 @@ public class AuthController {
     @PostMapping("/api/login")
     @ResponseBody
     public ResponseEntity<Result<?>> login(
-        @RequestBody LoginRequest loginRequest,
+        @Valid @RequestBody LoginRequest loginRequest,
         HttpSession session,
         HttpServletRequest request,
         HttpServletResponse servletResponse
@@ -81,7 +97,8 @@ public class AuthController {
             String clientKey = resolveLoginAttemptKey(request, loginRequest);
             if (loginAttemptService.isBlocked(clientKey)) {
                 return json(Result.fail(401,
-                    "登录尝试次数过多，请 " + loginAttemptService.remainingLockMinutes() + " 分钟后再试"));
+                    msg("auth.error.login.rateLimit", "登录尝试次数过多，请 {0} 分钟后再试",
+                        loginAttemptService.remainingLockMinutes())));
             }
 
             normalizeIdentifier(loginRequest);
@@ -93,13 +110,19 @@ public class AuthController {
             );
             if (principal == null) {
                 loginAttemptService.loginFailed(clientKey);
-                return json(Result.fail(401, "用户名或密码错误"));
+                return json(Result.fail(401, msg("auth.error.invalidCredentials", "用户名或密码错误")));
             }
 
             User user = userService.login(loginRequest);
             if (user == null) {
                 loginAttemptService.loginFailed(clientKey);
-                return json(Result.fail(401, "用户名或密码错误"));
+                return json(Result.fail(401, msg("auth.error.invalidCredentials", "用户名或密码错误")));
+            }
+            // 密码正确但账号被暂停：给出明确原因，不进入会话建立流程
+            if (user.isDisabled()) {
+                loginAttemptService.loginFailed(clientKey);
+                log.info("账号已被暂停，拒绝登录：userId={}", user.getId());
+                return json(Result.fail(403, msg("account.disabled", "账号已被暂停使用，如有疑问请联系管理员")));
             }
             // 老用户首次登录时补一个随机内置头像（只补一次，已有头像不动）
             user = userService.ensureAvatarAssigned(user);
@@ -118,6 +141,10 @@ public class AuthController {
 
             user.setPassword(null);
             session.setAttribute("user", user);
+            // 修复 D-P1-1：登记会话归属，管理员改角色/删号时可一键失效该用户全部会话
+            if (sessionRegistry != null) {
+                sessionRegistry.register(user.getId(), session);
+            }
 
             if (loginRequest.isRememberMe()) {
                 rememberMeService.issue(user.getId(), request, servletResponse);
@@ -128,10 +155,11 @@ public class AuthController {
             String redirectAfterLogin = resolveRedirectAfterLogin(
                 request, servletResponse, loginRequest.getReturnTo());
             loginAttemptService.loginSucceeded(clientKey);
-            return json(Result.ok("登录成功", user).withExtra("redirectAfterLogin", redirectAfterLogin));
+            return json(Result.ok(msg("auth.login.success", "登录成功"), user)
+                .withExtra("redirectAfterLogin", redirectAfterLogin));
         } catch (Exception e) {
             log.warn("登录异常", e);
-            return json(Result.fail("系统异常，请稍后重试"));
+            return json(Result.fail(msg("auth.error.unavailable", "系统异常，请稍后重试")));
         }
     }
 
@@ -141,13 +169,27 @@ public class AuthController {
         return "register";
     }
 
+    /** 注册前先往邮箱发验证码；邮箱已被注册时直接拒绝，让用户早点换一个 */
+    @PostMapping("/api/register/email-code")
+    @ResponseBody
+    public ResponseEntity<Result<?>> sendRegisterEmailCode(@RequestBody(required = false) Map<String, String> body,
+                                                           HttpServletRequest request) {
+        String email = body == null ? null : body.get("email");
+        String error = emailVerificationService.sendRegisterCode(email, ClientIpResolver.resolve(request));
+        if (error != null) {
+            return Result.badRequest(error).toResponseEntity();
+        }
+        return Result.ok(msg("auth.register.emailSent", "验证码已发送，请查收邮箱"), null).toResponseEntity();
+    }
+
     @PostMapping("/api/register")
     @ResponseBody
-    public ResponseEntity<Result<?>> register(@RequestBody RegisterRequest registerRequest,
+    public ResponseEntity<Result<?>> register(@Valid @RequestBody RegisterRequest registerRequest,
                                               HttpServletRequest request) {
         String clientIp = ClientIpResolver.resolve(request);
         if (!loginAttemptService.tryRegister(clientIp)) {
-            return Result.badRequest("注册过于频繁，请 1 分钟后再试").toResponseEntity();
+            return Result.badRequest(msg("auth.error.registration.rateLimit", "注册过于频繁，请 1 分钟后再试"))
+                .toResponseEntity();
         }
 
         String regPhone = registerRequest.getPhoneNumber();
@@ -163,55 +205,69 @@ public class AuthController {
                 try {
                     registerRequest.setStudentId(Long.parseLong(id));
                 } catch (NumberFormatException e) {
-                    return Result.badRequest("学号/工号格式错误").toResponseEntity();
+                    return Result.badRequest(msg("auth.error.studentId", "学号/工号格式错误")).toResponseEntity();
                 }
             } else {
-                return Result.badRequest("手机号或学号/工号格式不正确").toResponseEntity();
+                return Result.badRequest(msg("auth.error.identifier", "手机号或学号/工号格式不正确"))
+                    .toResponseEntity();
             }
         }
 
         String pwd = registerRequest.getPassword();
         if (!PasswordPolicy.isValid(pwd)) {
-            return Result.badRequest(PasswordPolicy.message()).toResponseEntity();
+            return Result.badRequest(msg("auth.register.validation.passwordPolicy", PasswordPolicy.message()))
+                .toResponseEntity();
         }
 
         if (registerRequest.getPhoneNumber() != null && !registerRequest.getPhoneNumber().trim().isEmpty()) {
             if (!registerRequest.getPhoneNumber().matches("^1[3-9]\\d{9}$")) {
-                return Result.badRequest("手机号格式错误").toResponseEntity();
+                return Result.badRequest(msg("auth.error.phone", "手机号格式错误")).toResponseEntity();
             }
         }
 
         if (registerRequest.getStudentId() != null) {
             if (!String.valueOf(registerRequest.getStudentId()).matches("^\\d{5,15}$")) {
-                return Result.badRequest("学号/工号格式错误").toResponseEntity();
+                return Result.badRequest(msg("auth.error.studentId", "学号/工号格式错误")).toResponseEntity();
             }
         }
 
         if ((registerRequest.getPhoneNumber() == null || registerRequest.getPhoneNumber().trim().isEmpty())
             && registerRequest.getStudentId() == null) {
-            return Result.badRequest("手机号或学号/工号必须填写一项").toResponseEntity();
+            return Result.badRequest(msg("auth.error.identifierRequired", "手机号或学号/工号必须填写一项"))
+                .toResponseEntity();
         }
 
         // 验证角色/身份：注册时必须选择学生或教师
         String role = registerRequest.getRole();
         if (role == null || (!"STUDENT".equals(role) && !"TEACHER".equals(role))) {
-            return Result.badRequest("请选择身份（学生或教师）").toResponseEntity();
+            return Result.badRequest(msg("auth.error.role", "请选择身份（学生或教师）")).toResponseEntity();
         }
-        registerRequest.setRole(role.toUpperCase());
+        registerRequest.setRole(role.toUpperCase(Locale.ROOT));
+
+        // 邮箱验证码校验放在这里：前面都是纯格式检查，走到这儿才真正要落库；
+        // 且验证码在注册成功后才消费，手机号填错不至于白白作废一个验证码
+        String emailError = emailVerificationService.verify(
+            registerRequest.getEmail(), registerRequest.getEmailCode());
+        if (emailError != null) {
+            return Result.badRequest(emailError).toResponseEntity();
+        }
 
         try {
             boolean success = userService.register(registerRequest);
             if (success) {
+                emailVerificationService.consume(registerRequest.getEmail());
                 boolean teacher = "TEACHER".equals(registerRequest.getRole());
                 return Result.ok(
-                    teacher ? "教师账号注册成功，导师身份已启用" : "注册成功",
+                    msg(teacher ? "auth.register.success.teacher" : "auth.register.success.student",
+                        teacher ? "教师账号注册成功，导师身份已启用" : "注册成功，请登录"),
                     null
                 ).withExtra("role", registerRequest.getRole()).toResponseEntity();
             }
-            return Result.badRequest("注册失败，手机号或学号/工号已存在").toResponseEntity();
+            return Result.badRequest(msg("auth.error.registerExists", "注册失败，手机号或学号/工号已存在"))
+                .toResponseEntity();
         } catch (Exception e) {
             log.error("注册事务失败", e);
-            return Result.fail(500, "注册失败，请稍后重试").toResponseEntity();
+            return Result.fail(500, msg("auth.error.registerFailed", "注册失败，请稍后重试")).toResponseEntity();
         }
     }
 
@@ -254,10 +310,20 @@ public class AuthController {
         return "404";
     }
 
+    /**
+     * 登录接口的统一响应封装。
+     *
+     * <p>历史实现固定返回 HTTP 200（连失败也是 200 + body code=401），与全站其余接口
+     * 「body.code 与 HTTP 状态码一致」的口径冲突，导致网关/监控按状态码统计成功率失真、
+     * SDK 必须先读 body 才知道失败（核实报告 P2-2）。这里直接复用 {@link Result#toResponseEntity()}，
+     * 由 body.code 映射真实 HTTP 状态码。
+     */
     private ResponseEntity<Result<?>> json(Result<?> result) {
-        return ResponseEntity.ok()
-            .header("Content-Type", "application/json;charset=UTF-8")
-            .body(result);
+        return result.toResponseEntity();
+    }
+
+    private String msg(String key, String fallback, Object... arguments) {
+        return i18nMessages == null ? fallback : i18nMessages.get(key, fallback, arguments);
     }
 
     private void normalizeIdentifier(LoginRequest loginRequest) {
@@ -360,7 +426,9 @@ public class AuthController {
     }
 
     private static String resolveLoginAttemptKey(HttpServletRequest request, LoginRequest loginRequest) {
-        String ip = request.getRemoteAddr();
+        // 修复 D-P2-10：getRemoteAddr() 在 nginx 同机部署下恒为 127.0.0.1，IP 维度限流退化为全体共享；
+        // 统一走 ClientIpResolver（解析受信任代理的 X-Forwarded-For），与注册/重置等接口口径一致
+        String ip = ClientIpResolver.resolve(request);
         String account = loginRequest.getIdentifier();
         if (account == null || account.isBlank()) {
             account = loginRequest.getPhoneNumber();

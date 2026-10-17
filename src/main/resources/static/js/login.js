@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateIdentifier(showHint) {
         const value = identifierInput ? identifierInput.value.trim() : '';
         if (!value) {
-            if (showHint) showFieldHint('identifierError', '请输入手机号或学号/工号', 'identifier');
+            if (showHint) showFieldHint('identifierError', t('auth.login.validation.identifier'), 'identifier');
             return false;
         }
         clearFieldHint('identifierError', 'identifier');
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function validatePassword(showHint) {
         const value = passwordInput ? passwordInput.value : '';
         if (!value) {
-            if (showHint) showFieldHint('passwordError', '请输入密码', 'password');
+            if (showHint) showFieldHint('passwordError', t('auth.login.validation.password'), 'password');
             return false;
         }
         clearFieldHint('passwordError', 'password');
@@ -60,11 +60,11 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             const submitButton = loginForm.querySelector('button[type="submit"]');
-            const originalText = submitButton ? submitButton.textContent : '登录';
+            const originalText = submitButton ? submitButton.textContent : t('auth.login.submit');
 
             try {
                 if (submitButton) {
-                    submitButton.textContent = '登录中...';
+                    submitButton.textContent = t('auth.login.submitting');
                     submitButton.disabled = true;
                 }
 
@@ -76,13 +76,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const contentType = response.headers.get('content-type') || '';
                 if (!contentType.includes('application/json')) {
-                    throw new Error('服务器响应不是有效的 JSON 格式');
+                    throw new Error(t('common.error'));
                 }
 
                 const result = await response.json();
 
                 if (response.ok && result.code === 200) {
-                    showMessage('登录成功，正在进入首页', 'success');
+                    showMessage(t('auth.login.success'), 'success');
 
                     let next = '/index.html';
                     const extra = result.extra || {};
@@ -95,11 +95,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 800);
                 } else {
                     const extra = result.extra || {};
-                    showMessage(extra.message || result.message || '用户名或密码错误', 'error');
+                    showMessage(extra.message || result.message || t('auth.login.invalid'), 'error');
                 }
             } catch (error) {
                 console.error('登录请求失败:', error);
-                showMessage('网络连接失败，请稍后重试', 'error');
+                showMessage(t('auth.networkError'), 'error');
             } finally {
                 if (submitButton) {
                     submitButton.textContent = originalText;

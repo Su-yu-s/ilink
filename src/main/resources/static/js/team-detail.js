@@ -95,15 +95,71 @@ function normalizeDateInput(value) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function categoryLabel(competitionId) {
-    const map = { 1: '技术开发', 2: '创意设计', 3: '市场营销', 4: '学术研究' };
-    return map[competitionId] || '未分类';
-}
+/** 编辑面板的参赛竞赛控件：目录选择与自填互斥 */
+const editCompetition = (function () {
+    const searchInput = document.getElementById('editCompetitionSearch');
+    if (!searchInput) return null;
+    const menu = document.getElementById('editCompetitionMenu');
+    const idInput = document.getElementById('editCompetitionId');
+    const customInput = document.getElementById('editCustomCompetitionInput');
+    const toggleBtn = document.getElementById('editToggleCustomCompetition');
 
-function categoryId(value) {
-    const map = { 技术开发: 1, 创意设计: 2, 市场营销: 3, 学术研究: 4, 竞赛协作: null };
-    return map[value] || null;
-}
+    CompetitionPicker.create({
+        input: searchInput,
+        menu: menu,
+        onSelect: function (comp) {
+            idInput.value = comp.id;
+            customInput.value = '';
+        }
+    });
+
+    toggleBtn.addEventListener('click', function () {
+        const toCustom = customInput.hidden;
+        customInput.hidden = !toCustom;
+        searchInput.style.display = toCustom ? 'none' : '';
+        menu.hidden = true;
+        toggleBtn.textContent = toCustom ? '从竞赛目录选择' : '目录里没有？自行填写';
+        if (toCustom) {
+            idInput.value = '';
+        } else {
+            customInput.value = '';
+        }
+    });
+
+    /** 进入编辑模式时回填：目录竞赛显示名称，自填显示原文 */
+    function fill(team) {
+        if (team.competitionId) {
+            idInput.value = team.competitionId;
+            searchInput.value = team.competitionName || '';
+            customInput.value = '';
+            customInput.hidden = true;
+            searchInput.style.display = '';
+            toggleBtn.textContent = '目录里没有？自行填写';
+        } else if (team.customCompetition) {
+            idInput.value = '';
+            searchInput.value = '';
+            customInput.value = team.customCompetition;
+            customInput.hidden = false;
+            searchInput.style.display = 'none';
+            toggleBtn.textContent = '从竞赛目录选择';
+        } else {
+            // 存量队伍尚未补竞赛：留在目录选择模式等队长补填
+            idInput.value = '';
+            searchInput.value = '';
+            customInput.value = '';
+            customInput.hidden = true;
+            searchInput.style.display = '';
+            toggleBtn.textContent = '目录里没有？自行填写';
+        }
+    }
+
+    function values() {
+        const id = idInput.value ? parseInt(idInput.value, 10) : null;
+        return { competitionId: id, customCompetition: id ? '' : customInput.value.trim() };
+    }
+
+    return { fill: fill, values: values };
+})();
 
 function formatTime(dateStr) {
     if (!dateStr) return '';
@@ -141,10 +197,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function checkCreatorAccess(teamData) {
     try {
-        const currentUser = await apiFetch('/api/user/profile');
-        const result = await currentUser.json();
-        if (result.code !== 200 || !result.data || !teamData.creatorId) return;
-        teamDetailCurrentUserId = Number(result.data.id);
+        // 匿名访客由 loadCurrentUserOnce 直接返回 null，不再产生 401 请求（核实报告 P2-6）；
+        // 登录态下多次调用共享同一次请求（本页此前会重复拉两次资料）
+        const data = await loadCurrentUserOnce();
+        if (!data || !teamData.creatorId) return;
+        teamDetailCurrentUserId = Number(data.id);
         isCurrentUserCreator = teamDetailCurrentUserId === Number(teamData.creatorId);
 
         // 判断是否为队员
@@ -204,24 +261,50 @@ function renderPendingApplications(apps) {
     const countBadge = document.getElementById('pendingCount');
     if (!section || !list) return;
     section.classList.remove('d-none');
-    countBadge.textContent = apps.length;
+    // 修复：区分「待审批申请」（对方主动申请）与「已发出的邀请」（等待对方确认）。
+    // 邀请行不能给通过/拒绝按钮——那是对方的决定权。
+    var applications = apps.filter(function(a) { return !a.invitedByMe; });
+    var invitations = apps.filter(function(a) { return a.invitedByMe; });
+    countBadge.textContent = applications.length;
     if (apps.length === 0) {
         list.innerHTML = '<div class="pending-list__empty">暂无待审批的申请</div>';
         return;
     }
-    list.innerHTML = apps.map(function(app) {
+    list.innerHTML = (invitations.length
+        ? '<div class="pending-group-title">已发出的邀请 · 等待对方确认（' + invitations.length + '）</div>' + invitations.map(function(app) {
         var name = escapeHtml(app.applicantName || '申请人');
         var major = app.applicantMajor ? escapeHtml(app.applicantMajor) : '';
         var grade = app.applicantGrade ? escapeHtml(app.applicantGrade) : '';
         var school = app.applicantSchool ? escapeHtml(app.applicantSchool) : '';
         var subtitle = [major, grade, school].filter(Boolean).join(' · ');
         var avatarHtml = renderAvatar(name, app.applicantAvatar);
-        var skillsHtml = '';
-        if (Array.isArray(app.skills) && app.skills.length > 0) {
-            skillsHtml = '<div class="pending-skill-list">' +
-                app.skills.map(function(s) { return renderSkillTag(s); }).join('') +
-                '</div>';
-        }
+        var dateStr = app.createdAt ? formatCompactDate(app.createdAt) : '';
+        return '<div class="pending-card" data-app-id="' + app.id + '" data-user-id="' + (app.applicantUserId || '') + '">' +
+            '<div class="pending-card__header">' +
+                '<div class="pending-card__avatar">' + avatarHtml + '</div>' +
+                '<div class="pending-card__info">' +
+                    '<div class="pending-card__name">' + name + '</div>' +
+                    (subtitle ? '<div class="pending-card__subtitle">' + subtitle + '</div>' : '') +
+                '</div>' +
+            '</div>' +
+            '<div class="pending-card__footer">' +
+                '<span class="pending-card__date">邀请于 ' + dateStr + ' · 等待对方确认</span>' +
+                '<div class="pending-card__actions">' +
+                    '<button type="button" class="il-btn il-btn--sm il-btn--ghost" onclick="openProfileOverlay(' + (app.applicantUserId || 0) + ')">查看完整资料</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }).join('') : '') +
+    (applications.length
+        ? (invitations.length ? '<div class="pending-group-title">待审批申请（' + applications.length + '）</div>' : '')
+        + applications.map(function(app) {
+        var name = escapeHtml(app.applicantName || '申请人');
+        var major = app.applicantMajor ? escapeHtml(app.applicantMajor) : '';
+        var grade = app.applicantGrade ? escapeHtml(app.applicantGrade) : '';
+        var school = app.applicantSchool ? escapeHtml(app.applicantSchool) : '';
+        var subtitle = [major, grade, school].filter(Boolean).join(' · ');
+        var avatarHtml = renderAvatar(name, app.applicantAvatar);
+        // 技能标签不再上卡：与"查看完整资料"弹窗重复，卡片保持轻量
         var dateStr = app.createdAt ? formatCompactDate(app.createdAt) : '';
 
         return '<div class="pending-card" data-app-id="' + app.id + '" data-user-id="' + (app.applicantUserId || '') + '">' +
@@ -233,17 +316,16 @@ function renderPendingApplications(apps) {
                 '</div>' +
             '</div>' +
             (app.message ? '<div class="pending-card__message">' + escapeHtml(app.message) + '</div>' : '') +
-            skillsHtml +
             '<div class="pending-card__footer">' +
                 '<span class="pending-card__date">申请于 ' + dateStr + '</span>' +
                 '<div class="pending-card__actions">' +
                     '<button type="button" class="il-btn il-btn--sm il-btn--ghost" onclick="openProfileOverlay(' + (app.applicantUserId || 0) + ')">查看完整资料</button>' +
-                    '<button type="button" class="il-btn il-btn--sm il-btn--primary" onclick="openApproveModal(' + app.id + ', \'' + name + '\')">✓ 通过</button>' +
-                    '<button type="button" class="il-btn il-btn--sm il-btn--danger" onclick="openRejectModal(' + app.id + ', \'' + name + '\')">✗ 拒绝</button>' +
+                    '<button type="button" class="il-btn il-btn--sm il-btn--primary" onclick="openApproveModal(' + app.id + ', \'' + name + '\')">通过</button>' +
+                    '<button type="button" class="il-btn il-btn--sm il-btn--danger" onclick="openRejectModal(' + app.id + ', \'' + name + '\')">拒绝</button>' +
                 '</div>' +
             '</div>' +
         '</div>';
-    }).join('');
+    }).join('') : '');
 }
 
 function renderAvatar(name, avatar) {
@@ -451,7 +533,7 @@ async function openProfileOverlay(userId) {
             return;
         }
 
-        var name = escapeHtml(user.username || '用户');
+        var name = escapeHtml(user.displayName || user.realName || '用户');
         var major = user.major ? escapeHtml(user.major) : '';
         var grade = user.grade ? escapeHtml(user.grade) : '';
         var school = user.school ? escapeHtml(user.school) : '';
@@ -469,14 +551,11 @@ async function openProfileOverlay(userId) {
         var skillsHtml = '';
         if (skills.length > 0) {
             skillsHtml = skills.map(function(s) {
-                var stars = '';
-                var level = Number(s.skillLevel) || 0;
-                for (var i = 0; i < 5; i++) stars += i < level ? '★' : '☆';
+                // 五角星熟练度去掉：弹窗里无信息量，只保留技能名与方向
                 var cat = s.skillCategory ? '<span class="skill-cat">' + escapeHtml(s.skillCategory) + '</span>' : '';
                 var exp = s.yearsExperience ? ' · ' + s.yearsExperience + '年' : '';
                 return '<div class="profile-skill-item">' +
                     '<span class="skill-name">' + escapeHtml(s.skillName) + '</span>' +
-                    '<span class="skill-stars">' + stars + '</span>' +
                     cat + exp +
                 '</div>';
             }).join('');
@@ -498,14 +577,19 @@ async function openProfileOverlay(userId) {
             } catch (e) { /* ignore parse errors */ }
         }
 
-        // 近期发布
+        // 近期发布：序号 + 标题 + 日期右对齐，排版更整齐
         var postsHtml = '';
         if (Array.isArray(user.publishedPosts) && user.publishedPosts.length > 0) {
             postsHtml = '<div class="profile-section"><h6>近期发布</h6>' +
-                user.publishedPosts.slice(0, 5).map(function(p) {
+                user.publishedPosts.slice(0, 5).map(function(p, idx) {
                     var title = escapeHtml(p.title || '无标题');
                     var date = p.createdAt ? formatCompactDate(p.createdAt) : '';
-                    return '<div class="profile-post-item"><a href="/community.html" class="text-decoration-none">' + title + '</a><span class="text-muted small ms-2">' + date + '</span></div>';
+                    var num = String(idx + 1).padStart(2, '0');
+                    return '<div class="profile-post-item">' +
+                        '<span class="profile-post-index">' + num + '</span>' +
+                        '<a href="/community.html" class="profile-post-title text-decoration-none">' + title + '</a>' +
+                        '<span class="profile-post-date">' + date + '</span>' +
+                        '</div>';
                 }).join('') + '</div>';
         }
 
@@ -556,9 +640,10 @@ function fillEditForm() {
     document.getElementById('editTitle').value = currentTeamData.title || '';
     document.getElementById('editDescription').value = currentTeamData.description || '';
     document.getElementById('editSkills').value = currentTeamData.requiredSkills || '';
-    document.getElementById('editCategory').value = categoryLabel(currentTeamData.competitionId);
+    document.getElementById('editCategory').value = currentTeamData.category || '技术开发';
     document.getElementById('editMemberCount').value = currentTeamData.requiredMemberCount || '';
     document.getElementById('editDeadline').value = normalizeDateInput(currentTeamData.deadline);
+    if (editCompetition) editCompetition.fill(currentTeamData);
 }
 
 async function saveTeamEdit() {
@@ -569,13 +654,20 @@ async function saveTeamEdit() {
         return;
     }
     const memberValue = document.getElementById('editMemberCount').value;
+    const compValues = editCompetition ? editCompetition.values() : { competitionId: null, customCompetition: '' };
+    if (!compValues.competitionId && !compValues.customCompetition) {
+        showMessage('请选择参赛竞赛，或点击「目录里没有？自行填写」', 'warning');
+        return;
+    }
     try {
         await teamApiRequest(`/team/${teamIdNum}`, {
             method: 'PUT',
             body: JSON.stringify({
                 title,
                 description,
-                competitionId: categoryId(document.getElementById('editCategory').value),
+                category: document.getElementById('editCategory').value,
+                competitionId: compValues.competitionId,
+                customCompetition: compValues.customCompetition,
                 requiredSkills: document.getElementById('editSkills').value.trim(),
                 requiredMemberCount: memberValue ? parseInt(memberValue, 10) : null,
                 deadline: document.getElementById('editDeadline').value || null
@@ -590,7 +682,7 @@ async function saveTeamEdit() {
 
 function bindTeamStatusActions() {
     document.getElementById('markTeamingBtn')?.addEventListener('click', function() {
-        updateTeamStatus('TEAMING', '确认将该组队标记为组队中？');
+        updateTeamStatus('TEAMING', '确认完成组队？');
     });
     document.getElementById('closeTeamBtn')?.addEventListener('click', function() {
         updateTeamStatus('CLOSED', '确认结束该项目？');
@@ -608,7 +700,7 @@ function bindWorkspaceButton() {
 }
 
 async function updateTeamStatus(status, confirmText) {
-    if (!confirm(confirmText)) return;
+    if (!uiConfirm(confirmText)) return;
     try {
         await teamApiRequest(`/team/${teamIdNum}/status`, {
             method: 'PUT',
@@ -626,9 +718,13 @@ function renderTeamDetail(team) {
     currentTeamData = team || {};
     document.getElementById('teamTitle').textContent = team.title || '未命名团队';
     renderPublisher(team);
-    document.getElementById('teamCategory').textContent = categoryLabel(team.competitionId);
+    document.getElementById('teamCategory').textContent = team.category || '未分类';
+    document.getElementById('teamCompetition').textContent =
+        team.competitionName || team.customCompetition || '未填写';
     renderTeamStatus(team.status);
-    document.getElementById('teamMemberCount').textContent = team.requiredMemberCount ? `${team.requiredMemberCount}人` : '待定';
+    document.getElementById('teamMemberCount').textContent = team.requiredMemberCount
+        ? t('ui.teamDetail.currentMemberCount', { count: team.requiredMemberCount })
+        : '待定';
     document.getElementById('teamDeadline').textContent = team.deadline ? normalizeDateInput(team.deadline) : '长期有效';
     document.getElementById('teamSkills').textContent = team.requiredSkills || '无';
     document.getElementById('teamDescription').textContent = team.description || '暂无描述';
@@ -646,7 +742,7 @@ function renderPublisher(team) {
     if (!pubEl) return;
     if (typeof publisherAvatarHtml === 'function' && team.creatorPreview && team.creatorPreview.id != null) {
         const preview = team.creatorPreview;
-        const name = preview.username || preview.realName || '用户';
+        const name = preview.displayName || preview.realName || '用户';
         pubEl.innerHTML = `<div class="d-flex align-items-center gap-2 flex-wrap">${publisherAvatarHtml(preview)}<span class="text-body">${escapeHtml(name)}</span></div>`;
     } else {
         pubEl.textContent = team.creatorId != null ? `用户 #${team.creatorId}` : '未知';
@@ -661,7 +757,7 @@ function renderTeamMembers(members) {
         return;
     }
     container.innerHTML = members.map(function(member) {
-        const name = escapeHtml(member.username || '成员');
+        const name = escapeHtml(member.displayName || member.username || '成员');
         const role = escapeHtml(member.role || '队员');
         const isLeader = member.role === 'LEADER' || role === '队长';
         const major = member.major ? '<span class="team-member__major">' + escapeHtml(member.major) + '</span>' : '';
@@ -673,7 +769,12 @@ function renderTeamMembers(members) {
         } else {
             avatarHtml = '<span class="team-member__avatar-fallback">' + escapeHtml(name.charAt(0)) + '</span>';
         }
-        return '<div class="team-member">' +
+        // 有 userId 的成员整卡可点，进 TA 的公开主页
+        var uid = member.userId != null ? Number(member.userId) : null;
+        var linkAttrs = uid
+            ? ' data-uid="' + uid + '" role="link" tabindex="0" title="查看 ' + name + ' 的主页"'
+            : '';
+        return '<div class="team-member' + (uid ? ' team-member--linkable' : '') + '"' + linkAttrs + '>' +
             '<div class="team-member__avatar">' + avatarHtml + '</div>' +
             '<div class="team-member__info">' +
                 '<span class="team-member__name">' + name + '</span>' +
@@ -682,6 +783,26 @@ function renderTeamMembers(members) {
             '<span class="team-member__role ' + roleClass + '">' + role + '</span>' +
         '</div>';
     }).join('');
+    bindMemberCardNav(container);
+}
+
+/** 成员卡跳转：事件委托挂在容器上，重渲染不丢；鼠标点、键盘 Enter/空格都能进 */
+function bindMemberCardNav(container) {
+    if (container.dataset.memberNavBound) return;
+    container.dataset.memberNavBound = '1';
+    function go(card) {
+        var uid = card && card.dataset ? card.dataset.uid : null;
+        if (uid) window.location.href = '/user-profile.html?id=' + encodeURIComponent(uid);
+    }
+    container.addEventListener('click', function (e) {
+        var card = e.target.closest ? e.target.closest('.team-member[data-uid]') : null;
+        if (card) go(card);
+    });
+    container.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var card = e.target.closest ? e.target.closest('.team-member[data-uid]') : null;
+        if (card) { e.preventDefault(); go(card); }
+    });
 }
 
 async function checkApplicationStatus(teamId) {

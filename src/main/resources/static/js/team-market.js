@@ -2,7 +2,8 @@
 
 // 当前页码
 let currentPage = 1;
-const pageSize = 10;
+// 组队大厅每页 12 张卡片（与导师招贤保持一致）
+const pageSize = 12;
 
 function formatDateStr(value) {
     if (!value) return '长期有效';
@@ -56,8 +57,15 @@ async function loadTeamList() {
         const result = await response.json();
 
         if (result.code === 200) {
-            renderTeamList(result.data);
             const pagination = (result.extra && result.extra.pagination) || result.pagination;
+            // 空页回退：当前页超出总页数（如数据被删、每页条数调整）时自动回退到末页重载，避免空白页
+            const p = pagination || {};
+            const totalPages = Math.max(1, Math.ceil((p.total || 0) / (p.size || pageSize)));
+            if (currentPage > totalPages && currentPage > 1) {
+                currentPage = totalPages;
+                return loadTeamList();
+            }
+            renderTeamList(result.data);
             renderPagination(pagination);
         } else {
             console.error('获取团队列表失败:', result.message);
@@ -180,7 +188,7 @@ function renderTeamList(teams) {
         const cardShell = document.createElement('a');
         cardShell.className = 'il-team-card-shell';
         cardShell.href = detailUrl;
-        cardShell.setAttribute('aria-label', '查看组队详情：' + (team.title || '未命名需求'));
+        cardShell.setAttribute('aria-label', t('ui.market.viewTeam', { title: team.title || t('ui.market.unnamed') }));
 
         const rawStatus = team.status || '';
         const normalizedStatus = rawStatus.toUpperCase();
@@ -197,12 +205,12 @@ function renderTeamList(teams) {
         let authorAvatarUrl = null;
         if (team.creatorPreview && team.creatorPreview.id != null) {
             const pv = team.creatorPreview;
-            const name = (pv.username && String(pv.username).trim()) || (pv.realName && String(pv.realName).trim()) || '';
+            const name = (pv.displayName && String(pv.displayName).trim()) || (pv.realName && String(pv.realName).trim()) || '';
             authorName = name || '发布者';
             authorAvatar = authorName.charAt(0).toUpperCase();
             authorAvatarUrl = pv.avatar || null;
         } else if (team.creatorId != null) {
-            authorName = '用户 #' + team.creatorId;
+            authorName = t('ui.market.userId', { id: team.creatorId });
         }
 
         function buildAvatarHtml(avatarUrl, fallbackChar) {
@@ -228,9 +236,8 @@ function renderTeamList(teams) {
             }
         }
 
-        // 分类
-        const catMap = { 1: '技术开发', 2: '创意设计', 3: '市场营销', 4: '学术研究' };
-        const category = team.category || catMap[team.competitionId] || '其他';
+        // 分类：team_demand.category 列（competitionId 不再承载分类语义）
+        const category = team.category || '其他';
         const catClassMap = {
             '技术开发': 'il-team-category--dev',
             '创意设计': 'il-team-category--design',
@@ -239,10 +246,13 @@ function renderTeamList(teams) {
         };
         const catClass = catClassMap[category] || '';
 
-        const memberCount = team.requiredMemberCount ? team.requiredMemberCount + '人' : '待定';
+        const memberCount = team.requiredMemberCount
+            ? team.requiredMemberCount + ' ' + t('ui.common.peopleSuffix')
+            : t('ui.common.toBeDetermined');
         const deadline = team.deadline ? formatDateStr(team.deadline) : '长期有效';
         const postedDate = team.createdAt ? formatTime(team.createdAt) : '';
         const desc = team.description ? (team.description.length > 120 ? team.description.substring(0, 120) + '...' : team.description) : '暂无描述';
+        const competitionLabel = team.competitionName || team.customCompetition || '';
 
         const statusClass = isRecruiting ? 'il-status-recruiting' : (isTeaming ? 'il-status-teamed' : 'il-status-closed');
         const statusAlias = isRecruiting ? 'status-recruiting' : (isTeaming ? 'status-teaming' : 'status-closed');
@@ -252,6 +262,9 @@ function renderTeamList(teams) {
                 '<h3 class="card-title il-team-title">' + escapeHtml(team.title || '未命名需求') + '</h3>' +
                 '<span class="category-tag il-team-category ' + catClass + '">' + escapeHtml(category) + '</span>' +
             '</div>' +
+            (competitionLabel ? '<div class="il-team-competition">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 01-10 0V4zM7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+                '<span>' + escapeHtml(competitionLabel) + '</span></div>' : '') +
             '<div class="card-meta il-team-meta">' +
                 '<span class="meta-item il-team-meta-item">' +
                     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>' +

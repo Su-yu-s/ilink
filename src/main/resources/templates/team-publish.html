@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +29,8 @@
 
                     <div class="tp-field">
                         <label for="title" class="il-form-label">标题 <span class="tp-req">*</span></label>
-                        <input type="text" class="il-form-input" id="title" maxlength="100" placeholder="用一句话概括你的团队需求" required>
+                        <!-- 上限与后端 ControllerUtils.TEAM_TITLE_MAX / 数据库列宽（V40 对齐为 200）一致 -->
+                        <input type="text" class="il-form-input" id="title" maxlength="200" placeholder="用一句话概括你的团队需求" required>
                     </div>
 
                     <div class="tp-field">
@@ -46,7 +47,7 @@
                     <h2 class="tp-section__title">队伍设置</h2>
 
                     <div class="tp-field">
-                        <label class="il-form-label" id="categoryLabel">分类 <span class="tp-req">*</span></label>
+                        <label class="il-form-label" id="categoryLabel">项目方向 <span class="tp-req">*</span></label>
                         <!-- 单选芯片：真正的值放在隐藏域里，提交契约与原来的 select 完全一致 -->
                         <input type="hidden" id="category" value="">
                         <div class="tp-chips" id="categoryChips" role="radiogroup" aria-labelledby="categoryLabel">
@@ -54,19 +55,64 @@
                             <button type="button" class="tp-chip" data-value="创意设计" role="radio" aria-checked="false">创意设计</button>
                             <button type="button" class="tp-chip" data-value="市场营销" role="radio" aria-checked="false">市场营销</button>
                             <button type="button" class="tp-chip" data-value="学术研究" role="radio" aria-checked="false">学术研究</button>
-                            <button type="button" class="tp-chip" data-value="竞赛协作" role="radio" aria-checked="false">竞赛协作</button>
+                        </div>
+                    </div>
+
+                    <div class="tp-field">
+                        <label for="competitionSearch" class="il-form-label">参赛竞赛 <span class="tp-req">*</span></label>
+                        <!-- 目录选择与自填互斥：competitionId 有值时自填框为空，反之亦然 -->
+                        <input type="hidden" id="competitionId" value="">
+                        <div class="tp-comp-anchor">
+                            <input type="text" class="il-form-input" id="competitionSearch"
+                                   placeholder="搜索竞赛名称或主办方，从竞赛目录中选择" autocomplete="off"
+                                   role="combobox" aria-expanded="false" aria-controls="competitionMenu">
+                            <div class="tp-comp-menu" id="competitionMenu" role="listbox" aria-label="竞赛候选" hidden></div>
+                        </div>
+                        <div id="customCompetitionField" hidden>
+                            <input type="text" class="il-form-input" id="customCompetitionInput"
+                                   maxlength="160" placeholder="输入竞赛全称，例如：全国大学生电子商务“创新、创意及创业”挑战赛">
+                        </div>
+                        <div class="tp-comp-toggle-row tp-helper-row">
+                            <span class="tp-helper-hint" id="customCompetitionHint">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                                目录里没有？
+                            </span>
+                            <button type="button" class="tp-comp-toggle" id="toggleCustomCompetition">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                                <span id="toggleCustomCompetitionText">自行填写</span>
+                            </button>
                         </div>
                     </div>
 
                     <div class="tp-grid tp-grid--2">
                         <div class="tp-field">
                             <label for="memberCount" class="il-form-label">所需人数 <span class="tp-req">*</span></label>
-                            <input type="number" class="il-form-input" id="memberCount" min="1" max="50" placeholder="2" required>
+                            <input type="number" class="il-form-input" id="memberCount" min="1" max="50" placeholder="2" required
+                                   oninvalid="this.setCustomValidity('所需人数需在 1-50 之间')"
+                                   oninput="this.setCustomValidity('')">
                         </div>
                         <div class="tp-field">
                             <label for="skills" class="il-form-label">所需技能 <span class="tp-optional">选填</span></label>
                             <input type="text" class="il-form-input" id="skills" placeholder="多个技能用逗号分隔，例如：Java, Python、UI设计">
                         </div>
+                    </div>
+                    <div class="tp-field">
+                        <label for="mentorSearch" class="il-form-label">邀请导师 <span class="tp-optional">选填</span></label>
+                        <!-- 单选：发布成功后向所选导师发送入队邀请，导师确认后以导师身份加入 -->
+                        <input type="hidden" id="inviteMentorId">
+                        <input type="hidden" id="inviteMentorName">
+                        <div class="tp-comp-anchor">
+                            <input type="text" class="il-form-input" id="mentorSearch" placeholder="搜索导师姓名或学号" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="mentorMenu">
+                            <div class="tp-comp-menu" id="mentorMenu" role="listbox" aria-label="导师候选" hidden></div>
+                        </div>
+                        <div id="mentorPicked" hidden></div>
+                        <div class="tp-comp-toggle-row tp-helper-row">
+                            <button type="button" class="tp-comp-toggle" id="toggleMyMentors">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                <span>从我的导师中选择</span>
+                            </button>
+                        </div>
+                        <span class="tp-label-note">选填。发布后将向所选导师发送入队邀请，导师确认后以导师身份加入团队</span>
                     </div>
                 </section>
 
@@ -106,6 +152,8 @@
 
     <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
     <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/competition-picker.js}"></script>
+    <script th:src="@{/js/mentor-picker.js}"></script>
     <script th:src="@{/js/team-publish.js}"></script>
 </body>
 </html>

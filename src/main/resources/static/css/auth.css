@@ -1,9 +1,10 @@
+@layer legacy {
 /* ========================================
    iLink Auth Pages — login / register
    ======================================== */
 
 .auth-page--login,
-.auth-page--register {
+html.ilink-app .auth-page--register {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -16,7 +17,7 @@
 }
 
 .auth-page--login html,
-.auth-page--register html {
+html.ilink-app .auth-page--register html {
   height: 100%;
   overflow: hidden;
 }
@@ -443,49 +444,58 @@
 }
 
 /* ── 注册页紧凑 ── */
-.auth-page--register .brand-logo {
-  margin-bottom: var(--space-3);        /* 24 → 12 */
+/* 注册页字段最多（身份 / 手机号学号 / 邮箱 / 验证码 / 密码 / 确认密码），
+   在通用紧凑规则之上再压一档，尽量让整页不用滚动 */
+html.ilink-app .auth-page--register .auth-card {
+  padding-top: 18px;                    /* 24 → 18 */
+  padding-bottom: 18px;
 }
 
-.auth-page--register .brand-logo__icon {
-  width: 44px;                          /* 56 → 44 */
-  height: 44px;
-  border-radius: 13px;
-  font-size: var(--font-size-lg);
+/* 外层留白也收一档：注册页比登录页长一截，这点余量正好让它不再需要滚动 */
+html.ilink-app .auth-page--register .auth-wrapper {
+  padding-top: 12px;                    /* 24 → 12 */
+  padding-bottom: 12px;
 }
 
-.auth-page--register .auth-card__header {
-  margin-bottom: var(--space-3);        /* 32 → 12 */
+html.ilink-app .auth-page--register .auth-card__header {
+  margin-bottom: var(--space-2);        /* 12 → 8 */
 }
 
-.auth-page--register .auth-card .form-group {
-  margin-bottom: var(--space-2);        /* 16 → 8 */
+/* 副标题是纯装饰，注册页省掉这一行 */
+html.ilink-app .auth-page--register .auth-card__subtitle {
+  display: none;
 }
 
-.auth-page--register .identifier-toggle {
+html.ilink-app .auth-page--register .auth-card .form-group {
+  margin-bottom: 6px;                   /* 8 → 6 */
+}
+
+html.ilink-app .auth-page--register .identifier-toggle {
   margin-bottom: var(--space-1);        /* 12 → 4 */
 }
 
-.auth-page--register .agreement-wrapper {
-  margin-bottom: var(--space-2);        /* 16 → 8 */
+html.ilink-app .auth-page--register .agreement-wrapper {
+  margin-bottom: 6px;                   /* 8 → 6 */
 }
 
-.auth-page--register .auth-card .input-wrapper input,
-.auth-page--register .auth-card #phone,
-.auth-page--register .auth-card #studentId,
-.auth-page--register .auth-card #password,
-.auth-page--register .auth-card #confirmPassword {
-  padding-top: 10px;                    /* 14 → 10 */
+html.ilink-app .auth-page--register .auth-card .input-wrapper input,
+html.ilink-app .auth-page--register .auth-card #phone,
+html.ilink-app .auth-page--register .auth-card #studentId,
+html.ilink-app .auth-page--register .auth-card #email,
+html.ilink-app .auth-page--register .auth-card #emailCode,
+html.ilink-app .auth-page--register .auth-card #password,
+html.ilink-app .auth-page--register .auth-card #confirmPassword {
+  padding-top: 9px;                     /* 10 → 9 */
+  padding-bottom: 9px;
+}
+
+html.ilink-app .auth-page--register .auth-card .btn-submit {
+  padding-top: 10px;
   padding-bottom: 10px;
 }
 
-.auth-page--register .auth-card .btn-submit {
-  padding-top: 11px;
-  padding-bottom: 11px;
-}
-
-.auth-page--register .auth-card__footer {
-  margin-top: var(--space-2);           /* 20 → 8 */
+html.ilink-app .auth-page--register .auth-card__footer {
+  margin-top: 6px;                      /* 8 → 6 */
 }
 
 @media (max-width: 480px) {
@@ -500,7 +510,7 @@
 /* 移动端登录注册页：保证触摸面积与小屏滚动稳定 */
 @media (max-width: 768px) {
   .auth-page--login,
-  .auth-page--register {
+  html.ilink-app .auth-page--register {
     min-height: 100dvh;
     align-items: flex-start;
     justify-content: flex-start;
@@ -596,4 +606,79 @@
   .floating-shapes .shape {
     animation: none !important;
   }
+}
+
+}
+
+/* 邮箱验证码：输入框与「获取验证码」同排。用 .input-wrapper 复用既有输入框样式，这里只加布局 */
+.auth-card .input-wrapper.code-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.auth-card .code-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.auth-card .code-btn {
+  flex: 0 0 auto;
+  height: 44px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #282A2F;
+  background: #f5f5f4;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.auth-card .code-btn:hover:not(:disabled) {
+  background: #ececeb;
+  border-color: #d7d8db;
+}
+
+.auth-card .code-btn:disabled {
+  color: #9aa1ab;
+  cursor: default;
+}
+
+/* 注册页比登录页长一截，浏览器默认的 body 外边距（上下各 8px）正好让它需要滚动，这里局部归零 */
+html.ilink-app body.auth-page--register {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.auth-language-switch {
+    position: fixed;
+    top: max(20px, env(safe-area-inset-top));
+    right: max(20px, env(safe-area-inset-right));
+    z-index: 10;
+    min-width: 48px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid rgba(100, 116, 139, 0.22);
+    border-radius: 999px;
+    color: #475569;
+    background: rgba(255, 255, 255, 0.86);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+}
+
+.auth-language-switch:hover {
+    color: #1f2937;
+    border-color: rgba(100, 116, 139, 0.4);
+    background: #fff;
+}
+
+.auth-language-switch:focus-visible {
+    outline: 2px solid #52637a;
+    outline-offset: 2px;
 }

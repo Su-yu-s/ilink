@@ -26,13 +26,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // 不要显式 setAllowedOrigins("*")：SockJS 传输层带 allowCredentials，配置星号会让
+        // CorsConfiguration 校验抛异常，/ws 全部传输回 400（聊天只能降级轮询）。
+        // 不配即同源；跨域防护由 WebSocketHandshakeInterceptor 的 Origin 校验兜底。
         registry.addEndpoint("/ws")
             .addInterceptors(webSocketHandshakeInterceptor)
-            .setAllowedOrigins("*")
             .withSockJS();
         registry.addEndpoint("/ws-native")
-            .addInterceptors(webSocketHandshakeInterceptor)
-            .setAllowedOrigins("*");
+            .addInterceptors(webSocketHandshakeInterceptor);
     }
 
     @Override

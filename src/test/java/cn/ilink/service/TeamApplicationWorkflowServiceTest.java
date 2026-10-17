@@ -31,13 +31,18 @@ class TeamApplicationWorkflowServiceTest {
         service = new TeamApplicationWorkflowService(applicationMapper, teamMapper, notificationService);
     }
 
+    /**
+     * requiredMemberCount 是「队伍总人数（含队长）」口径：
+     * 上限 2 的队伍 = 队长 + 1 名成员，所以批准第 1 个人时队伍就满员并进入 TEAMING。
+     */
     @Test
     void approvingLastSlotLocksRowsAndMovesTeamToTeaming() {
         TeamApplication application = application("PENDING");
         TeamDemand team = team(2);
         when(applicationMapper.selectByIdForUpdate(10L)).thenReturn(application);
         when(teamMapper.selectByIdForUpdate(20L)).thenReturn(team);
-        when(applicationMapper.selectCount(any())).thenReturn(1L, 2L);
+        // 第一次 selectCount 是审批前的满员判定（0 名已通过成员），第二次是审批后转入 TEAMING 的判定
+        when(applicationMapper.selectCount(any())).thenReturn(0L, 1L);
         when(applicationMapper.updateById(application)).thenReturn(1);
         when(teamMapper.updateById(team)).thenReturn(1);
 

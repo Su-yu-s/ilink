@@ -16,6 +16,7 @@ import cn.ilink.vo.TaskCommentVO;
 import cn.ilink.vo.TaskParticipantVO;
 import cn.ilink.vo.TeamTaskVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import cn.ilink.util.DisplayNameResolver;
 
 @Service
 public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> implements TeamTaskService {
@@ -83,13 +85,17 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         task.setDeadline(dto.getDeadline());
         task.setAssignedTo(dto.getAssignedTo());
         task.setCreatedBy(userId);
+        task.setRequiresReview(dto.getRequiresReview() == null || dto.getRequiresReview());
+        task.setParentTaskId(dto.getParentTaskId());
         task.setCreatedAt(new Date());
         task.setUpdatedAt(new Date());
 
         if (!this.save(task)) {
             throw new IllegalStateException("\u4efb\u52a1\u4fdd\u5b58\u5931\u8d25");
         }
-        if (dto.getAssignedTo() != null) {
+        // 被指派人本身就是创建者时只写一行，否则会撞 (task_id, user_id) 唯一键。
+        // 创建者固定为 owner；他人被指派时另写一行 lead。
+        if (dto.getAssignedTo() != null && !dto.getAssignedTo().equals(userId)) {
             TaskParticipant participant = new TaskParticipant();
             participant.setTaskId(task.getId());
             participant.setUserId(dto.getAssignedTo());
@@ -116,6 +122,10 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         if (task == null) {
             return false;
         }
+        // 修复 D-P3-2：请求体为字面 null 时 Jackson 反序列化出 null dto，原实现直接 NPE → 500
+        if (dto == null) {
+            return false;
+        }
         if (dto.getTaskTitle() != null) {
             task.setTaskTitle(dto.getTaskTitle());
         }
@@ -136,6 +146,9 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         }
         if (dto.getAssignedTo() != null) {
             task.setAssignedTo(dto.getAssignedTo());
+        }
+        if (dto.getRequiresReview() != null) {
+            task.setRequiresReview(dto.getRequiresReview());
         }
         task.setUpdatedAt(new Date());
         return this.updateById(task);
@@ -178,7 +191,9 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
     private boolean isAllowedTransition(String expected, String target) {
         return ("PENDING".equals(expected) && "IN_PROGRESS".equals(target))
             || ("IN_PROGRESS".equals(expected) && "REVIEW".equals(target))
-            || ("REVIEW".equals(expected) && ("COMPLETED".equals(target) || "IN_PROGRESS".equals(target)));
+            || ("REVIEW".equals(expected) && ("COMPLETED".equals(target) || "IN_PROGRESS".equals(target)))
+            // 直接完成通道：requires_review=0 的任务，由调用方校验任务开关后再走
+            || ("IN_PROGRESS".equals(expected) && "COMPLETED".equals(target));
     }
 
     @Override
@@ -257,7 +272,9 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         TaskParticipant existing = taskParticipantMapper.selectOne(wrapper);
 
         if (existing != null) {
-            return false;
+            // 已经在名单里属于幂等成功，不是失败：此前返回 false 被 controller 当成失败回 500，
+            // 「先指派再手动添加」这种正常操作会直接报服务器错误（核实报告 P1-3）。
+            return true;
         }
 
         TaskParticipant participant = new TaskParticipant();
@@ -276,6 +293,25 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         wrapper.eq(TaskParticipant::getTaskId, taskId)
                .eq(TaskParticipant::getUserId, userId);
         return taskParticipantMapper.delete(wrapper) > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeParticipantFromTeamTasks(Long teamId, Long userId) {
+        // 修复 D-P2-3：成员退出/被移出后，删除其在团队全部任务下的 task_participant 行，
+        // 否则 canAccessTask 的 participant 分支会继续放行其读任务、发评论。
+        // 用字符串列名的 QueryWrapper，与 removeMember 的说明一致（单测无 TableInfo 上下文）。
+        if (teamId == null || userId == null) {
+            return;
+        }
+        List<TeamTask> tasks = list(new QueryWrapper<TeamTask>().select("id").eq("team_id", teamId));
+        if (tasks.isEmpty()) {
+            return;
+        }
+        List<Long> taskIds = tasks.stream().map(TeamTask::getId).collect(Collectors.toList());
+        taskParticipantMapper.delete(new QueryWrapper<TaskParticipant>()
+            .eq("user_id", userId)
+            .in("task_id", taskIds));
     }
 
     @Override
@@ -351,13 +387,15 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         vo.setDeadline(task.getDeadline());
         vo.setAssignedTo(task.getAssignedTo());
         vo.setCreatedBy(task.getCreatedBy());
+        vo.setRequiresReview(task.getRequiresReview());
+        vo.setParentTaskId(task.getParentTaskId());
         vo.setCreatedAt(task.getCreatedAt());
         vo.setUpdatedAt(task.getUpdatedAt());
         vo.setCompletedAt(task.getCompletedAt());
 
         if (task.getTaskType() != null) {
             try {
-                TeamTask.TaskType type = TeamTask.TaskType.valueOf(task.getTaskType().toUpperCase());
+                TeamTask.TaskType type = TeamTask.TaskType.valueOf(task.getTaskType().toUpperCase(Locale.ROOT));
                 vo.setTaskTypeDesc(type.getDescription());
             } catch (IllegalArgumentException e) {
                 vo.setTaskTypeDesc(task.getTaskType());
@@ -379,7 +417,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
 
         if (task.getStatus() != null) {
             try {
-                TeamTask.TaskStatus status = TeamTask.TaskStatus.valueOf(task.getStatus().toUpperCase());
+                TeamTask.TaskStatus status = TeamTask.TaskStatus.valueOf(task.getStatus().toUpperCase(Locale.ROOT));
                 vo.setStatusDesc(status.getDescription());
             } catch (IllegalArgumentException e) {
                 vo.setStatusDesc(task.getStatus());
@@ -390,7 +428,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
             User assignee = userMap.get(task.getAssignedTo());
             if (assignee == null) assignee = userService.getById(task.getAssignedTo());
             if (assignee != null) {
-                vo.setAssigneeName(assignee.getRealName() != null ? assignee.getRealName() : assignee.getUsername());
+                vo.setAssigneeName(DisplayNameResolver.resolve(assignee));
                 vo.setAssigneeAvatar(assignee.getAvatar());
             }
         }
@@ -399,7 +437,7 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
             User creator = userMap.get(task.getCreatedBy());
             if (creator == null) creator = userService.getById(task.getCreatedBy());
             if (creator != null) {
-                vo.setCreatorName(creator.getRealName() != null ? creator.getRealName() : creator.getUsername());
+                vo.setCreatorName(DisplayNameResolver.resolve(creator));
                 vo.setCreatorAvatar(creator.getAvatar());
             }
         }
@@ -419,15 +457,15 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         vo.setStatus(participant.getStatus());
 
         if (user != null) {
-            vo.setUsername(user.getUsername());
-            vo.setRealName(user.getRealName());
+            vo.setUsername(DisplayNameResolver.resolve(user));
+            vo.setRealName(DisplayNameResolver.resolve(user));
             vo.setAvatar(user.getAvatar());
             vo.setMajor(user.getMajor());
         }
 
         if (participant.getRole() != null) {
             try {
-                TaskParticipant.ParticipantRole role = TaskParticipant.ParticipantRole.valueOf(participant.getRole().toUpperCase());
+                TaskParticipant.ParticipantRole role = TaskParticipant.ParticipantRole.valueOf(participant.getRole().toUpperCase(Locale.ROOT));
                 vo.setRoleDesc(role.getDescription());
             } catch (IllegalArgumentException e) {
                 vo.setRoleDesc(participant.getRole());
@@ -451,14 +489,14 @@ public class TeamTaskServiceImpl extends ServiceImpl<TeamTaskMapper, TeamTask> i
         vo.setReplies(new ArrayList<>());
 
         if (user != null) {
-            vo.setUsername(user.getUsername());
-            vo.setRealName(user.getRealName());
+            vo.setUsername(DisplayNameResolver.resolve(user));
+            vo.setRealName(DisplayNameResolver.resolve(user));
             vo.setAvatar(user.getAvatar());
         }
 
         if (comment.getCommentType() != null) {
             try {
-                TaskComment.CommentType type = TaskComment.CommentType.valueOf(comment.getCommentType().toUpperCase());
+                TaskComment.CommentType type = TaskComment.CommentType.valueOf(comment.getCommentType().toUpperCase(Locale.ROOT));
                 vo.setCommentTypeDesc(type.getDescription());
             } catch (IllegalArgumentException e) {
                 vo.setCommentTypeDesc(comment.getCommentType());

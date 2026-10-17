@@ -55,7 +55,7 @@ class TaskBoardManager {
             deadline: apiTask.deadline,
             assignedTo: apiTask.assignedTo ? {
                 id: apiTask.assignedTo,
-                username: apiTask.assigneeName || '',
+                displayName: apiTask.assigneeName || '',
                 realName: apiTask.assigneeName || ''
             } : null,
             createdBy: apiTask.createdBy,
@@ -136,7 +136,7 @@ class TaskBoardManager {
 
         let assigneeHtml = '';
         if (task.assignedTo) {
-            const name = task.assignedTo.realName || task.assignedTo.username || '未知';
+            const name = task.assignedTo.displayName || task.assignedTo.realName || '未知';
             const initials = name.substring(0, 2).toUpperCase();
             assigneeHtml = `
                 <div class="kanban-task-assignee">
@@ -305,7 +305,7 @@ class TaskBoardManager {
 
         let assigneeHtml = '<span class="text-tertiary">未分配</span>';
         if (task.assignedTo) {
-            const name = task.assignedTo.realName || task.assignedTo.username || '未知';
+            const name = task.assignedTo.displayName || task.assignedTo.realName || '未知';
             const initials = name.substring(0, 2).toUpperCase();
             assigneeHtml = `
                 <div class="d-flex align-items-center gap-2">
@@ -434,7 +434,7 @@ class TaskBoardManager {
     async deleteCurrentTask() {
         if (!this.currentTask) return;
 
-        if (!confirm('确定要删除这个任务吗？')) return;
+        if (!uiConfirm('确定要删除这个任务吗？')) return;
 
         const taskId = this.currentTask.id;
 

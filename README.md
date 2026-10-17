@@ -29,9 +29,30 @@ iLink 面向高校学生、教师与平台管理员，覆盖从发现赛事和�
 - **竞赛答疑**：可使用公开网页搜索补充上下文，支持普通响应与 SSE 流式响应。
 - **任务拆解**：根据团队任务生成子任务建议，用户确认后才会保存到数据库。
 - **周报聚合**：根据任务看板数据生成团队周报，不依赖外部 AI 调用。
+- **Agentic GraphRAG 模块**：知识图谱检索层，支持固定 2 跳快速检索问答与 ReAct 多轮探索问答（详见下文「Agentic GraphRAG 模块」一节）。
 - **用量留痕**：AI 请求次数和 token 使用情况会记录，便于审计。
 
 AI 功能仅在配置有效的 OpenAI 兼容服务凭据后可用。答疑只使用用户问题和公开竞赛信息；团队聊天与成员个人信息不作为外发上下文。
+
+### Agentic GraphRAG 模块
+
+在既有 AI 能力之上叠加的智能检索层，全部以**新增组件**方式接入，不修改任何现有 Controller / Service / 表结构。
+
+**架构**：文档（帖子/竞赛/任务）→ 异步抽取（Agnes 结构化 Prompt，限定 5 类实体 / 5 类关系）→ 实体对齐入库（`kg_*` 7 张表）→ 检索时：问题向量化（Qwen Embedding）→ 内存余弦 top-k → 2 跳图扩展 → 子图文本 → 生成答案（带引用）。
+
+**两种问答模式**（团队空间「AI 协作」页底部抽屉可切换）：
+
+| 模式 | 接口 | 说明 |
+| --- | --- | --- |
+| 快速答疑 | `POST /api/ai/graph-rag/query` | 固定 2 跳检索，一次性生成，返回 `answer` + `citations` |
+| 深度搜索 | `POST /api/ai/graph-rag/agentic-query` | ReAct 循环（最多 8 轮、12 次工具调用），返回完整 `trace` |
+| 深度搜索（流式） | `POST /api/ai/graph-rag/agentic-query/stream` | SSE 事件：`thought` / `action` / `observation` / `final` / `done` / `error` |
+
+**6 个 Agent 工具**：`search_entities`（入口检索）、`expand_neighbors`（图扩展）、`filter_entities`（条件过滤）、`get_community_summary`（社区摘要）、`get_document`（原文追溯）、`query_temporal`（时序查询，支持 `time_range`）。所有 `execute()` 调用被 `GraphPermissionAspect`（Spring AOP）拦截做可见性校验：GLOBAL 全员可见 / TEAM 仅成员 / PRIVATE 仅属主，越权返回结构化错误（不抛异常），Agent 自动换策略。
+
+**可降级设计**：Embedding 未配置时自动回落关键词检索；ReAct 循环失败时回落固定 2 跳检索；图谱无召回时由模型知识兜底作答。每次问答的推理链写入 `kg_agent_trace` 供回溯。
+
+**详细设计文档**：`docs/agentic-graphrag.md`（数据模型、Prompt 模板、工具定义、权限规则、配置项）。
 
 ### 账号与管理
 
@@ -181,7 +202,7 @@ WebSocket 端点为 `/ws`（SockJS）和 `/ws-native`；团队聊天发送到 `/
 - 支持持久化“记住我”令牌：selector/validator 分离、使用后轮换，退出或改密后撤销。
 - 连续登录失败达到阈值后会临时锁定；密码找回不泄露账号是否存在，令牌仅保存哈希且一次性有效。
 - 社区富文本经 Jsoup 白名单净化；上传使用扩展名、大小、文件签名与路径规范化校验。
-- 常规上传单文件最大 20 MB、单请求最大 50 MB；不同业务类型另有更小的文件限制。
+- 常规上传单文件最大 50 MB、单请求最大 100 MB；不同业务类型另有更小的文件限制（头像 1 MB、图片/证书 2 MB、证明与封面 5 MB）。
 - 管理员的用户、角色、队伍、导师、成果、社区和竞赛维护操作写入审计日志。
 - 响应头包含 CSP、`nosniff`、`Referrer-Policy` 与 `Permissions-Policy` 等基础防护策略。
 
@@ -213,8 +234,11 @@ WebSocket 端点为 `/ws`（SockJS）和 `/ws-native`；团队聊天发送到 `/
 │   │       └── application*.yml
 │   └── test/java/            # 单元、控制器、安全与路径契约测试
 ├── sql/                      # 历史/人工 SQL，非自动迁移来源
-└── iLink-cn/                 # 中文介绍页及其静态资源
+└── docs/                     # 设计文档、评测报告与部署手册
 ```
+
+> 中文介绍页（原 `iLink-cn/`）已迁出本仓库，现由 GitHub Pages 托管：
+> <https://su-yu-s.github.io/iLink-cn/>，应用内「关于作者」入口即指向该地址。
 
 ## 开发约定
 

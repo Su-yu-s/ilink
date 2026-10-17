@@ -386,9 +386,9 @@ async function request(url, options = {}) {
             throw error;
         }
         if (!silent && error && error.name === 'TypeError' && String(error.message).includes('fetch')) {
-            showMessage('网络连接失败，请检查网络设置', 'error');
+            showMessage(t('common.networkError'), 'error');
         } else if (!silent) {
-            showMessage((error && error.message) || '请求失败', 'error');
+            showMessage((error && error.message) || t('common.error'), 'error');
         }
         throw error;
     }
@@ -402,6 +402,35 @@ async function getCurrentUser() {
         console.error('获取用户信息失败:', error);
         return null;
     }
+}
+
+// 头部渲染时把登录用户写进 data-current-user-id；空值即匿名。
+// 用它做前置判断，可以避免匿名访客在每个公共页都发一次必然 401 的资料请求（核实报告 P2-6）。
+function currentUserIdFromHeader() {
+    const header = document.getElementById('ilHeader');
+    if (!header) return null;
+    const value = header.dataset ? header.dataset.currentUserId : header.getAttribute('data-current-user-id');
+    return value ? String(value) : null;
+}
+
+/** 头部是否明确标注为匿名访客（未登录） */
+function isAnonymousVisitor() {
+    return document.getElementById('ilHeader') !== null && currentUserIdFromHeader() === null;
+}
+
+let _currentUserPromise = null;
+
+/**
+ * 页面级「取当前用户」入口：登录态下复用同一次请求（团队详情页此前会重复请求两次），
+ * 匿名时直接返回 null，不发请求、不产生控制台 401。
+ * 与 getCurrentUser() 的区别：本函数不会抛错，适合在页面初始化里 await。
+ */
+async function loadCurrentUserOnce() {
+    if (isAnonymousVisitor()) return null;
+    if (!_currentUserPromise) {
+        _currentUserPromise = getCurrentUser().catch(function () { return null; });
+    }
+    return _currentUserPromise;
 }
 
 // 用户登出
@@ -420,7 +449,8 @@ function formatTime(timestamp) {
     if (!timestamp) return '未知时间';
 
     const date = new Date(timestamp);
-    const formatter = new Intl.DateTimeFormat('zh-CN', {
+    const language = String(document.documentElement.lang || 'zh-CN').toLowerCase().startsWith('en') ? 'en-US' : 'zh-CN';
+    const formatter = new Intl.DateTimeFormat(language, {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -466,7 +496,7 @@ function setMobileMenuOpen(open, options) {
     if (overlay) overlay.setAttribute('tabindex', nextOpen ? '0' : '-1');
     if (button) {
         button.setAttribute('aria-expanded', String(nextOpen));
-        button.setAttribute('aria-label', nextOpen ? '关闭菜单' : '打开菜单');
+        button.setAttribute('aria-label', nextOpen ? t('header.drawer.close') : t('header.drawer.open'));
     }
 
     if (nextOpen) {
@@ -530,12 +560,25 @@ function toggleUserMenu() {
     if (button) button.setAttribute('aria-expanded', String(open));
 }
 
-/** 右上角展示：优先用户名，否则姓名。 */
+/**
+ * 角色占位显示名。与后端 DisplayNameResolver 保持一致：
+ * 用户没填姓名时按角色给中性占位，**绝不回退 username**（历史账号的 username 可能是手机号或学号）。
+ */
+function rolePlaceholderName(role) {
+    const value = String(role || '').trim().toUpperCase();
+    if (value === 'STUDENT') return '同学';
+    if (value === 'TEACHER') return '老师';
+    if (value === 'ADMIN') return '管理员';
+    return '用户';
+}
+
+/** 右上角展示：优先后端解析好的 displayName，其次姓名，最后角色占位。 */
 function computeNavbarDisplayName(user) {
     if (!user) return '用户';
+    const displayName = String(user.displayName || '').trim();
+    if (displayName) return displayName;
     const realName = String(user.realName || '').trim();
-    const username = String(user.username || '').trim();
-    return username || realName || '用户';
+    return realName || rolePlaceholderName(user.role);
 }
 
 function computeNavbarInitials(displayName) {
@@ -545,11 +588,7 @@ function computeNavbarInitials(displayName) {
 
 function accountTriggerTitleAttr(user) {
     if (!user) return '';
-    const displayName = computeNavbarDisplayName(user);
-    const username = String(user.username || '').trim();
-    return username && displayName !== username
-        ? displayName + '（账号 ' + username + '）'
-        : displayName;
+    return computeNavbarDisplayName(user);
 }
 
 function buildAccountAvatarInnerHtml(user) {
@@ -750,64 +789,196 @@ function initUnifiedHeader() {
     }
 }
 
-// Toast 类型处理 — compact
+// 类型归一化：danger 是历史别名，统一映射到 error；缺省或未知类型回落 info
 function normalizeToastType(type) {
     return type === 'danger' ? 'error' : (type || 'info');
 }
 
-function getToastDurationMs(type, override) {
-    if (typeof override === 'number' && override > 0) return override;
-    const t = normalizeToastType(type);
-    if (t === 'error') return 4800;
-    if (t === 'warning') return 4000;
-    if (t === 'success') return 2800;
-    return 3200;
-}
+// ========================================
+// Toast — 顶部居中悬浮提示（2026-10-03 定稿，基准 demo.html）
+// · 五种状态：success / error / warning / info / loading
+// · 双行结构：标题必填，描述可选
+// · 默认 3 秒自动消失，可手动关闭；loading 不自动关闭，用返回的 close() 结束
+// · 进入 .32s 弹性落位，离开 .22s 快速收起
+// 用法：Toast.success('登录成功', '正在进入首页…')
+//       const close = Toast.loading('上传中…'); close()
+// ========================================
+const Toast = (function () {
+    // 每条提示的展示时长；0 表示不自动关闭
+    const DEFAULT_DURATION = 3000;
+    // 与 CSS 里 .ilink-toast.hiding 的 0.22s 离场动画保持一致
+    const EXIT_MS = 220;
+    // 同时最多显示条数：超出时移除最旧的一条，避免连续操作刷屏
+    const MAX_STACK = 3;
+    // 同一类型 + 同一文案在此时长内重复触发会被忽略
+    const DEDUPE_MS = 2200;
 
-let _lastToastKey = '';
-let _lastToastAt = 0;
+    const TYPE_ICONS = {
+        success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.75l6 6 9-13.5"/></svg>',
+        error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
+        warning: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="10"/></svg>',
+        loading: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>'
+    };
 
-const ILINK_TOAST_SVG = {
-    success: '<svg class="ilink-toast__svg" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 22a10 10 0 100-20 10 10 0 000 20z" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 12.2l2.2 2.2 5.2-5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    error: '<svg class="ilink-toast__svg" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 22a10 10 0 100-20 10 10 0 000 20z" stroke="currentColor" stroke-width="1.6"/><path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    warning: '<svg class="ilink-toast__svg" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 3l10 18H2L12 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-    info: '<svg class="ilink-toast__svg" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 22a10 10 0 100-20 10 10 0 000 20z" stroke="currentColor" stroke-width="1.6"/><path d="M12 16v-5h-.5M12 8h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
-};
+    const CLOSE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
 
-function ensureToastHost() {
-    let host = document.getElementById('ilinkToastHost');
-    if (!host) {
-        host = document.createElement('div');
-        host.id = 'ilinkToastHost';
-        host.className = 'ilink-toast-host';
-        host.setAttribute('aria-live', 'polite');
-        document.body.appendChild(host);
+    // 防重复刷屏用的「上次提示」状态
+    let lastKey = '';
+    let lastAt = 0;
+
+    /**
+     * 兜底：若只更新到新 common.js、页面仍在用旧版样式表（缓存场景），
+     * 就地补上容器定位所需的最小内联样式，避免提示看不见。
+     */
+    let legacyStylesApplied = false;
+    function applyLegacyStyles(host) {
+        if (legacyStylesApplied) return;
+        legacyStylesApplied = true;
+        host.style.cssText += ';position:fixed;left:50%;transform:translateX(-50%);display:flex;'
+            + 'flex-direction:column;align-items:center;gap:10px;pointer-events:none;';
+        host.style.top = '76px';
+        host.style.zIndex = '10050';
+        host.style.width = '380px';
+        host.style.maxWidth = 'calc(100vw - 32px)';
     }
-    return host;
-}
 
-function dismissIlinkToast(toast) {
-    if (!toast || !toast.parentNode) return;
-    if (toast._ilinkTimer) {
-        clearTimeout(toast._ilinkTimer);
-        toast._ilinkTimer = null;
-    }
-    toast.classList.remove('ilink-toast--visible');
-    toast.classList.add('ilink-toast--out');
-    setTimeout(function () {
-        if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
+    function ensureHost() {
+        let host = document.getElementById('ilinkToastHost');
+        const created = !host;
+        if (created) {
+            host = document.createElement('div');
+            host.id = 'ilinkToastHost';
+            host.className = 'ilink-toast-host';
+            host.setAttribute('aria-live', 'polite');
+            document.body.appendChild(host);
         }
-    }, 280);
-}
-
-function removeIlinkToast(toast) {
-    if (!toast) return;
-    if (toast._ilinkTimer) {
-        clearTimeout(toast._ilinkTimer);
-        toast._ilinkTimer = null;
+        // 新版样式表缺失时（页面缓存/样式未重新加载）用内联样式兜底
+        const styles = window.getComputedStyle ? window.getComputedStyle(host) : null;
+        if (!styles || styles.position !== 'fixed') applyLegacyStyles(host);
+        return host;
     }
-    if (toast.parentNode) toast.parentNode.removeChild(toast);
+
+    /**
+     * 关闭一条提示。手动关闭、自动关闭、Toast.loading 返回的 close() 都走这里。
+     */
+    function close(el) {
+        if (!el || el.classList.contains('hiding')) return;
+        el.classList.add('hiding');
+        if (el._toastTimer) {
+            clearTimeout(el._toastTimer);
+            el._toastTimer = null;
+        }
+        setTimeout(function () {
+            if (el.parentNode) el.parentNode.removeChild(el);
+        }, EXIT_MS);
+    }
+
+    /** 立即移除（不播离场动画），仅用于栈溢出与"最旧一条"清理 */
+    function removeNow(el) {
+        if (!el) return;
+        if (el._toastTimer) {
+            clearTimeout(el._toastTimer);
+            el._toastTimer = null;
+        }
+        if (el.parentNode) el.parentNode.removeChild(el);
+    }
+
+    function show(options) {
+        const opts = options || {};
+        const type = normalizeToastType(opts.type);
+        const title = String(opts.title == null ? '' : opts.title).trim();
+        const desc = String(opts.desc == null ? '' : opts.desc).trim();
+        if (!title) return function () {};
+
+        const duration = typeof opts.duration === 'number' ? opts.duration : DEFAULT_DURATION;
+
+        // 同一类型 + 同一文案短时间内重复触发时不再叠加（批量操作常会连发同一条）
+        const key = type + ':' + title;
+        const now = Date.now();
+        if (key === lastKey && now - lastAt < DEDUPE_MS) return function () {};
+        lastKey = key;
+        lastAt = now;
+
+        const host = ensureHost();
+        while (host.children.length >= MAX_STACK) {
+            removeNow(host.firstChild);
+        }
+
+        const el = document.createElement('div');
+        el.className = 'ilink-toast ilink-toast--' + type;
+        el.setAttribute('role', type === 'error' || type === 'warning' ? 'alert' : 'status');
+        el.setAttribute('aria-live', type === 'error' || type === 'warning' ? 'assertive' : 'polite');
+
+        const icon = document.createElement('div');
+        icon.className = 'ilink-toast__icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.innerHTML = TYPE_ICONS[type] || TYPE_ICONS.info;
+
+        const body = document.createElement('div');
+        body.className = 'ilink-toast__body';
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'ilink-toast__title';
+        titleEl.textContent = title;
+        body.appendChild(titleEl);
+
+        if (desc) {
+            const descEl = document.createElement('div');
+            descEl.className = 'ilink-toast__desc';
+            descEl.textContent = desc;
+            body.appendChild(descEl);
+        }
+
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'ilink-toast__close';
+        closeBtn.setAttribute('aria-label', typeof t === 'function' ? t('toast.close') : '关闭提示');
+        closeBtn.innerHTML = CLOSE_ICON;
+        closeBtn.addEventListener('click', function () {
+            close(el);
+        });
+
+        el.appendChild(icon);
+        el.appendChild(body);
+        el.appendChild(closeBtn);
+        host.appendChild(el);
+
+        if (duration > 0) {
+            el._toastTimer = setTimeout(function () {
+                close(el);
+            }, duration);
+        }
+
+        return function () {
+            close(el);
+        };
+    }
+
+    function api(type, title, desc, duration) {
+        return show({ type: type, title: title, desc: desc, duration: duration });
+    }
+
+    return {
+        show: show,
+        close: close,
+        success: function (title, desc, duration) { return api('success', title, desc, duration); },
+        error: function (title, desc, duration) { return api('error', title, desc, duration); },
+        warning: function (title, desc, duration) { return api('warning', title, desc, duration); },
+        info: function (title, desc, duration) { return api('info', title, desc, duration); },
+        // 加载态不自动关闭，由调用方使用返回的 close()
+        loading: function (title, desc) { return api('loading', title, desc, 0); }
+    };
+})();
+
+/**
+ * 全局轻提示（向后兼容入口，勿用于字段级 blur 校验）
+ * 消息文本即标题；具体原因放到 Toast.xxx(title, desc) 的 desc 第二行。
+ */
+function showMessage(message, type, durationMs) {
+    const text = String(message != null ? message : '').trim();
+    if (!text) return;
+    Toast.show({ type: type === undefined ? 'info' : type, title: text, duration: durationMs });
 }
 
 /**
@@ -841,80 +1012,6 @@ function clearFieldHint(hintId, inputId) {
     showFieldHint(hintId, '', inputId);
 }
 
-/**
- * 全局轻提示（右上角 Toast，勿用于字段级 blur 校验）
- */
-function showMessage(message, type, durationMs) {
-    if (type === undefined) type = 'info';
-    const text = String(message != null ? message : '').trim() || ' ';
-    const variant = normalizeToastType(type);
-    const dedupeKey = variant + ':' + text;
-    const now = Date.now();
-    if (dedupeKey === _lastToastKey && now - _lastToastAt < 2200) {
-        return;
-    }
-    _lastToastKey = dedupeKey;
-    _lastToastAt = now;
-
-    const host = ensureToastHost();
-
-    // “处理中”类信息被后续结果替换，避免连续操作遮挡页面内容。
-    Array.from(host.children).forEach(function (item) {
-        if (item.classList.contains('ilink-toast--info')) removeIlinkToast(item);
-    });
-
-    const maxStack = 3;
-    while (host.children.length >= maxStack) {
-        removeIlinkToast(host.firstChild);
-    }
-
-    const labels = { success: '操作完成', error: '操作失败', warning: '请注意', info: '提示' };
-
-    const toast = document.createElement('div');
-    toast.className = 'ilink-toast ilink-toast--' + variant;
-    toast.setAttribute('role', variant === 'error' ? 'alert' : 'status');
-
-    const icon = document.createElement('span');
-    icon.className = 'ilink-toast__icon';
-    icon.innerHTML = ILINK_TOAST_SVG[variant] || ILINK_TOAST_SVG.info;
-
-    const body = document.createElement('div');
-    body.className = 'ilink-toast__body';
-
-    const labelEl = document.createElement('span');
-    labelEl.className = 'ilink-toast__label';
-    labelEl.textContent = labels[variant] || labels.info;
-
-    const textEl = document.createElement('p');
-    textEl.className = 'ilink-toast__text';
-    textEl.textContent = text;
-
-    const closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'ilink-toast__close';
-    closeBtn.setAttribute('aria-label', '关闭');
-    closeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-    closeBtn.addEventListener('click', function () {
-        dismissIlinkToast(toast);
-    });
-
-    body.appendChild(labelEl);
-    body.appendChild(textEl);
-    toast.appendChild(icon);
-    toast.appendChild(body);
-    toast.appendChild(closeBtn);
-    host.appendChild(toast);
-
-    const wait = getToastDurationMs(type, durationMs);
-    requestAnimationFrame(function () {
-        toast.classList.add('ilink-toast--visible');
-    });
-
-    toast._ilinkTimer = setTimeout(function () {
-        dismissIlinkToast(toast);
-    }, wait);
-}
-
 function getTypeClass(type) {
     switch (normalizeToastType(type)) {
         case 'success': return 'success';
@@ -929,27 +1026,31 @@ function publicProfilePageUrl(userId) {
     return '/user-profile.html?id=' + encodeURIComponent(String(userId));
 }
 
-/** 卡片/详情展示名：preferRealName 时 realName → username，否则 username → realName。 */
-function displayUserName(preview, opts) {
+/**
+ * 卡片/详情展示名。后端在 userPreview 里已经解析好 displayName，这里优先用它；
+ * 老数据没有该字段时按 realName → 角色占位 的顺序回退。**不再回退 username**。
+ */
+function displayUserName(preview) {
     if (!preview) return '';
-    const preferRealName = !!(opts && opts.preferRealName);
+    const displayName = preview.displayName ? String(preview.displayName).trim() : '';
+    if (displayName) return displayName;
     const realName = preview.realName ? String(preview.realName).trim() : '';
-    const username = preview.username ? String(preview.username).trim() : '';
-    return preferRealName ? (realName || username) : (username || realName);
+    if (realName) return realName;
+    return rolePlaceholderName(preview.role);
 }
 
-/** 成果页面只展示 username，避免同一用户在列表和详情显示不同名称。 */
+/** 成果页面展示名；与列表口径一致，避免同一用户在列表和详情显示不同名称。 */
 function displayUsername(preview) {
     if (!preview) return '匿名';
-    const username = preview.username ? String(preview.username).trim() : '';
-    if (username) return username;
-    if (preview.id != null) return '用户' + preview.id;
-    return '匿名';
+    return displayUserName(preview) || '匿名';
 }
 
 function galleryAvatarInitial(preview) {
-    const username = preview && preview.username ? String(preview.username).trim() : '';
-    return username ? username.charAt(0).toUpperCase() : '';
+    if (!preview) return '';
+    const initial = preview.avatarInitial ? String(preview.avatarInitial).trim() : '';
+    if (initial) return initial.charAt(0).toUpperCase();
+    const displayName = displayUserName(preview);
+    return displayName ? displayName.charAt(0).toUpperCase() : '';
 }
 
 function galleryPublisherAvatarHtml(preview, extraClass) {
@@ -990,28 +1091,30 @@ function hideGalleryPublisherAvatarFallbacks(root) {
     });
 }
 
-function avatarInitial(preview, opts) {
-    const displayName = displayUserName(preview, opts);
+function avatarInitial(preview) {
+    const displayName = displayUserName(preview);
     return displayName ? displayName.charAt(0).toUpperCase() : '';
 }
 
-function publisherAvatarHtml(preview, extraClass, opts) {
+function publisherAvatarHtml(preview, extraClass) {
     if (!preview || preview.id == null) return '';
-    const preferRealName = !!(opts && opts.preferRealName);
-    const displayName = displayUserName(preview, { preferRealName: preferRealName });
-    const initials = avatarInitial(preview, { preferRealName: preferRealName });
+    const displayName = displayUserName(preview);
+    const initials = avatarInitial(preview);
     const nameEscaped = escapeHtml(displayName || '用户');
     const href = escapeHtml(publicProfilePageUrl(preview.id));
     const avatar = preview.avatar ? String(preview.avatar).trim() : '';
     const className = 'publisher-avatar' + (extraClass ? ' ' + extraClass : '');
+    const profileTitle = escapeHtml(t('ui.common.viewProfileTitle', { name: displayName }));
+    const profileLabel = escapeHtml(t('ui.common.viewProfileLabel'));
+    const profileLabelAttrs = 'title="' + profileTitle + '" aria-label="' + profileLabel + '"';
 
     if (avatar) {
-        return '<a href="' + href + '" class="' + className + '" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
+        return '<a href="' + href + '" class="' + className + '" ' + profileLabelAttrs + '>' +
             '<img class="publisher-avatar__img" src="' + escapeHtml(avatar) + '" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';var s=this.nextElementSibling;if(s)s.classList.remove(\'d-none\');">' +
             '<span class="publisher-avatar__fallback d-none" aria-hidden="true">' + escapeHtml(initials || '?') + '</span></a>';
     }
 
-    return '<a href="' + href + '" class="' + className + '" title="查看 ' + nameEscaped + ' 的主页" aria-label="查看 TA 的个人主页">' +
+    return '<a href="' + href + '" class="' + className + '" ' + profileLabelAttrs + '>' +
         '<span class="publisher-avatar__fallback" aria-hidden="true">' + escapeHtml(initials || '?') + '</span></a>';
 }
 
@@ -1020,10 +1123,225 @@ function publisherAvatarFromAuthorFields(authorId, authorAvatar, authorDisplay) 
     return publisherAvatarHtml({
         id: authorId,
         avatar: authorAvatar || '',
-        realName: authorDisplay || '',
-        username: ''
+        displayName: authorDisplay || '',
+        realName: authorDisplay || ''
     });
 }
+
+/** Localization helper. Missing keys intentionally fall back to the key itself. */
+function t(key, params) {
+    const dictionary = window.__I18N__ || {};
+    let value = Object.prototype.hasOwnProperty.call(dictionary, key) ? String(dictionary[key]) : String(key);
+    if (!Object.prototype.hasOwnProperty.call(dictionary, key) && !window.__I18N_MISSING__) {
+        window.__I18N_MISSING__ = {};
+    }
+    if (!Object.prototype.hasOwnProperty.call(dictionary, key) && !window.__I18N_MISSING__[key]) {
+        window.__I18N_MISSING__[key] = true;
+        if (window.console && console.warn) console.warn('[i18n] Missing message key:', key);
+    }
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach(function (name) {
+            value = value.split('{' + name + '}').join(String(params[name]));
+        });
+    }
+    return value;
+}
+
+/**
+ * 翻译脚本里写死的中文界面文案（依赖 buildUiCopyMap 的运行时对照表）。
+ * 非英文模式或查不到对照时原样返回，避免把中文界面改坏。
+ */
+function translateUiCopyText(value) {
+    const map = buildUiCopyMap();
+    if (!map || value == null) return value;
+    return translateUiCopy(normalizedUiCopy(value), map) || value;
+}
+
+/** 原生 confirm 弹窗不会被 DOM 翻译覆盖，这里先查对照表再弹。 */
+function uiConfirm(message) {
+    return window.confirm(translateUiCopyText(message));
+}
+
+function normalizedUiCopy(value) {
+    return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+}
+
+function buildUiCopyMap() {
+    if (!String(document.documentElement.lang || '').toLowerCase().startsWith('en')) return null;
+    if (window.__I18N_UI_COPY_MAP__) return window.__I18N_UI_COPY_MAP__;
+
+    const source = window.__I18N_SOURCE__ || {};
+    const localized = window.__I18N__ || {};
+    const map = Object.create(null);
+    const patterns = [];
+    Object.keys(source).forEach(function (key) {
+        const original = normalizedUiCopy(source[key]);
+        const translated = normalizedUiCopy(localized[key]);
+        if (!original || !translated || original === translated || /[\u3400-\u9fff]/.test(translated)) return;
+        if (original.indexOf('{') >= 0 && /\{[^{}]+\}/.test(original)) {
+            const names = [];
+            let lastIndex = 0;
+            let expression = '^';
+            original.replace(/\{([^{}]+)\}/g, function (placeholder, name, offset) {
+                expression += escapeUiCopyRegex(original.slice(lastIndex, offset)) + '(.+?)';
+                names.push(name);
+                lastIndex = offset + placeholder.length;
+                return placeholder;
+            });
+            expression += escapeUiCopyRegex(original.slice(lastIndex)) + '$';
+            patterns.push({ source: original, translated: translated, names: names, expression: new RegExp(expression) });
+        } else if (!Object.prototype.hasOwnProperty.call(map, original)) {
+            map[original] = translated;
+        }
+    });
+    patterns.sort(function (a, b) { return b.source.length - a.source.length; });
+    map.__patterns = patterns;
+    window.__I18N_UI_COPY_MAP__ = map;
+    return map;
+}
+
+function escapeUiCopyRegex(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function translateUiCopy(value, map) {
+    if (!map || value == null) return '';
+    const exact = map[value];
+    if (exact) return exact;
+    const patterns = map.__patterns || [];
+    for (let i = 0; i < patterns.length; i++) {
+        const pattern = patterns[i];
+        const match = pattern.expression.exec(value);
+        if (!match) continue;
+        let translated = pattern.translated;
+        pattern.names.forEach(function (name, index) {
+            translated = translated.split('{' + name + '}').join(match[index + 1]);
+        });
+        return translated;
+    }
+    return '';
+}
+
+function translateUiTextNode(node, map) {
+    if (!node || node.nodeType !== Node.TEXT_NODE || !map) return;
+    const parent = node.parentElement;
+    if (!parent || parent.closest('script, style, textarea, [contenteditable="true"], [data-user-content], .il-markdown-content, .community-article-content, .community-post-content, .post-content, .team-description, .asset-description, .profile-bio')) return;
+    const raw = node.textContent || '';
+    const normalized = normalizedUiCopy(raw);
+    const translated = translateUiCopy(normalized, map);
+    if (!translated) return;
+    const leading = (raw.match(/^\s*/) || [''])[0];
+    const trailing = (raw.match(/\s*$/) || [''])[0];
+    node.textContent = leading + translated + trailing;
+}
+
+/** 属性版翻译：placeholder / title / aria-label / alt 会被脚本在插入之后再赋值，需要单独兜底 */
+function translateUiAttribute(element, name, map) {
+    if (!map || !element || element.nodeType !== Node.ELEMENT_NODE) return;
+    if (element.closest('[data-user-content], .il-markdown-content, .community-article-content, .community-post-content, .post-content, .team-description, .asset-description, .profile-bio')) return;
+    const raw = element.getAttribute(name);
+    if (!raw) return;
+    const translated = translateUiCopy(normalizedUiCopy(raw), map);
+    if (translated && translated !== raw) element.setAttribute(name, translated);
+}
+
+/** Translate localized message literals and explicitly marked text without changing authored content. */
+function translateMarkedContent(root) {
+    const scope = root && root.querySelectorAll ? root : document;
+    const copyMap = buildUiCopyMap();
+    if (copyMap) {
+        const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
+        let textNode;
+        while ((textNode = walker.nextNode())) translateUiTextNode(textNode, copyMap);
+        const attributes = [];
+        if (scope.nodeType === Node.ELEMENT_NODE && scope.matches('[placeholder], [title], [aria-label], [alt]')) attributes.push(scope);
+        scope.querySelectorAll('[placeholder], [title], [aria-label], [alt]').forEach(function (element) { attributes.push(element); });
+        attributes.forEach(function (element) {
+            ['placeholder', 'title', 'aria-label', 'alt'].forEach(function (name) {
+                translateUiAttribute(element, name, copyMap);
+            });
+        });
+    }
+    const elements = [];
+    if (scope.nodeType === 1 && scope.matches('[data-i18n], [data-i18n-html], [data-i18n-lines], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria-label]')) {
+        elements.push(scope);
+    }
+    scope.querySelectorAll('[data-i18n], [data-i18n-html], [data-i18n-lines], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria-label]')
+        .forEach(function (element) { elements.push(element); });
+    elements.forEach(function (element) {
+        const directTextNodes = Array.from(element.childNodes).filter(function (node) { return node.nodeType === Node.TEXT_NODE; });
+        const textKey = element.getAttribute('data-i18n');
+        if (textKey && directTextNodes.length) {
+            const translated = t(textKey);
+            if (directTextNodes[0].textContent !== translated) directTextNodes[0].textContent = translated;
+        }
+        const htmlKey = element.getAttribute('data-i18n-html');
+        if (htmlKey) {
+            const translatedHtml = t(htmlKey);
+            if (element.innerHTML !== translatedHtml) element.innerHTML = translatedHtml;
+        }
+        const linesKey = element.getAttribute('data-i18n-lines');
+        if (linesKey) {
+            const keys = linesKey.split('|');
+            keys.forEach(function (key, index) {
+                if (directTextNodes[index]) {
+                    const translated = t(key);
+                    if (directTextNodes[index].textContent.trim() !== translated) directTextNodes[index].textContent = translated;
+                }
+            });
+        }
+        ['placeholder', 'title', 'aria-label'].forEach(function (attribute) {
+            const key = element.getAttribute('data-i18n-' + attribute);
+            if (key && element.getAttribute(attribute) !== t(key)) element.setAttribute(attribute, t(key));
+        });
+    });
+}
+
+function bindLanguageSwitch() {
+    const button = document.getElementById('languageSwitch');
+    if (!button || button.dataset.i18nBound === 'true') return;
+    button.dataset.i18nBound = 'true';
+    button.textContent = t('language.switch');
+    button.setAttribute('aria-label', t('language.switchLabel'));
+    button.addEventListener('click', function (event) {
+        event.preventDefault();
+        const url = new URL(window.location.href);
+        const current = String(document.documentElement.lang || 'zh-CN').toLowerCase();
+        url.searchParams.set('lang', current.startsWith('en') ? 'zh' : 'en');
+        window.location.assign(url.toString());
+    });
+}
+
+(function initializeInternationalization() {
+    function apply() {
+        translateMarkedContent(document);
+        bindLanguageSwitch();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply);
+    else apply();
+    if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(function (records) {
+            records.forEach(function (record) {
+                if (record.type === 'characterData') {
+                    translateUiTextNode(record.target, buildUiCopyMap());
+                    return;
+                }
+                if (record.type === 'attributes') {
+                    translateUiAttribute(record.target, record.attributeName, buildUiCopyMap());
+                    return;
+                }
+                record.addedNodes.forEach(function (node) {
+                    if (node.nodeType === Node.ELEMENT_NODE) translateMarkedContent(node);
+                    else if (node.nodeType === Node.TEXT_NODE) translateUiTextNode(node, buildUiCopyMap());
+                });
+            });
+        });
+        observer.observe(document.documentElement, {
+            childList: true, characterData: true, subtree: true,
+            attributes: true, attributeFilter: ['title', 'placeholder', 'aria-label', 'alt']
+        });
+    }
+})();
 
 // Lightweight navigation helper
 function navigateTo(href) {
@@ -1061,25 +1379,8 @@ document.addEventListener('DOMContentLoaded', function() {
         new ParticleSystem('particleCanvas', window.ILINK_PARTICLE_OPTIONS);
     }
 
-    // Navbar progressive scroll effect（0→1 进度驱动 CSS 变量）
-    const header = document.getElementById('ilHeader');
-    if (header) {
-        let headerTicking = false;
-        const SCROLL_RANGE = 60;
-        const updateHeader = () => {
-            const progress = Math.min(window.scrollY / SCROLL_RANGE, 1);
-            header.style.setProperty('--header-scroll', progress.toFixed(3));
-            header.classList.toggle('il-header--scrolled', window.scrollY > 10);
-            headerTicking = false;
-        };
-        window.addEventListener('scroll', () => {
-            if (!headerTicking) {
-                window.requestAnimationFrame(updateHeader);
-                headerTicking = true;
-            }
-        }, { passive: true });
-        updateHeader();
-    }
+    // 顶栏滚动效果已移除：原来每次滚动都往 header 写 --header-scroll 变量并切 il-header--scrolled 类，
+    // 但 CSS 里没有任何规则用到它们（纯无效写入，白白触发样式重算）
 });
 
 // Expose public API via namespace
@@ -1089,8 +1390,11 @@ const ilinkPublicApi = {
     buildLoginUrl: buildLoginUrl,
     redirectToLogin: redirectToLogin,
     getCurrentUser: getCurrentUser,
+    loadCurrentUserOnce: loadCurrentUserOnce,
+    isAnonymousVisitor: isAnonymousVisitor,
     logout: logout,
     showMessage: showMessage,
+    Toast: Toast,
     showFieldHint: showFieldHint,
     clearFieldHint: clearFieldHint,
     formatTime: formatTime,
@@ -1145,6 +1449,26 @@ Object.assign(window, ilinkPublicApi);
       for (var i = 0; i < open.length; i++) open[i].classList.remove('open');
     }
 
+    /* 菜单宽度由内容决定（英文选项更长），展开时若会超出视口就整体左移，
+       避免出现横向滚动条或把选项挤出屏幕。收起状态下已由 CSS 收窄，不影响布局。 */
+    function clampDropdown(dropdown) {
+      if (!dropdown) return;
+      dropdown.style.marginLeft = '0px';
+      var rect = dropdown.getBoundingClientRect();
+      var pad = 12;
+      var vw = document.documentElement.clientWidth;
+      var shift = 0;
+      if (rect.right > vw - pad) shift = (vw - pad) - rect.right;
+      if (rect.left + shift < pad) shift = pad - rect.left;
+      dropdown.style.marginLeft = shift < 0 ? shift + 'px' : '0px';
+    }
+
+    var clampOpenDropdowns = function () {
+      var open = document.querySelectorAll('.il-search-bar__select.open .cs-dropdown');
+      for (var i = 0; i < open.length; i++) clampDropdown(open[i]);
+    };
+    window.addEventListener('resize', clampOpenDropdowns);
+
     for (var w = 0; w < wraps.length; w++) {
       (function (wrap) {
         var select = wrap.querySelector('select');
@@ -1192,7 +1516,10 @@ Object.assign(window, ilinkPublicApi);
           e.stopPropagation();
           var wasOpen = wrap.classList.contains('open');
           closeAll();
-          if (!wasOpen) wrap.classList.add('open');
+          if (!wasOpen) {
+            wrap.classList.add('open');
+            clampDropdown(dropdown);
+          }
         });
 
         wrap.appendChild(trigger);
@@ -1255,4 +1582,30 @@ Object.assign(window, ilinkPublicApi);
   }
   setTimeout(setupIconSearch, 300);
   setTimeout(setupIconSearch, 1000);
+})();
+
+/* 滚动条按需浮出：滚动时给该滚动容器挂 .is-scrolling，停手 0.9 秒后摘掉。
+   平时完全透明（见 layout.css），避免常驻的灰色条一直挂在页面和面板边上。 */
+(function setupScrollbarAutoHide() {
+  var timers = new WeakMap();
+
+  function schedule(el) {
+    el.classList.add('is-scrolling');
+    var prev = timers.get(el);
+    if (prev) clearTimeout(prev);
+    timers.set(el, setTimeout(function () { el.classList.remove('is-scrolling'); }, 900));
+  }
+
+  document.addEventListener('scroll', function (event) {
+    // 页面级滚动的事件目标是 document。视口滚动条由 <html> 还是 <body> 绘制，
+    // 取决于谁的 overflow 传播到了视口：body 只要设了 overflow-x/y（首页就是
+    // overflow-x:hidden），被绘制的那根就归 body，只标 html 会让滑块永远透明。
+    // 两个都标；不是滚动容器的那一边没有滚动条，标了也没有视觉影响。
+    if (event.target === document) {
+      schedule(document.documentElement);
+      schedule(document.body);
+    } else if (event.target && event.target.classList) {
+      schedule(event.target);
+    }
+  }, { capture: true, passive: true });
 })();

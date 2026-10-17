@@ -47,20 +47,20 @@
     var avatar = '';
     var href = '';
     if (o && o.id != null) {
-      name = (o.username || o.realName || o.nickname || '').trim();
+      name = (o.displayName || o.realName || o.nickname || '').trim();
       avatar = (o.avatar || o.avatarUrl || o.profileImage || '').trim();
       href = typeof publicProfilePageUrl === 'function'
         ? publicProfilePageUrl(o.id)
         : '/user-profile.html?id=' + encodeURIComponent(o.id);
     }
-    name = name || (asset.authorName || asset.publisherName || asset.username || '发布者');
+    name = name || (asset.authorName || asset.publisherName || '发布者');
     var letter = name.trim().charAt(0).toUpperCase() || '发';
     var fallback = '<span class="result-card__avatar-fallback" ' + (avatar ? 'style="display:none;"' : '') + '>' + escapeHtml(letter) + '</span>';
     var avatarHtml = avatar
       ? '<img class="result-card__avatar-img" src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">'
       : '';
     var avatarWrap = href
-      ? '<a href="' + escapeHtml(href) + '" class="result-card__avatar-link" onclick="event.stopPropagation();" aria-label="查看个人主页">' + avatarHtml + fallback + '</a>'
+      ? '<a href="' + escapeHtml(href) + '" class="result-card__avatar-link" onclick="event.stopPropagation();" aria-label="' + escapeHtml(t('ui.profile.publicProfile')) + '">' + avatarHtml + fallback + '</a>'
       : '<span class="result-card__avatar-link">' + avatarHtml + fallback + '</span>';
     return '<div class="gc-author result-card__author">' + avatarWrap + '<span class="gc-author-name result-card__author-name">' + escapeHtml(name) + '</span></div>';
   }
@@ -155,7 +155,7 @@
         // 优先用作者上传的封面；没传过才回退到按分类的内置占位图（映射见 common.js）
         var cover = a.coverUrl || window.ILinkFiles.coverForCategory(cat);
         return '<article class="result-card gc-card with-cover" role="link" tabindex="0" onclick="location.href=\'/asset-detail.html?id=' + (a.id || '') + '\'">'
-          + '<div class="gc-cover"><img src="' + cover + '" alt="封面" loading="lazy" decoding="async"><div class="gc-cover-overlay"></div></div>'
+          + '<div class="gc-cover"><img src="' + cover + '" alt="' + escapeHtml(t('ui.gallery.coverAlt')) + '" loading="lazy" decoding="async"><div class="gc-cover-overlay"></div></div>'
           + '<div class="gc-content">' + authorHtml(a)
           + '<div class="gc-meta-row">' + (a.pinned ? '<span class="gallery-tag gc-tag-pin">置顶</span>' : '') + (cat ? '<span class="gallery-tag ' + catTag(cat) + '">' + escapeHtml(cat) + '</span>' : '') + '<span class="gc-date">' + fmtDate(a.createdAt) + '</span></div>'
           + '<div class="gc-body"><h3 class="gc-title">' + escapeHtml(a.title || '未命名成果') + '</h3>' + (desc ? '<p class="gc-desc">' + escapeHtml(desc) + '</p>' : '') + '</div>'

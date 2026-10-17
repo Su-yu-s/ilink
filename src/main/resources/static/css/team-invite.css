@@ -1,3 +1,4 @@
+@layer legacy {
 /* 邀请成员弹窗。视觉沿用全站规范：白卡、灰边框、深色主按钮、纯内联 SVG、无渐变。 */
 
 .ti-modal {
@@ -126,15 +127,13 @@
 .ti-row + .ti-row { margin-top: 4px; }
 .ti-row:hover:not(:disabled) { background: var(--bg-muted); }
 
-/* 选中：深色底 + 白字 + 绿色对勾 */
+/* 选中：浅灰底 + 主色描边 + 绿色对勾。
+   不用深色底——那会把「学生」这类自带浅灰底的标签压成浅灰底配白字，直接看不清 */
 .ti-row.is-selected {
-    color: var(--text-white);
-    background: var(--primary);
+    color: var(--text-primary);
+    background: var(--primary-light);
     border-color: var(--primary);
 }
-
-.ti-row.is-selected .ti-row__meta,
-.ti-row.is-selected .ti-row__role { color: rgba(255, 255, 255, .72); }
 
 .ti-row:disabled {
     cursor: not-allowed;
@@ -236,4 +235,6 @@
     .ti-list { max-height: 40vh; }
     .ti-footer { flex-direction: column; align-items: stretch; }
     .ti-footer__actions { justify-content: flex-end; }
+}
+
 }

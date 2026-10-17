@@ -14,6 +14,10 @@ public class TeamDemand {
     private String title;
     private String description;
     private Integer competitionId;
+    /** 项目方向：技术开发/创意设计/市场营销/学术研究 */
+    private String category;
+    /** 自填竞赛名称（目录中没有时使用，不回写竞赛目录） */
+    private String customCompetition;
     private String requiredSkills;
     private Integer requiredMemberCount;
     private Date deadline;

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org" class="ilink-app">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" xmlns:th="http://www.thymeleaf.org" class="ilink-app">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>写文章 - iLink</title>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <link href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.0/github-markdown.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link th:href="@{/lib/github-markdown.min.css}" rel="stylesheet">
     <link th:href="@{/css/md-editor.css}" rel="stylesheet">
     <link th:href="@{/css/profile.css}" rel="stylesheet">
     <link th:href="@{/css/publishing-workspace.css}" rel="stylesheet">
@@ -200,8 +200,9 @@
 
 <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/js/common.js}"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
+<script th:src="@{/lib/marked.min.js}"></script>
+<script th:src="@{/lib/preview/purify.min.js}"></script>
+<script th:src="@{/js/publishing-guard.js}"></script>
 <script th:src="@{/js/profile-article-edit.js}"></script>
 </body>
 </html>

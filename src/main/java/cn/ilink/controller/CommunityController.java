@@ -2,9 +2,11 @@ package cn.ilink.controller;
 
 import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
+import cn.ilink.util.DisplayNameResolver;
 import cn.ilink.entity.CommunityComment;
 import cn.ilink.entity.CommunityPost;
 import cn.ilink.entity.CommunityPostFavorite;
+import cn.ilink.entity.KgEntity;
 import cn.ilink.entity.User;
 import cn.ilink.service.impl.CommunityCommentServiceImpl;
 import cn.ilink.service.CommunityPostInteractionService;
@@ -12,6 +14,7 @@ import cn.ilink.service.impl.CommunityPostServiceImpl;
 import cn.ilink.service.NotificationService;
 import cn.ilink.service.UserService;
 import cn.ilink.service.AdminDataService;
+import cn.ilink.service.kg.KgIndexService;
 import cn.ilink.mapper.CommunityPostFavoriteMapper;
 import cn.ilink.mapper.CommunityCommentMapper;
 import cn.ilink.util.HtmlSanitizer;
@@ -27,6 +30,9 @@ import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
@@ -39,6 +45,8 @@ import static cn.ilink.common.ControllerUtils.safeSize;
 @Controller
 @RequestMapping("/api/community")
 public class CommunityController {
+
+    private static final Logger log = LoggerFactory.getLogger(CommunityController.class);
 
     private static final Set<String> CATEGORIES = Set.of("general", "tech", "competition", "resource");
     private static final int TITLE_MAX = 200;
@@ -58,6 +66,7 @@ public class CommunityController {
     private final ObjectMapper objectMapper;
     private final NotificationService notificationService;
     private final AdminDataService adminDataService;
+    private final KgIndexService kgIndexService;
 
     public CommunityController(CommunityPostServiceImpl communityPostService,
                                CommunityPostInteractionService communityPostInteractionService,
@@ -67,7 +76,8 @@ public class CommunityController {
                                UserService userService,
                                ObjectMapper objectMapper,
                                NotificationService notificationService,
-                               AdminDataService adminDataService) {
+                               AdminDataService adminDataService,
+                               KgIndexService kgIndexService) {
         this.communityPostService = communityPostService;
         this.communityPostInteractionService = communityPostInteractionService;
         this.communityPostFavoriteMapper = communityPostFavoriteMapper;
@@ -77,6 +87,7 @@ public class CommunityController {
         this.objectMapper = objectMapper;
         this.notificationService = notificationService;
         this.adminDataService = adminDataService;
+        this.kgIndexService = kgIndexService;
     }
 
     @GetMapping("/posts")
@@ -93,7 +104,7 @@ public class CommunityController {
         // 置顶帖在任何排序下都优先；id 作最终 tiebreaker，同秒发布的记录翻页顺序不漂移。
         // 排序键只看静态累计值（时间/浏览/点赞/收藏），阅读等行为不会改变列表顺序。
         wrapper.orderByDesc(CommunityPost::getIsPinned);
-        String sortKey = sort == null || sort.isBlank() ? "latest" : sort.trim().toLowerCase();
+        String sortKey = sort == null || sort.isBlank() ? "latest" : sort.trim().toLowerCase(Locale.ROOT);
         switch (sortKey) {
             case "views" -> wrapper.orderByDesc(CommunityPost::getViewCount);
             case "likes" -> wrapper.orderByDesc(CommunityPost::getLikeCount);
@@ -366,6 +377,9 @@ public class CommunityController {
         post.setCreatedAt(new Date());
 
         if (communityPostService.save(post)) {
+            // 文章入知识图谱索引队列（失败不影响发帖，enqueue 内部已兜底）；content 需去 HTML
+            kgIndexService.enqueue("POST", post.getId(), post.getTitle(),
+                Jsoup.parse(post.getContent()).text(), KgEntity.SCOPE_GLOBAL, 0L, user.getId());
             return Result.ok("发布成功", toDetail(post, user, user)).toResponseEntity();
         } else {
             return Result.fail("发布失败").toResponseEntity();
@@ -374,34 +388,75 @@ public class CommunityController {
 
     @GetMapping("/posts/{postId}/comments")
     @ResponseBody
-    public ResponseEntity<Result<?>> listComments(@PathVariable Long postId, HttpSession session) {
+    public ResponseEntity<Result<?>> listComments(@PathVariable Long postId,
+                                                  @RequestParam(value = "page", defaultValue = "1") int page,
+                                                  @RequestParam(value = "size", defaultValue = "20") int size,
+                                                  HttpSession session) {
+        // 匿名可读：与 SecurityConfig 中 GET /api/community/posts/*/comments 的 permitAll 保持一致，
+        // 也符合社区「公开门户」的定位。未登录时 currentUser 为 null，仅不返回 canDelete 等个性化字段。
         User currentUser = ControllerUtils.requireUser(session);
-        if (currentUser == null) {
-            return Result.unauthorized().toResponseEntity();
-        }
 
         CommunityPost post = communityPostService.getById(postId);
         if (post == null) {
             return Result.notFound("文章不存在").toResponseEntity();
         }
 
-        List<CommunityComment> comments = communityCommentService.list(
+        int safePage = safePage(page);
+        int safeSize = safeSize(size, 100);
+        Page<CommunityComment> pageObj = new Page<>(safePage, safeSize);
+        // 只对顶层评论分页，回复随所属顶层评论一并返回，避免分页把同一段对话切开。
+        // 最新在前（新评论插列表顶部）；id 兜底，避免同秒评论顺序漂移
+        Page<CommunityComment> paged = communityCommentService.page(pageObj,
             new LambdaQueryWrapper<CommunityComment>()
                 .eq(CommunityComment::getPostId, postId)
+                .isNull(CommunityComment::getParentId)
+                .orderByDesc(CommunityComment::getCreatedAt)
+                .orderByDesc(CommunityComment::getId));
+
+        List<CommunityComment> roots = paged.getRecords();
+        List<CommunityComment> replies = roots.isEmpty() ? Collections.emptyList()
+            : communityCommentService.list(new LambdaQueryWrapper<CommunityComment>()
+                .in(CommunityComment::getParentId,
+                    roots.stream().map(CommunityComment::getId).collect(Collectors.toList()))
                 .orderByAsc(CommunityComment::getCreatedAt)
-        );
+                .orderByAsc(CommunityComment::getId));
 
-        Set<Long> uids = comments.stream().map(CommunityComment::getUserId).collect(Collectors.toSet());
+        Set<Long> uids = new HashSet<>();
+        roots.forEach(c -> uids.add(c.getUserId()));
+        replies.forEach(c -> {
+            uids.add(c.getUserId());
+            if (c.getReplyToUserId() != null) {
+                uids.add(c.getReplyToUserId());
+            }
+        });
         Map<Long, User> authorMap = loadAuthors(uids);
-        List<CommunityCommentVO> list = comments.stream()
-            .map(c -> toCommentView(c, authorMap.get(c.getUserId()), currentUser))
-            .collect(Collectors.toList());
+        Map<Long, List<CommunityComment>> repliesByRoot = replies.stream()
+            .collect(Collectors.groupingBy(CommunityComment::getParentId));
 
-        return Result.ok("获取成功", list).toResponseEntity();
+        List<CommunityCommentVO> list = roots.stream().map(root -> {
+            CommunityCommentVO vo = toCommentView(root, authorMap.get(root.getUserId()), currentUser);
+            vo.setReplies(repliesByRoot.getOrDefault(root.getId(), Collections.emptyList()).stream()
+                .map(child -> {
+                    CommunityCommentVO childVo =
+                        toCommentView(child, authorMap.get(child.getUserId()), currentUser);
+                    childVo.setReplyToDisplay(authorDisplay(authorMap.get(child.getReplyToUserId())));
+                    return childVo;
+                })
+                .collect(Collectors.toList()));
+            return vo;
+        }).collect(Collectors.toList());
+
+        return Result.ok("获取成功", list)
+            .withPagination(safePage, safeSize, (int) paged.getTotal())
+            // 展示用的总数含回复；分页 total 只算顶层评论，两者语义不同
+            .withExtra("commentTotal", communityCommentService.count(
+                new LambdaQueryWrapper<CommunityComment>().eq(CommunityComment::getPostId, postId)))
+            .toResponseEntity();
     }
 
     @PostMapping("/posts/{postId}/comments")
     @ResponseBody
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<Result<?>> addComment(
         @PathVariable Long postId,
         @RequestBody Map<String, Object> body,
@@ -412,7 +467,9 @@ public class CommunityController {
             return Result.unauthorized().toResponseEntity();
         }
 
-        String content = body.get("content") != null ? String.valueOf(body.get("content")).trim() : "";
+        // 类型必须显式校验：String.valueOf 会把对象/数字/布尔强转成脏字符串落库（核实报告 P2-1）
+        String content = ControllerUtils.requireStringField(body, "content", "评论内容");
+        content = content == null ? "" : content.trim();
         if (content.isEmpty()) {
             return Result.badRequest("评论内容不能为空").toResponseEntity();
         }
@@ -425,33 +482,72 @@ public class CommunityController {
             return Result.notFound("文章不存在").toResponseEntity();
         }
 
+        // parentId 语义：前端传「被回复的那条评论 id」（可能是顶层评论，也可能是某条回复），
+        // 这里统一归一到顶层评论并记录被回复者，保证回复只有一层、不出现无限嵌套。
+        Long targetId = parseLongId(body.get("parentId"));
+        Long rootId = null;
+        Long replyToUserId = null;
+        if (targetId != null) {
+            CommunityComment target = communityCommentService.getById(targetId);
+            if (target == null || !postId.equals(target.getPostId())) {
+                return Result.badRequest("回复的评论不存在").toResponseEntity();
+            }
+            rootId = target.getParentId() != null ? target.getParentId() : target.getId();
+            replyToUserId = target.getUserId();
+        }
+
         CommunityComment comment = new CommunityComment();
         comment.setPostId(postId);
+        comment.setParentId(rootId);
+        comment.setReplyToUserId(replyToUserId);
         comment.setUserId(user.getId());
         comment.setContent(content);
         comment.setCreatedAt(new Date());
 
         if (communityCommentService.save(comment)) {
-            // 通知文章作者（排除作者自己评论）
-            if (!post.getAuthorId().equals(user.getId())) {
+            String actorName = DisplayNameResolver.resolve(user);
+            boolean isReply = replyToUserId != null;
+            // 回复 → 通知被回复者；顶层评论 → 通知文章作者；都不通知自己
+            Long notifyUserId = isReply ? replyToUserId : post.getAuthorId();
+            if (notifyUserId != null && !notifyUserId.equals(user.getId())) {
                 notificationService.create(
-                    post.getAuthorId(),
+                    notifyUserId,
                     user.getId(),
                     "COMMENT",
-                    "你的文章被评论了",
-                    (user.getRealName() != null ? user.getRealName() : user.getUsername())
-                        + " 评论了你的文章《" + post.getTitle() + "》：" + content,
+                    isReply ? "你的评论被回复了" : "你的文章被评论了",
+                    isReply
+                        ? actorName + " 回复了你在《" + post.getTitle() + "》下的评论：" + content
+                        : actorName + " 评论了你的文章《" + post.getTitle() + "》：" + content,
                     postId
                 );
             }
-            return Result.ok("评论成功", toCommentView(comment, user, user)).toResponseEntity();
+            CommunityCommentVO vo = toCommentView(comment, user, user);
+            if (isReply) {
+                vo.setReplyToDisplay(authorDisplay(
+                    loadAuthors(Collections.singleton(replyToUserId)).get(replyToUserId)));
+            }
+            return Result.ok("评论成功", vo).toResponseEntity();
         } else {
             return Result.fail("评论失败").toResponseEntity();
         }
     }
 
+    /** 请求体里的数字字段可能是 Integer/Long/String，统一解析为 Long；非法值按未传处理 */
+    private Long parseLongId(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        String text = String.valueOf(value).trim();
+        return text.matches("^\\d+$") ? Long.valueOf(text) : null;
+    }
+
     @DeleteMapping("/comments/{commentId}")
     @ResponseBody
+    // 修复 D-P2-9：删顶层评论 + 删回复原先是两条非原子 delete，第二步失败会留孤儿回复
+    @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<Result<?>> deleteComment(@PathVariable Long commentId, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
@@ -468,6 +564,11 @@ public class CommunityController {
         }
 
         if (communityCommentService.removeById(commentId)) {
+            // 删除顶层评论时一并清掉它的回复，避免留下孤儿数据
+            if (comment.getParentId() == null) {
+                communityCommentService.remove(new LambdaQueryWrapper<CommunityComment>()
+                    .eq(CommunityComment::getParentId, commentId));
+            }
             return Result.ok("已删除", null).toResponseEntity();
         } else {
             return Result.fail("删除失败").toResponseEntity();
@@ -510,9 +611,11 @@ public class CommunityController {
             return Result.fail(403, "无权删除该帖").toResponseEntity();
         }
         try {
-            adminDataService.deletePost(id);
+            adminDataService.deletePost(id, null);
             return Result.ok("已删除", null).toResponseEntity();
         } catch (RuntimeException e) {
+            // 修复 D-P2-9：原先吞掉异常不打日志，线上删帖失败无任何痕迹可查
+            log.error("删除帖子失败, postId={}", id, e);
             return Result.fail("删除失败").toResponseEntity();
         }
     }
@@ -578,13 +681,8 @@ public class CommunityController {
         if (u == null) {
             return "未知用户";
         }
-        if (u.getUsername() != null && !u.getUsername().trim().isEmpty()) {
-            return u.getUsername().trim();
-        }
-        if (u.getRealName() != null && !u.getRealName().trim().isEmpty()) {
-            return u.getRealName().trim();
-        }
-        return "用户#" + u.getId();
+        // 显示名统一走解析器：不得回退到 username（可能是手机号/学号）
+        return DisplayNameResolver.resolve(u);
     }
 
     private static int viewCountOf(CommunityPost p) {
@@ -677,6 +775,7 @@ public class CommunityController {
         vo.setAuthorAvatar(resolveAuthorAvatar(author, currentUser));
         vo.setContent(c.getContent());
         vo.setCreatedAt(c.getCreatedAt());
+        vo.setParentId(c.getParentId());
         boolean canDelete = currentUser != null && (
             "ADMIN".equals(currentUser.getRole()) || currentUser.getId().equals(c.getUserId())
         );

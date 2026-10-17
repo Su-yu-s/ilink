@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import cn.ilink.util.DisplayNameResolver;
 
 /**
  * 团队邀请与成员进出。
@@ -105,8 +107,6 @@ public class TeamInviteService {
         User inviter = userService.getById(inviterId);
         String inviterName = displayName(inviter);
         String teamTitle = displayName(team.getTitle());
-        // 邀请是即时发通知的批量操作，先算一次容量，避免循环里反复查
-        boolean full = membershipService.isFull(team);
 
         for (Long userId : targets) {
             User target = users.get(userId);
@@ -123,7 +123,8 @@ public class TeamInviteService {
                 outcome.skip(userId, "ALREADY_INVITED");
                 continue;
             }
-            if (full) {
+            // 修复 D-P3-5：容量每轮重算，避免用循环外的快照发出注定被拒的邀请
+            if (membershipService.isFull(team)) {
                 outcome.skip(userId, "TEAM_FULL");
                 continue;
             }
@@ -175,6 +176,8 @@ public class TeamInviteService {
         }
 
         // 同意：容量以落库这一刻为准，邀请发出后队伍可能已经被别人填满
+        // 修复 D-P2-4：CLOSED / DISSOLVED 的团队不再接受加入，与 invite/joinTeam 口径统一
+        requireActive(team, "该团队已结束招募或已解散，无法加入");
         if (membershipService.isFull(team)) {
             throw new TeamMembershipException(400, "队伍已满，无法加入");
         }
@@ -222,6 +225,9 @@ public class TeamInviteService {
             .eq("assigned_to", targetUserId)
             .set("assigned_to", null)
             .set("updated_at", new Date()));
+        // 修复 D-P2-3：同步清掉其 task_participant 行，否则 canAccessTask 仍会放行
+        // 已离开的成员查看任务、发评论（仅有 submit 会因 assigned_to 为空被 403）
+        teamTaskService.removeParticipantFromTeamTasks(teamId, targetUserId);
 
         if (!self) {
             notificationService.create(targetUserId, operatorId, "TEAM_MEMBER_REMOVED", "已离开团队",
@@ -236,6 +242,23 @@ public class TeamInviteService {
             .eq(TeamApplication::getStatus, TeamMembershipService.STATUS_PENDING)
             // 邀请与申请的区别是 initiator_id 是否等于 user_id，只能落到 SQL 里比
             .apply("initiator_id IS NOT NULL AND initiator_id <> user_id"));
+    }
+
+    /** 批量版 {@link #pendingInviteCount}：一次查询多个团队的待确认邀请数（修复列表页逐团队 N+1） */
+    public Map<Long, Long> pendingInviteCounts(List<Long> teamIds) {
+        if (teamIds == null || teamIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        List<TeamApplication> rows = teamApplicationMapper.selectList(new LambdaQueryWrapper<TeamApplication>()
+            .select(TeamApplication::getTeamId)
+            .eq(TeamApplication::getStatus, TeamMembershipService.STATUS_PENDING)
+            .in(TeamApplication::getTeamId, teamIds)
+            .apply("initiator_id IS NOT NULL AND initiator_id <> user_id"));
+        Map<Long, Long> counts = new HashMap<>();
+        for (TeamApplication row : rows) {
+            counts.merge(row.getTeamId(), 1L, Long::sum);
+        }
+        return counts;
     }
 
     private TeamDemand requireTeam(Long teamId) {
@@ -281,10 +304,8 @@ public class TeamInviteService {
         if (user == null) {
             return "某位同学";
         }
-        if (user.getRealName() != null && !user.getRealName().trim().isEmpty()) {
-            return user.getRealName().trim();
-        }
-        return user.getUsername() == null ? "某位同学" : user.getUsername();
+        // 显示名统一走解析器：不得回退到 username（可能是手机号/学号）
+        return DisplayNameResolver.resolve(user);
     }
 
     static String displayName(String fallback) {

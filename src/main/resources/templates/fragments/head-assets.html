@@ -8,7 +8,10 @@
   <head th:replace="fragments/head-assets :: core(bootstrap=true)"></head>
 -->
 <th:block th:fragment="core(bootstrap)">
+    <th:block th:replace="~{fragments/i18n :: dictionary}"></th:block>
     <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{/favicon.svg(v=5)}" href="/favicon.svg?v=5">
+    <!-- 层序单点声明：必须在所有样式之前加载（全部存量 CSS 已包进 legacy 层） -->
+    <link th:href="@{/css/layers.css}" rel="stylesheet">
     <!-- 字体使用系统默认：宋体（古诗词/标题）、微软雅黑（正文）、Times New Roman（西文）-->
     <link th:if="${bootstrap}" th:href="@{/lib/bootstrap.min.css}" rel="stylesheet">
     <link th:href="@{/css/design-tokens.css}" rel="stylesheet">
@@ -20,10 +23,15 @@
     <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
     <!-- 意见反馈 / 关于作者：悬浮入口与反馈详情页样式，放在最后避免与既有层冲突 -->
     <link th:href="@{/css/feedback.css}" rel="stylesheet">
+    <!-- 页面切换过渡：View Transitions API + 兜底动画，需最后加载以覆盖层序 -->
+    <link th:href="@{/css/page-transitions.css}" rel="stylesheet">
 </th:block>
 
 <th:block th:fragment="auth">
+    <th:block th:replace="~{fragments/i18n :: dictionary}"></th:block>
     <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{/favicon.svg(v=5)}" href="/favicon.svg?v=5">
+    <!-- 层序单点声明：必须在所有样式之前加载 -->
+    <link th:href="@{/css/layers.css}" rel="stylesheet">
     <!-- 字体使用系统默认：宋体（古诗词/标题）、微软雅黑（正文）、Times New Roman（西文）-->
     <link th:href="@{/css/design-tokens.css}" rel="stylesheet">
     <link th:href="@{/css/effects.css}" rel="stylesheet">
@@ -33,6 +41,8 @@
     <th:block th:replace="~{fragments/head-assets :: redesign}"></th:block>
     <!-- 意见反馈 / 关于作者：悬浮入口与反馈详情页样式，放在最后避免与既有层冲突 -->
     <link th:href="@{/css/feedback.css}" rel="stylesheet">
+    <!-- 页面切换过渡：View Transitions API + 兜底动画，需最后加载以覆盖层序 -->
+    <link th:href="@{/css/page-transitions.css}" rel="stylesheet">
 </th:block>
 
 <!-- Must be inserted after page-specific styles when a page has them. -->

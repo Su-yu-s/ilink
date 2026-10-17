@@ -71,6 +71,13 @@ public class RememberMeService {
             clearCookie(response, request.isSecure());
             return null;
         }
+        // 账号被暂停后，已签发的 remember-me 令牌立即失效并清除，
+        // 否则被禁用的用户仍能靠旧 cookie 自动登录。
+        if (user.isDisabled()) {
+            tokenMapper.deleteById(token.getId());
+            clearCookie(response, request.isSecure());
+            return null;
+        }
         // 老用户首次自动登录时补一个随机内置头像（只补一次，已有头像不动）
         user = userService.ensureAvatarAssigned(user);
         String nextValidator = SecureTokenSupport.randomToken(32);

@@ -1,0 +1,88 @@
+/* ============================================================
+   页面切换过渡（View Transitions API + 兜底方案）
+   ============================================================
+   分层说明：
+   L1  原生 View Transitions —— Chrome/Edge 111+ 生效，
+       其他浏览器自动忽略（MPA 默认跳转，无副作用）。
+   L2  .page-transition 空壳补齐 —— 5 个详情页在用此类
+       （asset-detail / community-article / teacher-detail /
+        team-detail），此前从未定义过样式。
+   L3  reduced-motion 适配 —— 尊重系统"减少动态效果"设置。
+   ============================================================ */
+
+/* ---------- L1: View Transitions（渐进增强） ---------- */
+
+/* 启用跨文档（MPA）视图过渡：页面跳转时新旧页面交叉淡入淡出，
+   替代默认的"白屏 → 硬切"。不支持的浏览器会忽略整条规则。 */
+@view-transition {
+  navigation: auto;
+}
+
+/* 过渡时长与缓动：默认 0.25s，交叉重叠让跳转"不断档" */
+::view-transition-old(root) {
+  animation: vt-fade-out 0.18s ease both;
+}
+
+::view-transition-new(root) {
+  animation: vt-fade-in 0.28s ease both;
+}
+
+/* 淡出旧页（轻微下移制造"离开"的方向感，避免纯 opacity 的呆板） */
+@keyframes vt-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* 淡入新页（从下方 4px 浮起，比纯透明度更有"到位"感；
+   位移足够小，不会让用户觉得页面在"滚动"） */
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- L2: 补齐 .page-transition 空壳 ---------- */
+
+/* 该类被 5 个详情页的文章/评论/卡片容器使用。
+   用入场动画让内容"浮起"而非硬切出现。
+   ⚠️ 需配合 JS 移除/添加 hidden 才会触发；
+      对初始渲染即可见的元素，用下方 body 级入场兜底。 */
+.page-transition {
+  animation: pt-enter 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes pt-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* 主内容整体入场兜底：页面加载时统一 0.22s 淡入，
+   消除 MPA "白屏 → 硬切"的生硬感。
+   作用在 body 上 —— 全站唯一统一存在的元素（部分页面无
+   .il-page-wrapper / <main> 包裹）。
+   排除首页：home 页有 GSAP stagger 入场，二者叠加会打架。 */
+body:not([data-app-page="home"]) {
+  animation: il-page-fade 0.22s ease-out both;
+}
+
+@keyframes il-page-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---------- L3: 减少动态效果适配 ---------- */
+
+/* 用户在系统里开了"减少动态效果"时，全部过渡退化为瞬时切换。
+   与 effects.css / feedback.css 等既有 reduced-motion 块保持同一口径。 */
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: auto;   /* 视图过渡保留（浏览器自动降级为无动画的瞬时切换） */
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  .page-transition,
+  body:not([data-app-page="home"]) {
+    animation: none !important;
+    transition: none !important;
+  }
+}

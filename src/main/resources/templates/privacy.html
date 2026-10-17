@@ -1,34 +1,138 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隐私政策 - iLink</title>
+    <title th:text="#{legal.privacy.title} + ' - iLink'">隐私政策 - iLink</title>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
+    <link th:href="@{/css/legal.css}" rel="stylesheet">
 </head>
 <body data-app-page="legal" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
-    <main class="legal-page">
-        <p class="legal-page__eyebrow">隐私说明</p>
-        <h1>隐私政策</h1>
-        <section>
-            <h2>我们收集什么</h2>
-            <p>为支持登录、组队、导师招募、社区交流和成果展示，平台会保存你主动提交的账号信息、公开资料、发布内容和协作记录。</p>
-        </section>
-        <section>
-            <h2>我们如何使用</h2>
-            <p>这些信息用于身份识别、内容展示、申请审批、消息通知和基础安全审计。非公开联系方式不会展示在公开主页中。</p>
-        </section>
-        <section>
-            <h2>你可以做什么</h2>
-            <p>你可以在个人中心编辑资料、管理发布内容，或联系管理员处理账号与数据相关请求。</p>
-        </section>
-        <div class="legal-page__actions">
-            <a href="/register.html" class="il-btn il-btn-primary">回到注册</a>
-            <a href="/index.html" class="il-btn il-btn-secondary">返回首页</a>
+
+    <main class="lg-shell">
+
+        <!-- 文档头 -->
+        <div class="lg-head">
+            <p class="lg-eyebrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span th:text="#{legal.privacy.eyebrow}">隐私说明</span>
+            </p>
+            <h1 class="lg-h1" th:text="#{legal.privacy.title}">隐私政策</h1>
+            <p class="lg-lead" th:text="#{legal.privacy.lead}">这份政策说明 iLink 会保存哪些信息、用它们做什么、哪些内容会被其他同学看到，以及你可以怎样管理自己的信息。</p>
+            <div class="lg-meta">
+                <span><b th:text="#{legal.updated}">最后更新</b> <span th:text="#{legal.lastUpdated}">2026 年 10 月 16 日</span></span>
+                <span class="lg-sep" aria-hidden="true"></span>
+                <span><b th:text="#{legal.version}">版本</b> v1.0</span>
+                <span class="lg-sep" aria-hidden="true"></span>
+                <span><b th:text="#{legal.applies}">适用于</b> <span th:text="#{legal.allUsers}">全部注册用户</span></span>
+            </div>
+        </div>
+
+        <div class="lg-grid">
+
+            <!-- 目录 -->
+            <aside class="lg-toc">
+                <p class="lg-toc__title" th:text="#{legal.privacy.toc}">本页目录</p>
+                <nav class="lg-toc__list" th:attr="aria-label=#{legal.privacy.toc}">
+                    <a href="#s1" th:text="#{legal.privacy.s1}">我们收集哪些信息</a>
+                    <a href="#s2" th:text="#{legal.privacy.s2}">为什么需要这些信息</a>
+                    <a href="#s3" th:text="#{legal.privacy.s3}">哪些内容会被别人看到</a>
+                    <a href="#s4" th:text="#{legal.privacy.s4}">信息会提供给第三方吗</a>
+                    <a href="#s5" th:text="#{legal.privacy.s5}">信息如何保存与保护</a>
+                    <a href="#s6" th:text="#{legal.privacy.s6}">你可以管理自己的信息</a>
+                    <a href="#s7" th:text="#{legal.privacy.s7}">未成年人使用说明</a>
+                    <a href="#s8" th:text="#{legal.privacy.s8}">政策更新与联系方式</a>
+                </nav>
+                <p class="lg-toc__foot"><span th:text="#{legal.alsoRead}">也请阅读</span> <a href="/terms.html" th:text="#{legal.readTerms}">用户协议</a><span th:text="#{legal.privacy.tocFoot}">，其中说明了使用平台时的行为约定。</span></p>
+            </aside>
+
+            <article>
+
+                <section class="lg-sec" id="s1">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">01</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.privacy.s1}">我们收集哪些信息</h2>
+                    </div>
+                    <th:block th:utext="#{legal.privacy.s1.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="s2">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">02</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.privacy.s2}">为什么需要这些信息</h2>
+                    </div>
+                    <th:block th:utext="#{legal.privacy.s2.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="s3">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">03</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.privacy.s3}">哪些内容会被别人看到</h2>
+                    </div>
+                    <th:block th:utext="#{legal.privacy.s3.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="s4">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">04</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.privacy.s4}">信息会提供给第三方吗</h2>
+                    </div>
+                    <th:block th:utext="#{legal.privacy.s4.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="s5">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">05</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.privacy.s5}">信息如何保存与保护</h2>
+                    </div>
+                    <th:block th:utext="#{legal.privacy.s5.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="s6">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">06</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.privacy.s6}">你可以管理自己的信息</h2>
+                    </div>
+                    <th:block th:utext="#{legal.privacy.s6.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="s7">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">07</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.privacy.s7}">未成年人使用说明</h2>
+                    </div>
+                    <th:block th:utext="#{legal.privacy.s7.body}"></th:block>
+                </section>
+
+                <section class="lg-sec" id="s8">
+                    <div class="lg-sec__head">
+                        <span class="lg-sec__num">08</span>
+                        <h2 class="lg-sec__h2" th:text="#{legal.privacy.s8}">政策更新与联系方式</h2>
+                    </div>
+                    <th:block th:utext="#{legal.privacy.s8.body}"></th:block>
+                </section>
+
+                <div class="lg-foot">
+                    <p class="lg-foot__rel"><span th:text="#{legal.related}">相关文档：</span><a href="/terms.html" th:text="#{legal.readTerms}">用户协议</a></p>
+                    <a href="/register.html" class="lg-btn lg-btn--p" th:text="#{legal.backRegister}">回到注册</a>
+                    <a href="/index.html" class="lg-btn lg-btn--s" th:text="#{legal.backHome}">返回首页</a>
+                </div>
+
+            </article>
         </div>
     </main>
+
+    <a href="#" class="lg-top" th:attr="title=#{legal.returnTop}, aria-label=#{legal.returnTop}" aria-hidden="true" tabindex="-1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+    </a>
+
     <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
     <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/legal.js}"></script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Unified Search Bar — 暖白金系
    5 个页面共用：组队大厅 / 导师招贤 / 交流社区 / 竞赛目录 / 成果展示
@@ -392,4 +393,6 @@ body[data-app-page="gallery"] .il-search-bar {
     .competition-toolbar__search {
         grid-column: 1 / -1;
     }
+}
+
 }

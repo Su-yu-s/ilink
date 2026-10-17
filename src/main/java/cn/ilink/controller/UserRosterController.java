@@ -11,6 +11,7 @@ import cn.ilink.service.UserService;
 import cn.ilink.service.impl.ProjectApplicationServiceImpl;
 import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
+import cn.ilink.util.DisplayNameResolver;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -107,8 +108,19 @@ public class UserRosterController {
         LambdaQueryWrapper<ProjectApplication> wrapper = new LambdaQueryWrapper<ProjectApplication>()
             .eq(ProjectApplication::getStatus, "APPROVED");
         if (wantStudents) {
-            wrapper.eq(ProjectApplication::getTeacherId, me.getId());
+            // 注意：project_application.teacher_id 存的是**导师档案 id**（teacher_application.id），
+            // 不是用户 id。用当前用户的 id 去匹配永远匹配不到，所以先取自己的导师档案。
+            TeacherApplication myProfile = teacherApplicationService.getOne(
+                new LambdaQueryWrapper<TeacherApplication>()
+                    .eq(TeacherApplication::getUserId, me.getId())
+                    .eq(TeacherApplication::getStatus, "APPROVED")
+                    .last("LIMIT 1"));
+            if (myProfile == null) {
+                return Result.ok(Collections.emptyList()).toResponseEntity();
+            }
+            wrapper.eq(ProjectApplication::getTeacherId, myProfile.getId());
         } else {
+            // user_id 才是学生（申请人）的用户 id
             wrapper.eq(ProjectApplication::getUserId, me.getId());
         }
         List<ProjectApplication> links = projectApplicationService.list(wrapper);
@@ -116,10 +128,22 @@ public class UserRosterController {
             return Result.ok(Collections.emptyList()).toResponseEntity();
         }
 
-        Set<Long> ids = links.stream()
-            .map(link -> wantStudents ? link.getUserId() : link.getTeacherId())
-            .filter(Objects::nonNull)
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<Long> ids = new LinkedHashSet<>();
+        if (wantStudents) {
+            links.stream().map(ProjectApplication::getUserId)
+                .filter(Objects::nonNull).forEach(ids::add);
+        } else {
+            // 我的导师：teacher_id 是导师档案 id，必须再换回用户 id，
+            // 否则会按主键命中 id 恰好相同的无关用户。
+            Set<Long> profileIds = links.stream().map(ProjectApplication::getTeacherId)
+                .filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
+            if (!profileIds.isEmpty()) {
+                teacherApplicationService.listByIds(profileIds).stream()
+                    .map(TeacherApplication::getUserId)
+                    .filter(Objects::nonNull)
+                    .forEach(ids::add);
+            }
+        }
         if (ids.isEmpty()) {
             return Result.ok(Collections.emptyList()).toResponseEntity();
         }
@@ -155,6 +179,7 @@ public class UserRosterController {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("userId", user.getId());
             row.put("realName", displayName(user));
+            row.put("avatarInitial", DisplayNameResolver.initial(user));
             row.put("avatar", user.getAvatar());
             row.put("major", user.getMajor());
             row.put("grade", user.getGrade());
@@ -163,6 +188,9 @@ public class UserRosterController {
             if (profile != null) {
                 row.put("professionalTitle", profile.getProfessionalTitle());
                 row.put("researchDirection", profile.getResearchDirection());
+                // 导师详情接口按 teacher_application.id 查，与这里的 userId 不是同一个 id 空间，
+                // 前端拿 userId 去拼链接必然 404，故单独下发
+                row.put("teacherId", profile.getId());
             }
             String status = statusByUser.get(user.getId());
             row.put("joined", TeamMembershipService.STATUS_APPROVED.equals(status));
@@ -189,9 +217,6 @@ public class UserRosterController {
     }
 
     private static String displayName(User user) {
-        if (user.getRealName() != null && !user.getRealName().trim().isEmpty()) {
-            return user.getRealName().trim();
-        }
-        return user.getUsername() == null ? "未命名用户" : user.getUsername();
+        return DisplayNameResolver.resolve(user);
     }
 }

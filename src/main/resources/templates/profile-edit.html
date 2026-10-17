@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -54,7 +54,6 @@
                             <section class="il-profile-read-section" aria-labelledby="profileReadBasicTitle">
                                 <h2 class="il-profile-read-section__title" id="profileReadBasicTitle">基本信息</h2>
                                 <dl class="il-profile-read-grid">
-                                    <div><dt>用户名</dt><dd id="profileReadUsername">未填写</dd></div>
                                     <div><dt>邮箱</dt><dd id="profileReadEmail">未填写</dd></div>
                                     <div><dt>姓名</dt><dd id="profileReadRealName">未填写</dd></div>
                                     <div><dt id="profileReadSchoolLabel">学校</dt><dd id="profileReadSchool">未填写</dd></div>
@@ -122,20 +121,16 @@
 
                         <div class="il-form-row">
                             <div class="il-form-group">
-                                <label class="il-form-label il-form-label--required" for="username">用户名</label>
-                                <input type="text" class="il-form-input" id="username" autocomplete="username" maxlength="64" required placeholder="请输入用户名">
-                            </div>
-                            <div class="il-form-group">
                                 <label class="il-form-label il-form-label--required" for="email">邮箱</label>
                                 <input type="email" class="il-form-input" id="email" required autocomplete="email" placeholder="name@example.com">
                             </div>
-                        </div>
-
-                        <div class="il-form-row">
                             <div class="il-form-group">
                                 <label class="il-form-label" for="realName">姓名</label>
                                 <input type="text" class="il-form-input" id="realName" autocomplete="name" placeholder="选填">
                             </div>
+                        </div>
+
+                        <div class="il-form-row">
                             <div class="il-form-group">
                                 <label class="il-form-label" id="schoolLabel" for="school">学校</label>
                                 <input type="text" class="il-form-input" id="school" maxlength="128" placeholder="例如：南京晓庄学院">

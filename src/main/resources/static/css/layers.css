@@ -1,0 +1,8 @@
+/* ========================================
+   iLink Layer Order（全站层序单点声明）
+   legacy = 全部存量 CSS（层内仍按各页 link 顺序，
+   与封装前层叠关系完全一致）
+   其余层预留给后续新代码：新样式进高优先级层，
+   覆盖旧样式不再需要 !important
+   ======================================== */
+@layer vendor, legacy, tokens, base, components, pages, utilities, overrides;

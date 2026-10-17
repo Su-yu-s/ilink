@@ -121,6 +121,51 @@ class AiAssistantControllerWebTest {
     }
 
     @Test
+    void breakdownRejectsLeaderBreakingDownOthersTask() throws Exception {
+        // 已分配给他人的任务，队长也不能代为拆解
+        given(teamTaskService.getById(11L)).willReturn(assigneeTask(7L));
+
+        mockMvc.perform(post("/api/team/3/ai/task-breakdown")
+                .session(session)
+                .contentType("application/json")
+                .content("{\"taskId\":11}"))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
+
+        verify(aiAssistantService, never()).breakdownTask(any(), any());
+    }
+
+    @Test
+    void breakdownAllowsAssigneeThemselves() throws Exception {
+        // 被分配者本人（非队长）可以拆解自己的任务
+        User assignee = new User();
+        assignee.setId(7L);
+        assignee.setUsername("assignee");
+        given(teamApplicationService.count(any(Wrapper.class))).willReturn(1L);
+        given(teamTaskService.getById(11L)).willReturn(assigneeTask(7L));
+        given(aiAssistantService.breakdownTask(any(TeamTask.class), any()))
+            .willReturn(Arrays.asList(new LinkedHashMap<String, Object>() {{ put("title", "子任务一"); }}));
+
+        mockMvc.perform(post("/api/team/3/ai/task-breakdown")
+                .session(sessionFor(assignee))
+                .contentType("application/json")
+                .content("{\"taskId\":11}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+
+        verify(aiAssistantService).breakdownTask(any(TeamTask.class), any());
+    }
+
+    private TeamTask assigneeTask(Long assignedTo) {
+        TeamTask task = new TeamTask();
+        task.setId(11L);
+        task.setTeamId(3L);
+        task.setTaskTitle("完成任务书");
+        task.setAssignedTo(assignedTo);
+        return task;
+    }
+
+    @Test
     void breakdownHasNoDailyCap() throws Exception {
         // 已取消每日调用上限：无论当天用过多少次都应正常放行（用量只记录、不拦截）
         given(aiAssistantService.breakdownTask(any(TeamTask.class), any()))

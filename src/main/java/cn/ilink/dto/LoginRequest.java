@@ -10,7 +10,7 @@ public class LoginRequest {
     private String phoneNumber;
     private String studentId;
 
-    @NotBlank(message = "密码不能为空")
+    @NotBlank(message = "{validation.password.required}")
     private String password;
 
     // 新增一个通用标识符字段

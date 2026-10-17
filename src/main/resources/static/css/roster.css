@@ -1,3 +1,4 @@
+@layer legacy {
 /* 师生通讯录：导师 / 学生卡片
    视觉沿用全站规范：白卡、灰边框、深色主按钮、纯内联 SVG、无渐变。 */
 
@@ -203,4 +204,6 @@
     .roster-toolbar__search { width: 100%; }
     .roster-switch { width: 100%; }
     .roster-switch__btn { flex: 1 1 0; }
+}
+
 }

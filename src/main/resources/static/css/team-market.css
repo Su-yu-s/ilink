@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Team Market — 组队大厅
    Public hero, card, list and pagination styles.
@@ -543,4 +544,6 @@ body[data-app-page="team-market"] .il-search-bar__select select {
     body[data-app-page="team-market"] .team-card {
         padding: 18px;
     }
+}
+
 }

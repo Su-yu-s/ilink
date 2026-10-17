@@ -1,5 +1,6 @@
 package cn.ilink.controller;
 
+import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.User;
 import cn.ilink.dto.ProjectMilestoneDTO;
 import cn.ilink.security.LoginAttemptService;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,6 +25,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,6 +42,9 @@ class ProjectMilestoneControllerWebTest {
 
     @MockBean
     private TeamAccessService teamAccessService;
+
+    @MockBean
+    private cn.ilink.service.impl.TeamDemandServiceImpl teamDemandService;
 
     @MockBean
     private LoginAttemptService loginAttemptService;
@@ -97,6 +103,48 @@ class ProjectMilestoneControllerWebTest {
             .andExpect(jsonPath("$.code").value(403));
 
         verify(projectMilestoneService, never()).update(anyLong(), any(ProjectMilestoneDTO.class));
+    }
+
+    /**
+     * 核实报告 P1-2：不存在的日期（2026-13-45）必须 400，不能被宽松解析滚成 2027-02-14 静默落库。
+     */
+    @Test
+    void nonExistentDueDateIsRejectedWithBadRequest() throws Exception {
+        User user = user(9L);
+        given(teamAccessService.isTeamParticipant(3L, 9L)).willReturn(true);
+        TeamDemand team = new TeamDemand();
+        team.setId(3L);
+        team.setStatus("TEAMING");
+        given(teamDemandService.getById(3L)).willReturn(team);
+
+        mockMvc.perform(post("/api/team/3/milestones")
+                .session(sessionFor(user))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"milestoneName\":\"T4日期错\",\"dueDate\":\"2026-13-45\",\"completionRate\":0}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(400));
+
+        verify(projectMilestoneService, never()).create(any(ProjectMilestoneDTO.class), anyLong());
+    }
+
+    /** 合法 yyyy-MM-dd 仍应创建成功 */
+    @Test
+    void validDueDateIsAccepted() throws Exception {
+        User user = user(9L);
+        given(teamAccessService.isTeamParticipant(3L, 9L)).willReturn(true);
+        TeamDemand team = new TeamDemand();
+        team.setId(3L);
+        team.setStatus("TEAMING");
+        given(teamDemandService.getById(3L)).willReturn(team);
+        given(projectMilestoneService.create(any(ProjectMilestoneDTO.class), anyLong())).willReturn(true);
+        given(projectMilestoneService.getByTeam(3L)).willReturn(Collections.emptyList());
+
+        mockMvc.perform(post("/api/team/3/milestones")
+                .session(sessionFor(user))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"milestoneName\":\"T4正常\",\"dueDate\":\"2026-12-31\",\"completionRate\":0}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
     }
 
     private User user(Long id) {

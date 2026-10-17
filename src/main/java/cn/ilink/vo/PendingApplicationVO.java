@@ -23,5 +23,7 @@ public class PendingApplicationVO {
     private String applicantGrade;
     private String applicantSchool;
     private Long applicantUserId;
+    /** true=这是我（队长）发出的邀请，等待对方确认；false/absent=对方申请加入，等待我审批 */
+    private Boolean invitedByMe;
     private List<SkillViewVO> skills;
 }

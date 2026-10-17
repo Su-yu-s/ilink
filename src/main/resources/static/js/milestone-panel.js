@@ -279,7 +279,7 @@ class MilestoneManager {
     }
 
     async deleteMilestone(milestoneId) {
-        if (!confirm('确定要删除这个里程碑吗？')) return;
+        if (!uiConfirm('确定要删除这个里程碑吗？')) return;
 
         try {
             await request(`/milestones/${milestoneId}`, { method: 'DELETE' });

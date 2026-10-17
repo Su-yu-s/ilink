@@ -56,33 +56,38 @@ public class FileService {
         ATTACHMENT_EXTENSIONS = Set.copyOf(extensions);
     }
 
-    private static final Map<String, UploadRule> RULES = Map.of(
-        "avatars", new UploadRule(IMAGE_EXTENSIONS, 1 * MB,
-            "\u5934\u50cf", "jpg\u3001png\u3001gif\u3001webp", "1MB"),
-        "certificates", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".pdf"), 2 * MB,
-            "\u8bc1\u4e66", "jpg\u3001png\u3001pdf", "2MB"),
-        "images", new UploadRule(IMAGE_EXTENSIONS, 2 * MB,
-            "\u56fe\u7247", "jpg\u3001png\u3001gif\u3001webp", "2MB"),
-        "proofs", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf"), 5 * MB,
-            "\u8bc1\u660e\u9644\u4ef6", "jpg\u3001png\u3001gif\u3001webp\u3001pdf", "5MB"),
-        "community", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
-            "\u793e\u533a\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"),
-        "tasks", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
-            "\u4efb\u52a1\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"),
-        "chat", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
-            "\u804a\u5929\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"),
-        "assets", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
-            "\u6210\u679c\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"),
-        "covers", new UploadRule(IMAGE_EXTENSIONS, 5 * MB,
-            "\u6210\u679c\u5c01\u9762", "jpg\u3001png\u3001gif\u3001webp", "5MB"),
-        "feedback", new UploadRule(IMAGE_EXTENSIONS, 5 * MB,
-            "\u53cd\u9988\u622a\u56fe", "jpg\u3001png\u3001gif\u3001webp", "5MB")
-    );
+    private static final Map<String, UploadRule> RULES;
+    static {
+        Map<String, UploadRule> rules = new java.util.HashMap<>();
+        rules.put("avatars", new UploadRule(IMAGE_EXTENSIONS, 1 * MB,
+            "\u5934\u50cf", "jpg\u3001png\u3001gif\u3001webp", "1MB"));
+        rules.put("certificates", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".pdf"), 2 * MB,
+            "\u8bc1\u4e66", "jpg\u3001png\u3001pdf", "2MB"));
+        rules.put("images", new UploadRule(IMAGE_EXTENSIONS, 2 * MB,
+            "\u56fe\u7247", "jpg\u3001png\u3001gif\u3001webp", "2MB"));
+        rules.put("proofs", new UploadRule(Set.of(".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf"), 5 * MB,
+            "\u8bc1\u660e\u9644\u4ef6", "jpg\u3001png\u3001gif\u3001webp\u3001pdf", "5MB"));
+        rules.put("community", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u793e\u533a\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"));
+        rules.put("tasks", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u4efb\u52a1\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"));
+        rules.put("chat", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u804a\u5929\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"));
+        rules.put("assets", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u6210\u679c\u9644\u4ef6", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"));
+        rules.put("library", new UploadRule(ATTACHMENT_EXTENSIONS, 50 * MB,
+            "\u56e2\u961f\u8d44\u6599", "\u56fe\u7247\u3001pdf\u3001office\u3001\u538b\u7f29\u5305\u3001\u6587\u672c\u548c\u5b89\u88c5\u5305", "50MB"));
+        rules.put("covers", new UploadRule(IMAGE_EXTENSIONS, 5 * MB,
+            "\u6210\u679c\u5c01\u9762", "jpg\u3001png\u3001gif\u3001webp", "5MB"));
+        rules.put("feedback", new UploadRule(IMAGE_EXTENSIONS, 5 * MB,
+            "\u53cd\u9988\u622a\u56fe", "jpg\u3001png\u3001gif\u3001webp", "5MB"));
+        RULES = java.util.Collections.unmodifiableMap(rules);
+    }
 
     @Value("${file.upload-dir:/data/uploads/}")
     private String uploadDir;
 
-    @Value("${file.access-url-prefix:http://121.40.34.68:8090/uploads/}")
+    @Value("${file.access-url-prefix:/uploads/}")
     private String accessUrlPrefix;
 
     public String upload(MultipartFile file, String bizType) throws IOException {
@@ -251,7 +256,7 @@ public class FileService {
     }
 
     private String normalizeAccessPrefix(String prefix) {
-        String value = StringUtils.hasText(prefix) ? prefix.trim() : "http://121.40.34.68:8090/uploads/";
+        String value = StringUtils.hasText(prefix) ? prefix.trim() : "/uploads/";
         return value.endsWith("/") ? value : value + "/";
     }
 

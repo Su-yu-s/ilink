@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -79,6 +79,11 @@
                             <span>竞赛目录</span>
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" role="tab">
+                            <span>审计日志</span>
+                        </button>
+                    </li>
                 </ul>
             </aside>
 
@@ -89,8 +94,16 @@
                     <div class="card-header"><h5 class="mb-0">用户列表</h5></div>
                     <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
-                            <div class="col-md-10">
+                            <div class="col-md-8">
                                 <div th:replace="~{fragments/search-field :: field('userSearchInput', '搜索：用户名 / 姓名 / 学号 / 学校 / 角色', '搜索用户', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm" id="userRoleFilter" aria-label="按角色筛选">
+                                    <option value="">全部角色</option>
+                                    <option value="STUDENT">学生</option>
+                                    <option value="TEACHER">教师</option>
+                                    <option value="ADMIN">管理员</option>
+                                </select>
                             </div>
                             <div class="col-md-2 d-flex justify-content-md-end gap-2">
                                 <button type="button" class="btn btn-primary btn-sm" id="userSearchBtn">搜索</button>
@@ -100,11 +113,12 @@
                             <table class="table table-striped align-middle admin-table">
                                 <thead>
                                     <tr>
-                                        <th>用户名</th>
+                                        <th>账号标识</th>
                                         <th>姓名</th>
                                         <th>学号</th>
                                         <th>学校</th>
                                         <th>角色</th>
+                                        <th>状态</th>
                                         <th>操作</th>
                                     </tr>
                                 </thead>
@@ -124,8 +138,17 @@
                     <div class="card-header"><h5 class="mb-0">组队需求列表</h5></div>
                     <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
-                            <div class="col-md-10">
+                            <div class="col-md-8">
                                 <div th:replace="~{fragments/search-field :: field('teamSearchInput', '搜索：标题 / 发布者 / 状态 / 技能', '搜索组队需求', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm" id="teamStatusFilter" aria-label="按状态筛选">
+                                    <option value="">全部状态</option>
+                                    <option value="OPEN">招募中</option>
+                                    <option value="TEAMING">已组队</option>
+                                    <option value="CLOSED">已结束</option>
+                                    <option value="DISSOLVED">已解散</option>
+                                </select>
                             </div>
                             <div class="col-md-2 d-flex justify-content-md-end gap-2">
                                 <button type="button" class="btn btn-primary btn-sm" id="teamSearchBtn">搜索</button>
@@ -145,7 +168,10 @@
                                 <tbody id="teamTableBody"></tbody>
                             </table>
                         </div>
-                        <small class="text-muted d-block mt-3" id="teamListHint">共 0 条</small>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                            <small class="text-muted" id="teamListHint">共 0 条</small>
+                            <nav id="teamPager" class="admin-user-pager" aria-label="组队列表分页"></nav>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -176,7 +202,10 @@
                                 <tbody id="teacherTableBody"></tbody>
                             </table>
                         </div>
-                        <small class="text-muted d-block mt-3" id="teacherListHint">共 0 条</small>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                            <small class="text-muted" id="teacherListHint">共 0 条</small>
+                            <nav id="teacherPager" class="admin-user-pager" aria-label="导师列表分页"></nav>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -207,7 +236,10 @@
                                 <tbody id="assetTableBody"></tbody>
                             </table>
                         </div>
-                        <small class="text-muted d-block mt-3" id="assetListHint">共 0 条</small>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                            <small class="text-muted" id="assetListHint">共 0 条</small>
+                            <nav id="assetPager" class="admin-user-pager" aria-label="成果列表分页"></nav>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -239,7 +271,10 @@
                                 <tbody id="communityPostTableBody"></tbody>
                             </table>
                         </div>
-                        <small class="text-muted d-block mt-3" id="communityListHint">共 0 条</small>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                            <small class="text-muted" id="communityListHint">共 0 条</small>
+                            <nav id="communityPager" class="admin-user-pager" aria-label="社区帖子分页"></nav>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -252,8 +287,26 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
-                            <div class="col-md-10">
+                            <div class="col-md-6">
                                 <div th:replace="~{fragments/search-field :: field('competitionSearchInput', '搜索：名称 / 主办单位 / 赛道 / 标签', '搜索竞赛', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm" id="competitionStatusFilter" aria-label="按状态筛选">
+                                    <option value="">全部状态</option>
+                                    <option value="ACTIVE">已发布</option>
+                                    <option value="INACTIVE">已停用</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm" id="competitionTrackFilter" aria-label="按赛道筛选">
+                                    <option value="">全部赛道</option>
+                                    <option value="cs">计算机软件</option>
+                                    <option value="ee">电子信息</option>
+                                    <option value="innovation">创新创业</option>
+                                    <option value="stem">数理建模</option>
+                                    <option value="robot">机器人 / 智能车</option>
+                                    <option value="general">综合 / 语言</option>
+                                </select>
                             </div>
                             <div class="col-md-2 d-flex justify-content-md-end gap-2">
                                 <button type="button" class="btn btn-primary btn-sm" id="competitionSearchBtn">搜索</button>
@@ -269,6 +322,55 @@
                             <ul class="pagination justify-content-center mb-0" id="competitionPagerInner"></ul>
                         </nav>
                         <small class="text-muted d-block mt-3" id="competitionListHint">共 0 条</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="audit" role="tabpanel">
+                <div class="card admin-table-card">
+                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="mb-0">操作审计日志</h5>
+                        <small class="text-muted">记录管理员的每一次写操作；只可查询，不可修改</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 align-items-center mb-3">
+                            <div class="col-md-8">
+                                <div th:replace="~{fragments/search-field :: field('auditSearchInput', '搜索：对象类型 / 对象ID / 详情 / IP', '搜索审计日志', 'text', 'il-search-field--admin')}"></div>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select form-select-sm" id="auditActionFilter" aria-label="按动作筛选">
+                                    <option value="">全部动作</option>
+                                    <option value="CREATE">新增</option>
+                                    <option value="UPDATE">更新</option>
+                                    <option value="DELETE">删除</option>
+                                    <option value="APPROVE">审批</option>
+                                    <option value="PIN">置顶</option>
+                                    <option value="UNPIN">取消置顶</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex justify-content-md-end gap-2">
+                                <button type="button" class="btn btn-primary btn-sm" id="auditSearchBtn">搜索</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>操作人</th>
+                                        <th>动作</th>
+                                        <th>对象</th>
+                                        <th>详情</th>
+                                        <th>IP</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                            <small class="text-muted" id="auditListHint">共 0 条</small>
+                            <nav id="auditPager" class="admin-user-pager" aria-label="审计日志分页"></nav>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -288,8 +390,9 @@
                     <input type="hidden" id="adminEditUserId">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="adminEditUsername" class="form-label">用户名 *</label>
-                            <input type="text" class="form-control" id="adminEditUsername" maxlength="64">
+                            <label for="adminEditUsername" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="adminEditUsername" maxlength="64" readonly aria-describedby="adminEditUsernameHint">
+                            <div class="form-text" id="adminEditUsernameHint">系统内部标识，不可修改</div>
                         </div>
                         <div class="col-md-6">
                             <label for="adminEditRole" class="form-label">角色 *</label>
@@ -339,6 +442,19 @@
                                 <option value="FEMALE">女</option>
                                 <option value="OTHER">其他</option>
                             </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="adminEditStatus" class="form-label">账号状态</label>
+                            <select class="form-select" id="adminEditStatus">
+                                <option value="ACTIVE">正常</option>
+                                <option value="DISABLED">暂停使用</option>
+                            </select>
+                        </div>
+                        <div class="col-12" id="adminEditDisabledReasonGroup" hidden>
+                            <label for="adminEditDisabledReason" class="form-label">暂停原因 *</label>
+                            <input type="text" class="form-control" id="adminEditDisabledReason" maxlength="255"
+                                   placeholder="例如：发布虚假招募信息，经核实后暂停账号">
+                            <div class="form-text">该原因会记录在审计日志中，用于说明处置依据。</div>
                         </div>
                     </div>
                 </div>
@@ -583,11 +699,33 @@
     </div>
 
 
+    <!-- 通用删除原因弹窗：组队/成果/社区帖子等管理删除共用 -->
+    <div class="modal fade" id="adminDeleteReasonModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminDeleteReasonTitle">删除确认</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">删除不可恢复。请填写删除原因，系统将把删除事实与原因通知内容所有者。</p>
+                    <textarea class="form-control" id="adminDeleteReasonInput" rows="3" maxlength="200"
+                              placeholder="请填写删除原因（必填，200 字以内）"></textarea>
+                    <div class="text-danger small mt-2 d-none" id="adminDeleteReasonError">请填写删除原因</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger btn-sm" id="adminDeleteReasonConfirmBtn">确认删除并通知</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
     <script th:src="@{/js/common.js}"></script>
     <script th:src="@{/js/ui-particles.js}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked@11.2.0/marked.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" crossorigin="anonymous"></script>
+    <script th:src="@{/lib/marked.min.js}"></script>
+    <script th:src="@{/lib/preview/purify.min.js}"></script>
     <script th:src="@{/js/admin.js}"></script>
 </body>
 </html>

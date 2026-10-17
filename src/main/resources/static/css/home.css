@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Homepage — Awwwards-Tier Design
    Vibe: Soft Structuralism
@@ -96,93 +97,22 @@ body[data-app-page="home"] .home-stats__num { font-size: clamp(36px, 4.5vw, 52px
 body[data-app-page="home"] .home-stats__label { font-size: 17px !important; }
 body[data-app-page="home"] .home-stats__desc { font-size: 16px !important; }
 body[data-app-page="home"] .home-cta__inner h2 { font-size: clamp(34px, 4.5vw, 52px) !important; color: var(--home-text) !important; }
+/* 英文模式：同样一句诗，英文比中文长一倍以上，沿用「一行排开 + nowrap」会被视口裁掉右半边。
+   这里只放宽英文的折行与字号，中文首页的排版保持不变；≤768px 已有小屏折行规则，故限定生效范围。 */
+@media (min-width: 769px) {
+  html[lang="en"] body[data-app-page="home"] .home-hero__title,
+  html[lang="en"] body[data-app-page="home"] .home-story__title,
+  html[lang="en"] body[data-app-page="home"] .home-cta__inner h2,
+  html[lang="en"] body[data-app-page="home"] .home-section-title {
+    white-space: normal !important;
+    font-size: clamp(30px, 3.35vw, 44px) !important;
+  }
+}
 body[data-app-page="home"] .home-cta__inner p { font-size: 18px !important; color: var(--home-text-secondary) !important; }
 body[data-app-page="home"] .home-cta-form input { font-size: 17px !important; }
 body[data-app-page="home"] .home-mag-tile__overlay strong { font-size: 24px !important; }
 body[data-app-page="home"] .home-text-link { font-size: 18px !important; }
 body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
-
-/* ── Desktop Menu Panel — Base (always hidden by default) ── */
-.il-desktop-menu {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(250, 249, 247, 0.92);
-  backdrop-filter: blur(40px) saturate(1.2);
-  -webkit-backdrop-filter: blur(40px) saturate(1.2);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1),
-              visibility 0.5s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.il-desktop-menu--open {
-  opacity: 1;
-  visibility: visible;
-}
-
-.il-desktop-menu__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.il-desktop-menu__link {
-  font-size: var(--home-fz-h1);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--home-text, #111);
-  text-decoration: none;
-  padding: 8px 24px;
-  border-radius: 12px;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1),
-              transform 0.5s cubic-bezier(0.32, 0.72, 0, 1),
-              color 0.2s ease,
-              background 0.2s ease;
-}
-
-.il-desktop-menu--open .il-desktop-menu__link {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.il-desktop-menu--open .il-desktop-menu__link:nth-child(1) { transition-delay: 0.06s; }
-.il-desktop-menu--open .il-desktop-menu__link:nth-child(2) { transition-delay: 0.10s; }
-.il-desktop-menu--open .il-desktop-menu__link:nth-child(3) { transition-delay: 0.14s; }
-.il-desktop-menu--open .il-desktop-menu__link:nth-child(4) { transition-delay: 0.18s; }
-.il-desktop-menu--open .il-desktop-menu__link:nth-child(5) { transition-delay: 0.22s; }
-.il-desktop-menu--open .il-desktop-menu__link:nth-child(6) { transition-delay: 0.26s; }
-.il-desktop-menu--open .il-desktop-menu__link:nth-child(7) { transition-delay: 0.30s; }
-.il-desktop-menu--open .il-desktop-menu__link:nth-child(8) { transition-delay: 0.34s; }
-
-.il-desktop-menu__link:hover {
-  color: var(--home-accent-dark, #6b5536);
-  background: rgba(0, 0, 0, 0.03);
-}
-
-.il-desktop-menu__link--cta {
-  color: var(--home-accent, #8a6d45);
-}
-
-.il-desktop-menu__divider {
-  width: 48px;
-  height: 1px;
-  background: rgba(0, 0, 0, 0.1);
-  border: none;
-  margin: 12px 0;
-  opacity: 0;
-  transition: opacity 0.5s cubic-bezier(0.32, 0.72, 0, 1) 0.3s;
-}
-
-.il-desktop-menu--open .il-desktop-menu__divider {
-  opacity: 1;
-}
 
 /* ── Shell ── */
 .home-shell {
@@ -207,11 +137,6 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 .home-corner--tl {
   top: 24px;
   left: 24px;
-}
-
-.home-corner--tr {
-  top: 24px;
-  right: 24px;
 }
 
 /* ── Eyebrow Tag ── */
@@ -306,6 +231,12 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
   opacity: 0;
 }
 
+/* 英文单词整体成组：逐字拆分的 inline-block 之间可以换行，不包一层会在单词中间断开 */
+.home-split-line .home-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .home-js .home-split-line .home-char {
   opacity: 1;
 }
@@ -369,37 +300,6 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
   0%, 100% { transform: translate(0, 0) scale(1); }
   33% { transform: translate(25px, -20px) scale(1.08); }
   66% { transform: translate(-15px, 25px) scale(0.92); }
-}
-
-.home-hero__stat-card {
-  position: relative;
-  z-index: 2;
-  padding: 32px 40px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: var(--home-radius);
-  text-align: center;
-  box-shadow: var(--home-shadow-soft);
-}
-
-.home-hero__stat-num {
-  display: block;
-  font-size: 48px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--home-text);
-  line-height: 1;
-}
-
-.home-hero__stat-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  color: var(--home-text-muted);
-  margin-top: 8px;
 }
 
 /* ═══════════════════════════════════════════
@@ -845,7 +745,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 
 .home-magazine-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 28px;
   max-width: 1400px;
   margin: 0 auto;
@@ -856,7 +756,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 }
 
 .home-mag-tile {
-  flex: 1;
+  grid-column: span 2;
   min-width: 0;
   display: block;
   text-decoration: none;
@@ -872,7 +772,7 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 160px;
+  aspect-ratio: 16 / 10;
 }
 
 .home-mag-tile__inner img {
@@ -1045,11 +945,19 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
     min-height: auto;
   }
 
-  /* 小屏允许标题折行，避免 17 字长句被 nowrap 截断 */
+  /* 小屏允许标题折行，避免长句被 nowrap 截断 */
   body[data-app-page="home"] .home-hero__title {
     font-size: clamp(24px, 7.2vw, 30px) !important;
     white-space: normal !important;
     letter-spacing: -0.02em;
+  }
+
+  /* story / CTA / section 标题基础样式同样是 nowrap，小屏必须同步豁免并降字号 */
+  body[data-app-page="home"] .home-story__title,
+  body[data-app-page="home"] .home-cta__inner h2,
+  body[data-app-page="home"] .home-section-title {
+    font-size: clamp(26px, 7vw, 34px) !important;
+    white-space: normal !important;
   }
 
   .home-hero__grid {
@@ -1059,14 +967,6 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
 
   .home-hero__visual {
     height: 240px;
-  }
-
-  .home-hero__stat-card {
-    padding: 24px 28px;
-  }
-
-  .home-hero__stat-num {
-    font-size: clamp(28px, 8vw, 36px);
   }
 
   .home-story {
@@ -1111,15 +1011,13 @@ body[data-app-page="home"] .home-live__desc { font-size: 18px !important; }
   }
 
   .home-magazine-grid {
+    grid-template-columns: 1fr;
     gap: 20px;
   }
 
-  .home-mag-row {
-    flex-direction: column;
-  }
-
-  .home-mag-tile__inner {
-    min-height: 240px;
+  /* grid 单列后所有 tile 各占一行（display:contents 的 row 无需处理） */
+  .home-mag-tile {
+    grid-column: auto;
   }
 
   .home-cta {
@@ -1230,6 +1128,14 @@ body[data-app-page="home"] .il-header__actions {
   margin-left: 4px;
 }
 
+body[data-app-page="home"] .il-header__language-switch {
+  height: 34px;
+  padding: 0 11px;
+  color: #111827;
+  border-color: rgba(0,0,0,0.1);
+  background: #ffffff;
+}
+
 body[data-app-page="home"] .il-header__auth {
   gap: 4px;
 }
@@ -1299,6 +1205,57 @@ body[data-app-page="home"] .il-header__auth-btn:hover {
   }
 }
 
+/* 英文头部：同一套导航的英文文案比中文长约 30%，中文在 900px 以内收紧即可，
+   英文一路顶到 1149px 仍会把语言切换按钮挤出视口。这里只压缩英文的头部，
+   中文首页在 901px 以上的头部排版保持原样。 */
+@media (min-width: 768px) and (max-width: 1149px) {
+  html[lang="en"] body[data-app-page="home"] .il-header__inner {
+    padding-inline: 12px;
+    gap: 16px;
+  }
+
+  html[lang="en"] body[data-app-page="home"] .il-header__title {
+    display: none;
+  }
+
+  html[lang="en"] body[data-app-page="home"] .il-header__nav {
+    gap: 0;
+    margin-inline: 4px;
+  }
+
+  html[lang="en"] body[data-app-page="home"] .il-header__link {
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+
+  html[lang="en"] body[data-app-page="home"] .il-header__auth-link,
+  html[lang="en"] body[data-app-page="home"] .il-header__auth-btn {
+    padding-inline: 10px;
+    font-size: 13px;
+  }
+}
+
+/* 768–830px 的窄平板：英文首页头部再紧一档，否则仍会溢出。 */
+@media (min-width: 768px) and (max-width: 830px) {
+  html[lang="en"] body[data-app-page="home"] .il-header__inner {
+    gap: 10px;
+  }
+
+  html[lang="en"] body[data-app-page="home"] .il-header__link {
+    padding-inline: 5px;
+    font-size: 12px;
+  }
+
+  html[lang="en"] body[data-app-page="home"] .il-header__auth-link,
+  html[lang="en"] body[data-app-page="home"] .il-header__auth-btn {
+    padding-inline: 8px;
+  }
+
+  html[lang="en"] body[data-app-page="home"] .il-header__language-switch {
+    padding-inline: 8px;
+  }
+}
+
 /* Hamburger → X morph */
 body[data-app-page="home"] .il-header__hamburger svg {
   transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
@@ -1317,21 +1274,6 @@ body[data-app-page="home"] .il-header__overlay {
 }
 
 /* Desktop menu panel styles are in base section above */
-
-/* ═══════════════════════════════════════════
-   SCROLL PROGRESS BAR
-   ═══════════════════════════════════════════ */
-.home-scroll-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 0%;
-  height: 2px;
-  background: linear-gradient(90deg, var(--home-accent) 0%, var(--home-accent-dark) 100%);
-  z-index: 10000;
-  transition: width 0.1s linear;
-  pointer-events: none;
-}
 
 /* ═══════════════════════════════════════════
    CUSTOM CURSOR FOLLOWER
@@ -1370,58 +1312,6 @@ body[data-app-page="home"] .il-header__overlay {
   width: 8px;
   height: 8px;
   opacity: 0.7;
-}
-
-/* ═══════════════════════════════════════════
-   DOUBLE-BEZEL STAT CARD — Hero Upgrade
-   ═══════════════════════════════════════════ */
-.home-hero__stat-card {
-  position: relative;
-  z-index: 2;
-  padding: 0;
-  background: transparent;
-  border: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.home-hero__stat-bezel {
-  padding: 5px;
-  background: rgba(255, 255, 255, 0.4);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 24px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-}
-
-.home-hero__stat-inner {
-  padding: 28px 40px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: calc(24px - 5px);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9);
-  text-align: center;
-}
-
-.home-hero__stat-num {
-  display: block;
-  font-size: clamp(42px, 5vw, 56px);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--home-text);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.home-hero__stat-label {
-  display: block;
-  font-size: var(--home-fz-body);
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--home-text-muted);
-  margin-top: 8px;
 }
 
 /* ═══════════════════════════════════════════
@@ -1502,16 +1392,6 @@ body[data-app-page="home"] .il-header__overlay {
 /* ═══════════════════════════════════════════
    MAGAZINE TILE — Hover Depth Enhancement
    ═══════════════════════════════════════════ */
-.home-mag-tile {
-  display: block;
-  text-decoration: none;
-  transition: transform 0.6s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.home-mag-tile:hover {
-  transform: translateY(-4px);
-}
-
 .home-mag-tile .home-bezel__shell {
   transition: border-color 0.5s cubic-bezier(0.32, 0.72, 0, 1),
               box-shadow 0.5s cubic-bezier(0.32, 0.72, 0, 1);
@@ -1531,15 +1411,11 @@ body[data-app-page="home"] .il-footer {
   color: var(--home-text) !important;
 }
 
-body[data-app-page="home"] .il-footer {
-  background: var(--home-bg) !important;
-  border-top: 1px solid var(--home-border) !important;
-  color: var(--home-text) !important;
-}
-
 body[data-app-page="home"] .il-footer__inner {
   background: transparent !important;
-  padding: 48px 24px 24px !important;
+  /* 只留垂直内边距：水平方向 .il-footer 已有 24px，再叠上来会让品牌列
+     比底部版权行多缩进 24px，左准线对不齐 */
+  padding: 48px 0 24px !important;
 }
 
 body[data-app-page="home"] .il-footer-title,
@@ -1560,27 +1436,15 @@ body[data-app-page="home"] .il-footer-bottom {
   border-top-color: var(--home-border) !important;
 }
 
-body[data-app-page="home"] .il-footer-bottom p {
+/* 版权与备案在浅色页脚上是主文字色，压暗一档；题词更淡一档作收尾。
+   字号沿用 components.css 的 13px——底部整行比正文小一档才不抢戏 */
+body[data-app-page="home"] .il-footer-copy {
   color: var(--home-text-muted) !important;
-  font-size: 15px;
 }
 
-/* ═══════════════════════════════════════════
-   HERO — Second Orb Color Variation
-   ═══════════════════════════════════════════ */
-.home-hero__orb--3 {
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, #d4a574 0%, transparent 70%);
-  top: 60%;
-  left: 50%;
-  animation: orbFloat3 22s ease-in-out infinite;
-}
-
-@keyframes orbFloat3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-20px, -25px) scale(1.03); }
-  66% { transform: translate(15px, 10px) scale(0.97); }
+body[data-app-page="home"] .il-footer-slogan {
+  color: var(--home-text-muted) !important;
+  opacity: 0.7;
 }
 
 /* ═══════════════════════════════════════════
@@ -1614,4 +1478,6 @@ body[data-app-page="home"] *:focus-visible {
   outline: 2px solid var(--home-accent);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
 }

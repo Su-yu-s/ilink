@@ -1,3 +1,4 @@
+@layer legacy {
 /* Team space: one mobile-first component stylesheet.
    Breakpoints: mobile < 768, tablet 768-1024, desktop > 1024. */
 
@@ -39,9 +40,9 @@ body[data-app-page="team-space"] [hidden] {
 
 body[data-app-page="team-space"] .main-content {
     width: 100%;
-    max-width: 1440px;
+    max-width: 1680px;
     margin: 0 auto;
-    padding: 24px 28px 56px;
+    padding: 24px 28px 16px;
 }
 
 .team-warning {
@@ -257,6 +258,7 @@ body[data-app-page="team-space"] .main-content {
 }
 
 .workspace-panel { display: none; flex-direction: column; min-width: 0; }
+
 .workspace-panel.active { display: flex; flex: 1 1 auto; animation: ts-panel-in .16s ease; }
 
 @keyframes ts-panel-in {
@@ -283,33 +285,14 @@ body[data-app-page="team-space"] .main-content {
     outline-offset: 2px;
 }
 
+/* 面板标题已去掉，标题栏只承载右侧操作按钮 */
 .panel-header {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: flex-end;
     gap: 16px;
     flex: 0 0 auto;
     padding: 0 0 20px;
-}
-
-.panel-heading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-
-.panel-team-name {
-    overflow: hidden;
-    color: var(--kb-text-muted);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: .02em;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.panel-title {
-    margin: 0;
-    color: var(--kb-text);
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -.02em;
 }
 
 .panel-actions { display: flex; align-items: center; gap: 8px; }
@@ -560,6 +543,24 @@ body[data-app-page="team-space"] .main-content {
 .panel-loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--kb-text-muted); font-size: 13px; }
 
 .chat-window-panel.active { min-height: 560px; }
+/* 桌面端把聊天面板钉在视口高度上：原来只有 min-height，消息一多面板就跟着长，
+   整页被顶长、消息区自己反倒不滚。112 = header 72 + 上下内边距 24/16 */
+@media (min-width: 768px) {
+    .chat-window-panel.active {
+        height: calc(100dvh - 112px);
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    /* 任务看板同理：列内已经有 overflow-y:auto，但父链高度不确定（.workspace-layout
+       只有 min-height），卡片一多就把整页顶长。钉住高度后由各列自己滚 */
+    #kanban-panel.active {
+        height: calc(100dvh - 112px);
+        min-height: 0;
+        overflow: hidden;
+    }
+    #kanban-panel .kanban-board { min-height: 0; }
+}
 .chat-window-panel .panel-header { padding-bottom: 20px; border-bottom: 1px solid var(--kb-border); }
 .chat-messages-area { display: flex; flex: 1 1 auto; flex-direction: column; gap: 14px; min-height: 0; padding: 20px 0; overflow-y: auto; }
 .chat-msg { display: flex; gap: 10px; max-width: min(76%, 680px); }
@@ -585,7 +586,13 @@ body[data-app-page="team-space"] .main-content {
 .chat-msg.sent .chat-msg-bubble { color: var(--kb-surface); background: var(--kb-text); border-color: var(--kb-text); }
 .chat-msg-name,.chat-msg-time { color: var(--kb-text-muted); font-size: 11px; }
 .chat-msg.sent .chat-msg-time { text-align: right; }
-.chat-image { display: block; max-width: min(320px, 100%); border-radius: 8px; }
+/* 用固定上限而非 min(320px, 100%)：百分比会让图片在 flex 计算内容宽度时被当成无上限，
+   气泡先按原图尺寸撑开再被压缩到容器宽，右侧留下大片空白 */
+.chat-image { display: block; max-width: 320px; height: auto; border-radius: 8px; }
+/* 窄屏改为跟随容器宽度，大图填满、小图仍按原尺寸 */
+@media (max-width: 767.98px) {
+    .chat-image { max-width: 100%; }
+}
 .chat-file-link { color: inherit; text-decoration: underline; }
 
 .chat-composer { position: relative; flex: 0 0 auto; padding-top: 16px; border-top: 1px solid var(--kb-border); }
@@ -846,6 +853,14 @@ body[data-app-page="team-space"] .form-select:focus { border-color: var(--kb-tex
     .task-card-title { font-size: 18px; }
     .task-card-desc { font-size: 14px; }
     .task-card[draggable="true"] { cursor: pointer; }
+    /* 团队空间右下角有三组浮动入口（创建任务 / 意见反馈 / AI 助手），各自都锚在右下角，
+       会叠在一起。这里排成纵向栈：创建任务是主操作放最下，反馈与 AI 依次上移 */
+    body[data-app-page="team-space"] .fbk-fabs {
+        bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    }
+    body[data-app-page="team-space"] .kgd-fab {
+        bottom: calc(204px + env(safe-area-inset-bottom, 0px));
+    }
     .create-task-fab {
         position: fixed;
         right: 20px;
@@ -1168,7 +1183,12 @@ body[data-app-page="team-space"] .form-select:focus { border-color: var(--kb-tex
 
 .ts-confirm__footer { padding: 12px 20px 18px; border-top: 0; gap: 8px; }
 
+/* 加载态只剩一个转圈，固定最小宽度避免按钮塌陷导致页脚按钮跳动 */
+#aiBreakdownConfirmBtn { min-width: 96px; }
+
 @media (max-width: 768px) {
     .member-card { flex-wrap: wrap; }
     .member-card-actions { width: 100%; margin-left: 0; justify-content: flex-end; }
+}
+
 }

@@ -1,5 +1,6 @@
 package cn.ilink.config;
 
+import cn.ilink.common.UserSessionRegistry;
 import cn.ilink.security.RememberMeAuthenticationFilter;
 import cn.ilink.service.RememberMeService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -27,15 +28,19 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           ObjectProvider<RememberMeService> rememberMeServiceProvider)
+                                           ObjectProvider<RememberMeService> rememberMeServiceProvider,
+                                           ObjectProvider<UserSessionRegistry> sessionRegistryProvider)
             throws Exception {
+        UserSessionRegistry sessionRegistry = sessionRegistryProvider.getIfAvailable();
         http
             .authorizeRequests(authorize -> authorize
-                .antMatchers("/", "/index.html", "/404.html", "/favicon.ico", "/favicon.svg",
+                .antMatchers("/", "/index.html", "/404.html", "/error.html", "/favicon.ico", "/favicon.svg",
                     "/error", "/error/**",
-                    "/api/login", "/api/register", "/api/logout", "/login", "/login.html", "/register", "/register.html",
+                    "/api/login", "/api/register", "/api/register/email-code", "/api/logout", "/login", "/login.html", "/register", "/register.html",
                     "/forgot-password.html", "/api/password-reset/**", "/terms.html", "/privacy.html").permitAll()
                 .antMatchers("/actuator/health", "/actuator/info").permitAll()
+                // 文案字典：所有页面（含匿名可访问页）都要在 <head> 里同步取用
+                .antMatchers("/i18n/**").permitAll()
                 .antMatchers("/css/**", "/js/**", "/lib/**", "/img/**", "/images/**", "/uploads/**").permitAll()
 
                 .antMatchers(HttpMethod.GET, "/api/community/posts").permitAll()
@@ -75,7 +80,7 @@ public class SecurityConfig {
                 .antMatchers("/api/files/**").authenticated()
                 .antMatchers("/home", "/home.html", "/profile.html", "/profile-edit.html", "/profile-honors.html",
                     "/profile-posts.html", "/profile-favorites.html", "/profile-article-edit.html", "/profile-asset-edit.html",
-                    "/profile-password.html").authenticated()
+                    "/profile-password.html", "/profile-delete.html").authenticated()
                 .antMatchers("/team-publish.html").authenticated()
                 .antMatchers("/admin.html", "/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
@@ -113,9 +118,9 @@ public class SecurityConfig {
                 headers.referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN);
                 headers.contentSecurityPolicy(
                     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; " +
-                    "form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-                    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
-                    "img-src 'self' data: blob: https:; font-src 'self' data: https://cdnjs.cloudflare.com; " +
+                    "form-action 'self'; script-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data: blob: https:; font-src 'self' data:; " +
                     "connect-src 'self' ws: wss:; worker-src 'self' blob:"
                 );
                 headers.addHeaderWriter((request, response) -> {
@@ -125,9 +130,15 @@ public class SecurityConfig {
                     response.setHeader("Permissions-Policy",
                         "camera=(), microphone=(), geolocation=(), payment=(), usb=()");
                     if (isFaviconRequest(path) || isStaticResource(path)) {
-                        response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-                        response.setHeader("Pragma", "");
-                        response.setHeader("Expires", "Tue, 22 Jun 2038 00:00:00 GMT");
+                        if (path.startsWith("/uploads/")) {
+                            // 用户上传内容是可变的（新上传/同名覆盖/先 404 后存在），
+                            // 不能发一年 immutable——否则浏览器会把 404 或旧图缓存一年。
+                            response.setHeader("Cache-Control", "public, max-age=3600");
+                        } else {
+                            response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+                            response.setHeader("Pragma", "");
+                            response.setHeader("Expires", "Tue, 22 Jun 2038 00:00:00 GMT");
+                        }
                     } else {
                         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
                         response.setHeader("Pragma", "no-cache");
@@ -136,12 +147,14 @@ public class SecurityConfig {
             })
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringAntMatchers("/ws/**", "/ws-native/**", "/api/upload/**")
+                // 只豁免 WebSocket 握手（非浏览器表单语义）。上传接口与其它写接口一视同仁：
+                // 前端统一走 apiFetch 自动带 X-XSRF-TOKEN，无需为 /api/upload 或 /api/files 开后门。
+                .ignoringAntMatchers("/ws/**", "/ws-native/**")
             );
 
         RememberMeService rememberMeService = rememberMeServiceProvider.getIfAvailable();
         if (rememberMeService != null) {
-            http.addFilterBefore(new RememberMeAuthenticationFilter(rememberMeService),
+            http.addFilterBefore(new RememberMeAuthenticationFilter(rememberMeService, sessionRegistry),
                 UsernamePasswordAuthenticationFilter.class);
         }
 

@@ -1,3 +1,4 @@
+@layer legacy {
 /* iLink administration console — quiet, dense and data-first. */
 
 html.ilink-app body[data-app-page="admin"] .admin-shell {
@@ -422,88 +423,230 @@ body[data-app-page="admin"] .modal-body {
 
 /* 社区帖子表格：置顶按钮加入后的列宽方案。
    table-layout:fixed 逐列显式宽度，标题列弹性吃剩余；按钮去掉 admin 皮肤的 min-width:54px。 */
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) {
-  min-width: 680px !important;
+/* 最小宽度只在表格仍是 fixed 布局的宽度下保留：
+   ≤768px 会切成卡片式块布局，此时 min-width 会把表格顶出卡片（阅读列被挤成竖排）。 */
+@media (min-width: 769px) {
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) {
+    min-width: 680px !important;
+  }
 }
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) .admin-row-actions .btn {
-  padding: 3px 7px !important;
-  font-size: 12px !important;
-  min-width: 0 !important;
-}
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) tbody td {
-  font-size: 12.5px !important;
-  padding-left: 10px !important;
-  padding-right: 10px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td.admin-row-actions {
-  white-space: nowrap !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-  width: 180px !important;
-  min-width: 180px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(6),
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(6) {
-  width: 180px !important;
-  min-width: 180px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(1),
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(1) {
-  width: 90px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(3),
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(3) {
-  width: 135px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(4),
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(4) {
-  width: 62px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(5),
-body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(5) {
-  width: 128px !important;
-  white-space: nowrap !important;
+/* 逐列像素宽度只在「fixed 表格」形态下生效：
+   ≤768px 表格会切成卡片式块布局，单元格是「标签 + 值」两列网格，
+   固定像素宽度会把作者/阅读等列挤成一两个字（实测 480px 下作者只剩「苏…」）。
+   这段规则在 @layer legacy 内且带 !important，层内 !important 会压过层外 !important，
+   所以只能用媒体查询限位，不能在文件末尾用 !important 覆盖。 */
+@media (min-width: 769px) {
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) .admin-row-actions .btn {
+    padding: 3px 7px !important;
+    font-size: 12px !important;
+    min-width: 0 !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) tbody td {
+    font-size: 12.5px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td.admin-row-actions {
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    width: 180px !important;
+    min-width: 180px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(6),
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(6) {
+    width: 180px !important;
+    min-width: 180px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(1),
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(1) {
+    width: 90px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(3),
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(3) {
+    width: 135px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(4),
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(4) {
+    width: 62px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(5),
+  body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(5) {
+    width: 128px !important;
+    white-space: nowrap !important;
+  }
 }
 
 /* 成果表格：与社区帖子表格同款列宽方案 */
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) {
-  min-width: 680px !important;
+@media (min-width: 769px) {
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) {
+    min-width: 680px !important;
+  }
 }
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) .admin-row-actions .btn {
-  padding: 3px 7px !important;
-  font-size: 12px !important;
-  min-width: 0 !important;
-}
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) tbody td {
-  font-size: 12.5px !important;
-  padding-left: 10px !important;
-  padding-right: 10px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) td.admin-row-actions {
-  white-space: nowrap !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-  width: 180px !important;
-  min-width: 180px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(5),
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(5) {
-  width: 180px !important;
-  min-width: 180px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(2),
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(2) {
-  width: 135px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(3),
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(3) {
-  width: 62px !important;
-}
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(4),
-body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(4) {
-  width: 128px !important;
-  white-space: nowrap !important;
+/* 同社区帖子表：成果表的列宽方案也只给桌面端 fixed 表格用。 */
+@media (min-width: 769px) {
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) .admin-row-actions .btn {
+    padding: 3px 7px !important;
+    font-size: 12px !important;
+    min-width: 0 !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) tbody td {
+    font-size: 12.5px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) td.admin-row-actions {
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    width: 180px !important;
+    min-width: 180px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(5),
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(5) {
+    width: 180px !important;
+    min-width: 180px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(2),
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(2) {
+    width: 135px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(3),
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(3) {
+    width: 62px !important;
+  }
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(4),
+  body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(4) {
+    width: 128px !important;
+    white-space: nowrap !important;
+  }
 }
 
+
+}
+
+/* 管理后台表格：状态徽标、时间、操作列不换行，避免“招募中”被挤成两行 */
+body[data-app-page="admin"] .admin-table .status-badge {
+    white-space: nowrap;
+}
+
+body[data-app-page="admin"] .admin-table td:nth-child(3),
+body[data-app-page="admin"] .admin-table th:nth-child(3) {
+    min-width: 72px;
+}
+
+body[data-app-page="admin"] .admin-table td[data-label="发布时间"],
+body[data-app-page="admin"] .admin-table td.admin-row-actions {
+    white-space: nowrap;
+}
+
+body[data-app-page="admin"] .admin-table td,
+body[data-app-page="admin"] .admin-table th {
+    padding-left: 14px;
+    padding-right: 14px;
+}
+
+body[data-app-page="admin"] .admin-table .admin-cell-text {
+    /* 必须跟随列宽：表格是 table-layout:fixed，列可能只有 180px，
+       固定 260px 上限会让文字越过单元格压到下一列（竞赛名称/帖子标题/审计详情）。 */
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+body[data-app-page="admin"] .admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 9px;
+  border: 1px solid #e5e5e7;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+body[data-app-page="admin"] .admin-status-badge--muted {
+  color: #52555c;
+  background: #f7f7f8;
+}
+body[data-app-page="admin"] .admin-status-badge--danger {
+  color: #8f4b47;
+  background: #fdf3f2;
+  border-color: #f1d4d1;
+  cursor: help;
+}
+
+/* 表格内的状态徽标：兜底把徽标收在单元格里。
+   英文枚举（如 DISSOLVED）比中文标签宽，nowrap 徽标会越过列边界压到相邻列。 */
+body[data-app-page="admin"] .admin-table .status-badge {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* 竞赛目录：名称列弹性吃剩余宽度，其余列按内容分配，
+   保证固定布局下不再出现“五列均分 + 长名称越界”。 */
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) td.admin-row-actions {
+    white-space: nowrap;
+}
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) th:nth-child(2),
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) td:nth-child(2) {
+    width: 132px;
+}
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) th:nth-child(3),
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) td:nth-child(3) {
+    min-width: 132px;
+    width: 148px;
+    white-space: nowrap;
+}
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) th:nth-child(4),
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) td:nth-child(4) {
+    width: 108px;
+}
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) th:nth-child(5),
+body[data-app-page="admin"] .admin-table:has(#competitionTableBody) td:nth-child(5) {
+    width: 168px;
+}
+
+/* 审计日志：详情列是长键值串，需要最多的空间；IP/动作列可以收窄。 */
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) th:nth-child(1),
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) td:nth-child(1) {
+    width: 148px;
+}
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) th:nth-child(2),
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) td:nth-child(2) {
+    width: 136px;
+}
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) th:nth-child(3),
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) td:nth-child(3) {
+    width: 76px;
+}
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) th:nth-child(4),
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) td:nth-child(4) {
+    width: 128px;
+}
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) th:nth-child(6),
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) td:nth-child(6) {
+    width: 120px;
+}
+
+/* ≤768px 表格切成卡片式块布局：每个单元格是「标签 + 值」两列网格，
+   上面按列声明的固定像素宽度会把这个网格挤坏（作者/赛道/阅读只剩一两个字）。
+   这里把这几张表的列宽交还给整行宽度；桌面端 fixed 布局不受影响。 */
+@media (max-width: 768px) {
+    body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) th:nth-child(n),
+    body[data-app-page="admin"] .admin-table:has(#communityPostTableBody) td:nth-child(n),
+    body[data-app-page="admin"] .admin-table:has(#assetTableBody) th:nth-child(n),
+    body[data-app-page="admin"] .admin-table:has(#assetTableBody) td:nth-child(n),
+    body[data-app-page="admin"] .admin-table:has(#competitionTableBody) th:nth-child(n),
+    body[data-app-page="admin"] .admin-table:has(#competitionTableBody) td:nth-child(n),
+    body[data-app-page="admin"] .admin-table:has(#auditTableBody) th:nth-child(n),
+    body[data-app-page="admin"] .admin-table:has(#auditTableBody) td:nth-child(n) {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+}

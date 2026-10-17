@@ -1,3 +1,4 @@
+@layer legacy {
 /* iLink v4.3 - Page styles (tokens: design-tokens.css) */
 
 
@@ -1116,16 +1117,16 @@ body {
 .il-btn--primary,
 .btn-primary,
 .il-btn-primary {
-  background: var(--primary) !important;
-  color: var(--text-white) !important;
-  border-color: var(--primary) !important;
+  background: var(--ui-surface-subtle, #F1F1F2) !important;
+  color: var(--ui-text, #282A2F) !important;
+  border-color: var(--ui-border-strong, #D7D8DB) !important;
 }
 
 .il-btn--primary:hover,
 .btn-primary:hover,
 .il-btn-primary:hover {
-  background: var(--primary-dark) !important;
-  border-color: var(--primary-dark) !important;
+  background: var(--ui-border, #E5E5E7) !important;
+  border-color: var(--ui-border-strong, #D7D8DB) !important;
 }
 
 .il-card,
@@ -1518,9 +1519,9 @@ body[data-app-page] .category-pill.active,
 body[data-app-page] .il-tab.active,
 body[data-app-page] .competition-track-tabs .btn.active,
 body[data-app-page] .competition-track-tabs .btn.btn-dark {
-  background: var(--primary) !important;
-  color: var(--text-white) !important;
-  border-color: var(--primary) !important;
+  background: var(--ui-surface-subtle, #f1f1f2) !important;
+  color: var(--ui-text, #282a2f) !important;
+  border-color: var(--ui-border-strong, #d7d8db) !important;
   box-shadow: none !important;
 }
 
@@ -1922,9 +1923,9 @@ body[data-app-page] .category-filter .category-pill.active,
 body[data-app-page] .il-tabs .il-tab.active,
 body[data-app-page] .competition-track-tabs .competition-track-tab.active,
 body[data-app-page] .competition-track-tabs .competition-track-tab.btn-dark {
-  background: var(--primary) !important;
-  color: var(--text-white) !important;
-  border-color: var(--primary) !important;
+  background: var(--ui-surface-subtle, #f1f1f2) !important;
+  color: var(--ui-text, #282a2f) !important;
+  border-color: var(--ui-border-strong, #d7d8db) !important;
 }
 
 body[data-app-page] .category-filter .category-pill .count {
@@ -2262,11 +2263,11 @@ a, button, [role="button"], [tabindex]:not([tabindex="-1"]) {
 }
 
 /* 閾炬帴 hover */
-a:not(.btn):not(.il-btn):not(.nav-link):not(.il-profile-nav-item):not(.page-link):not(.il-header__link):not(.il-header__auth-link):not(.il-header__auth-btn):not(.il-footer-link):not(.mentor-btn) {
+a:not(.btn):not(.il-btn):not(.nav-link):not(.il-profile-nav-item):not(.page-link):not(.il-header__link):not(.il-header__auth-link):not(.il-header__auth-btn):not(.il-footer-link):not(.il-footer-filing__link):not(.mentor-btn):not(.ilpv-download) {
     color: #111827;
     text-decoration: none;
 }
-a:not(.btn):not(.il-btn):not(.nav-link):not(.il-profile-nav-item):not(.page-link):not(.il-header__link):not(.il-header__auth-link):not(.il-header__auth-btn):not(.il-footer-link):not(.mentor-btn):hover {
+a:not(.btn):not(.il-btn):not(.nav-link):not(.il-profile-nav-item):not(.page-link):not(.il-header__link):not(.il-header__auth-link):not(.il-header__auth-btn):not(.il-footer-link):not(.il-footer-filing__link):not(.mentor-btn):not(.ilpv-download):hover {
     color: #030712;
     text-decoration: underline;
 }
@@ -2949,4 +2950,6 @@ img.honors-preview-proof__img {
 .task-card .badge {
     font-size: 0.75rem;
     padding: 4px 10px;
+}
+
 }

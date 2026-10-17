@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,18 +24,18 @@
                     <div class="il-profile-avatar">
                         <img th:if="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
                              th:src="${currentUser.avatar}"
-                             th:alt="${currentUser.realName ?: currentUser.username}"
+                             th:alt="${currentUser.displayName}"
                              onerror="this.style.display='none'; this.parentElement.querySelector('.il-profile-avatar-fallback').style.display='flex';">
                         <span class="il-profile-avatar-fallback"
                               th:unless="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
-                              th:text="${currentUser.username != null && !currentUser.username.isEmpty() ? #strings.substring(currentUser.username, 0, 1) : '用'}">用</span>
+                              th:text="${currentUser.avatarInitial}">用</span>
                         <span class="il-profile-avatar-fallback"
                               th:if="${currentUser.avatar != null && !currentUser.avatar.isEmpty()}"
                               style="display:none;"
-                              th:text="${currentUser.username != null && !currentUser.username.isEmpty() ? #strings.substring(currentUser.username, 0, 1) : '用'}">用</span>
+                              th:text="${currentUser.avatarInitial}">用</span>
                     </div>
                     <div class="il-profile-info">
-                        <h1 class="il-profile-name" th:text="${currentUser.realName ?: currentUser.username}">用户</h1>
+                        <h1 class="il-profile-name" th:text="${currentUser.displayName}">用户</h1>
                         <span class="il-profile-role" th:text="${currentUser.role == 'TEACHER' ? '认证导师' : (currentUser.role == 'ADMIN' ? '管理员' : '学生')}">学生</span>
                         <div class="il-profile-meta">
                             <span class="il-profile-meta-item">

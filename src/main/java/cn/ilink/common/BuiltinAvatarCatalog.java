@@ -1,6 +1,7 @@
 package cn.ilink.common;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -48,7 +49,7 @@ public final class BuiltinAvatarCatalog {
         if (role == null) {
             return List.of();
         }
-        return AVATARS_BY_ROLE.getOrDefault(role.trim().toUpperCase(), List.of());
+        return AVATARS_BY_ROLE.getOrDefault(role.trim().toUpperCase(Locale.ROOT), List.of());
     }
 
     /**

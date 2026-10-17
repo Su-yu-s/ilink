@@ -17,6 +17,12 @@ public class TeamDemandVO {
     private String title;
     private String description;
     private Long competitionId;
+    /** 目录竞赛名称（competitionId 非空时回填，展示用） */
+    private String competitionName;
+    /** 项目方向：技术开发/创意设计/市场营销/学术研究 */
+    private String category;
+    /** 自填竞赛名称（目录中没有时使用） */
+    private String customCompetition;
     private String requiredSkills;
     private Integer requiredMemberCount;
     private Object deadline;

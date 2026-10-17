@@ -11,7 +11,9 @@ import cn.ilink.mapper.UserSkillMapper;
 import cn.ilink.service.NotificationService;
 import cn.ilink.service.TeamApplicationWorkflowService;
 import cn.ilink.service.TeamInviteService;
+import cn.ilink.service.TeamLibraryService;
 import cn.ilink.service.TeamMembershipService;
+import cn.ilink.service.impl.CompetitionServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
@@ -23,14 +25,18 @@ import cn.ilink.vo.SkillViewVO;
 import cn.ilink.vo.TeamDemandVO;
 import cn.ilink.vo.TeamMemberViewVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +47,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -49,10 +56,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static cn.ilink.common.ControllerUtils.safePage;
 import static cn.ilink.common.ControllerUtils.safeSize;
+import cn.ilink.util.DisplayNameResolver;
 
 @Controller
 @RequestMapping("/api/team")
 public class TeamController {
+
+    private static final Logger log = LoggerFactory.getLogger(TeamController.class);
 
     private static final String STATUS_OPEN = "OPEN";
     private static final String STATUS_TEAMING = "TEAMING";
@@ -72,6 +82,8 @@ public class TeamController {
     private final TeamApplicationWorkflowService teamApplicationWorkflowService;
     private final TeamMembershipService teamMembershipService;
     private final TeamInviteService teamInviteService;
+    private final CompetitionServiceImpl competitionService;
+    private final TeamLibraryService teamLibraryService;
 
     public TeamController(TeamDemandServiceImpl teamDemandService,
                           TeamApplicationServiceImpl teamApplicationService,
@@ -80,7 +92,9 @@ public class TeamController {
                           UserSkillMapper userSkillMapper,
                           TeamApplicationWorkflowService teamApplicationWorkflowService,
                           TeamMembershipService teamMembershipService,
-                          TeamInviteService teamInviteService) {
+                          TeamInviteService teamInviteService,
+                          CompetitionServiceImpl competitionService,
+                          TeamLibraryService teamLibraryService) {
         this.teamDemandService = teamDemandService;
         this.teamApplicationService = teamApplicationService;
         this.userService = userService;
@@ -89,12 +103,14 @@ public class TeamController {
         this.teamApplicationWorkflowService = teamApplicationWorkflowService;
         this.teamMembershipService = teamMembershipService;
         this.teamInviteService = teamInviteService;
+        this.competitionService = competitionService;
+        this.teamLibraryService = teamLibraryService;
     }
 
     @GetMapping("/list")
     @ResponseBody
     public ResponseEntity<Result<?>> listTeams(@RequestParam(defaultValue = "1") Integer page,
-                                                @RequestParam(defaultValue = "10") Integer size,
+                                                @RequestParam(defaultValue = "12") Integer size,
                                                 @RequestParam(required = false) String keyword,
                                                 @RequestParam(required = false) String category,
                                                 @RequestParam(required = false) String status) {
@@ -118,17 +134,9 @@ public class TeamController {
             wrapper.ne(TeamDemand::getStatus, STATUS_DISSOLVED);
         }
 
-        // category: 如果能映射到 competitionId，则做精确过滤；否则回退到文本匹配（兼容旧数据/历史数据）
-        if (category != null && !category.trim().isEmpty()) {
-            String cat = category.trim();
-            Integer mappedCompetitionId = mapCategoryToCompetitionId(cat);
-            if (mappedCompetitionId != null) {
-                wrapper.eq(TeamDemand::getCompetitionId, mappedCompetitionId);
-            } else {
-                wrapper.and(w -> w.like(TeamDemand::getTitle, cat)
-                    .or().like(TeamDemand::getDescription, cat)
-                    .or().like(TeamDemand::getRequiredSkills, cat));
-            }
+        // category: 项目方向（team_demand.category 列），不在白名单内的值按无筛选处理
+        if (category != null && !category.trim().isEmpty() && TEAM_CATEGORIES.contains(category.trim())) {
+            wrapper.eq(TeamDemand::getCategory, category.trim());
         }
 
         int safePage = safePage(page);
@@ -171,13 +179,27 @@ public class TeamController {
         if (viewer == null) {
             return;
         }
+        // 修复压测 LT-1：原先逐团队调用 pendingInviteCount + canManageMembers（每团队 2 条 SQL，
+        // 60 团队 ≈ 120 条/请求，实测 200 并发 p50 1139ms、吞吐锁死 ~180 RPS）。改为两条批量 IN 查询，
+        // 创建者判定直接比对 creatorId 不查库。
+        List<Long> teamIds = rows.stream().map(TeamDemandVO::getId).filter(Objects::nonNull).collect(Collectors.toList());
+        Map<Long, Long> inviteCounts = teamInviteService.pendingInviteCounts(teamIds);
+        List<Long> nonOwnedIds = teamIds.stream()
+            .filter(id -> {
+                TeamDemand t = teamMap == null ? null : teamMap.get(id);
+                return t != null && !Objects.equals(t.getCreatorId(), viewer.getId());
+            })
+            .collect(Collectors.toList());
+        Set<Long> mentorTeamIds = teamMembershipService.mentorTeamIds(viewer.getId(), nonOwnedIds);
         for (TeamDemandVO row : rows) {
             if (row.getId() == null) {
                 continue;
             }
-            row.setPendingInviteCount(teamInviteService.pendingInviteCount(row.getId()));
+            row.setPendingInviteCount(inviteCounts.getOrDefault(row.getId(), 0L));
             TeamDemand team = teamMap == null ? null : teamMap.get(row.getId());
-            row.setCanManageMembers(team != null && teamMembershipService.canManageMembers(team, viewer.getId()));
+            boolean canManage = team != null
+                && (Objects.equals(team.getCreatorId(), viewer.getId()) || mentorTeamIds.contains(row.getId()));
+            row.setCanManageMembers(canManage);
         }
     }
 
@@ -210,21 +232,9 @@ public class TeamController {
         return Result.ok("获取成功", rows).toResponseEntity();
     }
 
-    private Integer mapCategoryToCompetitionId(String category) {
-        if (category == null) return null;
-        switch (category) {
-            case "技术开发":
-                return 1;
-            case "创意设计":
-                return 2;
-            case "市场营销":
-                return 3;
-            case "学术研究":
-                return 4;
-            default:
-                return null;
-        }
-    }
+    /** 项目方向白名单：与发布表单的分类芯片一致 */
+    private static final List<String> TEAM_CATEGORIES =
+        Arrays.asList("技术开发", "创意设计", "市场营销", "学术研究");
 
     @GetMapping("/{id}")
     @ResponseBody
@@ -240,7 +250,7 @@ public class TeamController {
     @PostMapping
     @ResponseBody
     @CacheEvict(value = "teamDetail", allEntries = true)
-    public ResponseEntity<Result<?>> createTeam(@RequestBody TeamDemandRequest request, HttpSession session) {
+    public ResponseEntity<Result<?>> createTeam(@Valid @RequestBody TeamDemandRequest request, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user != null) {
             String validationError = validateTeamDemandRequest(request);
@@ -251,6 +261,10 @@ public class TeamController {
             team.setTitle(request.getTitle().trim());
             team.setDescription(request.getDescription().trim());
             team.setCompetitionId(request.getCompetitionId());
+            // 选了目录竞赛就不存自填名，两者互斥
+            team.setCustomCompetition(request.getCompetitionId() != null
+                ? null : trimToNull(request.getCustomCompetition()));
+            team.setCategory(request.getCategory().trim());
             team.setRequiredSkills(trimToNull(request.getRequiredSkills()));
             team.setRequiredMemberCount(request.getRequiredMemberCount());
             team.setDeadline(request.getDeadline());
@@ -302,6 +316,13 @@ public class TeamController {
             return Result.badRequest("您是该团队的创建者，无需申请加入").toResponseEntity();
         }
 
+        // 满员判定前置（复测报告 N2）：requiredMemberCount=1 或已招满的队伍，
+        // 原先提交申请能成功（200）、审批时才被拒，申请人白白等待。
+        // 满员口径与审批链路同源（isFull：已通过申请数 + 队长 >= requiredMemberCount）。
+        if (teamMembershipService.isFull(team)) {
+            return Result.badRequest("该队伍人数已满，无法再加入").toResponseEntity();
+        }
+
         // 检查是否已经申请过
         TeamApplication existingApplication = teamApplicationService.getOne(
             new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<TeamApplication>()
@@ -309,7 +330,9 @@ public class TeamController {
                 .eq("user_id", user.getId())
         );
 
-        String message = request.containsKey("message") ? request.get("message").toString() : "";
+        // 修复 D-P3-1：message 为 JSON null 时 containsKey=true 但 get=null，原 toString() 直接 NPE → 500
+        String message = request.containsKey("message") && request.get("message") != null
+            ? request.get("message").toString() : "";
         if (existingApplication != null) {
             // 被拒 / 已退出 / 被移出的人允许重新申请；在队和待审批的仍然拦住。
             // uk_team_user 只允许一行，所以是复用旧行改回 PENDING，而不是插新行。
@@ -320,7 +343,7 @@ public class TeamController {
                 teamMembershipService.upsertRow(existingApplication, teamId, user.getId(), user.getId(),
                     TeamMembershipService.STATUS_PENDING,
                     TeamMembershipService.deriveMemberRole(user), message);
-                notifyApplicantJoined(team, user);
+                notifyApplicantJoinedSafely(team, user);
                 return Result.ok("申请已提交，请等待团队创建者审核").toResponseEntity();
             } catch (DuplicateKeyException e) {
                 return Result.badRequest("您已经申请过该团队").toResponseEntity();
@@ -340,16 +363,29 @@ public class TeamController {
             application.setCreatedAt(new Date());
             teamApplicationService.save(application);
 
-            notifyApplicantJoined(team, user);
+            notifyApplicantJoinedSafely(team, user);
             return Result.ok("申请已提交，请等待团队创建者审核").toResponseEntity();
         } catch (DuplicateKeyException e) {
             return Result.badRequest("您已经申请过该团队").toResponseEntity();
         }
     }
 
+    /**
+     * 修复 D-P2-2：申请/邀请写库成功后若通知创建失败，原先异常直接冒泡 → 全局兜底返回 500，
+     * 但数据已落库且唯一键会挡住用户重试，队长永远收不到申请。这里降级为记日志不回滚。
+     * 根治方案是把"写 + 通知"下沉到 service 同一事务（对照 TeamApplicationWorkflowService#review）。
+     */
+    private void notifyApplicantJoinedSafely(TeamDemand team, User applicant) {
+        try {
+            notifyApplicantJoined(team, applicant);
+        } catch (Exception e) {
+            log.error("入队申请通知发送失败, teamId={}, applicantId={}", team.getId(), applicant.getId(), e);
+        }
+    }
+
     /** 有人申请入队，通知创建者 */
     private void notifyApplicantJoined(TeamDemand team, User applicant) {
-        String applicantName = applicant.getRealName() != null ? applicant.getRealName() : applicant.getUsername();
+        String applicantName = DisplayNameResolver.resolve(applicant);
         notificationService.create(
             team.getCreatorId(),
             applicant.getId(),
@@ -363,7 +399,7 @@ public class TeamController {
     @ResponseBody
     @CacheEvict(value = "teamDetail", key = "#id")
     public ResponseEntity<Result<?>> updateTeam(@PathVariable Long id,
-                                                 @RequestBody TeamDemandRequest request,
+                                                 @Valid @RequestBody TeamDemandRequest request,
                                                  HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         TeamDemand team = teamDemandService.getById(id);
@@ -378,13 +414,20 @@ public class TeamController {
             }
             team.setTitle(request.getTitle().trim());
             team.setDescription(request.getDescription().trim());
-            team.setCompetitionId(request.getCompetitionId());
+            team.setCategory(request.getCategory().trim());
             team.setRequiredSkills(trimToNull(request.getRequiredSkills()));
             team.setRequiredMemberCount(request.getRequiredMemberCount());
             team.setDeadline(request.getDeadline());
             team.setUpdatedAt(new Date());
+            // competitionId/customCompetition 互斥，且改回目录选择时要把自填清成 NULL；
+            // updateById 默认忽略 null 字段，互斥清空必须走 wrapper 显式 set
+            LambdaUpdateWrapper<TeamDemand> uw = new LambdaUpdateWrapper<TeamDemand>()
+                .eq(TeamDemand::getId, id)
+                .set(TeamDemand::getCompetitionId, request.getCompetitionId())
+                .set(TeamDemand::getCustomCompetition, request.getCompetitionId() != null
+                    ? null : trimToNull(request.getCustomCompetition()));
 
-            boolean success = teamDemandService.updateById(team);
+            boolean success = teamDemandService.update(team, uw);
             if (success) {
                 return Result.ok("更新成功", team).toResponseEntity();
             } else {
@@ -431,6 +474,7 @@ public class TeamController {
 
     @DeleteMapping("/{id}")
     @ResponseBody
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "teamDetail", key = "#id")
     public ResponseEntity<Result<?>> deleteTeam(@PathVariable Long id, HttpSession session) {
         User user = ControllerUtils.requireUser(session);
@@ -443,6 +487,8 @@ public class TeamController {
             if (countApplications(id) > 0) {
                 return Result.badRequest("已有报名记录，不能删除").toResponseEntity();
             }
+            // 资料库记录随队伍一起清理，避免 team_id 指向已删队伍的孤儿（核实报告 P2-4）
+            teamLibraryService.deleteAllForTeam(id);
             boolean success = teamDemandService.removeById(id);
             if (success) {
                 return Result.ok("删除成功").toResponseEntity();
@@ -505,6 +551,12 @@ public class TeamController {
         vo.setTitle(t.getTitle());
         vo.setDescription(t.getDescription());
         vo.setCompetitionId(t.getCompetitionId() != null ? Long.valueOf(t.getCompetitionId()) : null);
+        if (t.getCompetitionId() != null) {
+            cn.ilink.entity.Competition comp = competitionService.getById(t.getCompetitionId());
+            vo.setCompetitionName(comp != null ? comp.getName() : null);
+        }
+        vo.setCategory(t.getCategory());
+        vo.setCustomCompetition(t.getCustomCompetition());
         vo.setRequiredSkills(t.getRequiredSkills());
         vo.setRequiredMemberCount(resolveRequiredMemberCount(t));
         vo.setDeadline(resolveDeadline(t));
@@ -558,7 +610,7 @@ public class TeamController {
         if ("已结束".equals(value)) {
             return STATUS_CLOSED;
         }
-        return value.toUpperCase();
+        return value.toUpperCase(Locale.ROOT);
     }
 
     private String statusLabel(String status) {
@@ -591,12 +643,30 @@ public class TeamController {
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
             return "标题不能为空";
         }
+        // 列宽是 VARCHAR(200)，超长不拦会直接变成 500「数据库访问失败」
+        String lengthError = ControllerUtils.checkMaxLength(
+            request.getTitle(), ControllerUtils.TEAM_TITLE_MAX, "标题");
+        if (lengthError != null) {
+            return lengthError;
+        }
         if (request.getDescription() == null || request.getDescription().trim().isEmpty()) {
             return "内容描述不能为空";
         }
         Integer count = request.getRequiredMemberCount();
         if (count != null && (count < 1 || count > 50)) {
             return "需求人数需在 1-50 之间";
+        }
+        // 参赛竞赛必填：从目录选一个，或自填名称
+        if (request.getCompetitionId() == null
+                && (request.getCustomCompetition() == null || request.getCustomCompetition().trim().isEmpty())) {
+            return "请选择参赛竞赛，或自行填写竞赛名称";
+        }
+        if (request.getCompetitionId() != null
+                && competitionService.getById(request.getCompetitionId()) == null) {
+            return "所选竞赛不存在，请重新选择";
+        }
+        if (request.getCategory() == null || !TEAM_CATEGORIES.contains(request.getCategory().trim())) {
+            return "请选择项目方向";
         }
         return null;
     }
@@ -642,8 +712,9 @@ public class TeamController {
     }
 
     private boolean isTeamFull(TeamDemand team) {
-        Integer requiredCount = resolveRequiredMemberCount(team);
-        return requiredCount != null && requiredCount > 0 && countApprovedMembers(team.getId()) >= requiredCount;
+        // 修复 D-P3-4：与审批/邀请链路同源（TeamMembershipService.isFull：approved + 1 >= required，
+        // 创建者算一名成员），避免卡片显示"未满"而提交申请时才被拒
+        return teamMembershipService.isFull(team);
     }
 
     private List<TeamMemberViewVO> buildTeamMemberViews(TeamDemand team, User creator) {
@@ -681,7 +752,9 @@ public class TeamController {
     private TeamMemberViewVO userToMemberView(User user, String role, Date joinedAt) {
         TeamMemberViewVO view = new TeamMemberViewVO();
         view.setUserId(user.getId());
-        view.setUsername(user.getRealName() != null ? user.getRealName() : user.getUsername());
+        view.setUsername(DisplayNameResolver.resolve(user));
+        view.setDisplayName(DisplayNameResolver.resolve(user));
+        view.setAvatarInitial(DisplayNameResolver.initial(user));
         view.setAvatar(user.getAvatar());
         view.setMajor(user.getMajor());
         view.setRole(role);
@@ -757,6 +830,8 @@ public class TeamController {
         }
         Map<Long, TeamDemand> teamMap = teamDemandService.listByIds(teamIds).stream()
             .collect(Collectors.toMap(TeamDemand::getId, t -> t, (a, b) -> a));
+        // 批量取待确认邀请数，避免逐团队 1 条 count
+        Map<Long, Long> inviteCounts = teamInviteService.pendingInviteCounts(new ArrayList<>(teamIds));
 
         // 构建结果：先放创建的团队（队长），再放加入的团队（队员）
         List<MyTeamVO> rows = new ArrayList<>();
@@ -770,7 +845,7 @@ public class TeamController {
             vo.setCreator(true);
             vo.setMemberRole(TeamMembershipService.deriveMemberRole(user));
             vo.setCanManageMembers(true);
-            vo.setPendingInviteCount(teamInviteService.pendingInviteCount(td.getId()));
+            vo.setPendingInviteCount(inviteCounts.getOrDefault(td.getId(), 0L));
             rows.add(vo);
         }
         // 加入的团队（排除已作为队长创建的）
@@ -788,7 +863,7 @@ public class TeamController {
                 ? TeamMembershipService.deriveMemberRole(user) : app.getMemberRole();
             vo.setMemberRole(role);
             vo.setCanManageMembers(TeamMembershipService.ROLE_MENTOR.equals(role));
-            vo.setPendingInviteCount(teamInviteService.pendingInviteCount(app.getTeamId()));
+            vo.setPendingInviteCount(inviteCounts.getOrDefault(app.getTeamId(), 0L));
             rows.add(vo);
         }
         return Result.ok("获取成功", rows).toResponseEntity();
@@ -850,7 +925,7 @@ public class TeamController {
             if (team != null) vo.setTeamName(team.getTitle());
             User applicant = userMap.get(app.getUserId());
             if (applicant != null) {
-                vo.setApplicantName(applicant.getRealName() != null ? applicant.getRealName() : applicant.getUsername());
+                vo.setApplicantName(DisplayNameResolver.resolve(applicant));
                 vo.setApplicantAvatar(applicant.getAvatar());
                 vo.setApplicantMajor(applicant.getMajor());
                 vo.setApplicantGrade(applicant.getGrade());
@@ -858,6 +933,9 @@ public class TeamController {
                 vo.setApplicantUserId(applicant.getId());
             }
             vo.setSkills(skillsMap.getOrDefault(app.getUserId(), Collections.emptyList()));
+            // 修复：发起人≠成员本人的行是"我发出的邀请"，等待对方确认；
+            // 不能和"待审批申请"混在一起让队长去"通过/拒绝"（后端 review 也会拒绝这种行）
+            vo.setInvitedByMe(app.getInitiatorId() != null && !app.getInitiatorId().equals(app.getUserId()));
             views.add(vo);
         }
         return Result.ok(views).toResponseEntity();

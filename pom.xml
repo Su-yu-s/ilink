@@ -15,6 +15,9 @@
     <description>iLink 竞赛组队与成果展示平台</description>
     <properties>
         <java.version>17</java.version>
+        <!-- Spring Boot 2.7 BOM 默认钉 kotlin-stdlib 1.6.21，但 resend-java 依赖的 okhttp 5.x
+             需要 Kotlin 2.x（kotlin.enums.EnumEntriesKt 自 1.9 起才有），此处覆盖为 okhttp 要求的版本 -->
+        <kotlin.version>2.1.21</kotlin.version>
     </properties>
     <dependencies>
         <dependency>
@@ -47,6 +50,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <!-- 排除 android-json：它与 resend-java 传入的 org.json:json 都提供 org.json.JSONObject，
+                     项目实际用 Jackson，此处排除可消除 DuplicateJsonObject 警告 -->
+                <exclusion>
+                    <groupId>com.vaadin.external.google</groupId>
+                    <artifactId>android-json</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>
@@ -72,6 +83,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- AOP：GraphRAG 权限切面（GraphPermissionAspect） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -95,6 +111,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <!-- Resend 邮件 API（密码重置邮件走 HTTPS，规避云服务器出站 25 端口封锁） -->
+        <dependency>
+            <groupId>com.resend</groupId>
+            <artifactId>resend-java</artifactId>
+            <version>4.26.0</version>
         </dependency>
         <!-- SpringDoc OpenAPI 3 (API 文档) -->
         <dependency>

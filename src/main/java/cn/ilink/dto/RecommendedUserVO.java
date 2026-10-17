@@ -7,7 +7,8 @@ import java.util.List;
 public class RecommendedUserVO {
     private Long logId;
     private Long userId;
-    private String username;
+    /** 展示名：由 {@link cn.ilink.util.DisplayNameResolver} 解析，不下发内部 username */
+    private String displayName;
     private String realName;
     private String school;
     private String avatar;

@@ -18,6 +18,8 @@ import cn.ilink.service.UserRoleService;
 import cn.ilink.service.AdminDataService;
 import cn.ilink.service.AdminAuditService;
 import cn.ilink.service.NotificationService;
+import cn.ilink.service.RememberMeService;
+import cn.ilink.util.DisplayNameResolver;
 import cn.ilink.vo.AdminDashboardVO;
 import static cn.ilink.common.ControllerUtils.safePage;
 import static cn.ilink.common.ControllerUtils.safeSize;
@@ -39,6 +41,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,6 +61,8 @@ public class AdminController {
     private final UserRoleService userRoleService;
     private final AdminDataService adminDataService;
     private final AdminAuditService adminAuditService;
+    private final RememberMeService rememberMeService;
+    private final cn.ilink.common.UserSessionRegistry sessionRegistry;
 
     @Value("${file.access-url-prefix:/uploads/}")
     private String accessUrlPrefix;
@@ -71,7 +76,9 @@ public class AdminController {
                            NotificationService notificationService,
                            UserRoleService userRoleService,
                            AdminDataService adminDataService,
-                           AdminAuditService adminAuditService) {
+                           AdminAuditService adminAuditService,
+                           RememberMeService rememberMeService,
+                           cn.ilink.common.UserSessionRegistry sessionRegistry) {
         this.userService = userService;
         this.teamDemandService = teamDemandService;
         this.teacherApplicationService = teacherApplicationService;
@@ -82,6 +89,8 @@ public class AdminController {
         this.userRoleService = userRoleService;
         this.adminDataService = adminDataService;
         this.adminAuditService = adminAuditService;
+        this.rememberMeService = rememberMeService;
+        this.sessionRegistry = sessionRegistry;
     }
 
     @GetMapping("/dashboard")
@@ -110,7 +119,12 @@ public class AdminController {
 
     @GetMapping("/users")
     @ResponseBody
-    public ResponseEntity<Result<?>> getUserList(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int size, HttpSession session) {
+    public ResponseEntity<Result<?>> getUserList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String role,
+            HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
             return Result.forbidden().toResponseEntity();
@@ -119,7 +133,18 @@ public class AdminController {
         try {
             int safeSize = safeSize(size, 100);
             int safePage = safePage(page);
-            Page<User> result = userService.page(new Page<>(safePage, safeSize));
+            LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+            if (role != null && !role.isBlank()) {
+                String r = role.trim().toUpperCase(java.util.Locale.ROOT);
+                if (!ALLOWED_ROLES.contains(r)) {
+                    return Result.badRequest("角色非法，仅支持 STUDENT / TEACHER / ADMIN").toResponseEntity();
+                }
+                wrapper.eq(User::getRole, r);
+            }
+            applyKeyword(wrapper, keyword, User::getUsername, User::getRealName, User::getEmail,
+                User::getPhoneNumber, User::getStudentId, User::getSchool, User::getMajor, User::getCollege);
+            wrapper.orderByAsc(User::getId);
+            Page<User> result = userService.page(new Page<>(safePage, safeSize), wrapper);
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取用户列表失败", e);
@@ -132,6 +157,8 @@ public class AdminController {
     public ResponseEntity<Result<?>> getTeamList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
@@ -141,7 +168,14 @@ public class AdminController {
         try {
             int safeSize = safeSize(size, 100);
             int safePage = safePage(page);
-            Page<cn.ilink.entity.TeamDemand> result = teamDemandService.page(new Page<>(safePage, safeSize));
+            LambdaQueryWrapper<TeamDemand> wrapper = new LambdaQueryWrapper<>();
+            if (status != null && !status.isBlank()) {
+                wrapper.eq(TeamDemand::getStatus, status.trim().toUpperCase(java.util.Locale.ROOT));
+            }
+            applyKeyword(wrapper, keyword, TeamDemand::getTitle, TeamDemand::getDescription,
+                TeamDemand::getRequiredSkills, TeamDemand::getCreatorId);
+            wrapper.orderByDesc(TeamDemand::getCreatedAt);
+            Page<TeamDemand> result = teamDemandService.page(new Page<>(safePage, safeSize), wrapper);
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取团队列表失败", e);
@@ -154,6 +188,8 @@ public class AdminController {
     public ResponseEntity<Result<?>> getTeacherList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
@@ -162,7 +198,15 @@ public class AdminController {
         try {
             int safeSize = safeSize(size, 100);
             int safePage = safePage(page);
-            Page<cn.ilink.entity.TeacherApplication> result = teacherApplicationService.page(new Page<>(safePage, safeSize));
+            LambdaQueryWrapper<TeacherApplication> wrapper = new LambdaQueryWrapper<>();
+            if (status != null && !status.isBlank()) {
+                wrapper.eq(TeacherApplication::getStatus, status.trim().toUpperCase(java.util.Locale.ROOT));
+            }
+            applyKeyword(wrapper, keyword, TeacherApplication::getIntroduction,
+                TeacherApplication::getResearchDirection, TeacherApplication::getProfessionalTitle,
+                TeacherApplication::getProjects, TeacherApplication::getUserId);
+            wrapper.orderByDesc(TeacherApplication::getCreatedAt);
+            Page<TeacherApplication> result = teacherApplicationService.page(new Page<>(safePage, safeSize), wrapper);
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取导师列表失败", e);
@@ -175,6 +219,8 @@ public class AdminController {
     public ResponseEntity<Result<?>> getAssetList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String category,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
@@ -183,7 +229,13 @@ public class AdminController {
         try {
             int safeSize = safeSize(size, 100);
             int safePage = safePage(page);
-            Page<cn.ilink.entity.Asset> result = assetService.page(new Page<>(safePage, safeSize));
+            LambdaQueryWrapper<Asset> wrapper = new LambdaQueryWrapper<>();
+            if (category != null && !category.isBlank()) {
+                wrapper.eq(Asset::getCategory, category.trim());
+            }
+            applyKeyword(wrapper, keyword, Asset::getTitle, Asset::getDescription, Asset::getUserId);
+            wrapper.orderByDesc(Asset::getCreatedAt);
+            Page<Asset> result = assetService.page(new Page<>(safePage, safeSize), wrapper);
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取成果列表失败", e);
@@ -196,6 +248,8 @@ public class AdminController {
     public ResponseEntity<Result<?>> getCommunityPostList(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String category,
             HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
@@ -204,15 +258,103 @@ public class AdminController {
         try {
             int safeSize = safeSize(size, 100);
             int safePage = safePage(page);
-            Page<CommunityPost> result = communityPostService.page(
-                new Page<>(safePage, safeSize),
-                new LambdaQueryWrapper<CommunityPost>().orderByDesc(CommunityPost::getCreatedAt)
-            );
+            LambdaQueryWrapper<CommunityPost> wrapper = new LambdaQueryWrapper<>();
+            if (category != null && !category.isBlank()) {
+                wrapper.eq(CommunityPost::getCategory, category.trim());
+            }
+            applyKeyword(wrapper, keyword, CommunityPost::getTitle, CommunityPost::getContent,
+                CommunityPost::getAuthorId);
+            wrapper.orderByDesc(CommunityPost::getCreatedAt);
+            Page<CommunityPost> result = communityPostService.page(new Page<>(safePage, safeSize), wrapper);
             return Result.ok("获取成功", result.getRecords()).withPagination(safePage, safeSize, result.getTotal()).toResponseEntity();
         } catch (Exception e) {
             log.error("获取社区帖子失败", e);
             return Result.fail(500, "获取社区帖子失败，请稍后重试").toResponseEntity();
         }
+    }
+
+    /**
+     * 审计日志分页查询（A6：此前只写不读，管理员无法自查操作记录）。
+     */
+    @GetMapping("/audit-logs")
+    @ResponseBody
+    public ResponseEntity<Result<?>> getAuditLogs(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) Long adminUserId,
+            HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (!ControllerUtils.isAdmin(user)) {
+            return Result.forbidden().toResponseEntity();
+        }
+        try {
+            int safeSize = safeSize(size, 100);
+            int safePage = safePage(page);
+            Page<cn.ilink.entity.AdminAuditLog> result =
+                adminAuditService.listLogs(safePage, safeSize, keyword, action, adminUserId);
+            java.util.List<Map<String, Object>> rows = new java.util.ArrayList<>();
+            long total = 0;
+            if (result != null) {
+                total = result.getTotal();
+                if (result.getRecords() != null && !result.getRecords().isEmpty()) {
+                    java.util.Set<Long> adminIds = new java.util.HashSet<>();
+                    for (cn.ilink.entity.AdminAuditLog entry : result.getRecords()) {
+                        if (entry.getAdminUserId() != null) {
+                            adminIds.add(entry.getAdminUserId());
+                        }
+                    }
+                    java.util.Map<Long, User> admins = adminIds.isEmpty()
+                        ? java.util.Map.of()
+                        : userService.listByIds(adminIds).stream()
+                            .collect(java.util.stream.Collectors.toMap(User::getId, u -> u, (a, b) -> a));
+                    for (cn.ilink.entity.AdminAuditLog entry : result.getRecords()) {
+                        Map<String, Object> row = new java.util.LinkedHashMap<>();
+                        row.put("id", entry.getId());
+                        row.put("adminUserId", entry.getAdminUserId());
+                        User admin = admins.get(entry.getAdminUserId());
+                        String adminName = admin == null
+                            ? "用户#" + entry.getAdminUserId()
+                            : DisplayNameResolver.resolve(admin);
+                        row.put("adminName", adminName);
+                        row.put("action", entry.getAction());
+                        row.put("targetType", entry.getTargetType());
+                        row.put("targetId", entry.getTargetId());
+                        row.put("details", entry.getDetails());
+                        row.put("ipAddress", entry.getIpAddress());
+                        row.put("createdAt", entry.getCreatedAt());
+                        rows.add(row);
+                    }
+                }
+            }
+            return Result.ok("获取成功", rows).withPagination(safePage, safeSize, total).toResponseEntity();
+        } catch (Exception e) {
+            log.error("获取审计日志失败", e);
+            return Result.fail(500, "获取审计日志失败，请稍后重试").toResponseEntity();
+        }
+    }
+
+    /**
+     * 对指定列做关键词 OR LIKE 模糊匹配；空关键词不追加条件。
+     * 列的取舍与各列表页的搜索提示文案一致。
+     */
+    @SafeVarargs
+    private <T> void applyKeyword(com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<T> wrapper,
+                                  String keyword,
+                                  com.baomidou.mybatisplus.core.toolkit.support.SFunction<T, ?>... columns) {
+        String kw = keyword == null ? "" : keyword.trim();
+        if (kw.isEmpty() || columns.length == 0) {
+            return;
+        }
+        wrapper.and(w -> {
+            for (int i = 0; i < columns.length; i++) {
+                if (i > 0) {
+                    w.or();
+                }
+                w.like(columns[i], kw);
+            }
+        });
     }
 
     @DeleteMapping("/user/{id}")
@@ -233,6 +375,74 @@ public class AdminController {
         } catch (Exception e) {
             log.error("删除用户失败", e);
             return Result.fail(500, "删除用户失败，请稍后重试").toResponseEntity();
+        }
+    }
+
+    /**
+     * 暂停 / 恢复账号使用。
+     *
+     * <p>禁用是整体禁用（无法登录），不做「仅禁言」这类部分限制——用户协议中的措辞
+     * 已同步改为「暂停账号使用」。禁用后立即失效该用户全部在线会话与 remember-me 令牌，
+     * 否则对方还能靠旧会话继续操作。
+     */
+    @PutMapping("/user/{id}/status")
+    @ResponseBody
+    public ResponseEntity<Result<?>> updateUserStatus(
+        @PathVariable Long id,
+        @RequestBody Map<String, Object> payload,
+        HttpSession session,
+        HttpServletRequest request
+    ) {
+        User operator = ControllerUtils.requireUser(session);
+        if (!ControllerUtils.isAdmin(operator)) {
+            return Result.forbidden().toResponseEntity();
+        }
+        try {
+            User target = userService.getById(id);
+            if (target == null) {
+                return Result.notFound("用户不存在").toResponseEntity();
+            }
+            if (operator.getId() != null && operator.getId().equals(id)) {
+                return Result.badRequest("不能修改当前登录管理员自己的账号状态").toResponseEntity();
+            }
+            String requested = str(payload == null ? null : payload.get("status")).toUpperCase(Locale.ROOT);
+            boolean disable;
+            if ("DISABLED".equals(requested)) {
+                disable = true;
+            } else if ("ACTIVE".equals(requested)) {
+                disable = false;
+            } else {
+                return Result.badRequest("账号状态非法，仅支持 ACTIVE / DISABLED").toResponseEntity();
+            }
+            String reason = str(payload == null ? null : payload.get("reason"));
+            if (disable && reason.isEmpty()) {
+                return Result.badRequest("暂停账号时必须填写原因").toResponseEntity();
+            }
+            if (reason.length() > 255) {
+                return Result.badRequest("原因不能超过 255 个字").toResponseEntity();
+            }
+
+            target.setStatus(disable ? "DISABLED" : "ACTIVE");
+            target.setDisabledReason(disable ? reason : null);
+            target.setDisabledAt(disable ? new Date() : null);
+            if (!userService.updateById(target)) {
+                return Result.fail(500, "更新账号状态失败").toResponseEntity();
+            }
+
+            if (disable) {
+                try {
+                    rememberMeService.revokeAllForUser(id);
+                } catch (Exception e) {
+                    log.warn("暂停账号后吊销 remember-me 令牌失败：userId={}", id, e);
+                }
+                sessionRegistry.invalidateAll(id);
+            }
+            adminAuditService.recordSafely(operator, disable ? "DISABLE_USER" : "ENABLE_USER", "USER", id,
+                disable ? "reason=" + reason : "", request);
+            return Result.ok(disable ? "账号已暂停使用" : "账号已恢复使用", null).toResponseEntity();
+        } catch (Exception e) {
+            log.error("更新账号状态失败", e);
+            return Result.fail(500, "更新账号状态失败，请稍后重试").toResponseEntity();
         }
     }
 
@@ -257,7 +467,7 @@ public class AdminController {
 
             String role = payload == null || payload.get("role") == null
                 ? ""
-                : String.valueOf(payload.get("role")).trim().toUpperCase();
+                : String.valueOf(payload.get("role")).trim().toUpperCase(Locale.ROOT);
             if (!ALLOWED_ROLES.contains(role)) {
                 return Result.badRequest("角色非法，仅支持 STUDENT / TEACHER / ADMIN").toResponseEntity();
             }
@@ -297,13 +507,19 @@ public class AdminController {
                 return Result.notFound("用户不存在").toResponseEntity();
             }
 
-            String username = str(payload.get("username"));
-            String role = str(payload.get("role")).toUpperCase();
-            if (username.isEmpty()) {
-                return Result.badRequest("用户名不能为空").toResponseEntity();
-            }
-            if (!ALLOWED_ROLES.contains(role)) {
-                return Result.badRequest("角色非法，仅支持 STUDENT / TEACHER / ADMIN").toResponseEntity();
+            // 部分更新语义（N-02）：只处理 payload 里出现的字段，缺失的字段保持现状。
+            // 此前缺 username/role 会被前置校验拦成 400「用户名不能为空」「角色非法」，
+            // 逼得前端必须"先 GET 再整体回传"，也让字段级校验的测试被前置错误掩盖。
+            // username 是内部标识（历史值可能是手机号或学号），管理端也不再接受修改：
+            // 直接忽略 payload 里的 username，始终沿用库中现值。
+            String username = target.getUsername();
+            String role = target.getRole();
+            if (payload.containsKey("role")) {
+                String requestedRole = str(payload.get("role")).toUpperCase(Locale.ROOT);
+                if (!ALLOWED_ROLES.contains(requestedRole)) {
+                    return Result.badRequest("角色非法，仅支持 STUDENT / TEACHER / ADMIN").toResponseEntity();
+                }
+                role = requestedRole;
             }
 
             User current = ControllerUtils.requireUser(session);
@@ -311,16 +527,64 @@ public class AdminController {
                 return Result.badRequest("不能修改当前登录管理员自己的身份").toResponseEntity();
             }
 
+            // 与 H3 同源：管理端改资料同样要先做长度/取值校验，避免超长值撞列宽变成 500
+            String fieldError =
+                ControllerUtils.checkMaxLength(username, ControllerUtils.USERNAME_MAX, "用户名");
+            if (fieldError == null) {
+                fieldError = ControllerUtils.checkMaxLength(str(payload.get("email")), ControllerUtils.EMAIL_MAX, "邮箱");
+            }
+            if (fieldError == null) {
+                fieldError = ControllerUtils.checkMaxLength(str(payload.get("realName")), ControllerUtils.REAL_NAME_MAX, "姓名");
+            }
+            if (fieldError == null) {
+                fieldError = ControllerUtils.checkMaxLength(str(payload.get("grade")), ControllerUtils.GRADE_MAX, "年级");
+            }
+            if (fieldError == null) {
+                fieldError = ControllerUtils.checkMaxLength(str(payload.get("major")), ControllerUtils.MAJOR_MAX, "专业");
+            }
+            if (fieldError == null) {
+                fieldError = ControllerUtils.checkMaxLength(str(payload.get("school")), ControllerUtils.SCHOOL_MAX, "学校");
+            }
+            if (fieldError == null) {
+                fieldError = ControllerUtils.checkMaxLength(str(payload.get("college")), ControllerUtils.COLLEGE_MAX, "学院");
+            }
+            if (fieldError == null) {
+                fieldError = ControllerUtils.checkMaxLength(str(payload.get("bio")), ControllerUtils.BIO_MAX, "个人简介");
+            }
+            if (fieldError == null) {
+                fieldError = ControllerUtils.checkGender(str(payload.get("gender")));
+            }
+            if (fieldError != null) {
+                return Result.badRequest(fieldError).toResponseEntity();
+            }
+
             target.setUsername(username);
             target.setRole(role);
-            target.setEmail(emptyToNull(str(payload.get("email"))));
-            target.setRealName(emptyToNull(str(payload.get("realName"))));
-            target.setGender(emptyToNull(str(payload.get("gender"))));
-            target.setGrade(emptyToNull(str(payload.get("grade"))));
-            target.setMajor(emptyToNull(str(payload.get("major"))));
-            target.setSchool(emptyToNull(str(payload.get("school"))));
-            target.setCollege(emptyToNull(str(payload.get("college"))));
-            target.setPhoneNumber(emptyToNull(str(payload.get("phoneNumber"))));
+            // 同 N-02：未出现在 payload 里的字段不再被清空，保持数据库现有值
+            if (payload.containsKey("email")) {
+                target.setEmail(emptyToNull(str(payload.get("email"))));
+            }
+            if (payload.containsKey("realName")) {
+                target.setRealName(emptyToNull(str(payload.get("realName"))));
+            }
+            if (payload.containsKey("gender")) {
+                target.setGender(ControllerUtils.normalizeGender(emptyToNull(str(payload.get("gender")))));
+            }
+            if (payload.containsKey("grade")) {
+                target.setGrade(emptyToNull(str(payload.get("grade"))));
+            }
+            if (payload.containsKey("major")) {
+                target.setMajor(emptyToNull(str(payload.get("major"))));
+            }
+            if (payload.containsKey("school")) {
+                target.setSchool(emptyToNull(str(payload.get("school"))));
+            }
+            if (payload.containsKey("college")) {
+                target.setCollege(emptyToNull(str(payload.get("college"))));
+            }
+            if (payload.containsKey("phoneNumber")) {
+                target.setPhoneNumber(emptyToNull(str(payload.get("phoneNumber"))));
+            }
             if (payload.containsKey("avatar")) {
                 String avatar = emptyToNull(str(payload.get("avatar")));
                 if (avatar != null && !ControllerUtils.isManagedUploadUrl(avatar, accessUrlPrefix)) {
@@ -332,21 +596,29 @@ public class AdminController {
                 target.setHonors(emptyToNull(str(payload.get("honors"))));
             }
 
-            Object sid = payload.get("studentId");
-            if (sid == null || String.valueOf(sid).trim().isEmpty()) {
-                target.setStudentId(null);
-            } else if (sid instanceof Number) {
-                target.setStudentId(((Number) sid).longValue());
-            } else {
-                target.setStudentId(Long.parseLong(String.valueOf(sid).trim()));
+            // 学号同样只在显式提交时改动：空串/空值视为清空，缺字段保持原值
+            if (payload.containsKey("studentId")) {
+                Object sid = payload.get("studentId");
+                if (sid == null || String.valueOf(sid).trim().isEmpty()) {
+                    target.setStudentId(null);
+                } else if (sid instanceof Number) {
+                    target.setStudentId(((Number) sid).longValue());
+                } else {
+                    target.setStudentId(Long.parseLong(String.valueOf(sid).trim()));
+                }
             }
 
-            target = userRoleService.updateUserAndRole(target);
+            // 编辑的是当前登录管理员本人时，保留当前会话（避免"接口 500 + 自己被踢下线"，见 N-01），
+            // 只吊销该账号在其它设备上的会话
+            boolean editingSelf = current != null && current.getId() != null && current.getId().equals(target.getId());
+            target = editingSelf
+                ? userRoleService.updateUserAndRole(target, session.getId())
+                : userRoleService.updateUserAndRole(target);
             adminAuditService.recordSafely(user, "UPDATE", "USER", id,
                 "username=" + username + ", role=" + role, request);
 
-            // 若编辑的是当前登录管理员本人，同步会话数据
-            if (current != null && current.getId() != null && current.getId().equals(target.getId())) {
+            // 若编辑的是当前登录管理员本人，同步会话数据（会话此时已被保留，不会再抛 invalidated）
+            if (editingSelf) {
                 current.setUsername(target.getUsername());
                 current.setRole(target.getRole());
                 current.setEmail(target.getEmail());
@@ -435,7 +707,7 @@ public class AdminController {
                 return Result.badRequest("标题不能超过200字").toResponseEntity();
             }
 
-            String status = str(payload.get("status")).toUpperCase();
+            String status = str(payload.get("status")).toUpperCase(Locale.ROOT);
             if (status.isEmpty()) {
                 status = team.getStatus();
             }
@@ -451,7 +723,13 @@ public class AdminController {
             if (countObj == null || String.valueOf(countObj).trim().isEmpty()) {
                 team.setRequiredMemberCount(null);
             } else {
-                team.setRequiredMemberCount(Integer.parseInt(String.valueOf(countObj).trim()));
+                // 修复 D-P3-3：管理端原样 Integer.parseInt 且无范围校验，误填 0/负数会让
+                // isFull 永远返回"未满"，与用户端 1-50 口径分裂（TeamController#validateTeamDemandRequest）
+                int count = Integer.parseInt(String.valueOf(countObj).trim());
+                if (count < 1 || count > 50) {
+                    return Result.badRequest("需求人数需在 1-50 之间").toResponseEntity();
+                }
+                team.setRequiredMemberCount(count);
             }
 
             Object compObj = payload.get("competitionId");
@@ -491,15 +769,20 @@ public class AdminController {
     @DeleteMapping("/team/{id}")
     @ResponseBody
     public ResponseEntity<Result<?>> deleteTeam(@PathVariable Long id, HttpSession session,
-                                                HttpServletRequest request) {
+                                                HttpServletRequest request,
+                                                @RequestParam(required = false) String reason) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
             return Result.forbidden().toResponseEntity();
         }
+        String normalizedReason = normalizeDeleteReason(reason);
+        if (normalizedReason == null) {
+            return Result.badRequest("请填写删除原因").toResponseEntity();
+        }
 
         try {
-            adminDataService.deleteTeam(id);
-            adminAuditService.recordSafely(user, "DELETE", "TEAM", id, "", request);
+            adminDataService.deleteTeam(id, normalizedReason);
+            adminAuditService.recordSafely(user, "DELETE", "TEAM", id, "reason=" + normalizedReason, request);
             return Result.ok("删除成功", null).toResponseEntity();
         } catch (java.util.NoSuchElementException e) {
             return Result.notFound(e.getMessage()).toResponseEntity();
@@ -540,7 +823,7 @@ public class AdminController {
                 return Result.badRequest("导师资料内容过长，请精简后重试").toResponseEntity();
             }
 
-            String status = str(payload.get("status")).toUpperCase();
+            String status = str(payload.get("status")).toUpperCase(Locale.ROOT);
             if (status.isEmpty()) {
                 status = teacher.getStatus();
             }
@@ -605,10 +888,15 @@ public class AdminController {
                 if ("APPROVED".equals(teacher.getStatus())) {
                     return Result.badRequest("该导师申请已通过").toResponseEntity();
                 }
+                // 与 PUT /admin/teacher/{id} 设 status=APPROVED 走同一套完整性校验，
+                // 否则可以绕过校验把空白档案直接推上公开导师墙。
+                User teacherUser = teacher.getUserId() == null ? null : userService.getById(teacher.getUserId());
+                if (!teacherProfileComplete(teacherUser, teacher)) {
+                    return Result.badRequest("导师资料不完整，暂不能批准（需姓名、学校、专业、职称、研究方向、简介齐全）").toResponseEntity();
+                }
                 teacher.setStatus("APPROVED");
                 boolean success = teacherApplicationService.updateById(teacher);
                 if (success) {
-                    User teacherUser = userService.getById(teacher.getUserId());
                     if (teacherUser != null && !"ADMIN".equals(teacherUser.getRole()) && !"TEACHER".equals(teacherUser.getRole())) {
                         userRoleService.changeRole(teacherUser.getId(), "TEACHER");
                     }
@@ -733,15 +1021,20 @@ public class AdminController {
     @DeleteMapping("/asset/{id}")
     @ResponseBody
     public ResponseEntity<Result<?>> deleteAsset(@PathVariable Long id, HttpSession session,
-                                                 HttpServletRequest request) {
+                                                 HttpServletRequest request,
+                                                 @RequestParam(required = false) String reason) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
             return Result.forbidden().toResponseEntity();
         }
+        String normalizedReason = normalizeDeleteReason(reason);
+        if (normalizedReason == null) {
+            return Result.badRequest("请填写删除原因").toResponseEntity();
+        }
 
         try {
-            adminDataService.deleteAsset(id);
-            adminAuditService.recordSafely(user, "DELETE", "ASSET", id, "", request);
+            adminDataService.deleteAsset(id, normalizedReason);
+            adminAuditService.recordSafely(user, "DELETE", "ASSET", id, "reason=" + normalizedReason, request);
             return Result.ok("删除成功", null).toResponseEntity();
         } catch (java.util.NoSuchElementException e) {
             return Result.notFound(e.getMessage()).toResponseEntity();
@@ -821,7 +1114,12 @@ public class AdminController {
             if (post == null) {
                 return Result.notFound("帖子不存在").toResponseEntity();
             }
-            boolean pinned = Boolean.parseBoolean(String.valueOf(payload.get("pinned")));
+            // 严格校验：非法/缺失的 pinned 不能静默当成 false，否则管理员会以为改成功
+            Object pinnedRaw = payload.get("pinned");
+            if (!(pinnedRaw instanceof Boolean)) {
+                return Result.badRequest("pinned 参数必须为布尔值 true 或 false").toResponseEntity();
+            }
+            boolean pinned = (Boolean) pinnedRaw;
             communityPostService.update(new LambdaUpdateWrapper<CommunityPost>()
                 .set(CommunityPost::getIsPinned, pinned ? 1 : 0)
                 .eq(CommunityPost::getId, id));
@@ -850,7 +1148,12 @@ public class AdminController {
             if (asset == null) {
                 return Result.notFound("成果不存在").toResponseEntity();
             }
-            boolean pinned = Boolean.parseBoolean(String.valueOf(payload.get("pinned")));
+            // 严格校验：非法/缺失的 pinned 不能静默当成 false，否则管理员会以为改成功
+            Object pinnedRaw = payload.get("pinned");
+            if (!(pinnedRaw instanceof Boolean)) {
+                return Result.badRequest("pinned 参数必须为布尔值 true 或 false").toResponseEntity();
+            }
+            boolean pinned = (Boolean) pinnedRaw;
             assetService.update(new LambdaUpdateWrapper<Asset>()
                 .set(Asset::getIsPinned, pinned ? 1 : 0)
                 .eq(Asset::getId, id));
@@ -866,15 +1169,20 @@ public class AdminController {
     @DeleteMapping("/community-post/{id}")
     @ResponseBody
     public ResponseEntity<Result<?>> deleteCommunityPost(@PathVariable Long id, HttpSession session,
-                                                         HttpServletRequest request) {
+                                                         HttpServletRequest request,
+                                                         @RequestParam(required = false) String reason) {
         User user = ControllerUtils.requireUser(session);
         if (!ControllerUtils.isAdmin(user)) {
             return Result.forbidden().toResponseEntity();
         }
+        String normalizedReason = normalizeDeleteReason(reason);
+        if (normalizedReason == null) {
+            return Result.badRequest("请填写删除原因").toResponseEntity();
+        }
 
         try {
-            adminDataService.deletePost(id);
-            adminAuditService.recordSafely(user, "DELETE", "COMMUNITY_POST", id, "", request);
+            adminDataService.deletePost(id, normalizedReason);
+            adminAuditService.recordSafely(user, "DELETE", "COMMUNITY_POST", id, "reason=" + normalizedReason, request);
             return Result.ok("删除成功", null).toResponseEntity();
         } catch (java.util.NoSuchElementException e) {
             return Result.notFound(e.getMessage()).toResponseEntity();
@@ -882,5 +1190,20 @@ public class AdminController {
             log.error("删除帖子失败", e);
             return Result.fail(500, "删除帖子失败，请稍后重试").toResponseEntity();
         }
+    }
+
+    /** 删除原因规范化：缺失/空白返回 null，超 200 字返回空串（视为非法） */
+    private String normalizeDeleteReason(String reason) {
+        if (reason == null) {
+            return null;
+        }
+        String trimmed = reason.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if (trimmed.length() > 200) {
+            return "";
+        }
+        return trimmed;
     }
 }

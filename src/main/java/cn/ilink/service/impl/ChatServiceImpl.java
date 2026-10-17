@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import cn.ilink.util.DisplayNameResolver;
 
 @Service
 public class ChatServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage> implements ChatService {
@@ -91,7 +92,7 @@ public class ChatServiceImpl extends ServiceImpl<ChatMessageMapper, ChatMessage>
         vo.setCreatedAt(message.getCreatedAt());
 
         if (sender != null) {
-            vo.setSenderName(sender.getRealName() != null ? sender.getRealName() : sender.getUsername());
+            vo.setSenderName(DisplayNameResolver.resolve(sender));
             vo.setSenderAvatar(resolveAvatarUrl(sender.getAvatar()));
         }
 

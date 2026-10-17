@@ -10,6 +10,7 @@ import cn.ilink.mapper.TeamTaskMapper;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.TeamMembershipService;
+import cn.ilink.service.TeamAccessService;
 import cn.ilink.service.UserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.stream.Collectors;
+import cn.ilink.util.DisplayNameResolver;
 
 /**
  * 团队工作空间 API —— 仅供已通过申请的成员访问。
@@ -44,6 +46,9 @@ public class TeamSpaceController {
 
     @Autowired
     private TeamMembershipService teamMembershipService;
+
+    @Autowired
+    private TeamAccessService teamAccessService;
 
     /**
      * 检查当前用户是否为团队成员（创建者或通过审批的成员）
@@ -163,6 +168,8 @@ public class TeamSpaceController {
         data.put("pendingTaskCount", todo);
         data.put("taskStats", taskStats);
         data.put("isLeader", isLeader);
+        // 批阅权限与后端 review 接口一致：队长或已批准导师。前端据此决定是否显示批阅入口
+        data.put("canReviewTasks", isLeader || teamAccessService.isApprovedMentor(teamId, user.getId()));
         data.put("deadline", team.getDeadline());
         data.put("requiredMemberCount", team.getRequiredMemberCount());
 
@@ -231,7 +238,7 @@ public class TeamSpaceController {
         if (creator != null) {
             Map<String, Object> view = new LinkedHashMap<>();
             view.put("userId", creator.getId());
-            view.put("username", creator.getRealName() != null ? creator.getRealName() : creator.getUsername());
+            view.put("username", DisplayNameResolver.resolve(creator));
             view.put("avatar", normalizeAvatar(creator.getAvatar()));
             view.put("major", creator.getMajor());
             view.put("grade", creator.getGrade());
@@ -272,7 +279,7 @@ public class TeamSpaceController {
             if (u != null) {
                 Map<String, Object> view = new LinkedHashMap<>();
                 view.put("userId", u.getId());
-                view.put("username", u.getRealName() != null ? u.getRealName() : u.getUsername());
+                view.put("username", DisplayNameResolver.resolve(u));
                 view.put("avatar", normalizeAvatar(u.getAvatar()));
                 view.put("major", u.getMajor());
                 view.put("grade", u.getGrade());
@@ -357,7 +364,9 @@ public class TeamSpaceController {
     private String normalizeAvatar(String avatar) {
         if (avatar == null || avatar.trim().isEmpty()) return null;
         String u = avatar.trim();
-        if (u.startsWith("http://") || u.startsWith("https://") || u.startsWith("/uploads/") || u.startsWith("/static/")) return u;
+        // 以 / 开头的一律当绝对路径原样返回：内置头像 /images/avatars/... 之前不在白名单里，
+        // 被拼成 /uploads//images/... 导致团队空间里所有内置头像 404
+        if (u.startsWith("/") || u.startsWith("http://") || u.startsWith("https://")) return u;
         return "/uploads/" + u;
     }
 

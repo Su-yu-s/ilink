@@ -1,3 +1,4 @@
+@layer legacy {
 /**
  * 成果发布/编辑弹窗 v1.0 — 与详情分享页字段对齐
  */
@@ -88,4 +89,6 @@
   font-size: 15px;
   line-height: 1.75;
   background: transparent !important;
+}
+
 }

@@ -1,3 +1,4 @@
+@layer legacy {
 /* ============================================================
    detail-refresh.css — 组队详情 / 导师详情 中性灰深度对齐 demo
    引入在 portal-redesign 之后；portal 对 .detail-view__row/meta 用了
@@ -151,9 +152,19 @@ html.ilink-app body[data-app-page="team-detail"] #teamMembers {
 html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member {
     width: auto; flex: 0 0 auto; margin: 0; padding: 12px 16px; background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px;
 }
+/* 能跳主页的成员卡：给可点反馈（鼠标 + 键盘焦点） */
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member--linkable {
+    cursor: pointer; transition: background-color .15s, border-color .15s;
+}
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member--linkable:hover {
+    background: var(--color-gray-100, #f1f1f2); border-color: var(--color-gray-300, #d7d8db);
+}
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member--linkable:focus-visible {
+    outline: 2px solid var(--ui-text, #282a2f); outline-offset: 2px;
+}
 html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__avatar { width: 40px; height: 40px; flex-basis: 40px; border-color: #e5e7eb; }
 html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__role { border-color: #e5e7eb; color: #6b7280; }
-html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__role--leader { background: #111827; border-color: #111827; color: #fff; }
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__role--leader { background: var(--ui-surface-subtle, #f1f1f2); border-color: var(--ui-border-strong, #d7d8db); color: var(--ui-text, #282a2f); }
 
 /* —— 底部操作通栏 —— */
 html.ilink-app body[data-app-page="team-detail"] .detail-view__actions {
@@ -172,12 +183,12 @@ html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .btn {
 html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .il-btn:active,
 html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .btn:active { transform: scale(.95); }
 html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .il-btn--primary,
-html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .btn-primary { background: #111827 !important; border-color: #111827 !important; color: #fff !important; }
-html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .il-btn--primary:hover { background: #000 !important; border-color: #000 !important; }
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .btn-primary { background: var(--ui-surface-subtle, #f1f1f2) !important; border-color: var(--ui-border-strong, #d7d8db) !important; color: var(--ui-text, #282a2f) !important; }
+html.ilink-app body[data-app-page="team-detail"] .detail-view__actions .il-btn--primary:hover { background: var(--ui-border, #e5e5e7) !important; border-color: var(--ui-border-strong, #d7d8db) !important; }
 html.ilink-app body[data-app-page="team-detail"] #backBtn,
 html.ilink-app body[data-app-page="team-detail"] #editTeamBtn,
 html.ilink-app body[data-app-page="team-detail"] #markTeamingBtn { background: #fff !important; border-color: #e5e7eb !important; color: #374151 !important; }
-html.ilink-app body[data-app-page="team-detail"] #workspaceBtn { background: #111827 !important; border-color: #111827 !important; color: #fff !important; }
+html.ilink-app body[data-app-page="team-detail"] #workspaceBtn { background: var(--ui-surface-subtle, #f1f1f2) !important; border-color: var(--ui-border-strong, #d7d8db) !important; color: var(--ui-text, #282a2f) !important; }
 html.ilink-app body[data-app-page="team-detail"] #backBtn:hover,
 html.ilink-app body[data-app-page="team-detail"] #editTeamBtn:hover,
 html.ilink-app body[data-app-page="team-detail"] #markTeamingBtn:hover { background: #f9fafb !important; border-color: #d1d5db !important; }
@@ -267,15 +278,15 @@ html.ilink-app body[data-app-page="teacher-detail"] .td-apply-actions { display:
 .td-apply-note { color: #9ca3af; font-size: 12px; flex: 1 1 220px; }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actions.td-apply-actions .teacher-detail__submit {
     min-height: 42px; padding: 0 30px; border-radius: 10px;
-    background: #111827 !important; border: 1px solid #111827 !important; color: #fff !important; font-size: 14px; font-weight: 500;
+    background: var(--ui-surface-subtle, #f1f1f2) !important; border: 1px solid var(--ui-border-strong, #d7d8db) !important; color: var(--ui-text, #282a2f) !important; font-size: 14px; font-weight: 500;
     transition: transform .12s ease, background .2s;
 }
-html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actions.td-apply-actions .teacher-detail__submit:hover:not(:disabled) { background: #000 !important; border-color: #000 !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actions.td-apply-actions .teacher-detail__submit:hover:not(:disabled) { background: var(--ui-border, #e5e5e7) !important; border-color: var(--ui-border-strong, #d7d8db) !important; }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit:active:not(:disabled) { transform: scale(.95); }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-status { font-size: 13px; color: #6b7280; }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__pending-card { border-color: #f3f4f6; background: #f9fafb; }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__decision { border-radius: 9px; border-color: #e5e7eb; }
-html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__decision--approve { background: #111827; border-color: #111827; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__decision--approve { background: var(--ui-surface-subtle, #f1f1f2); border-color: var(--ui-border-strong, #d7d8db); color: var(--ui-text, #282a2f); }
 
 /* ---------- 响应式 ---------- */
 @media (max-width: 767.98px) {
@@ -283,4 +294,69 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__decision--a
     html.ilink-app body[data-app-page="team-detail"] .detail-view__actions { margin: 20px -20px -24px !important; padding: 16px 20px !important; }
     html.ilink-app body[data-app-page="teacher-detail"] .td-standalone-card { padding: 20px; }
     html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit { width: 100%; justify-content: center; }
+}
+
+}
+
+/* —— 编辑模式反杀：detail-view__meta 被 @layer 内的 display!important 排版规则接管后，
+   Bootstrap 的 .d-none 压不过它；且 !important 的层叠顺序反向（layer 内 > 未分层），
+   所以本规则必须也放进 legacy layer 才能生效。点击“编辑需求”时保证只显示编辑表单。 —— */
+@layer legacy {
+  html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__meta.d-none {
+    display: none !important;
+  }
+}
+
+/* —— 任务批阅工作台 + 资料库材料选择器 + 批阅时间线 —— */
+@layer legacy {
+
+  /* 左侧两级：待批阅任务 → 该任务的交付材料 */
+
+  /* 完成弹窗里的资料库选择器 */
+  .library-picker-list {
+    max-height: 260px; overflow-y: auto; border: 1px solid #eceef1;
+    border-radius: 10px; padding: 6px;
+  }
+  .library-picker-folder {
+    font-size: 11.5px; font-weight: 600; color: #9aa1ab; padding: 6px 8px 4px;
+    text-transform: uppercase; letter-spacing: .03em;
+  }
+  .library-picker-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+    border-radius: 8px; cursor: pointer; transition: background .12s ease;
+  }
+  .library-picker-item:hover { background: #f8f9ff; }
+  .library-picker-item.picked { background: #f0f2ff; }
+  .library-picker-item input { flex-shrink: 0; }
+  .library-picker-icon { width: 28px; height: 28px; border-radius: 6px; background: #f4f5f7; display: grid; place-items: center; color: #6b7280; flex-shrink: 0; }
+  .library-picker-icon svg { width: 14px; height: 14px; }
+  .library-picker-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .library-picker-meta { font-size: 11px; color: #9aa1ab; flex-shrink: 0; }
+
+  /* 批阅时间线（任务详情弹窗内） */
+  .il-review-timeline__title {
+    font-size: 12px; font-weight: 700; color: #5c6370; letter-spacing: .03em; margin: 14px 0 8px;
+  }
+  .il-review-round { border-left: 2px solid #c7d2fe; padding-left: 12px; margin-bottom: 12px; }
+  .il-review-round.approve { border-left-color: #bbf7d0; }
+  .il-review-round.reject { border-left-color: #fecaca; }
+  .il-review-round__head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .il-review-round__name { font-size: 12.5px; font-weight: 600; }
+  .il-review-round__action { font-size: 11px; font-weight: 500; padding: 1px 7px; border-radius: 4px; background: #eef2ff; color: #6366f1; }
+  .il-review-round__action.approve { background: #e9f9f1; color: #0f9d63; }
+  .il-review-round__action.reject { background: #fee2e2; color: #dc2626; }
+  .il-review-round__time { font-size: 11px; color: #9aa1ab; margin-left: auto; }
+  .il-review-round__text { font-size: 12.5px; color: #4b515b; line-height: 1.6; white-space: pre-wrap; margin-bottom: 6px; }
+  .il-review-file-comment {
+    background: #f8f9fa; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px;
+    font-size: 12.5px; color: #4b515b; line-height: 1.6; white-space: pre-wrap;
+  }
+  .il-review-file-comment strong {
+    display: block; font-size: 11.5px; color: #2563eb; margin-bottom: 3px;
+  }
+
+}
+
+/* 文本文件预览 */
+@layer legacy {
 }

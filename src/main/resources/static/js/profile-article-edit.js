@@ -54,6 +54,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('editCategory')?.addEventListener('change', markDirty);
     document.addEventListener('keydown', handleSaveShortcut);
     window.addEventListener('beforeunload', guardUnsavedChanges);
+    // 站内跳转走应用内弹窗；关标签页/刷新只能是浏览器原生提示（样式改不了）
+    window.ILinkLeaveGuard.install({
+        isDirty: () => isDirty,
+        message: '草稿已自动保存在本地，离开后回来可以点右下角「恢复草稿」接着写。'
+    });
 
     const preview = document.getElementById('editPreviewLink');
     if (preview && postId) {
@@ -207,28 +212,38 @@ function initDividerDrag() {
 }
 
 // ============ 左右同步滚动 ============
+// 用「标记刚写入的元素」代替定时器防回环：写对侧之前记下目标元素，
+// 该元素随之而来的 scroll 事件一定是自己写的，直接消费掉，不会互相追着滚。
+// 写入统一走 rAF 节流，一帧最多算一次、写一次。
 function initSyncScroll() {
     const editor = document.getElementById('mdEditor');
     const preview = document.getElementById('mdPreviewPane');
     if (!editor || !preview) return;
-    let fromEditor = false, fromPreview = false;
+    let pending = null;   // 自己刚写过 scrollTop 的元素
+    let rafId = 0;
 
-    editor.addEventListener('scroll', function () {
-        if (fromPreview) return;
-        fromEditor = true;
-        const em = editor.scrollHeight - editor.clientHeight;
-        const pm = preview.scrollHeight - preview.clientHeight;
-        if (em > 0) preview.scrollTop = (editor.scrollTop / em) * pm;
-        setTimeout(() => { fromEditor = false; }, 60);
-    });
-    preview.addEventListener('scroll', function () {
-        if (fromEditor) return;
-        fromPreview = true;
-        const em = editor.scrollHeight - editor.clientHeight;
-        const pm = preview.scrollHeight - preview.clientHeight;
-        if (pm > 0) editor.scrollTop = (preview.scrollTop / pm) * em;
-        setTimeout(() => { fromPreview = false; }, 60);
-    });
+    /** 按可滚动距离的比例，算出对侧应该滚到哪；对侧不可滚动时返回 null */
+    function mirror(from, to) {
+        const fm = from.scrollHeight - from.clientHeight;
+        const tm = to.scrollHeight - to.clientHeight;
+        if (fm <= 0 || tm <= 0) return null;
+        return (from.scrollTop / fm) * tm;
+    }
+
+    function onScroll(from, to) {
+        if (pending === from) { pending = null; return; }   // 这轮滚动是自己写进去的
+        if (rafId) return;
+        rafId = requestAnimationFrame(function () {
+            rafId = 0;
+            const next = mirror(from, to);
+            if (next === null || Math.abs(to.scrollTop - next) < 1) return;
+            pending = to;
+            to.scrollTop = next;
+        });
+    }
+
+    editor.addEventListener('scroll', function () { onScroll(editor, preview); });
+    preview.addEventListener('scroll', function () { onScroll(preview, editor); });
 }
 
 // ============ 编辑器键盘增强（Tab 缩进 / 魔法输入 / 快捷键） ============
@@ -382,7 +397,7 @@ async function handleAttachmentFiles(files) {
     for (const file of files) {
         const duplicate = window.ILinkFiles.findDuplicate(pendingAttachments, file.name);
         if (duplicate) {
-            const shouldReplace = window.confirm(`已存在同名附件“${file.name}”，是否替换？`);
+            const shouldReplace = uiConfirm(`已存在同名附件“${file.name}”，是否替换？`);
             if (!shouldReplace) continue;
             const previous = { ...duplicate };
             duplicate.name = file.name || '附件';
@@ -890,18 +905,19 @@ function applyMdAction(ta, action) {
     let rep = '', start = start0, end = end0;
 
     const markers = {
-        bold: { wrap: '**', label: '粗体' },
-        italic: { wrap: '*', label: '斜体' },
-        strikethrough: { wrap: '~~', label: '删除线' },
-        code: { wrap: '`', label: '代码' },
-        h2: { prefix: '## ', label: '标题' },
-        h3: { prefix: '### ', label: '小标题' },
-        ul: { prefix: '- ', label: '列表' },
-        ol: { prefix: '1. ', label: '有序' },
-        quote: { prefix: '> ', label: '引用' },
-        link: { prefix: '[', suffix: '](url)', label: '链接', selectLabel: '链接文字' },
-        image: { prefix: '![', suffix: '](url)', label: '图片', selectLabel: '图片描述' },
-        table: { line: '\n| 表头 | 表头 |\n| --- | --- |\n| 内容 | 内容 |\n' },
+        // 未选中文本时会把 label 插进正文，所以要按当前语言取值
+        bold: { wrap: '**', label: t('editor.markdown.bold') },
+        italic: { wrap: '*', label: t('editor.markdown.italic') },
+        strikethrough: { wrap: '~~', label: t('editor.markdown.strikethrough') },
+        code: { wrap: '`', label: t('editor.markdown.code') },
+        h2: { prefix: '## ', label: t('editor.markdown.h2') },
+        h3: { prefix: '### ', label: t('editor.markdown.h3') },
+        ul: { prefix: '- ', label: t('editor.markdown.ul') },
+        ol: { prefix: '1. ', label: t('editor.markdown.ol') },
+        quote: { prefix: '> ', label: t('editor.markdown.quote') },
+        link: { prefix: '[', suffix: '](url)', label: t('editor.markdown.link'), selectLabel: t('editor.markdown.linkText') },
+        image: { prefix: '![', suffix: '](url)', label: t('editor.markdown.image'), selectLabel: t('editor.markdown.imageAlt') },
+        table: { line: t('editor.markdown.table') },
         hr: { line: '\n---\n' },
     };
 

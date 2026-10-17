@@ -73,6 +73,11 @@ class UserServiceImplTest {
 
         assertTrue(result);
         verify(passwordEncoder).encode("Test@1234");
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userMapper).insert(captor.capture());
+        assertTrue(captor.getValue().getUsername().matches("^u[23456789abcdefghjkmnpqrstuvwxyz]{8}$"));
+        assertNotEquals("13800138000", captor.getValue().getUsername());
+        assertNull(captor.getValue().getRealName());
     }
 
     @Test
@@ -88,15 +93,39 @@ class UserServiceImplTest {
     }
 
     @Test
-    void registerRejectsDuplicateUsername() {
+    void registerRetriesUsernameCollisionAndStoresOpaqueInternalUsername() {
         when(userMapper.findByPhoneNumber(anyString())).thenReturn(null);
         User existing = new User();
         existing.setId(2L);
-        when(userMapper.findByUsername("testuser")).thenReturn(existing);
+        when(userMapper.findByUsername(anyString())).thenReturn(existing, null);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded_pwd");
+        when(userMapper.insert(any(User.class))).thenReturn(1);
 
         boolean result = userService.register(validRegister);
 
-        assertFalse(result);
+        assertTrue(result);
+        ArgumentCaptor<String> usernameChecks = ArgumentCaptor.forClass(String.class);
+        verify(userMapper, times(2)).findByUsername(usernameChecks.capture());
+        assertTrue(usernameChecks.getAllValues().get(0)
+            .matches("^u[23456789abcdefghjkmnpqrstuvwxyz]{8}$"));
+        assertTrue(usernameChecks.getAllValues().get(1)
+            .matches("^u[23456789abcdefghjkmnpqrstuvwxyz]{8}$"));
+
+        ArgumentCaptor<User> inserted = ArgumentCaptor.forClass(User.class);
+        verify(userMapper).insert(inserted.capture());
+        assertEquals(usernameChecks.getAllValues().get(1), inserted.getValue().getUsername());
+        assertNull(inserted.getValue().getRealName());
+    }
+
+    @Test
+    void registerStopsAfterFiveUsernameCollisions() {
+        when(userMapper.findByPhoneNumber(anyString())).thenReturn(null);
+        when(userMapper.findByUsername(anyString())).thenReturn(new User());
+
+        assertFalse(userService.register(validRegister));
+
+        verify(userMapper, times(5)).findByUsername(anyString());
+        verify(userMapper, never()).insert(any(User.class));
     }
 
     @Test

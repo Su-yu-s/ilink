@@ -1,5 +1,6 @@
 package cn.ilink.service;
 
+import cn.ilink.common.UserSessionRegistry;
 import cn.ilink.entity.TeacherApplication;
 import cn.ilink.entity.User;
 import cn.ilink.service.impl.ProjectApplicationServiceImpl;
@@ -19,6 +20,8 @@ class UserRoleServiceTest {
     private UserService userService;
     private TeacherApplicationServiceImpl teacherService;
     private ProjectApplicationServiceImpl projectService;
+    private RememberMeService rememberMeService;
+    private UserSessionRegistry sessionRegistry;
     private UserRoleService roleService;
 
     @BeforeEach
@@ -27,7 +30,10 @@ class UserRoleServiceTest {
         teacherService = mock(TeacherApplicationServiceImpl.class);
         projectService = mock(ProjectApplicationServiceImpl.class);
         CacheManager cacheManager = mock(CacheManager.class);
-        roleService = new UserRoleService(userService, teacherService, projectService, cacheManager);
+        rememberMeService = mock(RememberMeService.class);
+        sessionRegistry = mock(UserSessionRegistry.class);
+        roleService = new UserRoleService(userService, teacherService, projectService, cacheManager,
+            rememberMeService, sessionRegistry);
     }
 
     @Test
@@ -70,5 +76,36 @@ class UserRoleServiceTest {
         user.setUsername("user7");
         user.setRole(role);
         return user;
+    }
+
+    /**
+     * 回归报告 N-01：管理员在后台编辑自己时，必须保留发起请求的会话
+     * （否则 controller 随后的会话同步会撞上已失效会话 → 500 且数据已生效）。
+     * 常规路径（编辑别人）仍然吊销该用户全部会话与 remember-me。
+     */
+    @Test
+    void selfEditKeepsOwnSessionAndOtherSessionsStillRevoked() {
+        User user = user("ADMIN");
+        when(userService.updateById(user)).thenReturn(true);
+        when(teacherService.getOne(any())).thenReturn(null);
+
+        roleService.updateUserAndRole(user, "session-keep-me");
+
+        verify(sessionRegistry).invalidateAllExcept(7L, "session-keep-me");
+        verify(sessionRegistry, org.mockito.Mockito.never()).invalidateAll(7L);
+        // 自己改自己不必吊销自己的 remember-me（否则会话过期后直接被登出）
+        verify(rememberMeService, org.mockito.Mockito.never()).revokeAllForUser(7L);
+    }
+
+    @Test
+    void editingOthersRevokesAllSessionsAndRememberMe() {
+        User user = user("STUDENT");
+        when(userService.updateById(user)).thenReturn(true);
+        when(teacherService.getOne(any())).thenReturn(null);
+
+        roleService.updateUserAndRole(user);
+
+        verify(rememberMeService).revokeAllForUser(7L);
+        verify(sessionRegistry).invalidateAll(7L);
     }
 }

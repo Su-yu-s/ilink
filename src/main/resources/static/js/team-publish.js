@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (cancelBtn) {
         cancelBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            if (confirm('确定要放弃发布吗？已填写的内容将不会保存。')) {
+            if (uiConfirm('确定要放弃发布吗？已填写的内容将不会保存。')) {
                 window.location.href = '/team-market.html';
             }
         });
@@ -37,6 +37,51 @@ document.addEventListener('DOMContentLoaded', function() {
     bindRadioGroup('categoryChips', function(chip) {
         if (categoryInput) categoryInput.value = chip.dataset.value || '';
     });
+
+    // --- 参赛竞赛：目录搜索选择 或 自填，二者互斥、必填其一 ---
+    const competitionSearch = document.getElementById('competitionSearch');
+    const competitionMenu = document.getElementById('competitionMenu');
+    const competitionIdInput = document.getElementById('competitionId');
+    const customCompetitionInput = document.getElementById('customCompetitionInput');
+    const customCompetitionField = document.getElementById('customCompetitionField');
+    const toggleBtn = document.getElementById('toggleCustomCompetition');
+
+    if (competitionSearch && competitionMenu) {
+        CompetitionPicker.create({
+            input: competitionSearch,
+            menu: competitionMenu,
+            onSelect: function(comp) {
+                // 选了目录竞赛：记 id、清掉自填
+                if (competitionIdInput) competitionIdInput.value = comp.id;
+                if (customCompetitionInput) customCompetitionInput.value = '';
+            }
+        });
+    }
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            const toCustom = customCompetitionField.hidden;
+            customCompetitionField.hidden = !toCustom;
+            competitionSearch.style.display = toCustom ? 'none' : '';
+            competitionMenu.hidden = true;
+            // helper 行（hint + 链接文本）同步切换；SVG 图标保留
+            const btnText = document.getElementById('toggleCustomCompetitionText');
+            if (btnText) btnText.textContent = toCustom ? '返回目录选择' : '自行填写';
+            const hint = document.getElementById('customCompetitionHint');
+            if (hint) {
+                hint.innerHTML = toCustom
+                    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> 正在填写自定义竞赛'
+                    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> 目录里没有？';
+            }
+            if (toCustom) {
+                // 切到自填：清空目录选择
+                if (competitionIdInput) competitionIdInput.value = '';
+            } else if (customCompetitionInput) {
+                // 切回目录：清空自填
+                customCompetitionInput.value = '';
+            }
+        });
+    }
 
     // --- 截止日期 ---
     const deadlineInput = document.getElementById('deadline');
@@ -92,6 +137,80 @@ document.addEventListener('DOMContentLoaded', function() {
         desc.addEventListener('input', syncCounter);
         syncCounter();
     }
+
+    // --- 邀请导师（选填，单选）---
+    const mentorSearch = document.getElementById('mentorSearch');
+    const mentorMenu = document.getElementById('mentorMenu');
+    const mentorPicked = document.getElementById('mentorPicked');
+    const toggleMyMentors = document.getElementById('toggleMyMentors');
+
+    function renderMentorPicked() {
+        const id = document.getElementById('inviteMentorId').value;
+        const name = document.getElementById('inviteMentorName').value;
+        if (!mentorPicked) return;
+        if (!id) {
+            mentorPicked.hidden = true;
+            mentorPicked.innerHTML = '';
+            return;
+        }
+        mentorPicked.hidden = false;
+        mentorPicked.innerHTML =
+            '<span class="tp-chip is-active">' +
+            '已选导师：' + name +
+            '<button type="button" class="tp-mentor-remove" id="removeMentorBtn" aria-label="移除已选导师">×</button>' +
+            '</span>';
+        const removeBtn = document.getElementById('removeMentorBtn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                document.getElementById('inviteMentorId').value = '';
+                document.getElementById('inviteMentorName').value = '';
+                renderMentorPicked();
+            });
+        }
+    }
+
+    if (mentorSearch && mentorMenu) {
+        MentorPicker.create({
+            input: mentorSearch,
+            menu: mentorMenu,
+            onPick: function(mentor) {
+                document.getElementById('inviteMentorId').value = mentor.userId || '';
+                document.getElementById('inviteMentorName').value = mentor.realName || '';
+                renderMentorPicked();
+            }
+        });
+    }
+
+    if (toggleMyMentors) {
+        toggleMyMentors.addEventListener('click', function() {
+            if (!mentorMenu) return;
+            mentorMenu.hidden = false;
+            mentorSearch.setAttribute('aria-expanded', 'true');
+            mentorMenu.innerHTML = '<div class="tp-comp-empty">通讯录加载中…</div>';
+            apiFetch('/api/user/roster?side=mentors')
+                .then(function(r) { return r.json(); })
+                .then(function(res) {
+                    const mentors = (res && res.data) || [];
+                    // 通讯录行与搜索行同构（含 role 字段），共用同一套渲染
+                    if (mentorMenu.innerHTML.indexOf('加载中') === -1) return;
+                    if (!mentors.length) {
+                        mentorMenu.innerHTML = '<div class="tp-comp-empty">通讯录还是空的——还没有建立指导关系的导师</div>';
+                        return;
+                    }
+                    mentorMenu.innerHTML = mentors.map(function(m) {
+                        const title = [m.professionalTitle, m.researchDirection].filter(Boolean).join(' · ') || m.major || '';
+                        return '<button type="button" class="tp-comp-item" role="option" data-user-id="' + m.userId + '"' +
+                            ' data-name="' + m.realName + '">' +
+                            '<span class="tp-comp-name">' + m.realName + '</span>' +
+                            (title ? '<span class="tp-comp-org">' + title + '</span>' : '') +
+                            '</button>';
+                    }).join('');
+                })
+                .catch(function() {
+                    mentorMenu.innerHTML = '<div class="tp-comp-empty">通讯录加载失败，请稍后重试</div>';
+                });
+        });
+    }
 });
 
 // 提交表单发布组队需求
@@ -103,18 +222,17 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const categoryValue = document.getElementById('category').value;
-            const competitionMap = {
-                '技术开发': 1,
-                '创意设计': 2,
-                '市场营销': 3,
-                '学术研究': 4
-            };
-            const competitionId = competitionMap[categoryValue] || null;
+            const competitionIdRaw = document.getElementById('competitionId').value;
+            const competitionId = competitionIdRaw ? parseInt(competitionIdRaw, 10) : null;
+            const customCompetition = document.getElementById('customCompetitionInput')
+                ? document.getElementById('customCompetitionInput').value.trim() : '';
 
             const teamData = {
                 title: document.getElementById('title').value,
                 description: document.getElementById('description').value,
+                category: categoryValue,
                 competitionId: competitionId,
+                customCompetition: competitionId ? '' : customCompetition,
                 requiredSkills: document.getElementById('skills').value,
                 requiredMemberCount: null,
                 deadline: null
@@ -128,13 +246,17 @@ document.addEventListener('DOMContentLoaded', function() {
             teamData.requiredMemberCount = memberCount ? parseInt(memberCount, 10) : null;
             teamData.deadline = deadline || null;
             
-            // 验证表单（分类现在是芯片，浏览器不会再替我们拦空值）
+            // 验证表单（分类/竞赛现在是芯片与搜索选择，浏览器不会再替我们拦空值）
             if (!teamData.title || !teamData.description) {
                 showMessage('请填写必填字段', 'error');
                 return;
             }
             if (!categoryValue) {
-                showMessage('请选择分类', 'error');
+                showMessage('请选择项目方向', 'error');
+                return;
+            }
+            if (!competitionId && !customCompetition) {
+                showMessage('请选择参赛竞赛，或点击「目录里没有？自行填写」', 'error');
                 return;
             }
             
@@ -159,10 +281,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
 
                 if (result.code === 200) {
-                    showMessage('发布成功！', 'success');
+                    // 可选导师邀请：发布成功后向所选导师发送入队邀请。
+                    // 邀请失败不阻塞发布结果，只提示差异。
+                    const newTeamId = result.data && (result.data.id || result.data.teamId);
+                    const mentorId = document.getElementById('inviteMentorId') ? document.getElementById('inviteMentorId').value : '';
+                    const mentorName = document.getElementById('inviteMentorName') ? document.getElementById('inviteMentorName').value : '';
+                    if (newTeamId && mentorId) {
+                        try {
+                            const inviteResp = await apiFetch('/api/team/' + encodeURIComponent(newTeamId) + '/invite', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userIds: [Number(mentorId)] })
+                            });
+                            const inviteResult = await inviteResp.json();
+                            if (inviteResult.code === 200) {
+                                const invited = Array.isArray(inviteResult.data && inviteResult.data.invited)
+                                    ? inviteResult.data.invited.length : 0;
+                                showMessage(invited > 0
+                                    ? '发布成功！已向导师 ' + mentorName + ' 发送邀请'
+                                    : '发布成功，但导师邀请未发送（' + mentorName + ' 可能已在队中或已被邀请）', invited > 0 ? 'success' : 'warning');
+                            } else {
+                                showMessage('发布成功，但导师邀请发送失败：' + (inviteResult.message || '未知原因'), 'warning');
+                            }
+                        } catch (inviteError) {
+                            console.error('导师邀请发送失败:', inviteError);
+                            showMessage('发布成功，但导师邀请发送失败，可在团队详情页重新邀请', 'warning');
+                        }
+                    } else {
+                        showMessage('发布成功！', 'success');
+                    }
                     setTimeout(() => {
                         window.location.href = '/team-market.html';
-                    }, 1500);
+                    }, 1800);
                 } else if (result.code === 401) {
                     showMessage('请先登录', 'warning');
                     setTimeout(() => {

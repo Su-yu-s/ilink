@@ -110,10 +110,10 @@ class FeedbackControllerWebTest {
     void submit_returnsTooManyRequestsWhenRateLimited() throws Exception {
         when(loginAttemptService.tryFeedback(any())).thenReturn(false);
 
-        // Result.toHttpStatus() 不映射 429，限流沿用项目既有约定：HTTP 200 + body.code=429
-        // （与 AiAssistantController 的配额超限一致，前端 request() 按 body.code 报错）
+        // Result.toHttpStatus() 现在映射 429 → HTTP 429（与 body.code 一致，见核实报告 P2-2 同类问题），
+        // 前端 request() 依旧按 body.code 报错，行为兼容
         mockMvc.perform(multipart("/api/feedback").param("desc", "刷屏"))
-            .andExpect(status().isOk())
+            .andExpect(status().isTooManyRequests())
             .andExpect(jsonPath("$.code").value(429))
             .andExpect(jsonPath("$.message").value("提交过于频繁，请稍后再试"));
 

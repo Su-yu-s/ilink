@@ -1,0 +1,317 @@
+@layer legacy {
+/* ============================================================
+   Agentic GraphRAG 前端组件共享样式（kgd- 前缀）
+   由两处复用：
+   1) 全站悬浮入口 fragments/agentic-drawer.html（header 统一引入）
+   2) team-space 中央「AI 智能答疑」卡片的 inline 实例
+   ============================================================ */
+
+/* ---------- FAB（仅悬浮实例） ----------
+   与意见反馈按钮组（.fbk-fabs，右下角竖排两枚 52px，总高约 116px）同列，
+   位于其正上方 12px 处；渐变底色区分 AI 入口。 */
+/* ---------- 悬浮入口（仅悬浮实例） ---------- */
+/* 与意见反馈按钮（.fbk-fab）同款白底样式，位于其正上方 12px 处，靠图标区分。 */
+.kgd-fab { position: fixed; right: 24px; bottom: calc(152px + env(safe-area-inset-bottom, 0px)); z-index: 1040; width: 52px; height: 52px;
+           border: 1px solid var(--ui-border); border-radius: var(--radius-full); color: var(--ui-text-muted);
+           background: var(--ui-surface); box-shadow: var(--shadow-md); cursor: pointer; padding: 0;
+           display: flex; align-items: center; justify-content: center;
+           transition: transform .15s, box-shadow .15s, color .15s, border-color .15s; }
+.kgd-fab:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg);
+                 color: var(--ui-text); border-color: var(--ui-border-strong); }
+.kgd-fab:active { transform: scale(0.94); }
+.kgd-fab:focus-visible { outline: none; box-shadow: var(--shadow-md), var(--ui-ring); }
+.kgd-fab svg { width: 22px; height: 22px; }
+@media (max-width: 768px) {
+    .kgd-fab { right: 16px; bottom: calc(132px + env(safe-area-inset-bottom, 0px)); width: 46px; height: 46px; }
+    .kgd-fab svg { width: 20px; height: 20px; }
+}
+.kgd-fab.kgd-hidden { display: none; }
+
+/* ---------- 遮罩与抽屉（仅悬浮实例） ---------- */
+/* 页面级浮层 z-index 普遍在 1000~2100：抽屉整体压过它们，避免悬浮按钮遮挡发送区 */
+.kgd-mask { position: fixed; inset: 0; z-index: 3990; background: rgba(0,0,0,.3);
+            backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity .3s, visibility .3s;
+            /* 关闭时必须 visibility:hidden：只靠 opacity:0 的话，这个全屏 backdrop-filter 图层
+               会一直留在合成层里，滚动/动画时反复做全屏模糊，弱显卡上就是「一卡一卡」 */
+            visibility: hidden; }
+.kgd-mask.kgd-open { opacity: 1; pointer-events: auto; visibility: visible; }
+.kgd-drawer { position: fixed; top: 0; right: 0; z-index: 4000; height: 100%; width: 540px;
+              max-width: 96vw; background: #fff; box-shadow: -12px 0 40px -12px rgba(0,0,0,.25);
+              display: flex; flex-direction: column;
+              transform: translateX(102%); transition: transform .35s cubic-bezier(.22,1,.36,1); }
+.kgd-drawer.kgd-open { transform: translateX(0); }
+
+/* ---------- 头部（仅悬浮实例） ---------- */
+.kgd-head { display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
+.kgd-head-left { display: flex; align-items: center; gap: 10px; }
+.kgd-head-title { font-size: 14px; font-weight: 700; color: #111827; line-height: 1.3; }
+.kgd-close { width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent;
+             color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.kgd-close:hover { background: #f3f4f6; color: #374151; }
+.kgd-close svg { width: 18px; height: 18px; }
+
+/* ---------- AI 头像 ---------- */
+/* 品牌深色底：与发送按钮/选中态同语义（深色=AI 身份），替代原蓝紫渐变（全站唯一彩色离群点） */
+.kgd-avatar { width: 32px; height: 32px; border-radius: 50%; color: #fff; flex-shrink: 0;
+              background: var(--primary, #282a2f);
+              display: flex; align-items: center; justify-content: center; }
+.kgd-avatar svg { width: 16px; height: 16px; }
+.kgd-avatar-sm { width: 28px; height: 28px; }
+.kgd-avatar-sm svg { width: 14px; height: 14px; }
+
+/* ---------- 模式工具栏 ---------- */
+.kgd-toolbar { padding: 10px 20px 12px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
+.kgd-toolbar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.kgd-mode { background: #f3f4f6; border-radius: 8px; padding: 3px; display: flex; gap: 3px; flex-shrink: 0; }
+.kgd-mode button { border: 0; border-radius: 6px; padding: 7px 14px; font-size: 11.5px; font-weight: 600;
+                   background: transparent; color: #6b7280; cursor: pointer;
+                   display: inline-flex; align-items: center; gap: 5px; transition: all .2s; }
+.kgd-mode button svg { width: 12px; height: 12px; }
+.kgd-mode button.kgd-active { background: #fff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.kgd-context { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px;
+               font-size: 12px; color: #4b5563; padding: 8px 10px; max-width: 260px; outline: none;
+               cursor: pointer; transition: border-color .15s; }
+.kgd-context:hover { border-color: #d1d5db; }
+.kgd-hint { font-size: 10.5px; color: #9ca3af; margin-top: 8px; padding: 0 2px; }
+
+/* ---------- 消息流 + 滚动气泡 ---------- */
+.kgd-chatwrap { position: relative; flex: 1; min-height: 0; }
+.kgd-chat { position: absolute; inset: 0; overflow-y: auto; padding: 16px 20px; }
+.kgd-chat::-webkit-scrollbar { width: 4px; }
+/* 条身颜色交给 layout.css 的统一规则（滚动时才浮出、半透明），这里不再写死实色 */
+/* inline 实例（中央卡片内）：跟随卡片高度，限制滚动区 */
+.kgd-inline .kgd-chatwrap { flex: 1 1 auto; min-height: 300px; max-height: 56vh; }
+.kgd-inline .kgd-composer { border-top: 0; padding: 12px 0 0; }
+.kgd-inline .kgd-foot { margin-bottom: 2px; }
+
+.kgd-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.kgd-row-user { justify-content: flex-end; }
+.kgd-bubble { background: #f9fafb; border: 1px solid #f3f4f6; border-radius: 16px 16px 16px 4px;
+              padding: 12px 16px; max-width: 85%; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.kgd-msg-user { background: var(--ui-border-strong, #d7d8db); color: var(--ui-text, #282a2f); font-size: 13px; line-height: 1.6;
+                padding: 10px 16px; border-radius: 16px 4px 16px 16px; max-width: 80%;
+                white-space: pre-wrap; word-break: break-word; }
+.kgd-agent-bubble { flex: 1; min-width: 0; max-width: 85%; }
+.kgd-card-title { font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 8px;
+                  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kgd-dots { display: inline-flex; align-items: center; gap: 2px; }
+.kgd-dot { width: 4px; height: 4px; border-radius: 50%; background: #9ca3af;
+           animation: kgdPulse 1.4s ease-in-out infinite; }
+.kgd-dot:nth-child(2) { animation-delay: .2s; }
+.kgd-dot:nth-child(3) { animation-delay: .4s; }
+.kgd-badge-done { font-size: 10px; color: #16a34a; background: #f0fdf4; border: 1px solid #dcfce7;
+                  padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.kgd-badge-fb { font-size: 10px; color: #b45309; background: #fffbeb; border: 1px solid #fde68a;
+                padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.kgd-stop { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7280;
+            background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 7px; padding: 3px 9px;
+            cursor: pointer; transition: all .15s; margin-left: auto; }
+.kgd-stop:hover { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+.kgd-stop svg { width: 10px; height: 10px; }
+
+.kgd-trace { border-left: 1px solid #e5e7eb; padding-left: 12px; display: flex;
+             flex-direction: column; gap: 9px; }
+.kgd-trace.kgd-collapsed { display: none; }
+.kgd-chevron { width: 22px; height: 22px; border: 0; border-radius: 6px; background: transparent;
+               color: #9ca3af; cursor: pointer; display: inline-flex; align-items: center;
+               justify-content: center; transition: transform .2s; margin-left: 2px; }
+.kgd-chevron:hover { background: #f3f4f6; color: #374151; }
+.kgd-chevron svg { width: 12px; height: 12px; transition: transform .2s; }
+.kgd-card-title.kgd-open .kgd-chevron svg { transform: rotate(180deg); }
+.kgd-line { font-size: 12px; }
+.kgd-line-info { color: #9ca3af; font-style: italic; display: flex; gap: 8px; align-items: flex-start; }
+.kgd-line-action { display: flex; gap: 8px; align-items: flex-start; }
+.kgd-tool-chip { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px;
+                 background: #eff6ff; color: #2563eb; padding: 1px 6px; border-radius: 4px; }
+.kgd-line-obs { color: #374151; display: flex; gap: 8px; align-items: flex-start; }
+.kgd-line svg { width: 12px; height: 12px; flex-shrink: 0; margin-top: 1px; }
+.kgd-params { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px;
+              color: #9ca3af; margin-top: 2px; overflow: hidden; text-overflow: ellipsis;
+              white-space: nowrap; }
+
+/* ---------- 答案卡 ---------- */
+.kgd-answer-head { font-size: 12px; font-weight: 700; color: #111827; margin-bottom: 10px;
+                   display: flex; align-items: center; gap: 6px; }
+.kgd-answer-head svg { width: 14px; height: 14px; color: #22c55e; }
+.kgd-answer-text { font-size: 13px; color: #1f2937; line-height: 1.7; white-space: pre-wrap;
+                   word-break: break-word; }
+.kgd-cites { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.kgd-cite { font-size: 10px; font-weight: 600; background: #fff; color: #4b5563;
+            border: 1px solid #e5e7eb; padding: 2px 8px; border-radius: 4px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 4px; transition: all .15s; }
+.kgd-cite:hover { background: var(--ui-surface-subtle, #f1f1f2); color: var(--ui-text, #282a2f); border-color: var(--ui-border-strong, #d7d8db); }
+.kgd-cite svg { width: 10px; height: 10px; }
+.kgd-toggle { margin-top: 14px; width: 100%; font-size: 12px; color: #6b7280; background: transparent;
+              border: 1px dashed #d1d5db; border-radius: 8px; padding: 10px 0; cursor: pointer;
+              display: flex; align-items: center; justify-content: center; gap: 6px; transition: all .15s; }
+.kgd-toggle:hover { color: #111827; border-color: #6b7280; }
+.kgd-toggle svg { width: 14px; height: 14px; }
+.kgd-visual { margin-top: 14px; }
+.kgd-vline { position: relative; padding-left: 24px; }
+.kgd-vline::before { content: ''; position: absolute; left: 5px; top: 10px; bottom: 10px;
+                     width: 1px; background: #e5e7eb; }
+.kgd-vnode { position: relative; margin-bottom: 10px; cursor: pointer; }
+.kgd-vnode-dot { position: absolute; left: -24px; top: 50%; transform: translateY(-50%);
+                 width: 12px; height: 12px; border-radius: 50%; border: 2px solid; }
+.kgd-vnode-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 12px;
+                  font-weight: 600; border: 1px solid; border-radius: 8px; padding: 7px 12px;
+                  max-width: 100%; }
+.kgd-vnode-chip svg { width: 13px; height: 13px; flex-shrink: 0; }
+.kgd-vnode-detail { font-size: 11px; color: #6b7280; margin: 5px 0 0 4px; line-height: 1.6;
+                    white-space: pre-wrap; word-break: break-word; display: none; }
+.kgd-vnode.kgd-open .kgd-vnode-detail { display: block; }
+.kgd-legend { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb;
+              font-size: 10px; color: #9ca3af; display: flex; gap: 14px; }
+.kgd-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+
+/* ---------- 滚动气泡 ---------- */
+.kgd-scrollbadge { position: absolute; right: 16px; bottom: 16px; width: 40px; height: 40px;
+                   border-radius: 12px; background: #fff; color: var(--ui-text, #282a2f); border: 1px solid var(--ui-border-strong, #d7d8db); cursor: pointer;
+                   display: flex; flex-direction: column; align-items: center; justify-content: center;
+                   box-shadow: 0 6px 18px -8px rgba(40,42,47,.25); opacity: 0; visibility: hidden;
+                   transform: translateY(8px); transition: all .22s cubic-bezier(.2,.8,.3,1); z-index: 5; }
+.kgd-scrollbadge.kgd-show { opacity: 1; visibility: visible; transform: translateY(0); }
+.kgd-scrollbadge:hover { background: var(--ui-surface-subtle, #f1f1f2); }
+.kgd-scrollbadge .kgd-count { font-size: 13px; font-weight: 700; line-height: 1; }
+.kgd-scrollbadge svg { width: 13px; height: 13px; margin-top: 1px; }
+
+/* ---------- 输入区 ---------- */
+.kgd-composer { padding: 14px 20px; border-top: 1px solid #f3f4f6; flex-shrink: 0; }
+.kgd-error { font-size: 12px; color: #dc2626; background: #fef2f2; border: 1px solid #fecaca;
+             border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; display: none; }
+.kgd-error.kgd-show { display: block; }
+.kgd-inputwrap { position: relative; display: flex; align-items: flex-end; gap: 12px; }
+.kgd-inputbox { flex: 1; background: #f9fafb; border: 1px solid var(--ui-border, #e5e7eb); border-radius: var(--radius-lg, 12px);
+                padding: 10px 14px; transition: border-color .15s, background .15s, box-shadow .15s; position: relative; }
+.kgd-inputbox:focus-within { border-color: var(--primary, #282a2f); background: #fff;
+                             box-shadow: var(--ui-ring, 0 0 0 3px rgba(40,42,47,.12)); }
+/* html.ilink-app 前缀反压 layout.css 的全站 textarea 覆盖层（border-color/min-height !important），杜绝框中框 */
+.kgd-inputbox textarea, html.ilink-app .kgd-inputbox textarea {
+    width: 100%; border: 0 !important; outline: none !important;
+    background: transparent !important; box-shadow: none !important;
+    padding: 2px; appearance: none; resize: none;
+    font-size: 14px; font-family: inherit; line-height: 1.6; color: #111827;
+    min-height: 28px !important; max-height: 96px; }
+html.ilink-app .kgd-inputbox textarea:focus { border: 0 !important; box-shadow: none !important; outline: none !important; }
+.kgd-inputbox textarea::placeholder { color: #9ca3af; }
+.kgd-tplmenu { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); background: #fff;
+               border: 1px solid #e5e7eb; border-radius: 12px; padding: 5px; display: none;
+               box-shadow: 0 12px 30px -10px rgba(20,25,40,.22); z-index: 50; }
+.kgd-tplmenu.kgd-show { display: block; animation: kgdSlideIn .16s ease; }
+.kgd-tplitem { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 12px;
+               color: #4b5563; display: flex; align-items: center; gap: 8px; }
+.kgd-tplitem:hover { background: var(--primary-light, #ECEDEF); color: var(--primary, #282a2f); }
+.kgd-tplitem .kgd-k { font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+                      color: #9aa1ab; margin-left: auto; }
+.kgd-sendbtn { border: 1px solid var(--ui-border-strong, #d7d8db); border-radius: var(--radius-lg, 12px);
+               background: var(--ui-surface-subtle, #f1f1f2); color: var(--ui-text, #282a2f); font-size: 14px;
+               font-weight: 600; padding: 0 22px; min-height: 46px; cursor: pointer; display: inline-flex;
+               align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; transition: background .15s, transform .15s;
+               box-shadow: none; }
+.kgd-sendbtn:hover { background: var(--ui-border, #e5e5e7); border-color: var(--ui-border-strong, #d7d8db); }
+.kgd-sendbtn:disabled { opacity: .45; cursor: not-allowed; }
+.kgd-sendbtn:active { transform: scale(.97); }
+.kgd-sendbtn svg { width: 14px; height: 14px; }
+.kgd-foot { display: flex; justify-content: space-between; font-size: 10.5px; color: #9ca3af;
+            margin-top: 10px; padding: 0 2px; gap: 8px; flex-wrap: wrap; }
+.kgd-foot .kgd-lockhint { display: inline-flex; align-items: center; gap: 4px; }
+.kgd-foot svg { width: 13px; height: 13px; }
+.kgd-spin { width: 12px; height: 12px; border: 1.5px solid #d1d5db; border-top-color: #111827;
+            border-radius: 50%; animation: kgdSpin .8s linear infinite; display: inline-block; }
+
+/* 快速模式：无标题卡，加载/错误态直接住在答案气泡里 */
+.kgd-quick-loading { display: flex; align-items: center; gap: 8px; color: #9ca3af; font-size: 13px; }
+.kgd-quick-error { color: #b91c1c; font-size: 13px; }
+
+/* ---------- 实体浮层 ---------- */
+.kgd-pop { position: fixed; z-index: 4100; width: 288px; background: #fff; border: 1px solid #e5e7eb;
+           border-radius: 12px; box-shadow: 0 24px 48px -12px rgba(0,0,0,.25); padding: 16px;
+           opacity: 0; pointer-events: none; transform: translateY(6px);
+           transition: opacity .2s, transform .2s; }
+.kgd-pop.kgd-show { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.kgd-pop-type { font-size: 10px; font-weight: 700; background: var(--ui-surface-subtle, #f1f1f2); color: var(--ui-text, #282a2f); border: 1px solid var(--ui-border-strong, #d7d8db);
+                padding: 2px 8px; border-radius: 4px; }
+.kgd-pop-name { font-size: 14px; font-weight: 700; color: #111827; }
+.kgd-pop-desc { font-size: 12px; color: #4b5563; line-height: 1.7; margin: 8px 0 12px; }
+.kgd-pop-more { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+.kgd-pop-more.kgd-open { max-height: 220px; }
+.kgd-pop-morerow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+                   font-size: 11px; padding: 6px 0; border-bottom: 1px solid #f9fafb; }
+.kgd-pop-morerow:last-child { border-bottom: 0; }
+.kgd-pop-morerow .kgd-k { color: #9ca3af; flex-shrink: 0; }
+.kgd-pop-morerow .kgd-v { color: #374151; font-weight: 600; text-align: right; word-break: break-all; }
+.kgd-pop-src { font-size: 10px; color: #9ca3af; padding-top: 8px; border-top: 1px solid #f3f4f6;
+               display: flex; align-items: center; gap: 4px; }
+.kgd-pop-src svg { width: 12px; height: 12px; flex-shrink: 0; }
+.kgd-pop-morebtn { margin-top: 10px; width: 100%; font-size: 12px; color: #4b5563; background: #fff;
+                   border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 0; cursor: pointer;
+                   transition: all .15s; }
+.kgd-pop-morebtn:hover { color: #111827; background: #f9fafb; }
+
+/* ---------- 动画 ---------- */
+@keyframes kgdSlideIn { from { opacity: 0; transform: translateY(6px); }
+                        to { opacity: 1; transform: translateY(0); } }
+.kgd-enter { animation: kgdSlideIn .28s ease-out forwards; opacity: 0; }
+@keyframes kgdPulse { 0%, 100% { opacity: .3; transform: scale(.85); }
+                      50% { opacity: 1; transform: scale(1); } }
+@keyframes kgdSpin { to { transform: rotate(360deg); } }
+
+/* ====== 答案卡 Markdown 渲染（kgd-md） ====== */
+/* white-space 必须重置为 normal：源码里的换行已由 <p>/<li> 表达，pre-wrap 会把每个换行再渲染成空行（间距翻倍） */
+.kgd-answer-text.kgd-md { font-size: 14px; line-height: 1.75; white-space: normal; }
+.kgd-md > :first-child { margin-top: 0; }
+.kgd-md > :last-child { margin-bottom: 0; }
+.kgd-md h1, .kgd-md h2, .kgd-md h3, .kgd-md h4 {
+  margin: 14px 0 8px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #111827;
+}
+.kgd-md h1 { font-size: 17px; }
+.kgd-md h2 { font-size: 15.5px; }
+.kgd-md h3, .kgd-md h4 { font-size: 14px; }
+.kgd-md p { margin: 6px 0; }
+.kgd-md ul, .kgd-md ol { margin: 6px 0; padding-left: 20px; }
+.kgd-md li { margin: 3px 0; }
+.kgd-md table {
+  width: 100%;
+  margin: 10px 0;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  display: block;
+  overflow-x: auto;
+}
+.kgd-md th, .kgd-md td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.kgd-md th { background: #f3f4f6; font-weight: 600; white-space: nowrap; }
+.kgd-md tr:nth-child(2n) td { background: #fafafa; }
+.kgd-md code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12.5px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.kgd-md pre {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 10px 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+.kgd-md pre code { background: transparent; color: inherit; padding: 0; }
+.kgd-md blockquote {
+  margin: 8px 0;
+  padding: 2px 12px;
+  border-left: 3px solid #d1d5db;
+  color: #6b7280;
+}
+.kgd-md a { color: #2563eb; }
+
+}

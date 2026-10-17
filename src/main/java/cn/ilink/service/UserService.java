@@ -13,4 +13,6 @@ public interface UserService extends IService<User> {
     User ensureAvatarAssigned(User user);
     boolean updateProfile(Long userId, ProfileRequest profileRequest);
     boolean changePassword(Long userId, String oldPassword, String newPassword);
+    /** 校验当前密码是否正确。用于注销账号等需要二次验证的敏感操作。 */
+    boolean checkPassword(Long userId, String rawPassword);
 }

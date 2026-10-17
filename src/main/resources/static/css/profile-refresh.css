@@ -1,3 +1,4 @@
+@layer legacy {
 /* =====================================================================
  * profile-refresh.css  v1.0
  * 个人中心深度优化覆盖层（个人资料 / 我的文章 / 我的收藏 / 修改密码）
@@ -406,4 +407,184 @@ html.ilink-app body[data-profile-page="password"] #passwordForm > div:last-child
   html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-grid {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* =====================================================================
+ * 注销账号页（profile-delete）
+ * 危险操作用低饱和灰红 #DC2626 点色，其余保持中性灰，避免整页发红。
+ * ===================================================================== */
+
+html.ilink-app body[data-profile-page="delete"] .il-profile-nav-item--danger {
+  color: #A85C58 !important;
+}
+html.ilink-app body[data-profile-page="delete"] .il-profile-nav-item--danger:hover {
+  color: #8f4b47 !important;
+  background: #fdf3f2 !important;
+}
+html.ilink-app body[data-profile-page="delete"] .il-profile-nav-item--danger.active,
+html.ilink-app body[data-profile-page="delete"] .il-profile-nav-item--danger.active:hover {
+  color: #8f4b47 !important;
+  background: #fdf3f2 !important;
+  font-weight: 600;
+}
+html.ilink-app body[data-profile-page="delete"] .il-profile-nav-item--danger.active::before {
+  background: #A85C58 !important;
+}
+
+.acct-delete {
+  display: grid;
+  gap: 24px;
+  max-width: 720px;
+}
+
+/* ---------- 步骤指示 ---------- */
+.acct-delete__steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 20px;
+  list-style: none;
+  border-bottom: 1px solid #ececee;
+  flex-wrap: wrap;
+}
+
+.acct-delete__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  color: #74767b;
+  font-size: 13px;
+  transition: color .18s ease, background-color .18s ease;
+}
+
+.acct-delete__step:not(:last-child)::after {
+  content: "";
+  width: 16px;
+  height: 1px;
+  margin-left: 4px;
+  background: #e5e5e7;
+}
+
+.acct-delete__step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #e5e5e7;
+  background: #f7f7f8;
+  color: #74767b;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.acct-delete__step.is-active {
+  color: #282A2F;
+  background: #f3f4f6;
+  font-weight: 600;
+}
+.acct-delete__step.is-active .acct-delete__step-index {
+  border-color: #282A2F;
+  background: #282A2F;
+  color: #fff;
+}
+
+.acct-delete__step.is-done .acct-delete__step-index {
+  border-color: #D7D8DB;
+  background: #fff;
+  color: #52555C;
+}
+
+/* ---------- 面板 ---------- */
+.acct-delete__panel {
+  display: grid;
+  gap: 18px;
+}
+.acct-delete__panel[hidden] { display: none; }
+
+.acct-delete__notice {
+  display: flex;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef7f6;
+  color: #7f1d1d;
+}
+.acct-delete__notice svg { flex-shrink: 0; margin-top: 2px; }
+.acct-delete__notice strong { display: block; font-size: 14px; margin-bottom: 4px; }
+.acct-delete__notice p { margin: 0; font-size: 13px; line-height: 1.6; color: #8f4b47; }
+
+.acct-delete__list {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #52555C;
+}
+.acct-delete__list strong { color: #282A2F; font-weight: 600; }
+
+.acct-delete__hint {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #f7f7f8;
+  color: #63666D;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.acct-delete__field {
+  display: grid;
+  gap: 8px;
+  max-width: 420px;
+}
+.acct-delete__field-hint {
+  margin: 0;
+  font-size: 12px;
+  color: #74767b;
+}
+
+.acct-delete__warning {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: #fef7f6;
+  color: #8f4b47;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.acct-delete__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+html.ilink-app body[data-profile-page="delete"] .il-btn--danger {
+  background: #DC2626;
+  border-color: #DC2626;
+  color: #fff;
+}
+html.ilink-app body[data-profile-page="delete"] .il-btn--danger:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+html.ilink-app body[data-profile-page="delete"] .il-btn--danger:active { transform: scale(.97); }
+
+@media (max-width: 640px) {
+  .acct-delete__step:not(:last-child)::after { display: none; }
+  .acct-delete__actions .il-btn { width: 100%; justify-content: center; }
+}
+
 }

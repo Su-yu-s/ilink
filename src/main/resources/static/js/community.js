@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         for (const file of files) {
             const duplicate = window.ILinkFiles.findDuplicate(pendingAttachments, file.name);
             if (duplicate) {
-                const shouldReplace = window.confirm(`已存在同名附件“${file.name}”，是否替换？`);
+                const shouldReplace = uiConfirm(`已存在同名附件“${file.name}”，是否替换？`);
                 if (!shouldReplace) continue;
                 const previous = { ...duplicate };
                 duplicate.name = file.name || '附件';
@@ -371,17 +371,10 @@ function goToArticle(id) {
 
 async function loadCurrentUser() {
     try {
-        const r = await apiFetch('/api/user/profile', { credentials: 'same-origin' });
-        const contentType = r.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            currentUser = null;
-            return;
-        }
-        const j = await r.json();
-        if (j && j.code === 200) {
-            currentUser = j.data || null;
-            return;
-        }
+        // loadCurrentUserOnce 会在匿名访客（页头无 data-current-user-id）时直接返回 null，
+        // 不再发出必然 401 的资料请求（核实报告 P2-6）
+        currentUser = await loadCurrentUserOnce();
+        return;
     } catch (e) {
         console.warn('当前未登录或用户信息读取失败', e);
     }
@@ -553,7 +546,9 @@ async function loadPosts(page) {
             if (p.pinned || p.top || p.isTop) card.classList.add('is-pinned');
             card.setAttribute('role', 'link');
             card.setAttribute('tabindex', '0');
-            card.setAttribute('aria-label', '阅读全文：' + (p.title || '未命名文章'));
+            card.setAttribute('aria-label', t('ui.community.readFull', {
+                title: p.title || t('ui.community.unnamedPost')
+            }));
 
             const authorAvatar = (p.authorDisplay || '用户').charAt(0).toUpperCase();
             const authorAvatarUrl = p.authorAvatar || null;
@@ -589,7 +584,7 @@ async function loadPosts(page) {
                 <div class="il-pc-top">
                     ${badgesHtml}
                     <span class="card-tag primary il-tag ${tagClass}">${escapeHtml(badge)}</span>
-                    <span class="il-pc-views">阅读 ${views}</span>
+                    <span class="il-pc-views">${escapeHtml(t('ui.community.views', { count: views }))}</span>
                 </div>
                 <h2 class="card-title il-post-title">
                     ${escapeHtml(p.title)}
@@ -671,7 +666,8 @@ function renderPager(pag, pagerEl, innerEl) {
     if (totalPages <= 1) {
         // 单页时保留总数信息条（GitHub 风格），页码按钮在跨页后自动出现
         pagerEl.classList.remove('d-none');
-        innerEl.innerHTML = '<li class="page-item disabled"><span class="page-link text-secondary">共 ' + total + ' 篇</span></li>';
+        innerEl.innerHTML = '<li class="page-item disabled"><span class="page-link text-secondary">' +
+            escapeHtml(t('ui.community.totalPosts', { count: total })) + '</span></li>';
         return;
     }
     pagerEl.classList.remove('d-none');

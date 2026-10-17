@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Design Tokens v7.4
    Unified Black, White & Gray Design System
@@ -208,25 +209,4 @@
   --transition-fast-home: 350ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* Dark mode support (optional) */
-[data-theme="dark"] {
-  --text-primary: var(--color-white);
-  --text-secondary: var(--color-gray-300);
-  --text-tertiary: var(--color-gray-500);
-  --bg-body: #2A2A2A;
-  --bg-light: #2A2A2A;
-  --bg-white: #1A1A1A;
-  --bg-surface: #1A1A1A;
-  --bg-surface-hover: #333333;
-  --bg-muted: #333333;
-  --border-light: var(--color-gray-700);
-  --border-default: var(--color-gray-600);
-  --primary: #F9FAFB;
-  --primary-dark: #FFFFFF;
-  --primary-light: rgba(255, 255, 255, 0.08);
-  --glass-bg: rgba(26, 26, 26, 0.96);
-  --glass-bg-light: rgba(42, 42, 42, 0.98);
-  --glass-bg-strong: #1A1A1A;
-  --glass-border: rgba(64, 64, 64, 0.95);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }

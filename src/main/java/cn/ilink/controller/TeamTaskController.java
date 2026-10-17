@@ -7,6 +7,7 @@ import cn.ilink.dto.TaskCommentDTO;
 import cn.ilink.dto.TaskParticipantDTO;
 import cn.ilink.dto.TaskStatusUpdateDTO;
 import cn.ilink.dto.TeamTaskDTO;
+import cn.ilink.entity.TaskReview;
 import cn.ilink.entity.TaskSubmission;
 import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.TeamDemand;
@@ -18,6 +19,7 @@ import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.TeamTaskService;
 import cn.ilink.service.UserService;
+import cn.ilink.service.kg.KgIndexService;
 import cn.ilink.vo.TaskCommentVO;
 import cn.ilink.vo.TaskParticipantVO;
 import cn.ilink.vo.TeamTaskVO;
@@ -47,6 +49,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import cn.ilink.util.DisplayNameResolver;
 
 @Controller
 @RequestMapping("/api")
@@ -73,7 +76,16 @@ public class TeamTaskController {
     private TaskSubmissionMapper taskSubmissionMapper;
 
     @Autowired
+    private cn.ilink.mapper.TaskReviewMapper taskReviewMapper;
+
+    @Autowired
+    private cn.ilink.mapper.TaskParticipantMapper taskParticipantMapper;
+
+    @Autowired
     private UserService userService;
+
+    @Autowired
+    private cn.ilink.service.kg.KgIndexService kgIndexService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -121,30 +133,58 @@ public class TeamTaskController {
             return Result.unauthorized().toResponseEntity();
         }
         TeamDemand team = teamDemandService.getById(teamId);
-        ResponseEntity<Result<?>> guard = requireLeaderAndTaskEnabled(team, user);
-        if (guard != null) {
-            return guard;
+        if (team == null) {
+            return Result.notFound(MSG_TEAM_NOT_FOUND).toResponseEntity();
+        }
+        if (!isTaskFeatureEnabled(team)) {
+            return Result.badRequest(MSG_TASK_DISABLED).toResponseEntity();
+        }
+        if (!isTeamLeader(team, user)) {
+            // 非队长仅允许创建"分配给自己"的任务：被分配者本人拆解子任务/自建任务时使用
+            boolean selfAssign = dto != null && dto.getAssignedTo() != null
+                && Objects.equals(dto.getAssignedTo(), user.getId());
+            if (!selfAssign) {
+                return Result.forbidden().toResponseEntity();
+            }
         }
         if (dto == null || dto.getTaskTitle() == null || dto.getTaskTitle().trim().isEmpty()) {
             return Result.badRequest("\u4efb\u52a1\u540d\u79f0\u4e0d\u80fd\u4e3a\u7a7a").toResponseEntity();
         }
+        String fieldError = validateTaskFields(dto);
+        if (fieldError != null) {
+            return Result.badRequest(fieldError).toResponseEntity();
+        }
         if (dto.getAssignedTo() == null || !isTeamParticipantByUserId(teamId, dto.getAssignedTo())) {
             return Result.badRequest(MSG_VALID_ASSIGNEE).toResponseEntity();
         }
+        // AI 拆解只允许一层：子任务不能再拆，否则任务会无限套娃
+        if (dto.getParentTaskId() != null) {
+            TeamTask parent = teamTaskService.getById(dto.getParentTaskId());
+            if (parent == null || !Objects.equals(parent.getTeamId(), teamId)) {
+                return Result.badRequest("父任务不存在").toResponseEntity();
+            }
+            if (parent.getParentTaskId() != null) {
+                return Result.badRequest("子任务不能再拆解").toResponseEntity();
+            }
+        }
         dto.setTeamId(teamId);
         TeamTaskVO task = teamTaskService.createTask(dto, user.getId());
-        // 给被指派人发送任务分配通知
-        TeamTaskDTO finalDto = dto;
+        // 任务入知识图谱索引队列：TEAM scope 仅团队成员可见（失败不影响创建）
+        if (task != null && task.getId() != null) {
+            kgIndexService.enqueue("TASK", task.getId(), dto.getTaskTitle(), dto.getTaskDescription(),
+                cn.ilink.entity.KgEntity.SCOPE_TEAM, teamId, user.getId());
+        }
+        // 给被指派人发送任务分配通知（自己给自己分配的不通知）
         Long assigneeId = dto.getAssignedTo();
-        User assignee = userService.getById(assigneeId);
-        String assigneeName = assignee != null ? (assignee.getRealName() != null ? assignee.getRealName() : assignee.getUsername()) : "队员";
-        notificationService.create(
-            assigneeId,
-            user.getId(),
-            "TASK_ASSIGNED",
-            "新任务指派",
-            (user.getRealName() != null ? user.getRealName() : user.getUsername()) + " 给你分配了任务「" + finalDto.getTaskTitle() + "」",
-            null);
+        if (!Objects.equals(assigneeId, user.getId())) {
+            notificationService.create(
+                assigneeId,
+                user.getId(),
+                "TASK_ASSIGNED",
+                "新任务指派",
+                DisplayNameResolver.resolve(user) + " 给你分配了任务「" + dto.getTaskTitle() + "」",
+                null);
+        }
         return Result.ok("\u4efb\u52a1\u521b\u5efa\u6210\u529f", task).toResponseEntity();
     }
 
@@ -168,6 +208,10 @@ public class TeamTaskController {
         }
         if (dto != null && dto.getAssignedTo() != null && !isTeamParticipantByUserId(task.getTeamId(), dto.getAssignedTo())) {
             return Result.badRequest(MSG_VALID_ASSIGNEE).toResponseEntity();
+        }
+        String fieldError = validateTaskFields(dto);
+        if (fieldError != null) {
+            return Result.badRequest(fieldError).toResponseEntity();
         }
         boolean success = teamTaskService.updateTask(taskId, dto);
         if (!success) {
@@ -193,7 +237,8 @@ public class TeamTaskController {
             return Result.notFound(MSG_TASK_NOT_FOUND).toResponseEntity();
         }
         TeamDemand team = teamDemandService.getById(task.getTeamId());
-        if (!canAccessTask(team, task, user)) {
+        // 状态推进是写操作，只认任务的直接关系人：导师可批阅但不应替队员推进进度
+        if (!canOperateTask(team, task, user)) {
             return Result.forbidden().toResponseEntity();
         }
         String targetStatus = dto.getStatus().trim().toUpperCase(Locale.ROOT);
@@ -259,13 +304,13 @@ public class TeamTaskController {
             TeamTask assignedTask = teamTaskService.getById(taskId);
             if (assignedTask != null) {
                 User assignee = userService.getById(dto.getUserId());
-                String assigneeName = assignee != null ? (assignee.getRealName() != null ? assignee.getRealName() : assignee.getUsername()) : "队员";
+                String assigneeName = assignee != null ? DisplayNameResolver.resolve(assignee) : "队员";
                 notificationService.create(
                     dto.getUserId(),
                     user.getId(),
                     "TASK_ASSIGNED",
                     "新任务指派",
-                    (user.getRealName() != null ? user.getRealName() : user.getUsername()) + " 给你分配了任务「" + assignedTask.getTaskTitle() + "」",
+                    DisplayNameResolver.resolve(user) + " 给你分配了任务「" + assignedTask.getTaskTitle() + "」",
                     null);
             }
         }
@@ -390,7 +435,7 @@ public class TeamTaskController {
     @ResponseBody
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<Result<?>> reviewTask(@PathVariable Long taskId,
-                                                    @RequestBody Map<String, String> body,
+                                                    @RequestBody Map<String, Object> body,
                                                     HttpSession session) {
         User user = ControllerUtils.requireUser(session);
         if (user == null) {
@@ -401,25 +446,196 @@ public class TeamTaskController {
             return Result.notFound(MSG_TASK_NOT_FOUND).toResponseEntity();
         }
         TeamDemand team = teamDemandService.getById(task.getTeamId());
-        ResponseEntity<Result<?>> guard = requireLeaderAndTaskEnabledVoid(team, user);
-        if (guard != null) {
-            return guard;
+        if (!isTaskFeatureEnabled(team)) {
+            return Result.badRequest(MSG_TASK_DISABLED).toResponseEntity();
         }
-        if (!"REVIEW".equals(task.getStatus())) {
+        // 批阅权限：队长或导师（导师与队长平级，不区分权威）
+        boolean isLeader = isTeamLeader(team, user);
+        boolean isMentor = isApprovedMentor(team.getId(), user.getId());
+        if (!isLeader && !isMentor) {
+            return Result.fail(403, "只有队长或导师可以批阅任务").toResponseEntity();
+        }
+        if (!"REVIEW".equals(task.getStatus()) && !"COMMENT".equals(body == null ? "" : strOf(body.get("action")))) {
             return Result.badRequest("只有待审核任务可以执行审核").toResponseEntity();
         }
-        String action = body == null ? "" : body.getOrDefault("action", "");
+        String action = body == null ? "" : strOf(body.get("action"));
+        if (!"COMPLETED".equals(action) && !"RETURNED".equals(action) && !"COMMENT".equals(action)) {
+            return Result.badRequest("\u65e0\u6548\u64cd\u4f5c").toResponseEntity();
+        }
+        String overall = strOf(body.get("overall"));
+        if (overall != null) overall = overall.trim();
+        Object fileComments = body == null ? null : body.get("fileComments");
+
+        // 驳回是否定动作，必须给出理由：整体点评或任一逐文件点评非空
+        if ("RETURNED".equals(action) && (overall == null || overall.isEmpty()) && !hasAnyFileComment(fileComments)) {
+            return Result.badRequest("驳回时必须至少填写一条点评（整体点评或针对文件的点评）").toResponseEntity();
+        }
+
+        // COMMENT 为补充点评，不改变任务状态；通过/驳回沿用原状态机
         if ("COMPLETED".equals(action)) {
-            return teamTaskService.transitionTaskStatus(taskId, "REVIEW", "COMPLETED")
-                ? Result.ok("\u4efb\u52a1\u5df2\u786e\u8ba4\u5b8c\u6210", null).toResponseEntity()
-                : Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
+            if (!teamTaskService.transitionTaskStatus(taskId, "REVIEW", "COMPLETED")) {
+                return Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
+            }
+        } else if ("RETURNED".equals(action)) {
+            if (!teamTaskService.transitionTaskStatus(taskId, "REVIEW", "IN_PROGRESS")) {
+                return Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
+            }
         }
-        if ("RETURNED".equals(action)) {
-            return teamTaskService.transitionTaskStatus(taskId, "REVIEW", "IN_PROGRESS")
-                ? Result.ok("\u5df2\u9000\u56de\u4fee\u6539", null).toResponseEntity()
-                : Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
+
+        // 批阅留痕：时间线/逐文件点评/驳回理由的唯一数据源
+        TaskReview review = new TaskReview();
+        review.setTaskId(taskId);
+        review.setSubmissionId(longOf(body == null ? null : body.get("submissionId")));
+        review.setReviewerId(user.getId());
+        review.setVerdict("COMMENT".equals(action) ? "COMMENT" : ("COMPLETED".equals(action) ? "PASS" : "REJECT"));
+        review.setOverallComment(overall == null || overall.isEmpty() ? null : overall);
+        review.setFileComments(fileComments == null ? null : serializeAttachments(fileComments));
+        review.setCreatedAt(new Date());
+        taskReviewMapper.insert(review);
+
+        // 通知提交者（最近一次提交的人）
+        TaskSubmission latest = taskSubmissionMapper.selectOne(new LambdaQueryWrapper<TaskSubmission>()
+            .eq(TaskSubmission::getTaskId, taskId)
+            .orderByDesc(TaskSubmission::getCreatedAt)
+            .last("LIMIT 1"));
+        Long submitterId = latest != null ? latest.getSubmitterId() : task.getAssignedTo();
+        if (submitterId != null && !submitterId.equals(user.getId())) {
+            String reviewerName = DisplayNameResolver.resolve(user);
+            String verdictText;
+            String content;
+            if ("COMPLETED".equals(action)) {
+                verdictText = "任务已通过";
+                content = reviewerName + " 通过了任务「" + task.getTaskTitle() + "」"
+                    + (overall == null || overall.isEmpty() ? "" : "：" + truncate(overall, 80));
+            } else if ("RETURNED".equals(action)) {
+                int commentCount = countFileComments(fileComments) + ((overall == null || overall.isEmpty()) ? 0 : 1);
+                verdictText = "任务被驳回";
+                content = reviewerName + " 驳回了任务「" + task.getTaskTitle() + "」，留下 " + commentCount + " 条修改建议";
+            } else {
+                verdictText = "收到新的批阅点评";
+                content = reviewerName + " 对任务「" + task.getTaskTitle() + "」补充了批阅点评";
+            }
+            notificationService.create(submitterId, user.getId(), "TASK_REVIEWED", verdictText, content, null);
         }
-        return Result.badRequest("\u65e0\u6548\u64cd\u4f5c").toResponseEntity();
+        return Result.ok("COMMENT".equals(action) ? "点评已保存"
+            : ("COMPLETED".equals(action) ? "\u4efb\u52a1\u5df2\u786e\u8ba4\u5b8c\u6210" : "\u5df2\u9000\u56de\u4fee\u6539"),
+            null).toResponseEntity();
+    }
+
+    /** 直接完成通道：requires_review=0 的任务，被分配者在进行中可直接结束（不经审核） */
+    @PostMapping("/tasks/{taskId}/complete")
+    @ResponseBody
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseEntity<Result<?>> completeTaskDirectly(@PathVariable Long taskId,
+                                                          HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
+        TeamTask task = teamTaskService.getById(taskId);
+        if (task == null) {
+            return Result.notFound(MSG_TASK_NOT_FOUND).toResponseEntity();
+        }
+        TeamDemand team = teamDemandService.getById(task.getTeamId());
+        if (!isTaskFeatureEnabled(team)) {
+            return Result.badRequest(MSG_TASK_DISABLED).toResponseEntity();
+        }
+        if (task.getAssignedTo() == null || !task.getAssignedTo().equals(user.getId())) {
+            return Result.fail(403, "\u4ec5\u88ab\u6307\u6d3e\u7684\u961f\u5458\u53ef\u4ee5\u5b8c\u6210\u4efb\u52a1").toResponseEntity();
+        }
+        if (Boolean.TRUE.equals(task.getRequiresReview())) {
+            return Result.badRequest("该任务需要提交审阅，请先交付材料").toResponseEntity();
+        }
+        if (!teamTaskService.transitionTaskStatus(taskId, "IN_PROGRESS", "COMPLETED")) {
+            return Result.badRequest("任务状态已变化，请刷新后重试").toResponseEntity();
+        }
+        return Result.ok("任务已完成", null).toResponseEntity();
+    }
+
+    /** 批阅记录（任务详情时间线）：提交事件来自 submissions，批阅事件来自 task_reviews */
+    @GetMapping("/tasks/{taskId}/reviews")
+    @ResponseBody
+    public ResponseEntity<Result<?>> getTaskReviews(@PathVariable Long taskId,
+                                                    HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
+        TeamTask task = teamTaskService.getById(taskId);
+        if (task == null) {
+            return Result.notFound(MSG_TASK_NOT_FOUND).toResponseEntity();
+        }
+        TeamDemand team = teamDemandService.getById(task.getTeamId());
+        if (!canAccessTask(team, task, user)) {
+            return Result.forbidden().toResponseEntity();
+        }
+        List<TaskReview> reviews = taskReviewMapper.selectList(new LambdaQueryWrapper<TaskReview>()
+            .eq(TaskReview::getTaskId, taskId)
+            .orderByAsc(TaskReview::getCreatedAt));
+        List<Map<String, Object>> rows = reviews.stream().map(review -> {
+            Map<String, Object> row = new java.util.LinkedHashMap<String, Object>();
+            row.put("id", review.getId());
+            row.put("taskId", review.getTaskId());
+            row.put("submissionId", review.getSubmissionId());
+            row.put("verdict", review.getVerdict());
+            row.put("overall", review.getOverallComment());
+            row.put("fileComments", review.getFileComments());
+            row.put("createdAt", review.getCreatedAt());
+            User reviewer = review.getReviewerId() == null ? null : userService.getById(review.getReviewerId());
+            row.put("reviewerName", reviewer != null
+                ? DisplayNameResolver.resolve(reviewer)
+                : "批阅者");
+            return row;
+        }).collect(java.util.stream.Collectors.toList());
+        return Result.ok(MSG_SUCCESS, rows).toResponseEntity();
+    }
+
+    private boolean isApprovedMentor(Long teamId, Long userId) {
+        return approvedMentorIds(teamId).contains(userId);
+    }
+
+    /** 团队内已批准的导师 ID 列表（批阅权限与提交通知的接收方） */
+    private List<Long> approvedMentorIds(Long teamId) {
+        if (teamId == null) return List.of();
+        return teamApplicationService.list(new LambdaQueryWrapper<TeamApplication>()
+            .eq(TeamApplication::getTeamId, teamId)
+            .eq(TeamApplication::getStatus, "APPROVED")
+            .eq(TeamApplication::getMemberRole, "MENTOR"))
+            .stream().map(TeamApplication::getUserId).collect(java.util.stream.Collectors.toList());
+    }
+
+    private static String strOf(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private static Long longOf(Object value) {
+        if (value == null) return null;
+        try {
+            return Long.valueOf(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** fileComments 结构：[{fileId, fileName, comment}]；至少一条非空点评 */
+    private boolean hasAnyFileComment(Object fileComments) {
+        return countFileComments(fileComments) > 0;
+    }
+
+    private int countFileComments(Object fileComments) {
+        if (!(fileComments instanceof List)) return 0;
+        int count = 0;
+        for (Object item : (List<?>) fileComments) {
+            if (item instanceof Map) {
+                Object comment = ((Map<?, ?>) item).get("comment");
+                if (comment != null && !String.valueOf(comment).isBlank()) count++;
+            }
+        }
+        return count;
+    }
+
+    private static String truncate(String text, int max) {
+        return text.length() <= max ? text : text.substring(0, max) + "…";
     }
 
     @GetMapping("/tasks/{taskId}/submissions")
@@ -441,7 +657,9 @@ public class TeamTaskController {
         LambdaQueryWrapper<TaskSubmission> wrapper = new LambdaQueryWrapper<TaskSubmission>()
             .eq(TaskSubmission::getTaskId, taskId)
             .orderByDesc(TaskSubmission::getCreatedAt);
-        if (!isTeamLeader(team, user)) {
+        // 队长与导师要看全部提交（批阅的前提）；其余人只看自己交的。
+        // 少了导师这一支，导师进批阅工作台只会看到「这个提交没有附件材料」
+        if (!isTeamLeader(team, user) && !isApprovedMentor(team.getId(), user.getId())) {
             wrapper.eq(TaskSubmission::getSubmitterId, user.getId());
         }
         List<Map<String, Object>> rows = taskSubmissionMapper.selectList(wrapper).stream()
@@ -499,8 +717,20 @@ public class TeamTaskController {
                 user.getId(),
                 "TASK_SUBMITTED",
                 "任务已提交",
-                (user.getRealName() != null ? user.getRealName() : user.getUsername()) + " 提交了任务「" + task.getTaskTitle() + "」，请审核",
+                DisplayNameResolver.resolve(user) + " 提交了任务「" + task.getTaskTitle() + "」，请审核",
                 null);
+        }
+        // 导师也有批阅权，同样收到提交通知
+        for (Long mentorId : approvedMentorIds(task.getTeamId())) {
+            if (!mentorId.equals(user.getId()) && !mentorId.equals(leaderId)) {
+                notificationService.create(
+                    mentorId,
+                    user.getId(),
+                    "TASK_SUBMITTED",
+                    "任务已提交",
+                    DisplayNameResolver.resolve(user) + " 提交了任务「" + task.getTaskTitle() + "」，请批阅",
+                    null);
+            }
         }
         return Result.ok("\u63d0\u4ea4\u6210\u529f\uff0c\u7b49\u5f85\u961f\u957f\u5ba1\u6838", null).toResponseEntity();
     }
@@ -531,8 +761,11 @@ public class TeamTaskController {
             log.info("[任务] 用户是团队成员, 开始查询任务列表");
             List<TeamTaskVO> tasks = teamTaskService.getTasksByTeam(teamId);
             log.info("[任务] 查询到 {} 个任务", tasks != null ? tasks.size() : 0);
-            if (!isTeamLeader(team, user)) {
-                log.info("[任务] 非队长, 过滤只显示自己的任务");
+            // 导师与队长平级、同样可以批阅任务，因此也要看到全部任务，
+            // 否则导师的批阅工作台会因为没有可见任务而空着
+            boolean canSeeAllTasks = isTeamLeader(team, user) || isApprovedMentor(team.getId(), user.getId());
+            if (!canSeeAllTasks) {
+                log.info("[任务] 非队长/导师, 过滤只显示自己的任务");
                 tasks = tasks.stream()
                     .filter(task -> task.getAssignedTo() != null && task.getAssignedTo().equals(user.getId()))
                     .collect(Collectors.toList());
@@ -575,6 +808,41 @@ public class TeamTaskController {
         return team != null && TEAMING.equals(team.getStatus());
     }
 
+    private static final java.util.Set<String> ALLOWED_TASK_TYPES =
+        java.util.Set.of("DEVELOPMENT", "DESIGN", "TESTING", "DOCUMENTATION", "OTHER");
+
+    /**
+     * 任务字段的长度/取值校验。返回 null 表示通过。
+     * 不做校验时超长标题、超长类型会直接撞列宽，被数据库拒绝后变成 500。
+     */
+    private String validateTaskFields(TeamTaskDTO dto) {
+        if (dto == null) {
+            return null;
+        }
+        String error = ControllerUtils.checkMaxLength(
+            dto.getTaskTitle(), ControllerUtils.TASK_TITLE_MAX, "任务名称");
+        if (error == null) {
+            error = ControllerUtils.checkMaxLength(
+                dto.getTaskType(), ControllerUtils.TASK_TYPE_MAX, "任务类型");
+        }
+        if (error != null) {
+            return error;
+        }
+        String type = dto.getTaskType() == null ? "" : dto.getTaskType().trim();
+        if (!type.isEmpty() && !ALLOWED_TASK_TYPES.contains(type.toUpperCase(Locale.ROOT))) {
+            return "任务类型非法，仅支持 DEVELOPMENT / DESIGN / TESTING / DOCUMENTATION / OTHER";
+        }
+        Integer priority = dto.getPriority();
+        if (priority != null && (priority < 1 || priority > 4)) {
+            return "优先级需在 1-4 之间";
+        }
+        if (dto.getEstimatedHours() != null
+                && dto.getEstimatedHours().compareTo(java.math.BigDecimal.ZERO) < 0) {
+            return "预估工时不能为负数";
+        }
+        return null;
+    }
+
     private boolean isTeamLeader(TeamDemand team, User user) {
         return team != null && user != null && team.getCreatorId() != null && team.getCreatorId().equals(user.getId());
     }
@@ -602,7 +870,27 @@ public class TeamTaskController {
         if (!isTaskFeatureEnabled(team) || task == null || user == null) {
             return false;
         }
-        return isTeamLeader(team, user) || (task.getAssignedTo() != null && task.getAssignedTo().equals(user.getId()));
+        // 导师与队长平级、有批阅权，必须能看任务的提交材料与批阅时间线，
+        // 否则新加入的导师点开批阅工作台只会看到「这个提交没有附件材料」
+        return canOperateTask(team, task, user) || isApprovedMentor(team.getId(), user.getId());
+    }
+
+    /** 任务的直接关系人：队长、被指派人、参与者。状态推进这类写操作只认这些人 */
+    private boolean canOperateTask(TeamDemand team, TeamTask task, User user) {
+        if (!isTaskFeatureEnabled(team) || task == null || user == null) {
+            return false;
+        }
+        if (isTeamLeader(team, user)) {
+            return true;
+        }
+        if (task.getAssignedTo() != null && task.getAssignedTo().equals(user.getId())) {
+            return true;
+        }
+        // 参与者名单里的人（addParticipant 写入的行）同样应该能看/评论自己参与的任务，
+        // 否则他们会变成「查不到自己参与的任务」的隐形人。
+        return taskParticipantMapper.selectCount(new LambdaQueryWrapper<cn.ilink.entity.TaskParticipant>()
+            .eq(cn.ilink.entity.TaskParticipant::getTaskId, task.getId())
+            .eq(cn.ilink.entity.TaskParticipant::getUserId, user.getId())) > 0;
     }
 
     private String serializeAttachments(Object attachments) {
@@ -630,7 +918,7 @@ public class TeamTaskController {
         view.put("createdAt", submission.getCreatedAt());
         User submitter = userService.getById(submission.getSubmitterId());
         if (submitter != null) {
-            view.put("submitterName", submitter.getRealName() != null ? submitter.getRealName() : submitter.getUsername());
+            view.put("submitterName", DisplayNameResolver.resolve(submitter));
             view.put("submitterAvatar", submitter.getAvatar());
         }
         return view;

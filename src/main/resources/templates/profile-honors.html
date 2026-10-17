@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh-CN" th:lang="${#locale.language == 'en' ? 'en' : 'zh-CN'}" class="ilink-app" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -126,7 +126,7 @@
         function edit(id){window.location.href='/profile-asset-edit.html?id='+id;}
 
         function del(id){
-            if(!confirm('确定删除该成果？'))return;
+            if(!uiConfirm('确定删除该成果？'))return;
             apiFetch('/api/asset/'+id,{method:'DELETE',credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
                 if(d.code===200){load(cp);showMessage('已删除','success');}else{showMessage(d.message||'删除失败','error');}
             }).catch(function(){showMessage('网络错误','error');});
@@ -135,7 +135,7 @@
         function batchDel(){
             var ids=Object.keys(selectedIds);
             if(!ids.length)return;
-            if(!confirm('确定删除选中的 '+ids.length+' 项成果？'))return;
+            if(!uiConfirm('确定删除选中的 '+ids.length+' 项成果？'))return;
             Promise.all(ids.map(function(id){return apiFetch('/api/asset/'+id,{method:'DELETE',credentials:'same-origin'}).then(function(r){return r.json();});}))
                 .then(function(results){var ok=results.filter(function(r){return r.code===200;}).length;selectedIds={};manageMode=false;document.getElementById('btnManage').textContent='管理成果';document.getElementById('btnManage').classList.remove('is-active');load(cp);showMessage('已删除 '+ok+' 项','success');})
                 .catch(function(){showMessage('网络错误','error');});

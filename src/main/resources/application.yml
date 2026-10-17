@@ -23,8 +23,8 @@ spring:
       dev: local
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/ilink?useUnicode=true&characterEncoding=utf8&useSSL=${DB_USE_SSL:true}&serverTimezone=Asia/Shanghai
-#    username: ${DB_USERNAME:root}
-    username: ${DB_USERNAME:ilink}
+#    username: ${DB_USERNAME:ilink}
+    username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:changeme_in_production}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
@@ -81,21 +81,31 @@ logging:
 app:
   public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8090}
   mail:
-    from: ${APP_MAIL_FROM:no-reply@ilink.local}
+    # 发件人须为 Resend 已验证域名下的地址（ilink.work 已验证）
+    from: "${APP_MAIL_FROM:iLink <noreply@ilink.work>}"
+    # 留空则回落 SMTP / 开发日志；生产用环境变量注入
+    resend-api-key: ${RESEND_API_KEY:}
   api:
     expose-error-detail: false
   ai:
-    # Agnes AI（OpenAI 兼容）。此处不给默认值：dev 由不入库的 application-local.yml 提供，prod 必须用环境变量。
-    # 国际站节点：https://apihub.agnes-ai.com/v1（默认国内节点更快）
+    # 阿里云百炼 DashScope（OpenAI 兼容模式）。此处不给默认 Key：dev 由不入库的 application-local.yml 提供，prod 必须用环境变量。
+    # 聊天/抽取 = qwen3.7-flash（AiClient 中关闭思考模式）；知识图谱 Embedding = qwen3.7-text-embedding-flash（同账号 Key 通用）
     enabled: ${AI_ENABLED:true}
-    base-url: ${AGNES_BASE_URL:https://apihub.agnes-ai.cn/v1}
-    api-key: ${AGNES_API_KEY:}
-    model: ${AGNES_MODEL:agnes-2.5-flash}
+    base-url: ${DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+    api-key: ${DASHSCOPE_API_KEY:}
+    model: ${DASHSCOPE_MODEL:qwen3.7-flash}
     max-tokens: 2048
     timeout-ms: 60000
     # 联网搜索：Bing 公开网页搜索为 AI 答疑补充上下文（AI_SEARCH_ENABLED=false 可关闭）
     search-enabled: ${AI_SEARCH_ENABLED:true}
     search-max-results: ${AI_SEARCH_MAX_RESULTS:5}
+    # 知识图谱 Embedding（Qwen 文本向量，OpenAI 兼容接口）。
+    # 未配置 Key 时向量化/向量检索自动降级，抽取入库与关键词检索不受影响。
+    embedding:
+      base-url: ${EMBEDDING_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      api-key: ${EMBEDDING_API_KEY:}
+      model: ${EMBEDDING_MODEL:qwen3.7-text-embedding-flash}
+      timeout-ms: 30000
   feedback:
     # 意见反馈推送到开发者微信（Server酱 https://sct.ftqq.com）。
     # 同样不给默认值：dev 由不入库的 application-local.yml 提供，prod 必须用环境变量。

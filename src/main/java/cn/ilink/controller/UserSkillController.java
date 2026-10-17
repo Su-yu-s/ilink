@@ -52,6 +52,14 @@ public class UserSkillController {
             return Result.badRequest("技能名称不能超过64个字符").toResponseEntity();
         }
 
+        // 技能等级 1-5（实体上没有校验注解，之前 99 会被直接写库）
+        if (skill.getSkillLevel() != null && (skill.getSkillLevel() < 1 || skill.getSkillLevel() > 5)) {
+            return Result.badRequest("技能等级需在 1-5 之间").toResponseEntity();
+        }
+        if (skill.getYearsExperience() != null && skill.getYearsExperience() < 0) {
+            return Result.badRequest("从业年限不能为负数").toResponseEntity();
+        }
+
         if (userSkillService.isSkillExists(user.getId(), skill.getSkillName().trim())) {
             return Result.badRequest("该技能已存在").toResponseEntity();
         }

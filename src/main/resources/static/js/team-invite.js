@@ -44,8 +44,9 @@
     }
 
     function notifyUser(message, type) {
-        if (typeof notify === 'function') { notify(message, type || 'info'); return; }
-        if (typeof showToast === 'function') { showToast(message, type || 'info'); }
+        // 曾经的两级兜底 notify/showToast 全站都不存在，导致这里的提示被静默丢弃；
+        // showMessage 是 common.js 暴露的全局入口（内部走 Toast 组件）。
+        if (typeof showMessage === 'function') { showMessage(message, type || 'info'); }
     }
 
     function inviterRole() {

@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
+import cn.ilink.util.DisplayNameResolver;
 
 @Service
 public class ProjectMilestoneServiceImpl extends ServiceImpl<ProjectMilestoneMapper, ProjectMilestone> implements ProjectMilestoneService {
@@ -137,7 +139,7 @@ public class ProjectMilestoneServiceImpl extends ServiceImpl<ProjectMilestoneMap
 
         if (milestone.getStatus() != null) {
             try {
-                ProjectMilestone.MilestoneStatus status = ProjectMilestone.MilestoneStatus.valueOf(milestone.getStatus().toUpperCase());
+                ProjectMilestone.MilestoneStatus status = ProjectMilestone.MilestoneStatus.valueOf(milestone.getStatus().toUpperCase(Locale.ROOT));
                 vo.setStatusDesc(status.getDescription());
             } catch (IllegalArgumentException e) {
                 vo.setStatusDesc(milestone.getStatus());
@@ -147,7 +149,7 @@ public class ProjectMilestoneServiceImpl extends ServiceImpl<ProjectMilestoneMap
         if (milestone.getCreatedBy() != null) {
             var creator = userService.getById(milestone.getCreatedBy());
             if (creator != null) {
-                vo.setCreatorName(creator.getRealName() != null ? creator.getRealName() : creator.getUsername());
+                vo.setCreatorName(DisplayNameResolver.resolve(creator));
             }
         }
 

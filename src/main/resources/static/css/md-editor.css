@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Markdown Editor — 公共组件
    使用页面：编写文章 / 成果发布弹窗 / 编辑成果
@@ -627,4 +628,6 @@
 @media (max-width: 520px) {
   .il-upload-file { flex-basis: 100%; width: 100%; }
   .il-upload-file__actions { grid-column: 2; justify-content: flex-start; }
+}
+
 }

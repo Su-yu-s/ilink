@@ -1,3 +1,4 @@
+@layer legacy {
 /* iLink teacher detail - scoped, responsive detail shell */
 body[data-app-page="teacher-detail"] {
     --td-surface: #ffffff;
@@ -459,4 +460,6 @@ body[data-app-page="teacher-detail"] .teacher-detail__decision:disabled {
     body[data-app-page="teacher-detail"] .teacher-detail__decision {
         width: 100%;
     }
+}
+
 }

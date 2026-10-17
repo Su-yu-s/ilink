@@ -112,6 +112,9 @@ public class Result<T> {
             case 401: return HttpStatus.UNAUTHORIZED;
             case 403: return HttpStatus.FORBIDDEN;
             case 404: return HttpStatus.NOT_FOUND;
+            case 405: return HttpStatus.METHOD_NOT_ALLOWED;
+            case 415: return HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+            case 429: return HttpStatus.TOO_MANY_REQUESTS;
             case 500: return HttpStatus.INTERNAL_SERVER_ERROR;
             default:  return HttpStatus.OK;
         }

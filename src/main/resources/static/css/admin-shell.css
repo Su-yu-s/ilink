@@ -1,3 +1,4 @@
+@layer legacy {
 /* ========================================
    iLink Admin Shell v1.0 — 管理后台专属样式
    从 style.css 分离, 仅 admin.html 加载
@@ -1483,4 +1484,6 @@ body[data-app-page="admin"] .btn-danger:hover {
     grid-template-columns: 1fr ;
     gap: 10px ;
   }
+}
+
 }

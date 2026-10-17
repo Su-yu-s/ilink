@@ -1,0 +1,239 @@
+@layer legacy {
+/* ============================================================
+   review-workbench.css — 批阅工作台（材料列表 / 预览 / 逐份点评）
+   抽自 detail-refresh.css：团队空间与组队详情都会打开这套工作台，
+   放公共文件避免两处各维护一份。预览皮肤（.ilpv-*）也在这里，
+   来自 ILinkPreview 的类名约定。
+   ============================================================ */
+  .review-workbench {
+    position: fixed; inset: 0; z-index: 1050; background: #f8f9fa;
+    display: flex; flex-direction: column;
+    /* 关闭时必须 visibility:hidden + pointer-events:none：
+       只写 opacity:0 的话，这个全屏浮层仍然接收所有点击，页面看着正常但「什么都点不了」 */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .2s ease, visibility .2s ease;
+  }
+  .review-workbench.show { opacity: 1; visibility: visible; pointer-events: auto; }
+
+  .rw-topbar {
+    height: 56px; background: #fff; border-bottom: 1px solid #eceef1;
+    padding: 0 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0;
+  }
+  .rw-back {
+    width: 32px; height: 32px; border-radius: 8px; border: none; background: transparent;
+    display: grid; place-items: center; color: #5c6370; font-size: 18px; cursor: pointer;
+  }
+  .rw-back:hover { background: #f4f5f7; color: #1f2328; }
+  .rw-title-block { flex: 1; min-width: 0; }
+  .rw-title { font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rw-title-sub { font-size: 11.5px; color: #9aa1ab; margin-top: 2px; display: flex; align-items: center; gap: 8px; overflow: hidden; white-space: nowrap; }
+  .rw-dot { color: #d0d4da; }
+  .rw-body { flex: 1; display: flex; min-height: 0; }
+  .rw-materials { width: 240px; background: #fff; border-right: 1px solid #eceef1; display: flex; flex-direction: column; flex-shrink: 0; }
+  .rw-mat-head {
+    padding: 14px 16px 10px; font-size: 11px; font-weight: 700; color: #9aa1ab;
+    letter-spacing: .05em; text-transform: uppercase;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .rw-mat-progress { font-size: 10px; color: #6366f1; background: #eef2ff; padding: 2px 6px; border-radius: 4px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+  .rw-mat-list { flex: 1; overflow-y: auto; padding: 0 8px 12px; }
+  .rw-task-group + .rw-task-group { margin-top: 6px; }
+  .rw-task-head { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background .12s ease; }
+  .rw-task-head:hover { background: #f4f5f7; }
+  .rw-task-group.active .rw-task-head { background: #eef2ff; }
+  .rw-task-name { font-size: 12.5px; font-weight: 600; color: #2c313a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rw-task-sub { font-size: 11px; color: #9aa1ab; }
+  .rw-task-mats { padding: 2px 0 2px 6px; }
+  .rw-mat-none { padding: 6px 10px; font-size: 11.5px; color: #b0b6bf; }
+  .rw-mat-item {
+    display: flex; align-items: flex-start; gap: 10px; padding: 10px;
+    border-radius: 8px; cursor: pointer; margin-bottom: 2px; transition: background .12s ease;
+  }
+  .rw-mat-item:hover { background: #f4f5f7; }
+  .rw-mat-item.active { background: #eef2ff; }
+  .rw-mat-icon { width: 32px; height: 32px; border-radius: 7px; background: #f4f5f7; display: grid; place-items: center; color: #6b7280; flex-shrink: 0; }
+  .rw-mat-icon svg { width: 15px; height: 15px; }
+  .rw-mat-item.active .rw-mat-icon { color: #6366f1; background: #e0e3ff; }
+  .rw-mat-info { flex: 1; min-width: 0; }
+  .rw-mat-name { display: block; font-size: 12.5px; font-weight: 500; color: #2c313a; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rw-mat-item.active .rw-mat-name { color: #6366f1; font-weight: 600; }
+  .rw-mat-meta { font-size: 10.5px; color: #9aa1ab; }
+  .rw-mat-badge {
+    flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%; background: #e5e7eb;
+    display: grid; place-items: center; color: #fff; font-size: 9px; margin-top: 1px;
+  }
+  .rw-mat-badge.ok { background: #10b981; }
+  .rw-preview { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #f8f9fa; }
+  .rw-pv-head {
+    height: 48px; background: #fff; border-bottom: 1px solid #eceef1;
+    padding: 0 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .rw-pv-icon { width: 26px; height: 26px; border-radius: 6px; background: #f4f5f7; display: grid; place-items: center; color: #6b7280; }
+  .rw-pv-icon svg { width: 14px; height: 14px; }
+  .rw-pv-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rw-pv-sub { font-size: 11px; color: #9aa1ab; flex-shrink: 0; }
+  .rw-pv-hint { margin-left: auto; font-size: 11.5px; color: #6366f1; background: #eef2ff; padding: 3px 10px; border-radius: 6px; font-weight: 500; flex-shrink: 0; }
+  .rw-pv-canvas-wrap { flex: 1; overflow: auto; padding: 24px; display: flex; align-items: flex-start; justify-content: center; min-height: 0; }
+  .library-pv-canvas {
+    display: flex; flex-direction: column;
+    width: 100%; background: #fff; border-radius: 10px;
+    box-shadow: 0 2px 12px -4px rgba(0, 0, 0, .08); overflow: hidden;
+  }
+  /* 图片 / PDF / 降级卡片撑满预览区并按容器缩放；md、txt 这类长内容撑高自身，由外层滚动 */
+  .library-pv-canvas > .ilpv-img,
+  .library-pv-canvas > .ilpv-pdf-frame,
+  .library-pv-canvas > .ilpv-fallback,
+  .library-pv-canvas > .ilpv-doc { flex: 1 1 auto; min-height: 0; }
+  /* 图片预览：中性灰底（原为紫色渐变，与全站黑白灰不一致）；滚轮/按钮缩放，放大后可拖动 */
+  .ilpv-img { position: relative; background: #f7f8fa; min-height: 320px; display: grid; place-items: center; padding: 16px; overflow: hidden; }
+  .ilpv-img img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(0,0,0,.2); background: #fff; transform-origin: center center; will-change: transform; }
+  html.ilink-app .ilpv-img.is-zoomed img { cursor: grab; }
+  /* 图片按容器高度收敛：尺寸约束（min-height + max-height）会把画布撑破，撑出滚动条。
+     md/txt 这类长内容仍走「撑高自身、外层滚动」的老路，故只对含图片的画布生效 */
+  .library-pv-canvas:has(> .ilpv-img) { height: 100%; min-height: 0; }
+  /* grid 行默认由内容撑高，图片的 max-height:100% 就失去了参照物（图仍按原尺寸溢出后被裁）。
+     minmax(0,1fr) 把行高钉在容器高度上，图片才真正按容器缩放 */
+  .library-pv-canvas > .ilpv-img { min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .library-pv-canvas > .ilpv-img img { max-height: 100%; }
+  html.ilink-app .ilpv-img.is-dragging img { cursor: grabbing; }
+
+  /* 缩放工具条：右下角浮层，不占图片位置 */
+  .ilpv-img__zoom {
+    position: absolute; right: 12px; bottom: 12px; z-index: 2;
+    display: flex; align-items: center; gap: 2px; padding: 4px;
+    background: rgb(255 255 255 / 94%); border: 1px solid #eceef1; border-radius: 10px;
+    box-shadow: 0 4px 14px -6px rgb(0 0 0 / 20%);
+  }
+  .ilpv-img__zoom button {
+    min-width: 28px; height: 28px; padding: 0 8px;
+    font-family: inherit; font-size: 13px; line-height: 1; color: #4b5563;
+    background: transparent; border: 0; border-radius: 7px; cursor: pointer;
+    transition: background .12s ease;
+  }
+  .ilpv-img__zoom button:hover { background: #f0f1f3; color: #1f2328; }
+  .ilpv-img__level { min-width: 42px; text-align: center; font-size: 12px; color: #6b7280; }
+  .ilpv-pdf-frame { width: 100%; height: calc(100vh - 220px); min-height: 480px; display: flex; flex-direction: column; }
+  .ilpv-pdf-body { position: relative; flex: 1 1 auto; min-height: 0; }
+  .ilpv-pdf-body iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: block; }
+  .ilpv-md { padding: 32px 40px; font-size: 14px; line-height: 1.75; color: #2c313a; word-break: break-word; }
+  .ilpv-md > :first-child { margin-top: 0; }
+  .ilpv-md h2, .ilpv-md h3, .ilpv-md h4, .ilpv-md h5, .ilpv-md h6 {
+    margin: 24px 0 10px; font-weight: 700; line-height: 1.35; color: #1f2328;
+  }
+  .ilpv-md h2 { font-size: 21px; }
+  .ilpv-md h3 { font-size: 17px; }
+  .ilpv-md h4 { font-size: 15px; }
+  .ilpv-md p { margin: 0 0 12px; }
+  .ilpv-md ul { margin: 0 0 12px; padding-left: 22px; }
+  .ilpv-md li { margin: 3px 0; }
+  .ilpv-md hr { border: 0; border-top: 1px solid #eceef1; margin: 22px 0; }
+  .ilpv-md a { color: #4f46e5; text-decoration: none; }
+  .ilpv-md a:hover { text-decoration: underline; }
+  .ilpv-md code { background: #f4f5f7; border-radius: 4px; padding: 1px 5px; font-size: 12.5px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .ilpv-md .ilpv-code { margin: 0 0 14px; padding: 14px 16px; background: #f7f8fa; border: 1px solid #eceef1; border-radius: 8px; overflow: auto; }
+  .ilpv-md .ilpv-code code { background: transparent; padding: 0; font-size: 12.5px; line-height: 1.7; }
+  .ilpv-table { width: 100%; border-collapse: collapse; margin: 0 0 16px; font-size: 13px; }
+  .ilpv-table th, .ilpv-table td { border: 1px solid #eceef1; padding: 8px 12px; text-align: left; vertical-align: top; }
+  .ilpv-table th { background: #f7f8fa; font-weight: 600; color: #1f2328; }
+  .ilpv-table tbody tr:nth-child(even) td { background: #fcfcfd; }
+  .ilpv-docx { padding: 32px 40px; font-size: 14px; line-height: 1.75; color: #2c313a; word-break: break-word; }
+  .ilpv-docx h1, .ilpv-docx h2, .ilpv-docx h3, .ilpv-docx h4 { margin: 22px 0 10px; font-weight: 700; line-height: 1.35; color: #1f2328; }
+  .ilpv-docx h1 { font-size: 22px; }
+  .ilpv-docx h2 { font-size: 19px; }
+  .ilpv-docx h3 { font-size: 16px; }
+  .ilpv-docx p { margin: 0 0 12px; }
+  .ilpv-docx img { max-width: 100%; height: auto; }
+  .ilpv-docx ul, .ilpv-docx ol { margin: 0 0 12px; padding-left: 22px; }
+  .ilpv-docx table { width: 100%; border-collapse: collapse; margin: 0 0 16px; }
+  .ilpv-docx td, .ilpv-docx th { border: 1px solid #e5e7eb; padding: 6px 10px; }
+  .ilpv-docx a { color: #4f46e5; text-decoration: none; }
+  .ilpv-docx a:hover { text-decoration: underline; }
+  .ilpv-xlsx { padding: 20px 24px; }
+  .ilpv-sheet { margin-bottom: 14px; border: 1px solid #eceef1; border-radius: 10px; overflow: hidden; }
+  .ilpv-sheet > summary { padding: 10px 14px; background: #f7f8fa; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer; }
+  .ilpv-sheet__body { overflow: auto; max-height: 60vh; }
+  .ilpv-sheet__body table { border-collapse: collapse; font-size: 12.5px; }
+  .ilpv-sheet__body td, .ilpv-sheet__body th { border: 1px solid #eceef1; padding: 5px 10px; white-space: nowrap; }
+  .ilpv-sheet__body tr:nth-child(even) td { background: #fcfcfd; }
+
+  /* 表格线兜底：样式原先只挂在 .ilpv-sheet__body 上，一旦这层包裹没渲染出来
+     （空表跳过等路径），表格就变成没有格线的裸文本。这里直接给表格本体上样式 */
+  .ilpv-xlsx table { border-collapse: collapse; font-size: 12.5px; }
+  .ilpv-xlsx td, .ilpv-xlsx th { border: 1px solid #eceef1; padding: 5px 10px; vertical-align: top; }
+  .ilpv-xlsx tr:nth-child(even) td { background: #fcfcfd; }
+
+  .ilpv-i--pdf { color: #dc2626; }
+  .ilpv-i--word { color: #2563eb; }
+  .ilpv-i--excel { color: #16a34a; }
+  .ilpv-i--ppt { color: #ea580c; }
+  .ilpv-i--img { color: #7c3aed; }
+  .ilpv-i--md { color: #0891b2; }
+  .ilpv-i--zip { color: #6b7280; }
+  .ilpv-i--text { color: #6b7280; }
+  .ilpv-i--other { color: #9aa1ab; }
+  .ilpv-doc { padding: 36px 44px; }
+  .ilpv-doc h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .ilpv-fallback { padding: 48px 32px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+  .ilpv-fallback__icon { width: 52px; height: 52px; border-radius: 12px; background: #f4f5f7; color: #9aa1ab; display: grid; place-items: center; }
+  .ilpv-fallback__icon svg { width: 24px; height: 24px; }
+  .ilpv-fallback__name { font-size: 14px; font-weight: 600; color: #374151; word-break: break-all; }
+  .ilpv-fallback__meta { font-size: 12px; color: #9aa1ab; }
+  html.ilink-app a.ilpv-download {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+    height: 32px; padding: 0 16px; border-radius: 8px;
+    background: #1f2328; color: #fff; font-size: 12.5px; font-weight: 500; text-decoration: none;
+  }
+  html.ilink-app a.ilpv-download:hover { background: #000; color: #fff; }
+  html.ilink-app a.ilpv-download svg { width: 13px; height: 13px; }
+  .ilpv-hinttext { color: #9aa1ab; }
+  .ilpv-text { padding: 32px 40px; }
+  .ilpv-text pre { white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; line-height: 1.8; color: #2c313a; margin: 0; }
+  .rw-review { width: 380px; background: #fff; border-left: 1px solid #eceef1; display: flex; flex-direction: column; flex-shrink: 0; }
+  .rw-review-head { padding: 16px 20px 12px; border-bottom: 1px solid #f2f3f6; }
+  .rw-review-title { font-size: 13.5px; font-weight: 700; }
+  .rw-review-badge { font-size: 10px; font-weight: 600; color: #6366f1; background: #eef2ff; padding: 2px 7px; border-radius: 4px; margin-left: 6px; }
+  .rw-review-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+  .rw-current-file {
+    background: #f8f9fa; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .rw-fi-icon { width: 32px; height: 32px; border-radius: 7px; background: #fff; border: 1px solid #eceef1; display: grid; place-items: center; color: #6b7280; flex-shrink: 0; }
+  .rw-fi-icon svg { width: 15px; height: 15px; }
+  .rw-fi-name { font-size: 12.5px; font-weight: 600; word-break: break-all; }
+  .rw-section { margin-bottom: 20px; }
+  .rw-section-label { font-size: 12px; font-weight: 700; color: #5c6370; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .rw-section-hint { font-size: 11px; color: #9aa1ab; font-weight: 400; }
+  .rw-section textarea {
+    width: 100%; border: 1px solid #e6e8ec; border-radius: 10px; padding: 10px 14px;
+    font-size: 13px; line-height: 1.65; resize: vertical; outline: none; min-height: 88px; font-family: inherit;
+  }
+  .rw-section textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, .1); }
+  .rw-verdict { background: #f8f9fa; border-radius: 10px; padding: 14px; }
+  .rw-verdict-btns { display: flex; gap: 8px; }
+  .rw-verdict-btns button {
+    flex: 1; height: 42px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid transparent; transition: all .15s ease;
+  }
+  .rw-verdict-pass { background: #fff; border-color: #bbf7d0; color: #0f9d63; }
+  .rw-verdict-pass:hover { background: #f0fdf4; }
+  .rw-verdict-pass.active { background: #10b981; border-color: #10b981; color: #fff; }
+  .rw-verdict-reject { background: #fff; border-color: #fecaca; color: #dc2626; }
+  .rw-verdict-reject:hover { background: #fef2f2; }
+  .rw-verdict-reject.active { background: #dc2626; border-color: #dc2626; color: #fff; }
+  .rw-verdict-hint { font-size: 11.5px; color: #8b939e; margin-top: 10px; line-height: 1.5; }
+  .rw-verdict-hint.success { color: #0f9d63; }
+  .rw-verdict-hint.danger { color: #dc2626; }
+  .rw-foot {
+    padding: 14px 20px 16px; border-top: 1px solid #f2f3f6;
+    display: flex; align-items: center; justify-content: flex-end; gap: 8px; background: #fff;
+  }
+  @media (max-width: 1024px) {
+    .rw-materials { width: 200px; }
+    .rw-review { width: 320px; }
+  }
+  .ilpv-text { padding: 32px 40px; }
+  .ilpv-text pre { white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; line-height: 1.8; color: #2c313a; margin: 0; }
+}

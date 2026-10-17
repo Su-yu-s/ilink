@@ -12,7 +12,15 @@ import java.util.Date;
 @Data
 public class TeamMemberViewVO {
     private Long userId;
+    /**
+     * 展示名。历史上这里放的是内部 username，现已改为 {@link cn.ilink.util.DisplayNameResolver} 的解析结果。
+     * 前端读 {@code username} 或 {@code displayName} 都能拿到同一个值。
+     */
     private String username;
+    /** 与 {@code username} 同值的显式展示名字段，供新前端代码使用 */
+    private String displayName;
+    /** 展示名首字，供头像占位使用 */
+    private String avatarInitial;
     private String avatar;
     private String major;
     /** 展示用身份：队长 / 队员（沿用旧字段，前端已有判断依赖它） */

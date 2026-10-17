@@ -99,4 +99,31 @@ class RememberMeServiceTest {
         verify(mapper).deleteById(2L);
         assertTrue(response.getHeader("Set-Cookie").contains("Max-Age=0"));
     }
+
+    @Test
+    void disabledAccountCannotAuthenticateWithRememberMeCookie() {
+        String selector = "selector";
+        String validator = "validator";
+        RememberMeToken token = new RememberMeToken();
+        token.setId(3L);
+        token.setUserId(11L);
+        token.setSelector(selector);
+        token.setValidatorHash(SecureTokenSupport.hash(validator));
+        token.setExpiresAt(new Date(System.currentTimeMillis() + 60_000));
+        when(mapper.selectOne(any())).thenReturn(token);
+        User disabled = new User();
+        disabled.setId(11L);
+        disabled.setStatus("DISABLED");
+        when(userService.getById(11L)).thenReturn(disabled);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie(RememberMeService.COOKIE_NAME, selector + "." + validator));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        assertNull(service.authenticateAndRotate(request, response));
+
+        verify(mapper).deleteById(3L);
+        verify(userService, org.mockito.Mockito.never()).ensureAvatarAssigned(any());
+        verify(mapper, org.mockito.Mockito.never()).updateById(any(RememberMeToken.class));
+        assertTrue(response.getHeader("Set-Cookie").contains("Max-Age=0"));
+    }
 }

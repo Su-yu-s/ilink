@@ -1,3 +1,4 @@
+@layer legacy {
 /**
  * 成果详情 · 分享卡片布局 v2.0
  * 参考竞赛成果分享页，配色对齐 iLink 黑白灰
@@ -269,9 +270,9 @@ body[data-app-page="asset-detail"] .detail-action-btn svg {
   flex-shrink: 0;
 }
 body[data-app-page="asset-detail"] .detail-action--on {
-  background: #111827;
-  border-color: #111827;
-  color: #fff;
+  background: var(--ui-surface-subtle, #f1f1f2);
+  border-color: var(--ui-border-strong, #d7d8db);
+  color: var(--ui-text, #282a2f);
 }
 body[data-app-page="asset-detail"] .detail-action--on:hover {
   background: #374151;
@@ -607,16 +608,16 @@ body[data-app-page="asset-detail"] .asset-edit-btn {
   padding: 0.55rem 1.35rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #ffffff;
-  background: #111827;
-  border: none;
+  color: var(--ui-text, #282a2f);
+  background: var(--ui-surface-subtle, #f1f1f2);
+  border: 1px solid var(--ui-border-strong, #d7d8db);
   border-radius: 8px;
   cursor: pointer;
   transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 body[data-app-page="asset-detail"] .asset-edit-btn:hover {
-  background: #1f2937;
+  background: var(--ui-border, #e5e5e7);
 }
 
 body[data-app-page="asset-detail"] .asset-edit-btn:active {
@@ -796,3 +797,5 @@ body[data-app-page="asset-detail"] .desc-text th {
 body[data-app-page="asset-detail"] .desc-text td {
 	  background: var(--ui-surface, #fff);
 	}
+
+}

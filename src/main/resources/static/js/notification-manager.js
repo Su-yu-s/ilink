@@ -60,7 +60,7 @@ class NotificationManager {
         if (!listContainer) return;
 
         if (!notifications || notifications.length === 0) {
-            listContainer.innerHTML = '<div class="notification-dropdown__empty">暂无通知</div>';
+            listContainer.innerHTML = '<div class="notification-dropdown__empty">' + t('header.notifications.empty') + '</div>';
             return;
         }
 
@@ -76,8 +76,8 @@ class NotificationManager {
             const invitationId = Number(notification.invitationId) || 0;
             const inviteActions = (safeType === 'TEAM_INVITE' && invitationId > 0)
                 ? `<div class="notification-item__actions">
-                        <button type="button" class="notification-invite-btn notification-invite-btn--primary" data-invite-action="accept" data-invitation-id="${invitationId}">同意加入</button>
-                        <button type="button" class="notification-invite-btn" data-invite-action="reject" data-invitation-id="${invitationId}">拒绝</button>
+                        <button type="button" class="notification-invite-btn notification-invite-btn--primary" data-invite-action="accept" data-invitation-id="${invitationId}">${t('header.invitation.accept')}</button>
+                        <button type="button" class="notification-invite-btn" data-invite-action="reject" data-invitation-id="${invitationId}">${t('header.invitation.reject')}</button>
                     </div>`
                 : '';
 
@@ -124,7 +124,7 @@ class NotificationManager {
         const card = button.closest('.notification-item');
         const buttons = card ? card.querySelectorAll('[data-invite-action]') : [button];
         buttons.forEach(b => { b.disabled = true; });
-        button.textContent = '处理中…';
+        button.textContent = t('header.invitation.processing');
 
         const teamTitle = card ? (card.querySelector('.notification-item__text') || {}).textContent || '' : '';
         this.request(`/api/team/invitation/${invitationId}/${action}`, {
@@ -134,19 +134,19 @@ class NotificationManager {
         .then(response => response.json())
         .then(data => {
             if (data.code !== 200) {
-                throw new Error(data.message || '处理失败，请稍后重试');
+                throw new Error(data.message || t('header.invitation.failed'));
             }
-            const label = action === 'accept' ? '已加入团队' : '已拒绝邀请';
-            if (typeof showToast === 'function') {
-                showToast(label, 'success');
-            } else if (typeof notify === 'function') {
-                notify(label, 'success');
+            const label = action === 'accept' ? t('header.invitation.accepted') : t('header.invitation.declined');
+            // showMessage 是 common.js 暴露的全局提示入口（内部走 Toast 组件）；
+            // 历史上的 showToast/notify 兜底都未定义，会把这条反馈吞掉。
+            if (typeof showMessage === 'function') {
+                showMessage(label, 'success');
             }
             // 邀请已处理，卡片撤掉；未读数由服务端推送更新
             if (card) card.remove();
             const list = document.getElementById('notificationList');
             if (list && !list.querySelector('.notification-item')) {
-                list.innerHTML = '<div class="notification-dropdown__empty">暂无通知</div>';
+                list.innerHTML = '<div class="notification-dropdown__empty">' + t('header.notifications.empty') + '</div>';
             }
             if (typeof window.onInvitationHandled === 'function') {
                 window.onInvitationHandled(invitationId, action, teamTitle);
@@ -154,13 +154,11 @@ class NotificationManager {
         })
         .catch(error => {
             buttons.forEach(b => { b.disabled = false; });
-            if (button.getAttribute('data-invite-action') === 'accept') button.textContent = '同意加入';
-            else button.textContent = '拒绝';
-            const message = error.message || '处理失败，请稍后重试';
-            if (typeof showToast === 'function') {
-                showToast(message, 'error');
-            } else if (typeof notify === 'function') {
-                notify(message, 'warning');
+            if (button.getAttribute('data-invite-action') === 'accept') button.textContent = t('header.invitation.accept');
+            else button.textContent = t('header.invitation.reject');
+            const message = error.message || t('header.invitation.failed');
+            if (typeof showMessage === 'function') {
+                showMessage(message, 'error');
             }
         });
     }
@@ -186,7 +184,10 @@ class NotificationManager {
             'SYSTEM': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
             'LIKE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>',
             'FAVORITE': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
-            'COMMENT': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'
+            'COMMENT': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+            'TEAM_DELETED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>',
+            'ASSET_DELETED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><circle cx="12" cy="13" r="3"/><path d="M9.5 10.5l5 5M14.5 10.5l-5 5"/></svg>',
+            'POST_DELETED': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5V5a2 2 0 0 1 2-2h9l5 5v11.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19.5Z"/><path d="M14 3v6h6"/><path d="m9.5 12.5 5 5M14.5 12.5l-5 5"/></svg>'
         };
         return icons[type] || icons['SYSTEM'];
     }
@@ -310,6 +311,17 @@ function handleNotificationClick(id, notificationType, relatedId) {
         window.notificationManager.markAsRead(id);
     }
 
+    // 删除类通知：相关内容已被删除，跳转会 404——点击打开完整详情弹窗
+    if (notificationType === 'TEAM_DELETED' || notificationType === 'ASSET_DELETED' || notificationType === 'POST_DELETED') {
+        const item = document.querySelector('.notification-item[data-id="' + id + '"]');
+        const title = item ? (item.querySelector('.notification-item__title') || {}).textContent || '' : '';
+        const content = item ? (item.querySelector('.notification-item__text') || {}).textContent || '' : '';
+        const time = item ? (item.querySelector('.notification-item__time') || {}).textContent || '' : '';
+        const icon = item ? (item.querySelector('.notification-item__icon') || {}).innerHTML || '' : '';
+        showNotificationDetailModal(title, content, time, icon);
+        return;
+    }
+
     if (!notificationType || !relatedId) {
         return;
     }
@@ -350,12 +362,63 @@ function handleNotificationClick(id, notificationType, relatedId) {
             route = '/teacher-detail.html?id=' + relatedId;
             break;
         default:
-            // 兜底：跳转到团队详情页
-            route = '/team-detail.html?id=' + relatedId;
+            // 未知类型不做猜测跳转（跳错页面比不跳更糟）
+            route = '';
             break;
     }
 
     if (route) {
         window.location.href = route;
+    }
+}
+
+// ============================================================
+// 通知详情弹窗：展示完整标题/内容/时间（下拉列表里长文本被截断，
+// 点击删除类等无跳转目标的通知时在这里看全文）。动态注入，随用随建。
+// ============================================================
+function showNotificationDetailModal(title, content, time, iconSvg) {
+    let overlay = document.getElementById('notificationDetailOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'notificationDetailOverlay';
+        overlay.className = 'modal fade';
+        overlay.tabIndex = -1;
+        overlay.innerHTML =
+            '<div class="modal-dialog modal-dialog-centered">' +
+                '<div class="modal-content">' +
+                    '<div class="modal-header">' +
+                        '<h5 class="modal-title">' + t('header.notification.detail') + '</h5>' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="' + t('common.close') + '"></button>' +
+                    '</div>' +
+                    '<div class="modal-body">' +
+                        '<div class="d-flex align-items-center gap-2 mb-3">' +
+                            '<span class="notification-detail-icon"></span>' +
+                            '<h6 class="notification-detail-title mb-0"></h6>' +
+                        '</div>' +
+                        '<p class="notification-detail-content mb-3" style="white-space: pre-wrap; word-break: break-word;"></p>' +
+                        '<div class="notification-detail-time text-muted small"></div>' +
+                    '</div>' +
+                    '<div class="modal-footer">' +
+                        '<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">' + t('common.close') + '</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(overlay);
+        const style = document.createElement('style');
+        style.textContent =
+            '#notificationDetailOverlay .notification-detail-icon { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 8px; background: #eef2ff; color: #4f46e5; }' +
+            '#notificationDetailOverlay .notification-detail-title { font-weight: 700; }' +
+            '#notificationDetailOverlay .notification-detail-content { font-size: 15px; line-height: 1.7; color: #1f2937; }';
+        document.head.appendChild(style);
+    }
+    overlay.querySelector('.notification-detail-icon').innerHTML = iconSvg || '';
+    overlay.querySelector('.notification-detail-title').textContent = title || t('header.notifications.defaultTitle');
+    overlay.querySelector('.notification-detail-content').textContent = content || '';
+    overlay.querySelector('.notification-detail-time').textContent = time || '';
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        bootstrap.Modal.getOrCreateInstance(overlay).show();
+    } else {
+        overlay.classList.add('show');
+        overlay.style.display = 'block';
     }
 }

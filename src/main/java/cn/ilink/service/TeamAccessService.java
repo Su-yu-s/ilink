@@ -40,4 +40,16 @@ public class TeamAccessService {
             .eq(TeamApplication::getUserId, userId)
             .eq(TeamApplication::getStatus, "APPROVED")) > 0;
     }
+
+    /** 团队内已批准的导师：与队长平级，可批阅任务。 */
+    public boolean isApprovedMentor(Long teamId, Long userId) {
+        if (teamId == null || userId == null) {
+            return false;
+        }
+        return teamApplicationService.count(new LambdaQueryWrapper<TeamApplication>()
+            .eq(TeamApplication::getTeamId, teamId)
+            .eq(TeamApplication::getUserId, userId)
+            .eq(TeamApplication::getStatus, "APPROVED")
+            .eq(TeamApplication::getMemberRole, "MENTOR")) > 0;
+    }
 }

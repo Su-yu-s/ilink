@@ -33,13 +33,45 @@
         document.querySelectorAll('.home-split-line').forEach(function (line) {
             var text = line.textContent || '';
             line.innerHTML = '';
-            Array.from(text).forEach(function (char) {
-                var span = document.createElement('span');
-                span.className = 'home-char';
-                span.textContent = char;
-                line.appendChild(span);
-            });
+            appendSplitText(line, text);
         });
+    }
+
+    // 逐字动画把每个字符包成 inline-block 的 .home-char：
+    // · 空白如果也包成 span，会被折叠成 0 宽，英文单词就会粘成一串 —— 必须留成真实空格文本
+    // · 英文单词再包一层 .home-word（inline-block），保证换行时不会从单词中间断开
+    var WORD_PATTERN = /[A-Za-z0-9\u00C0-\u024F][A-Za-z0-9\u00C0-\u024F'’&.+-]*/g;
+
+    function appendSplitText(container, text) {
+        var cursor = 0;
+        var match;
+        WORD_PATTERN.lastIndex = 0;
+        while ((match = WORD_PATTERN.exec(text)) !== null) {
+            if (match.index > cursor) appendCharRun(container, text.slice(cursor, match.index));
+            var word = document.createElement('span');
+            word.className = 'home-word';
+            Array.from(match[0]).forEach(function (char) { word.appendChild(makeChar(char)); });
+            container.appendChild(word);
+            cursor = match.index + match[0].length;
+        }
+        if (cursor < text.length) appendCharRun(container, text.slice(cursor));
+    }
+
+    function appendCharRun(container, chunk) {
+        Array.from(chunk).forEach(function (char) {
+            if (/\s/.test(char)) {
+                container.appendChild(document.createTextNode(' '));
+                return;
+            }
+            container.appendChild(makeChar(char));
+        });
+    }
+
+    function makeChar(char) {
+        var span = document.createElement('span');
+        span.className = 'home-char';
+        span.textContent = char;
+        return span;
     }
 
     function initReveals() {
@@ -269,11 +301,28 @@
         var items = Array.prototype.slice.call(document.querySelectorAll('.home-feed-item'));
         if (items.length < 2 || reduceMotion) return;
         var index = 0;
-        window.setInterval(function () {
+        var timer = null;
+
+        function tick() {
             items[index].classList.remove('is-active');
             index = (index + 1) % items.length;
             items[index].classList.add('is-active');
-        }, 2800);
+        }
+
+        function start() {
+            if (!timer) timer = window.setInterval(tick, 2800);
+        }
+
+        function stop() {
+            if (timer) { window.clearInterval(timer); timer = null; }
+        }
+
+        // 页面切后台时暂停轮播，回前台恢复，避免空跑
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) stop(); else start();
+        });
+
+        start();
     }
 
     function initMagneticButtons() {

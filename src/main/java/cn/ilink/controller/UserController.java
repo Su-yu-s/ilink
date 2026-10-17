@@ -13,7 +13,11 @@ import cn.ilink.mapper.CommunityPostMapper;
 import cn.ilink.mapper.AssetMapper;
 import cn.ilink.service.UserService;
 import cn.ilink.service.RememberMeService;
+import cn.ilink.service.AccountDeletionService;
+import cn.ilink.service.AccountDeletionBlockedException;
 import cn.ilink.util.PasswordPolicy;
+import cn.ilink.util.DisplayNameResolver;
+import cn.ilink.util.I18nMessageResolver;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +50,12 @@ public class UserController {
     @Autowired
     private RememberMeService rememberMeService;
 
+    @Autowired
+    private AccountDeletionService accountDeletionService;
+
+    @Autowired(required = false)
+    private I18nMessageResolver i18nMessages;
+
     @Value("${file.access-url-prefix:/uploads/}")
     private String accessUrlPrefix;
 
@@ -57,11 +67,12 @@ public class UserController {
     public ResponseEntity<Result<?>> getPublicProfile(@PathVariable Long userId) {
         User u = userService.getById(userId);
         if (u == null) {
-            return Result.fail(404, "用户不存在").toResponseEntity();
+            return Result.fail(404, msg("user.profile.notFound", "用户不存在")).toResponseEntity();
         }
         PublicUserProfileVO vo = new PublicUserProfileVO();
         vo.setId(u.getId());
-        vo.setUsername(u.getUsername());
+        vo.setDisplayName(DisplayNameResolver.resolve(u));
+        vo.setAvatarInitial(DisplayNameResolver.initial(u));
         vo.setAvatar(u.getAvatar());
         vo.setRole(u.getRole());
         vo.setGrade(u.getGrade());
@@ -169,21 +180,59 @@ public class UserController {
 
         if (profileRequest.getAvatar() != null
                 && !ControllerUtils.isManagedUploadUrl(profileRequest.getAvatar(), accessUrlPrefix)) {
-            return Result.badRequest("头像地址仅支持站内上传文件").toResponseEntity();
+            return Result.badRequest(msg("user.profile.avatar.invalid", "头像地址仅支持站内上传文件"))
+                .toResponseEntity();
         }
         // 内置头像只能选择本人角色分组，防止学生选教师头像（反之亦然）
         String requestedAvatar = profileRequest.getAvatar();
         if (requestedAvatar != null && BuiltinAvatarCatalog.isBuiltin(requestedAvatar.trim())
                 && !BuiltinAvatarCatalog.belongsToRole(requestedAvatar.trim(), user.getRole())) {
-            return Result.badRequest("只能选择与本人身份匹配的内置头像").toResponseEntity();
+            return Result.badRequest(msg("user.profile.avatar.roleMismatch", "只能选择与本人身份匹配的内置头像"))
+                .toResponseEntity();
+        }
+
+        // 长度/取值校验前置：超长值直接撞列宽会变成 500，这里统一回 400
+        // username 已不接受修改（见 UserServiceImpl.updateProfile），因此也不做长度校验
+        String lengthError =
+            ControllerUtils.checkMaxLength(profileRequest.getEmail(), ControllerUtils.EMAIL_MAX, "邮箱");
+        if (lengthError == null) {
+            lengthError = ControllerUtils.checkEmailFormat(profileRequest.getEmail());
+        }
+        if (lengthError == null) {
+            lengthError = ControllerUtils.checkMaxLength(profileRequest.getRealName(), ControllerUtils.REAL_NAME_MAX, "姓名");
+        }
+        if (lengthError == null) {
+            lengthError = ControllerUtils.checkMaxLength(profileRequest.getGrade(), ControllerUtils.GRADE_MAX, "年级");
+        }
+        if (lengthError == null) {
+            lengthError = ControllerUtils.checkMaxLength(profileRequest.getMajor(), ControllerUtils.MAJOR_MAX, "专业");
+        }
+        if (lengthError == null) {
+            lengthError = ControllerUtils.checkMaxLength(profileRequest.getSchool(), ControllerUtils.SCHOOL_MAX, "学校");
+        }
+        if (lengthError == null) {
+            lengthError = ControllerUtils.checkMaxLength(profileRequest.getCollege(), ControllerUtils.COLLEGE_MAX, "学院");
+        }
+        if (lengthError == null) {
+            lengthError = ControllerUtils.checkMaxLength(profileRequest.getBio(), ControllerUtils.BIO_MAX, "个人简介");
+        }
+        if (lengthError == null) {
+            lengthError = ControllerUtils.checkGender(profileRequest.getGender());
+        }
+        if (lengthError != null) {
+            return Result.badRequest(lengthError).toResponseEntity();
+        }
+        profileRequest.setGender(ControllerUtils.normalizeGender(profileRequest.getGender()));
+        // 校验通过后再归一化邮箱（去空格 + 小写），保证唯一索引与登录查询口径一致
+        if (profileRequest.getEmail() != null) {
+            String normalizedEmail = ControllerUtils.normalizeEmail(profileRequest.getEmail());
+            profileRequest.setEmail(normalizedEmail == null || normalizedEmail.isEmpty() ? null : normalizedEmail);
         }
 
         boolean success = userService.updateProfile(user.getId(), profileRequest);
         if (success) {
             // 更新session中的用户信息
-            if (profileRequest.getUsername() != null) {
-                user.setUsername(profileRequest.getUsername().trim());
-            }
+            // username 是内部标识，不接受客户端修改，此处刻意不写回会话快照
             if (profileRequest.getEmail() != null) {
                 user.setEmail(profileRequest.getEmail());
             }
@@ -224,7 +273,7 @@ public class UserController {
 
             return Result.ok(user).toResponseEntity();
         } else {
-            return Result.fail(500, "更新失败").toResponseEntity();
+            return Result.fail(500, msg("user.profile.updateFailed", "更新失败")).toResponseEntity();
         }
     }
 
@@ -234,11 +283,71 @@ public class UserController {
         User user = ControllerUtils.requireUser(session);
         if (user == null) return Result.unauthorized().toResponseEntity();
         if (!PasswordPolicy.isValid(req.getNewPassword())) {
-            return Result.badRequest(PasswordPolicy.message()).toResponseEntity();
+            return Result.badRequest(msg("auth.forgot.validation.password", PasswordPolicy.message()))
+                .toResponseEntity();
         }
         boolean ok = userService.changePassword(user.getId(), req.getOldPassword(), req.getNewPassword());
-        if (!ok) return Result.badRequest("原密码错误").toResponseEntity();
+        if (!ok) return Result.badRequest(msg("user.password.oldIncorrect", "原密码错误")).toResponseEntity();
         rememberMeService.revokeAllForUser(user.getId());
-        return Result.ok("密码修改成功", null).toResponseEntity();
+        return Result.ok(msg("user.password.changed", "密码修改成功"), null).toResponseEntity();
+    }
+
+    /**
+     * 自助注销账号。
+     *
+     * <p>校验顺序固定为：登录态 → 密码 → 确认文本 → 创建者阻断 → 执行删除。
+     * 密码与确认文本都通过后才做创建者检查，是为了不让「能不能注销」这一步
+     * 变成探测团队归属的接口。
+     *
+     * <p>删除完成后当前会话随之失效，前端应跳回首页。
+     */
+    @PostMapping("/delete-account")
+    @ResponseBody
+    public ResponseEntity<Result<?>> deleteAccount(@RequestBody Map<String, Object> payload, HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
+        String password = payload == null ? null : str(payload.get("password"));
+        String confirmText = payload == null ? null : str(payload.get("confirmText"));
+        if (password == null || password.isEmpty()) {
+            return Result.badRequest(msg("account.delete.passwordRequired", "请输入当前密码")).toResponseEntity();
+        }
+        if (!userService.checkPassword(user.getId(), password)) {
+            return Result.badRequest(msg("account.delete.passwordIncorrect", "密码错误")).toResponseEntity();
+        }
+        if (!"注销".equals(confirmText)) {
+            return Result.badRequest(msg("account.delete.confirmMismatch", "请输入「注销」二字以确认"))
+                .toResponseEntity();
+        }
+        List<String> blocking = accountDeletionService.findBlockingTeams(user.getId());
+        if (!blocking.isEmpty()) {
+            return Result.fail(409, msg("account.delete.blockedDetailed",
+                "你仍是以下团队的创建者：{0}。请先转让或解散团队后再注销账号。",
+                String.join("、", blocking))).toResponseEntity();
+        }
+        try {
+            accountDeletionService.deleteAccount(user.getId());
+        } catch (AccountDeletionBlockedException e) {
+            return Result.fail(409, msg("account.delete.blockedRace",
+                "你创建的团队仍有成员，暂时无法注销。请先转让或解散团队后再试。"))
+                .toResponseEntity();
+        } catch (Exception e) {
+            return Result.fail(500, msg("account.delete.failed", "注销失败，请稍后重试")).toResponseEntity();
+        }
+        try {
+            session.invalidate();
+        } catch (IllegalStateException ignored) {
+            // 会话可能已被 sessionRegistry.invalidateAll 失效
+        }
+        return Result.ok(msg("account.delete.success", "账号已注销"), null).toResponseEntity();
+    }
+
+    private String str(Object value) {
+        return value == null ? "" : String.valueOf(value).trim();
+    }
+
+    private String msg(String key, String fallback, Object... arguments) {
+        return i18nMessages == null ? fallback : i18nMessages.get(key, fallback, arguments);
     }
 }

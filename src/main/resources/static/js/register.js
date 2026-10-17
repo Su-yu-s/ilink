@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const studentIdInput = document.getElementById('studentId');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
+    const emailInput = document.getElementById('email');
+    const emailCodeInput = document.getElementById('emailCode');
 
     function getActiveIdentifierType() {
         const studentWrapper = document.getElementById('studentIdWrapper');
@@ -39,15 +41,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const inputId = type === 'phone' ? 'phone' : 'studentId';
         if (!value) {
             if (showHint) {
-                const identityLabel = window.currentIdentity === 'TEACHER' ? '工号' : '学号';
-                showFieldHint('identifierError', type === 'phone' ? '请输入手机号' : '请输入' + identityLabel, inputId);
+                const identityLabel = window.currentIdentity === 'TEACHER' ? t('auth.register.staffId') : t('auth.register.studentIdLabel');
+                showFieldHint('identifierError', type === 'phone' ? t('auth.register.validation.phone') : t('auth.register.validation.identifier', { label: identityLabel }), inputId);
             }
             return false;
         }
         if (!isValidIdentifier(value, type)) {
             if (showHint) {
-                const identityLabel = window.currentIdentity === 'TEACHER' ? '工号' : '学号';
-                showFieldHint('identifierError', type === 'phone' ? '手机号格式不正确' : identityLabel + '格式不正确', inputId);
+                const identityLabel = window.currentIdentity === 'TEACHER' ? t('auth.register.staffId') : t('auth.register.studentIdLabel');
+                showFieldHint('identifierError', type === 'phone' ? t('auth.register.validation.phoneFormat') : t('auth.register.validation.identifierFormat', { label: identityLabel }), inputId);
             }
             return false;
         }
@@ -60,11 +62,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function validatePassword(showHint) {
         const pwd = passwordInput ? passwordInput.value : '';
         if (!pwd) {
-            if (showHint) showFieldHint('passwordError', '请输入密码', 'password');
+            if (showHint) showFieldHint('passwordError', t('auth.register.validation.password'), 'password');
             return false;
         }
         if (!PASSWORD_POLICY.test(pwd)) {
-            if (showHint) showFieldHint('passwordError', PASSWORD_POLICY_MSG, 'password');
+            if (showHint) showFieldHint('passwordError', t('auth.register.validation.passwordPolicy'), 'password');
             return false;
         }
         clearFieldHint('passwordError', 'password');
@@ -75,11 +77,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const pwd = passwordInput ? passwordInput.value : '';
         const confirm = confirmPasswordInput ? confirmPasswordInput.value : '';
         if (!confirm) {
-            if (showHint) showFieldHint('confirmPasswordError', '请再次输入密码', 'confirmPassword');
+            if (showHint) showFieldHint('confirmPasswordError', t('auth.register.validation.confirmPassword'), 'confirmPassword');
             return false;
         }
         if (confirm !== pwd) {
-            if (showHint) showFieldHint('confirmPasswordError', '两次输入的密码不一致', 'confirmPassword');
+            if (showHint) showFieldHint('confirmPasswordError', t('auth.register.validation.passwordMismatch'), 'confirmPassword');
             return false;
         }
         clearFieldHint('confirmPasswordError', 'confirmPassword');
@@ -103,6 +105,59 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmPasswordInput.addEventListener('blur', () => validateConfirmPassword(true));
     }
 
+    // 邮箱验证码：发码后 60 秒倒计时，与后端冷却窗口一致
+    const sendCodeBtn = document.getElementById('sendEmailCodeBtn');
+    let codeCountdown = null;
+
+    function startCodeCountdown(seconds) {
+        let left = seconds;
+        sendCodeBtn.textContent = t('auth.register.countdown', { seconds: left });
+        if (codeCountdown) clearInterval(codeCountdown);
+        codeCountdown = setInterval(function () {
+            left -= 1;
+            if (left <= 0) {
+                clearInterval(codeCountdown);
+                codeCountdown = null;
+                sendCodeBtn.disabled = false;
+                sendCodeBtn.textContent = t('auth.register.sendCode');
+                return;
+            }
+            sendCodeBtn.textContent = t('auth.register.countdown', { seconds: left });
+        }, 1000);
+    }
+
+    if (sendCodeBtn) {
+        sendCodeBtn.addEventListener('click', async function () {
+            const email = emailInput ? emailInput.value.trim() : '';
+            if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(email)) {
+                showMessage(t('auth.register.validation.email'), 'warning');
+                if (emailInput) emailInput.focus();
+                return;
+            }
+            sendCodeBtn.disabled = true;
+            try {
+                const response = await apiFetch('/api/register/email-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const result = await response.json();
+                if (response.ok && result.code === 200) {
+                    showMessage(t('auth.register.emailSent'), 'success');
+                    startCodeCountdown(60);
+                } else {
+                    // 邮箱已被占用等业务拒绝：放开按钮让用户改邮箱，不进入倒计时
+                    showMessage(result.message || t('auth.register.emailSendFailed'), 'error');
+                    sendCodeBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('发送验证码失败:', error);
+                showMessage(t('auth.networkError'), 'error');
+                sendCodeBtn.disabled = false;
+            }
+        });
+    }
+
     if (registerForm) {
         registerForm.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -114,18 +169,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            const emailValue = emailInput ? emailInput.value.trim() : '';
+            const emailCodeValue = emailCodeInput ? emailCodeInput.value.trim() : '';
+            if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(emailValue)) {
+                showMessage(t('auth.register.validation.email'), 'error');
+                if (emailInput) emailInput.focus();
+                return;
+            }
+            if (!/^\d{6}$/.test(emailCodeValue)) {
+                showMessage(t('auth.register.validation.emailCode'), 'error');
+                if (emailCodeInput) emailCodeInput.focus();
+                return;
+            }
+
             const requestData = {
                 identifier: getIdentifierValue(),
                 password: passwordInput.value,
-                role: window.currentIdentity || 'STUDENT'
+                role: window.currentIdentity || 'STUDENT',
+                email: emailValue,
+                emailCode: emailCodeValue
             };
 
             const submitButton = registerForm.querySelector('button[type="submit"]');
-            const originalText = submitButton ? submitButton.textContent : '注册';
+            const originalText = submitButton ? submitButton.textContent : t('auth.register.submit');
 
             try {
                 if (submitButton) {
-                    submitButton.textContent = '注册中...';
+                    submitButton.textContent = t('auth.register.submitting');
                     submitButton.disabled = true;
                 }
 
@@ -139,16 +209,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (response.ok && result.code === 200) {
                     const isTeacher = requestData.role === 'TEACHER';
-                    showMessage(isTeacher ? '教师账号注册成功，导师身份已启用，请登录' : '注册成功，请登录', 'success');
+                    showMessage(isTeacher ? t('auth.register.success.teacher') : t('auth.register.success.student'), 'success');
                     setTimeout(() => {
                         window.location.href = '/login.html';
                     }, 800);
                 } else {
-                    showMessage(result.message || '注册失败，请稍后重试', 'error');
+                    showMessage(result.message || t('auth.register.failed'), 'error');
                 }
             } catch (error) {
                 console.error('注册请求失败:', error);
-                showMessage('网络连接失败，请稍后重试', 'error');
+                showMessage(t('auth.networkError'), 'error');
             } finally {
                 if (submitButton) {
                     submitButton.textContent = originalText;

@@ -41,7 +41,7 @@
         if(!user) { if(auth) auth.style.display=''; if(ua) ua.style.display='none'; return; }
         if(auth) auth.style.display='none';
         if(ua) ua.style.display='';
-        var name = user.realName || user.username || '用户';
+        var name = user.displayName || user.realName || '用户';
         var nm = $('userName'); if(nm) nm.textContent = name;
         var fb = $('userAvatarFb'); if(fb) fb.textContent = name.charAt(0).toUpperCase();
         var av = $('userAvatar'), af = $('userAvatarFb');
@@ -374,7 +374,7 @@
                 if(card) ids.push(card.getAttribute('data-honor-id'));
             }
             if(!ids.length) return;
-            if(!confirm('确定删除选中的 ' + ids.length + ' 条成果？')) return;
+            if(!uiConfirm('确定删除选中的 ' + ids.length + ' 条成果？')) return;
             honors = honors.filter(function(h) { return ids.indexOf(h.id) === -1; });
             render(); saveDraft(); updateBatch();
             showMessage('已删除 ' + ids.length + ' 条', 'success');

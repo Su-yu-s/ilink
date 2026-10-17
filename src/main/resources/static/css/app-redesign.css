@@ -1,3 +1,4 @@
+@layer legacy {
 /*
  * iLink visual system v1
  * Loaded last on every top-level page. It intentionally bridges legacy page
@@ -222,22 +223,24 @@ html.ilink-app .mentor-btn:hover {
   transform: translateY(-1px);
 }
 
+/* 主按钮：冷白浅色（原近黑填充改过来，与聊天/侧栏选中态同一套语言）
+   阶梯度：主按钮 = 浅灰实心 + 深字；次按钮 = 白底 + 浅描边 */
 html.ilink-app .il-btn-primary,
 html.ilink-app .btn-primary,
 html.ilink-app .il-search-bar__btn--primary,
 html.ilink-app .il-btn-xs-dark {
-  color: var(--ui-surface) !important;
-  background: var(--ui-text) !important;
-  border-color: var(--ui-text) !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-color: var(--ui-border-strong) !important;
 }
 
 html.ilink-app .il-btn-primary:hover,
 html.ilink-app .btn-primary:hover,
 html.ilink-app .il-search-bar__btn--primary:hover,
 html.ilink-app .il-btn-xs-dark:hover {
-  color: var(--ui-surface) !important;
-  background: #181A1E !important;
-  border-color: #181A1E !important;
+  color: var(--ui-text) !important;
+  background: var(--ui-border) !important;
+  border-color: var(--ui-border-strong) !important;
 }
 
 html.ilink-app .il-btn-secondary,
@@ -385,6 +388,82 @@ html.ilink-app .il-form-input:focus,
 html.ilink-app .il-form-select:focus {
   border-color: var(--ui-text) !important;
   box-shadow: var(--ui-ring) !important;
+}
+
+/* 下拉选择：去掉系统原生外观（各平台原生箭头/内阴影都不一样，是页面里最"没设计过"的控件），
+   统一换成自绘箭头 + 浅灰描边；hover 加深一档，focus 用中性光圈。
+   覆盖所有单选下拉（含没有 .form-select 类的裸 <select>），多选保留原生列表外观 */
+html.ilink-app select:not([multiple]) {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 30px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2374767B' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 15px 15px !important;
+  cursor: pointer;
+}
+html.ilink-app select:not([multiple]):hover {
+  border-color: var(--ui-border-strong) !important;
+}
+html.ilink-app select:not([multiple]) option {
+  color: var(--ui-text);
+  background: #fff;
+}
+
+/* 展开的下拉列表本体：原生那层由系统绘制，CSS 摸不到（各平台差异最大的一块）。
+   Chrome 135+ 的 appearance: base-select 把 ::picker(select) 交给页面，
+   支持时做完整样式：圆角面板 / 浅灰悬停 / 选中加粗；不支持的浏览器保持原生外观。 */
+@supports (appearance: base-select) {
+  html.ilink-app select:not([multiple]) {
+    /* !important：各页自己写的 `appearance: none`（下拉、工具栏、搜索栏）都比这条特异度高，
+       不加 !important 就只有部分页面能享受可定制的下拉列表。
+       -webkit-appearance 必须一起写：各页写的是这个前缀属性，只写标准属性会被它盖住 */
+    -webkit-appearance: base-select !important;
+    appearance: base-select !important;
+    padding-right: 12px !important;
+    background-image: none !important;   /* 箭头改由 ::picker-icon 提供，可跟随展开旋转 */
+  }
+  html.ilink-app select:not([multiple])::picker(select) {
+    appearance: base-select;
+    margin-top: 6px;
+    padding: 4px;
+    background: #fff;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgb(40 42 47 / 12%);
+    /* 固定向下展开：默认 Chrome 会在下方空间不足时向上翻，方向忽上忽下很跳。
+       改成永远在下方，超过 320px 的列表在面板内滚动，避免贴底时被裁掉 */
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: none;
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  html.ilink-app select:not([multiple]) option {
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: var(--ui-text);
+    font-size: 14px;
+  }
+  html.ilink-app select:not([multiple]) option:hover,
+  html.ilink-app select:not([multiple]) option:focus {
+    background: var(--ui-surface-subtle);
+  }
+  html.ilink-app select:not([multiple]) option:checked {
+    background: var(--ui-surface-subtle);
+    color: var(--ui-text);
+    font-weight: 600;
+  }
+  /* 选中项不再显示原生对勾：浅灰底 + 加粗已经足够表达"当前选中" */
+  html.ilink-app select:not([multiple]) option::checkmark { display: none; }
+  html.ilink-app select:not([multiple])::picker-icon {
+    color: var(--ui-text-muted);
+    transition: transform .2s ease;
+  }
+  html.ilink-app select:not([multiple]):open::picker-icon {
+    transform: rotate(180deg);
+  }
 }
 
 html.ilink-app textarea.form-control,
@@ -586,9 +665,9 @@ html.ilink-app .page-btn {
 
 html.ilink-app .pagination .page-item.active .page-link,
 html.ilink-app .page-btn.active {
-  color: var(--ui-surface) !important;
-  background: var(--ui-text) !important;
-  border-color: var(--ui-text) !important;
+  color: var(--ui-text, #282a2f) !important;
+  background: var(--ui-surface-subtle, #f1f1f2) !important;
+  border-color: var(--ui-border-strong, #d7d8db) !important;
 }
 
 /* Toast 视觉已迁移至 components.css 的紧凑暗胶囊 (ilink-toast) 规则，旧规则停用。 */
@@ -697,6 +776,8 @@ html.ilink-app .identifier-toggle__btn.active {
   box-shadow: 0 1px 2px rgba(40, 42, 47, 0.08) !important;
 }
 
+/* 登录 / 注册 / 找回密码页的主按钮：保持深色实心（这两页是单卡极简布局，
+   深色按钮是页面上唯一的主动作，改成浅灰会失去焦点） */
 html.ilink-app .btn-submit {
   min-height: 44px;
   color: var(--ui-surface) !important;
@@ -707,6 +788,11 @@ html.ilink-app .btn-submit {
   font-family: var(--ui-font) !important;
   font-size: 14px;
   font-weight: 650;
+}
+html.ilink-app .btn-submit:hover {
+  color: var(--ui-surface) !important;
+  background: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
 }
 
 html.ilink-app .il-link {
@@ -808,7 +894,23 @@ html.ilink-app body[data-app-page="admin"] .admin-table thead th {
   }
 
   html.ilink-app body[data-app-page="admin"] .admin-workspace {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* The tab row is a horizontal scroll container here; letting the sidebar
+     shrink below its content width keeps longer (e.g. English) labels from
+     widening the whole page. */
+  html.ilink-app body[data-app-page="admin"] .admin-sidebar {
+    min-width: 0 !important;
+  }
+
+  /* Soft right edge so a clipped tab reads as "scroll for more". Only the
+     tablet range scrolls the row; small screens switch to a two-column grid. */
+  @media (min-width: 768px) {
+    html.ilink-app body[data-app-page="admin"] .admin-tabs {
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
+      mask-image: linear-gradient(to right, #000 calc(100% - 16px), transparent 100%);
+    }
   }
 
   html.ilink-app body[data-app-page="admin"] .admin-sidebar {
@@ -892,4 +994,6 @@ html.ilink-app body[data-app-page="admin"] .admin-table thead th {
 .ilink-app select:focus-visible,
 .ilink-app [contenteditable="true"]:focus-visible {
   outline: none;
+}
+
 }

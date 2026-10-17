@@ -28,6 +28,21 @@ public class WebMvcConfig implements WebMvcConfigurer {
         this.environment = environment;
     }
 
+    /**
+     * 畸形路径兜底过滤器注册在最外层（Spring Security 的 FilterChainProxy 是 -100）。
+     * 用 FilterRegistrationBean 显式固定顺序，避免依赖 @Order 与 Boot 自动注册的相对关系。
+     */
+    @org.springframework.context.annotation.Bean
+    public org.springframework.boot.web.servlet.FilterRegistrationBean<RejectedRequestFilter> rejectedRequestFilter(
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+        org.springframework.boot.web.servlet.FilterRegistrationBean<RejectedRequestFilter> registration =
+            new org.springframework.boot.web.servlet.FilterRegistrationBean<>(new RejectedRequestFilter(objectMapper));
+        registration.setOrder(org.springframework.core.Ordered.HIGHEST_PRECEDENCE);
+        registration.addUrlPatterns("/*");
+        registration.setName("rejectedRequestFilter");
+        return registration;
+    }
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         String path = StringUtils.hasText(uploadDir) ? uploadDir.trim() : "/data/uploads/";
