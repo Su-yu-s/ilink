@@ -7,7 +7,7 @@ import lombok.Data;
 
 import java.util.Date;
 
-/** 知识图谱关系表（带时序：valid_from/valid_to，NULL 表示仍有效） */
+/** 知识图谱关系表；validFrom 为空表示来源未给出可核实的生效日期。 */
 @Data
 @TableName("kg_relation")
 public class KgRelation {
@@ -17,6 +17,8 @@ public class KgRelation {
     private Long targetId;
     /** REQUIRES/TEACHES/HOSTED_BY/RELATED_TO/MENTIONS */
     private String relationType;
+    /** 与原文完全一致的短句，不能由模型概括拼接。 */
+    private String factText;
     private Double weight;
     private Date validFrom;
     /** NULL = 仍然有效 */
@@ -27,6 +29,7 @@ public class KgRelation {
     private Long userId;
     /** 抽取来源文档标识（docType:docId） */
     private String sourceDocId;
+    private Long sourceChunkId;
     private Date createdAt;
 
     public static final String REQUIRES = "REQUIRES";

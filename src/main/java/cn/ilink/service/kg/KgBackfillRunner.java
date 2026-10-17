@@ -12,6 +12,7 @@ import cn.ilink.mapper.TeamTaskMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,7 @@ import java.util.List;
  * 存量数据只能靠这里补齐（服务器部署后首次启动自动回填，无需手工 SQL）。
  */
 @Component
+@ConditionalOnProperty(name = "app.kg.backfill.enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class KgBackfillRunner implements ApplicationRunner {
 

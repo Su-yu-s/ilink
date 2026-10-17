@@ -6,10 +6,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,14 +19,12 @@ import java.util.concurrent.Executors;
  * 用条件更新（PENDING→RUNNING）抢占任务，天然防止多实例/多线程重复消费。
  */
 @Service
+@ConditionalOnProperty(name = "app.kg.worker.enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class KgIndexWorker {
 
     /** 每轮最多认领的任务数 */
     private static final int BATCH_SIZE = 10;
-
-    /** RUNNING 超过该时长视为进程崩溃遗留（正常单任务处理在分钟级以内） */
-    private static final long STALE_RUNNING_MS = 30L * 60 * 1000;
 
     private final KgIndexTaskMapper taskMapper;
     private final KgIndexService indexService;
@@ -47,7 +45,6 @@ public class KgIndexWorker {
     @Scheduled(fixedDelay = 30000, initialDelay = 15000)
     public void pollAndDispatch() {
         try {
-            recoverStaleRunningTasks();
             List<KgIndexTask> tasks = taskMapper.selectList(new QueryWrapper<KgIndexTask>()
                 .eq("status", KgIndexTask.PENDING)
                 .orderByAsc("id")
@@ -69,26 +66,6 @@ public class KgIndexWorker {
             }
         } catch (Exception e) {
             log.warn("[KG] 任务扫描失败: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * 修复 D-P2-5：任务被认领为 RUNNING 后若进程重启/崩溃，会永久停留 RUNNING 且不再被扫描，
-     * 重试机制随之失效。这里把超过 30 分钟仍在 RUNNING 的任务重置回 PENDING 并累加重试计数。
-     */
-    private void recoverStaleRunningTasks() {
-        try {
-            Date staleBefore = new Date(System.currentTimeMillis() - STALE_RUNNING_MS);
-            int recovered = taskMapper.update(null, new UpdateWrapper<KgIndexTask>()
-                .eq("status", KgIndexTask.RUNNING)
-                .lt("updated_at", staleBefore)
-                .setSql("retry_count = IFNULL(retry_count, 0) + 1")
-                .set("status", KgIndexTask.PENDING));
-            if (recovered > 0) {
-                log.warn("[KG] 回收 {} 个卡死的 RUNNING 任务（进程重启/崩溃遗留），已重置为 PENDING", recovered);
-            }
-        } catch (Exception e) {
-            log.warn("[KG] RUNNING 任务回收失败: {}", e.getMessage());
         }
     }
 

@@ -31,6 +31,9 @@ public class AiProperties {
     /** 读取超时（毫秒） */
     private int timeoutMs = 60000;
 
+    /** Shared answer-generation temperature for B1/B2/B3 evaluation. */
+    private double temperature = 0.3;
+
     /** 联网搜索开关（AI 答疑时补充公开网页上下文） */
     private boolean searchEnabled = true;
 
@@ -99,6 +102,17 @@ public class AiProperties {
 
     public void setTimeoutMs(int timeoutMs) {
         this.timeoutMs = timeoutMs;
+    }
+
+    public double getTemperature() {
+        return temperature;
+    }
+
+    public void setTemperature(double temperature) {
+        if (!Double.isFinite(temperature) || temperature < 0 || temperature > 2) {
+            throw new IllegalArgumentException("temperature must be between 0 and 2");
+        }
+        this.temperature = temperature;
     }
 
     /** 配置是否完整可用 */

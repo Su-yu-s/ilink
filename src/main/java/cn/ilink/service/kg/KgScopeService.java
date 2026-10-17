@@ -59,17 +59,22 @@ public class KgScopeService {
         if (entity == null) {
             return false;
         }
-        if (KgEntity.SCOPE_GLOBAL.equals(entity.getScope())) {
+        return canSee(entity.getScope(), entity.getTeamId(), entity.getUserId(), userId);
+    }
+
+    /** The same visibility rule for source chunks and graph relations. */
+    public boolean canSee(String scope, Long teamId, Long ownerId, Long userId) {
+        if (KgEntity.SCOPE_GLOBAL.equals(scope)) {
             return true;
         }
         if (userId == null || userId <= 0) {
             return false;
         }
-        if (KgEntity.SCOPE_PRIVATE.equals(entity.getScope())) {
-            return entity.getUserId() != null && entity.getUserId().equals(userId);
+        if (KgEntity.SCOPE_PRIVATE.equals(scope)) {
+            return ownerId != null && ownerId.equals(userId);
         }
-        if (KgEntity.SCOPE_TEAM.equals(entity.getScope())) {
-            return entity.getTeamId() != null && teamAccessService.isTeamParticipant(entity.getTeamId(), userId);
+        if (KgEntity.SCOPE_TEAM.equals(scope)) {
+            return teamId != null && teamAccessService.isTeamParticipant(teamId, userId);
         }
         return false;
     }

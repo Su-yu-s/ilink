@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -224,6 +225,7 @@ public class KgEmbeddingService {
         }
         // 简单选择法取 top-k：k 通常 ≤ 8，无需全排序
         double[] bestScores = new double[k];
+        Arrays.fill(bestScores, Double.NEGATIVE_INFINITY);
         long[] bestIds = new long[k];
         for (int i = 0; i < idx.entityIds.length; i++) {
             double score;

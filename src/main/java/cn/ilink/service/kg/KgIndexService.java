@@ -1,6 +1,7 @@
 package cn.ilink.service.kg;
 
 import cn.ilink.entity.KgDocEntity;
+import cn.ilink.entity.KgDocumentChunk;
 import cn.ilink.entity.KgEntity;
 import cn.ilink.entity.KgIndexTask;
 import cn.ilink.entity.KgRelation;
@@ -10,6 +11,7 @@ import cn.ilink.mapper.KgIndexTaskMapper;
 import cn.ilink.mapper.KgRelationMapper;
 import cn.ilink.service.ai.AiClient;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +22,15 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.time.ZoneId;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * KG 索引服务：文档 →（LLM 抽取）→ 实体/关系 →（对齐）→ 图谱入库。
@@ -35,8 +43,20 @@ public class KgIndexService {
 
     /** 最多重试次数，超过即 FAILED 终态 */
     static final int MAX_RETRY = 3;
-    /** 单篇文档抽取正文的字符上限（控制 token） */
+    /** 单次图谱抽取正文的字符上限（控制 token） */
     static final int MAX_CONTENT_CHARS = 4000;
+    /** 图谱抽取的生成预算：密集技术文档的 JSON（含逐字 source_quote）实测可达 3700+ token，
+     *  2048 会稳定截断（completionTokens 顶格 + JsonEOFException），见 diag 复现 */
+    static final int EXTRACTION_MAX_TOKENS = 6144;
+    static final int EXTRACTION_OVERLAP_CHARS = 400;
+    private static final int MAX_EXTRACTION_SPLIT_DEPTH = 3;
+    static final int MAX_TECH_ENTITIES_PER_DOCUMENT = 24;
+    private static final Pattern TECH_TOKEN = Pattern.compile(
+        "(?<![A-Za-z0-9_])([A-Z][A-Za-z0-9]*(?:[-_.][A-Za-z0-9]+)*)(?![A-Za-z0-9_])");
+    private static final Pattern TECH_CONTEXT = Pattern.compile(
+        "技术|框架|前端|后端|架构|采用|使用|接入|基于|缓存|数据库|容器|部署|拖拽|看板|接口|服务|脚本|代码|程序|系统|实现|依赖|算法|模型");
+    private static final Set<String> GENERIC_LATIN_WORDS = Set.of(
+        "api", "ai", "ui", "http", "https", "link", "demo", "primary", "pass", "bug", "inter");
 
     /** 抽取结果中间结构 */
     static class ExtractionResult {
@@ -55,6 +75,10 @@ public class KgIndexService {
         String source;
         String target;
         String relationType;
+        String sourceQuote;
+        LocalDate validFrom;
+        LocalDate validTo;
+        Long sourceChunkId;
     }
 
     private final AiClient aiClient;
@@ -63,6 +87,7 @@ public class KgIndexService {
     private final KgDocEntityMapper docEntityMapper;
     private final KgIndexTaskMapper taskMapper;
     private final KgEmbeddingService embeddingService;
+    private final KgDocumentChunkService chunkService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -71,13 +96,15 @@ public class KgIndexService {
                           KgRelationMapper relationMapper,
                           KgDocEntityMapper docEntityMapper,
                           KgIndexTaskMapper taskMapper,
-                          KgEmbeddingService embeddingService) {
+                          KgEmbeddingService embeddingService,
+                          KgDocumentChunkService chunkService) {
         this.aiClient = aiClient;
         this.entityMapper = entityMapper;
         this.relationMapper = relationMapper;
         this.docEntityMapper = docEntityMapper;
         this.taskMapper = taskMapper;
         this.embeddingService = embeddingService;
+        this.chunkService = chunkService;
     }
 
     // ==================== 任务入队 ====================
@@ -144,49 +171,95 @@ public class KgIndexService {
     }
 
     private void doProcess(KgIndexTask task) {
-        String content = task.getContent() == null ? "" : task.getContent();
-        if (content.length() > MAX_CONTENT_CHARS) {
-            content = content.substring(0, MAX_CONTENT_CHARS);
-        }
+        chunkService.index(task);
+        String content = KgSourceText.clean(task.getContent());
         if (content.trim().isEmpty()) {
             log.info("[KG] 任务 {} 正文为空，直接完成", task.getId());
             return;
         }
 
-        // ① LLM 抽取
-        String raw = aiClient.chat(
-            List.of(
-                msg("system", EXTRACTION_SYSTEM_PROMPT),
-                msg("user", buildExtractionUserPrompt(task.getTitle(), content))),
-            2048).content;
-
-        // ② 解析
-        ExtractionResult extraction = parseExtraction(raw);
+        // Each call stays bounded, while source-backed extraction covers the whole
+        // document. Only a span present in an indexed chunk may become a fact.
+        List<KgDocumentChunk> sourceChunks = chunkService.listIndexedByDocument(task);
+        List<String> windows = sourceChunks == null || sourceChunks.isEmpty()
+            ? List.of(content.substring(0, Math.min(content.length(), MAX_CONTENT_CHARS)))
+            : extractionWindows(content);
+        ExtractionResult extraction = new ExtractionResult();
+        Set<String> seenEntities = new HashSet<>();
+        Set<String> seenRelations = new HashSet<>();
+        int proposedRelations = 0;
+        for (String window : windows) {
+            for (WindowExtraction completed : extractWindow(task.getTitle(), window, 0)) {
+                ExtractionResult part = completed.extraction();
+                String supportedText = normalizeName(
+                    (task.getTitle() == null ? "" : task.getTitle()) + " " + completed.window());
+                part.entities.removeIf(entity -> !supportedText.contains(normalizeName(entity.name)));
+                proposedRelations += part.relations.size();
+                bindSourceFacts(part, content, sourceChunks, task.getTitle());
+                for (EntityDraft entity : part.entities) {
+                    if (seenEntities.add(normalizeName(entity.name))) {
+                        extraction.entities.add(entity);
+                    }
+                }
+                for (RelationDraft relation : part.relations) {
+                    String key = normalizeName(relation.source) + "|" + relation.relationType + "|"
+                        + normalizeName(relation.target) + "|" + relation.sourceChunkId;
+                    if (seenRelations.add(key)) {
+                        extraction.relations.add(relation);
+                    }
+                }
+            }
+        }
+        if (sourceChunks != null && !sourceChunks.isEmpty()) {
+            normalizeDocumentSubject(extraction, task.getTitle());
+            int addedTechnology = addTechnicalEntities(extraction, content, task.getTitle());
+            if (addedTechnology > 0 && titleSubject(extraction, task.getTitle()) == null
+                && task.getTitle() != null && !task.getTitle().isBlank()
+                && task.getTitle().length() <= 120) {
+                EntityDraft title = new EntityDraft();
+                title.name = task.getTitle().trim();
+                title.displayName = title.name;
+                title.entityType = "POST";
+                extraction.entities.add(title);
+            }
+            addTitleMentions(extraction, content, sourceChunks, task.getTitle());
+        }
+        if (extraction.entities.isEmpty()) {
+            throw new IllegalStateException("AI 未抽出任何有原文依据的实体");
+        }
+        log.info("[KG] 任务 {} 关系证据通过 {}/{}", task.getId(),
+            extraction.relations.size(), proposedRelations);
 
         // ③ 对齐 + 写入
         String scope = task.getScope() == null ? KgEntity.SCOPE_GLOBAL : task.getScope();
-        Long teamId = task.getTeamId() == null ? 0L : task.getTeamId();
-        Long userId = task.getUserId() == null ? 0L : task.getUserId();
+        // The author is not part of a GLOBAL/TEAM entity's identity.
+        Long teamId = KgEntity.SCOPE_TEAM.equals(scope)
+            ? (task.getTeamId() == null ? 0L : task.getTeamId()) : 0L;
+        Long userId = KgEntity.SCOPE_PRIVATE.equals(scope)
+            ? (task.getUserId() == null ? 0L : task.getUserId()) : 0L;
         String docRef = task.getDocType() + ":" + task.getDocId();
 
         Set<Long> touchedEntityIds = new HashSet<>();
+        Map<String, Long> alignedIds = new HashMap<>();
         for (EntityDraft draft : extraction.entities) {
-            KgEntity entity = alignAndSave(draft, scope, teamId, userId, docRef);
+            KgEntity entity = alignAndSave(draft, scope, teamId, userId,
+                task.getDocType(), task.getDocId());
             if (entity != null) {
                 touchedEntityIds.add(entity.getId());
+                alignedIds.put(normalizeName(draft.name), entity.getId());
                 // ④ 向量化（失败静默降级，不影响图谱）
                 embeddingService.embedAndSave(entity.getId(),
-                    entity.getDisplayName() + "\n" + nullToEmpty(entity.getDescription()));
+                    entity.getDisplayName());
             }
         }
 
         for (RelationDraft draft : extraction.relations) {
-            Long sourceId = resolvedEntityId(extraction, draft.source, touchedEntityIds);
-            Long targetId = resolvedEntityId(extraction, draft.target, touchedEntityIds);
+            Long sourceId = alignedIds.get(normalizeName(draft.source));
+            Long targetId = alignedIds.get(normalizeName(draft.target));
             if (sourceId == null || targetId == null || sourceId.equals(targetId)) {
                 continue;
             }
-            saveRelation(sourceId, targetId, draft.relationType, scope, teamId, userId, docRef);
+            saveRelation(sourceId, targetId, draft, scope, teamId, userId, docRef);
         }
 
         // ⑤ 文档-实体映射
@@ -208,6 +281,152 @@ public class KgIndexService {
             extraction.entities.size(), extraction.relations.size());
     }
 
+    static List<String> extractionWindows(String content) {
+        List<String> windows = new ArrayList<>();
+        for (int start = 0; start < content.length();) {
+            int end = Math.min(content.length(), start + MAX_CONTENT_CHARS);
+            if (end < content.length() && Character.isHighSurrogate(content.charAt(end - 1))) {
+                end--;
+            }
+            windows.add(content.substring(start, end));
+            if (end == content.length()) {
+                break;
+            }
+            start = end - EXTRACTION_OVERLAP_CHARS;
+        }
+        return windows;
+    }
+
+    private record WindowExtraction(String window, ExtractionResult extraction) { }
+
+    /** A truncated model JSON is retried on smaller overlapping source windows. */
+    private List<WindowExtraction> extractWindow(String title, String window, int depth) {
+        AiClient.AiChatResult result = aiClient.chat(
+            List.of(msg("system", EXTRACTION_SYSTEM_PROMPT),
+                msg("user", buildExtractionUserPrompt(title, window))),
+            EXTRACTION_MAX_TOKENS);
+        String raw = result.content;
+        try {
+            return List.of(new WindowExtraction(window, parseExtraction(raw, true)));
+        } catch (IllegalStateException malformed) {
+            log.warn("[KG] 抽取 JSON 解析失败: 窗口 {} 字符, 响应 {} 字符 / {} tokens（等于 {} 即截断）",
+                window.length(), raw == null ? -1 : raw.length(), result.completionTokens,
+                EXTRACTION_MAX_TOKENS);
+            if (depth >= MAX_EXTRACTION_SPLIT_DEPTH || window.length() < 1000) {
+                throw malformed;
+            }
+            int midpoint = window.length() / 2;
+            int overlap = Math.min(EXTRACTION_OVERLAP_CHARS / 2, midpoint / 2);
+            List<WindowExtraction> recovered = new ArrayList<>();
+            recovered.addAll(extractWindow(title, window.substring(0, midpoint + overlap), depth + 1));
+            recovered.addAll(extractWindow(title, window.substring(midpoint - overlap), depth + 1));
+            return recovered;
+        }
+    }
+
+    /** A document/project title is a topic, unless it explicitly names a competition. */
+    private static void normalizeDocumentSubject(ExtractionResult extraction, String title) {
+        if (title == null || title.isBlank() || title.matches(".*(竞赛|大赛|比赛|挑战赛|杯赛).*")) {
+            return;
+        }
+        String normalizedTitle = normalizeName(title);
+        for (EntityDraft entity : extraction.entities) {
+            String name = normalizeName(entity.name);
+            if (name.length() >= 4 && normalizedTitle.contains(name)
+                && "COMPETITION".equals(entity.entityType)) {
+                entity.entityType = "POST";
+            }
+        }
+    }
+
+    private static EntityDraft titleSubject(ExtractionResult extraction, String title) {
+        String normalizedTitle = normalizeName(title);
+        if (normalizedTitle.length() < 4) {
+            return null;
+        }
+        for (EntityDraft entity : extraction.entities) {
+            String name = normalizeName(entity.name);
+            if (name.length() >= 4 && normalizedTitle.contains(name)
+                && ("POST".equals(entity.entityType)
+                    || "COMPETITION".equals(entity.entityType))) {
+                return entity;
+            }
+        }
+        return null;
+    }
+
+    /** Recover explicit technology names from technical context when the model omits them. */
+    static int addTechnicalEntities(ExtractionResult extraction, String content, String title) {
+        if (content == null || content.isBlank()) {
+            return 0;
+        }
+        int added = 0;
+        String normalizedTitle = normalizeName(title);
+        Matcher matcher = TECH_TOKEN.matcher(content);
+        while (matcher.find() && added < MAX_TECH_ENTITIES_PER_DOCUMENT) {
+            String token = matcher.group(1);
+            String normalized = normalizeName(token);
+            if (normalized.length() < 2 || token.length() == 2 && !token.equals(token.toUpperCase())
+                || GENERIC_LATIN_WORDS.contains(normalized)
+                || normalizedTitle.contains(normalized)) {
+                continue;
+            }
+            String context = content.substring(Math.max(0, matcher.start() - 55),
+                Math.min(content.length(), matcher.end() + 55));
+            if (!TECH_CONTEXT.matcher(context).find()) {
+                continue;
+            }
+            boolean covered = extraction.entities.stream().anyMatch(entity ->
+                normalizeName(entity.name).contains(normalized));
+            if (covered) {
+                continue;
+            }
+            EntityDraft draft = new EntityDraft();
+            draft.name = token;
+            draft.displayName = token;
+            draft.entityType = "SKILL";
+            extraction.entities.add(draft);
+            added++;
+        }
+        return added;
+    }
+
+    /** Only MENTIONS can be inferred from a document title and a cited body span. */
+    static void addTitleMentions(ExtractionResult extraction, String content,
+                                 List<KgDocumentChunk> chunks, String title) {
+        EntityDraft subject = titleSubject(extraction, title);
+        if (subject == null || chunks == null || chunks.isEmpty()) {
+            return;
+        }
+        List<RelationDraft> mentions = new ArrayList<>();
+        for (EntityDraft entity : extraction.entities) {
+            if (!"SKILL".equals(entity.entityType)
+                || normalizeName(subject.name).equals(normalizeName(entity.name))) {
+                continue;
+            }
+            boolean alreadyMentioned = extraction.relations.stream().anyMatch(relation ->
+                "MENTIONS".equals(relation.relationType)
+                    && normalizeName(subject.name).equals(normalizeName(relation.source))
+                    && normalizeName(entity.name).equals(normalizeName(relation.target)));
+            if (alreadyMentioned) {
+                continue;
+            }
+            RelationDraft mention = new RelationDraft();
+            mention.source = subject.name;
+            mention.target = entity.name;
+            mention.relationType = "MENTIONS";
+            ExtractionResult candidate = new ExtractionResult();
+            candidate.entities.add(subject);
+            candidate.entities.add(entity);
+            candidate.relations.add(mention);
+            bindSourceFacts(candidate, content, chunks, title);
+            if (!candidate.relations.isEmpty()) {
+                mentions.add(mention);
+            }
+        }
+        extraction.relations.addAll(mentions);
+    }
+
     // ==================== 实体对齐 ====================
 
     /** 名字归一化：小写、去空格、去标点符号 */
@@ -215,13 +434,14 @@ public class KgIndexService {
         if (raw == null) {
             return "";
         }
-        return raw.toLowerCase(Locale.ROOT)
+        return raw.toLowerCase()
             .replaceAll("[\\s\\p{Punct}\\u3000-\\u303F\\uFF00-\\uFFEF]+", "")
             .trim();
     }
 
     /** 对齐规则：同 scope+team+user 下 name+type 相同视为同一实体；否则新建。 */
-    private KgEntity alignAndSave(EntityDraft draft, String scope, Long teamId, Long userId, String docRef) {
+    private KgEntity alignAndSave(EntityDraft draft, String scope, Long teamId, Long userId,
+                                  String docType, Long docId) {
         String name = normalizeName(draft.name);
         if (name.isEmpty()) {
             return null;
@@ -235,9 +455,14 @@ public class KgIndexService {
             .eq("status", KgEntity.STATUS_ACTIVE)
             .last("LIMIT 1"));
         if (existing != null) {
-            existing.setDocCount(existing.getDocCount() == null ? 1 : existing.getDocCount() + 1);
-            if (entityMapper.updateById(existing) == 0) {
-                log.warn("[KG] 实体 {} 计数更新失败（可能被并发合并）", existing.getId());
+            KgDocEntity indexed = docEntityMapper.selectOne(new QueryWrapper<KgDocEntity>()
+                .eq("doc_type", docType).eq("doc_id", docId).eq("entity_id", existing.getId())
+                .last("LIMIT 1"));
+            if (indexed == null) {
+                existing.setDocCount(existing.getDocCount() == null ? 1 : existing.getDocCount() + 1);
+                if (entityMapper.updateById(existing) == 0) {
+                    log.warn("[KG] 实体 {} 计数更新失败（可能被并发合并）", existing.getId());
+                }
             }
             return existing;
         }
@@ -245,7 +470,8 @@ public class KgIndexService {
         entity.setName(name);
         entity.setDisplayName(truncate(draft.displayName, 255));
         entity.setEntityType(draft.entityType);
-        entity.setDescription(truncate(draft.description, 2000));
+        // Model summaries are not original source facts and cannot support answers.
+        entity.setDescription(null);
         entity.setScope(scope);
         entity.setTeamId(teamId);
         entity.setUserId(userId);
@@ -265,49 +491,53 @@ public class KgIndexService {
         }
     }
 
-    /** 关系写入：同 source+target+type 当天已存在则 weight+1，否则新建（valid_from=当前时间） */
-    private void saveRelation(Long sourceId, Long targetId, String relationType,
+    /** 每条关系保留自己的原文证据；同一片段重试时保持幂等。 */
+    private void saveRelation(Long sourceId, Long targetId, RelationDraft draft,
                               String scope, Long teamId, Long userId, String docRef) {
         Date now = new Date();
         KgRelation existing = relationMapper.selectOne(new QueryWrapper<KgRelation>()
             .eq("source_id", sourceId).eq("target_id", targetId)
-            .eq("relation_type", relationType)
-            .isNull("valid_to")
-            .apply("DATE(valid_from) = CURDATE()")
+            .eq("relation_type", draft.relationType)
+            .eq("source_chunk_id", draft.sourceChunkId)
             .last("LIMIT 1"));
         if (existing != null) {
-            existing.setWeight((existing.getWeight() == null ? 1.0 : existing.getWeight()) + 1.0);
-            relationMapper.updateById(existing);
             return;
         }
         KgRelation relation = new KgRelation();
         relation.setSourceId(sourceId);
         relation.setTargetId(targetId);
-        relation.setRelationType(relationType);
+        relation.setRelationType(draft.relationType);
+        relation.setFactText(truncate(draft.sourceQuote, 1000));
         relation.setWeight(1.0);
-        relation.setValidFrom(now);
-        relation.setValidTo(null);
+        relation.setValidFrom(toDate(draft.validFrom));
+        relation.setValidTo(toDate(draft.validTo));
         relation.setScope(scope);
         relation.setTeamId(teamId);
         relation.setUserId(userId);
         relation.setSourceDocId(docRef);
+        relation.setSourceChunkId(draft.sourceChunkId);
         relation.setCreatedAt(now);
         try {
             relationMapper.insert(relation);
         } catch (DuplicateKeyException e) {
-            // 同秒并发写入同一关系，忽略
+            // 同一片段的并发重复写入，忽略。
         }
+    }
+
+    private static Date toDate(LocalDate day) {
+        return day == null ? null : Date.from(day.atStartOfDay(ZoneId.of("Asia/Shanghai")).toInstant());
     }
 
     // ==================== Prompt 与解析 ====================
 
     static final String EXTRACTION_SYSTEM_PROMPT =
-        "你是高校竞赛领域的知识图谱构建专家。你的唯一任务是从给定的文本中抽取实体和关系，"
-            + "并严格按要求的 JSON 格式输出。你不做任何解释、评论或追加文本。";
+        "你是项目与高校竞赛领域的知识图谱构建专家。你的唯一任务是从给定的文本中抽取实体和关系，"
+            + "并严格按要求的 JSON 格式输出。关系必须有可逐字定位的原文短句；不得补全缺失事实。"
+            + "你不做任何解释、评论或追加文本。";
 
     static final String EXTRACTION_TYPE_CONSTRAINTS =
-        "实体类型只能取：COMPETITION（竞赛）、SKILL（技能/学科方向）、TEACHER（教师）、"
-            + "ORGANIZATION（主办方/院校/机构）、POST（帖子/话题）。\n"
+        "实体类型只能取：COMPETITION（有明确名称的赛事）、SKILL（技能/技术/工具/框架/接口/学科）、TEACHER（教师）、"
+            + "ORGANIZATION（主办方/院校/机构）、POST（文章/项目/模块等文档主题）。\n"
             + "关系类型只能取：REQUIRES（竞赛要求某技能）、TEACHES（教师擅长/教授某方向）、"
             + "HOSTED_BY（竞赛由某机构主办）、RELATED_TO（一般相关）、MENTIONS（文中提到）。";
 
@@ -317,11 +547,21 @@ public class KgIndexService {
         sb.append("【任务】从下面的文本中抽取实体和关系，输出 JSON。\n\n");
         sb.append("【约束】\n").append(EXTRACTION_TYPE_CONSTRAINTS).append('\n');
         sb.append("实体 name 必须简短规范（如“数学建模”“全国大学生数学建模竞赛”），"
-            + "不要把整句话当名称；一篇文章中同一实体只出现一次。\n");
+            + "不要把整句话当名称；一篇文章中同一实体只出现一次。"
+            + "项目、模块、开发日志的标题归为 POST，不能因为出现“项目”“模块”就归为 COMPETITION。\n");
+        sb.append("技术文档要覆盖正文明确出现的编程语言、框架、数据库、缓存、算法、接口、组件与交互技术，"
+            + "即使它们只出现一次；标题是文档主题时，输出标题实体及其与正文技术实体的 MENTIONS 关系。"
+            + "不要凭常识补出未出现的技术，也不要把项目使用某技术写成竞赛要求该技术。\n");
+        sb.append("保留原文中的专有标识、大小写、数字和单位，例如 PointROPE、FileList、300px。"
+            + "每条关系必须给出 source_quote，逐字复制正文中同时提到两端实体的最短原句；"
+            + "若 source 是标题中的文档主题且正文只提及 target，可输出 source→target 的 MENTIONS 关系，"
+            + "source_quote 逐字复制提及 target 的正文短句；不要据此推断 REQUIRES 等更强关系。"
+            + "没有直接证据就不要输出该关系。valid_from/valid_to 只在短句明示关系的生效/结束日期时填写 yyyy-MM-dd，"
+            + "否则填 null；不得用文档创建或入库日期代替。\n");
         sb.append("严格输出如下 JSON，不要有任何解释文本、注释或代码块标记：\n\n");
         sb.append("【示例】\n");
         sb.append("输入：第十届“华为杯”中国研究生数学建模竞赛由中国国际青年交流中心主办，"
-            + "参赛需要掌握优化算法与 MATLAB 编程，张伟老师长期指导该赛事。\n");
+            + "中国研究生数学建模竞赛参赛需要掌握优化算法与 MATLAB 编程，张伟老师长期指导该赛事。\n");
         sb.append("输出：\n");
         sb.append("{\"entities\":["
             + "{\"name\":\"中国研究生数学建模竞赛\",\"display_name\":\"中国研究生数学建模竞赛\","
@@ -335,10 +575,11 @@ public class KgIndexService {
             + "{\"name\":\"张伟\",\"display_name\":\"张伟\","
             + "\"entity_type\":\"TEACHER\",\"description\":\"长期指导数学建模竞赛\"}],"
             + "\"relations\":["
-            + "{\"source\":\"中国研究生数学建模竞赛\",\"target\":\"中国国际青年交流中心\",\"relation_type\":\"HOSTED_BY\"},"
-            + "{\"source\":\"中国研究生数学建模竞赛\",\"target\":\"优化算法\",\"relation_type\":\"REQUIRES\"},"
-            + "{\"source\":\"中国研究生数学建模竞赛\",\"target\":\"matlab\",\"relation_type\":\"REQUIRES\"},"
-            + "{\"source\":\"张伟\",\"target\":\"中国研究生数学建模竞赛\",\"relation_type\":\"TEACHES\"}]}\n\n");
+            + "{\"source\":\"中国研究生数学建模竞赛\",\"target\":\"中国国际青年交流中心\",\"relation_type\":\"HOSTED_BY\",\"source_quote\":\"第十届“华为杯”中国研究生数学建模竞赛由中国国际青年交流中心主办\",\"valid_from\":null,\"valid_to\":null},"
+            + "{\"source\":\"中国研究生数学建模竞赛\",\"target\":\"优化算法\",\"relation_type\":\"REQUIRES\",\"source_quote\":\"中国研究生数学建模竞赛参赛需要掌握优化算法与 MATLAB 编程\",\"valid_from\":null,\"valid_to\":null}]}\n\n");
+        sb.append("技术文档示例：标题“协作看板开发记录”，正文“看板采用 Kanban 布局，拖拽接入 DnD API，缓存使用 Redis。”；"
+            + "应抽取标题为 POST、Kanban/DnD API/Redis 为 SKILL，并以正文原句为 source_quote，"
+            + "分别输出标题到这些技术的 MENTIONS；不能输出 REQUIRES。\n\n");
         sb.append("【待抽取文本】\n<document>\n");
         if (title != null && !title.trim().isEmpty()) {
             sb.append("标题：").append(title.trim()).append('\n');
@@ -354,6 +595,11 @@ public class KgIndexService {
      * 非法类型、缺字段的条目跳过；整包解析失败抛 IllegalStateException。
      */
     ExtractionResult parseExtraction(String raw) throws IllegalStateException {
+        return parseExtraction(raw, false);
+    }
+
+    private ExtractionResult parseExtraction(String raw, boolean allowEmptyEntities)
+        throws IllegalStateException {
         if (raw == null || raw.trim().isEmpty()) {
             throw new IllegalStateException("AI 返回内容为空");
         }
@@ -364,23 +610,19 @@ public class KgIndexService {
             throw new IllegalStateException("AI 返回内容中未找到 JSON 对象");
         }
         String json = text.substring(start, end + 1);
-        JsonNode root;
-        try {
-            root = objectMapper.readTree(json);
-        } catch (Exception e) {
-            throw new IllegalStateException("AI 返回的 JSON 无法解析");
-        }
+        JsonNode root = readTreeWithQuoteRepair(json);
         ExtractionResult result = new ExtractionResult();
         Set<String> seenNames = new HashSet<>();
         JsonNode entities = root.path("entities");
         if (entities.isArray()) {
             for (JsonNode node : entities) {
                 String name = node.path("name").asText("").trim();
-                String type = node.path("entity_type").asText("").trim().toUpperCase(Locale.ROOT);
-                if (name.isEmpty() || !ALLOWED_ENTITY_TYPES.contains(type) || seenNames.contains(name)) {
+                String type = node.path("entity_type").asText("").trim().toUpperCase();
+                if (name.isEmpty() || !ALLOWED_ENTITY_TYPES.contains(type)
+                    || seenNames.contains(normalizeName(name))) {
                     continue;
                 }
-                seenNames.add(name);
+                seenNames.add(normalizeName(name));
                 EntityDraft draft = new EntityDraft();
                 draft.name = name;
                 draft.displayName = node.path("display_name").asText(name).trim();
@@ -398,7 +640,7 @@ public class KgIndexService {
             for (JsonNode node : relations) {
                 String source = node.path("source").asText("").trim();
                 String target = node.path("target").asText("").trim();
-                String type = node.path("relation_type").asText("").trim().toUpperCase(Locale.ROOT);
+                String type = node.path("relation_type").asText("").trim().toUpperCase();
                 if (source.isEmpty() || target.isEmpty() || !ALLOWED_RELATION_TYPES.contains(type)) {
                     continue;
                 }
@@ -406,13 +648,176 @@ public class KgIndexService {
                 draft.source = source;
                 draft.target = target;
                 draft.relationType = type;
+                draft.sourceQuote = node.path("source_quote").asText("").trim();
+                draft.validFrom = parseDate(node.path("valid_from"));
+                draft.validTo = parseDate(node.path("valid_to"));
                 result.relations.add(draft);
             }
         }
-        if (result.entities.isEmpty()) {
+        if (result.entities.isEmpty() && !allowEmptyEntities) {
             throw new IllegalStateException("AI 未抽出任何合法实体");
         }
         return result;
+    }
+
+    /** 游离引号坏形：值已闭合后、结构符（} ] ,）之前又出现一个引号，如 "value"\n"} */
+    private static final Pattern STRAY_QUOTE_BEFORE_STRUCTURAL =
+        Pattern.compile("\"(\\s+)\"(\\s*)([}\\],])");
+
+    /**
+     * 模型偶发输出上述游离引号导致 JSON 非法（diag 实录：删掉该引号即恢复解析）。
+     * 只做这一类模式化修复；其余损坏（如截断）原样抛出，交给窗口拆分重试。
+     */
+    private JsonNode readTreeWithQuoteRepair(String json) {
+        String candidate = json;
+        for (int repair = 0; repair < 20; repair++) {
+            try {
+                return objectMapper.readTree(candidate);
+            } catch (JsonProcessingException e) {
+                Matcher fixed = STRAY_QUOTE_BEFORE_STRUCTURAL.matcher(candidate);
+                if (!fixed.find()) {
+                    throw new IllegalStateException("AI 返回的 JSON 无法解析: " + e.getOriginalMessage());
+                }
+                candidate = fixed.replaceFirst("\"$1$2$3");
+            }
+        }
+        throw new IllegalStateException("AI 返回的 JSON 无法解析");
+    }
+
+    /** Bind a claim to a source span, allowing only MENTIONS to use the document title as source. */
+    static void bindSourceFacts(ExtractionResult result, String content,
+                                List<KgDocumentChunk> chunks) {
+        bindSourceFacts(result, content, chunks, null);
+    }
+
+    static void bindSourceFacts(ExtractionResult result, String content,
+                                List<KgDocumentChunk> chunks, String title) {
+        Set<String> entityNames = new HashSet<>();
+        for (EntityDraft entity : result.entities) {
+            entityNames.add(normalizeName(entity.name));
+        }
+        result.relations.removeIf(relation -> {
+            if (!entityNames.contains(normalizeName(relation.source))
+                || !entityNames.contains(normalizeName(relation.target))
+                || relation.validFrom != null && relation.validTo != null
+                    && !relation.validFrom.isBefore(relation.validTo)) {
+                return true;
+            }
+            for (KgDocumentChunk chunk : chunks == null ? List.<KgDocumentChunk>of() : chunks) {
+                String quote = supportedQuote(relation, chunk, title);
+                if (quote != null && content.contains(quote)
+                    && dateSupported(quote, relation.validFrom)
+                    && dateSupported(quote, relation.validTo)) {
+                    relation.sourceQuote = quote;
+                    relation.sourceChunkId = chunk.getId();
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    private static String supportedQuote(RelationDraft relation, KgDocumentChunk chunk,
+                                         String title) {
+        if (chunk == null || chunk.getId() == null || chunk.getContent() == null) {
+            return null;
+        }
+        String content = chunk.getContent();
+        String suggested = relation.sourceQuote;
+        boolean titleMention = "MENTIONS".equals(relation.relationType)
+            && title != null && !normalizeName(relation.source).isEmpty()
+            && (normalizeName(title).equals(normalizeName(relation.source))
+                || normalizeName(relation.source).length() >= 4
+                    && normalizeName(title).contains(normalizeName(relation.source)));
+        if (suggested != null && !suggested.isBlank() && content.contains(suggested)
+            && (containsBoth(suggested, relation.source, relation.target)
+                || titleMention && indexOfExactName(
+                    suggested.toLowerCase(java.util.Locale.ROOT), relation.target) >= 0)
+            && hasRelationCue(suggested, relation.relationType)) {
+            return suggested;
+        }
+        String lower = content.toLowerCase(java.util.Locale.ROOT);
+        int sourceAt = indexOfExactName(lower, relation.source);
+        int targetAt = indexOfExactName(lower, relation.target);
+        if (targetAt < 0 || sourceAt < 0 && !titleMention) {
+            return null;
+        }
+        if (sourceAt < 0) {
+            return content.substring(Math.max(0, targetAt - 80),
+                Math.min(content.length(), targetAt + relation.target.length() + 80)).trim();
+        }
+        int from = Math.min(sourceAt, targetAt);
+        int to = Math.max(sourceAt + relation.source.length(), targetAt + relation.target.length());
+        if (to - from > 500) {
+            return null;
+        }
+        String span = content.substring(Math.max(0, from - 30),
+            Math.min(content.length(), to + 30)).trim();
+        return hasRelationCue(span, relation.relationType) ? span : null;
+    }
+
+    /** A Latin technology name must not match a substring of another identifier. */
+    private static int indexOfExactName(String lowerText, String name) {
+        if (name == null || name.isBlank()) {
+            return -1;
+        }
+        String needle = name.toLowerCase(java.util.Locale.ROOT);
+        for (int offset = 0; offset < lowerText.length();) {
+            int at = lowerText.indexOf(needle, offset);
+            if (at < 0) {
+                return -1;
+            }
+            int end = at + needle.length();
+            boolean leftBounded = !asciiIdentifier(needle.charAt(0))
+                || at == 0 || !asciiIdentifier(lowerText.charAt(at - 1));
+            boolean rightBounded = !asciiIdentifier(needle.charAt(needle.length() - 1))
+                || end == lowerText.length() || !asciiIdentifier(lowerText.charAt(end));
+            if (leftBounded && rightBounded) {
+                return at;
+            }
+            offset = at + 1;
+        }
+        return -1;
+    }
+
+    private static boolean asciiIdentifier(char value) {
+        return value >= 'a' && value <= 'z' || value >= '0' && value <= '9'
+            || value == '_';
+    }
+
+    private static boolean containsBoth(String quote, String source, String target) {
+        String normalized = normalizeName(quote);
+        return normalized.contains(normalizeName(source))
+            && normalized.contains(normalizeName(target));
+    }
+
+    private static boolean hasRelationCue(String quote, String relationType) {
+        return switch (relationType) {
+            case "HOSTED_BY" -> quote.contains("主办") || quote.contains("举办")
+                || quote.contains("组织");
+            case "REQUIRES" -> quote.contains("需要") || quote.contains("要求")
+                || quote.contains("必备") || quote.contains("掌握");
+            case "TEACHES" -> quote.contains("教授") || quote.contains("指导")
+                || quote.contains("擅长") || quote.contains("授课");
+            default -> true;
+        };
+    }
+
+    private static LocalDate parseDate(JsonNode node) {
+        if (node == null || node.isNull()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(node.asText());
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private static boolean dateSupported(String quote, LocalDate day) {
+        return day == null || quote.contains(day.toString())
+            || quote.contains(day.getYear() + "年" + day.getMonthValue() + "月"
+                + day.getDayOfMonth() + "日");
     }
 
     public static final Set<String> ALLOWED_ENTITY_TYPES = new HashSet<>(List.of(
@@ -420,32 +825,11 @@ public class KgIndexService {
     public static final Set<String> ALLOWED_RELATION_TYPES = new HashSet<>(List.of(
         "REQUIRES", "TEACHES", "HOSTED_BY", "RELATED_TO", "MENTIONS"));
 
-    /** 关系草稿中的 name → 已入库实体 ID（仅在本任务抽出的实体里解析） */
-    private Long resolvedEntityId(ExtractionResult extraction, String draftName, Set<Long> touched) {
-        String name = normalizeName(draftName);
-        for (EntityDraft draft : extraction.entities) {
-            if (normalizeName(draft.name).equals(name)) {
-                // 重新查一次拿 ID（对齐阶段已入库）
-                KgEntity entity = entityMapper.selectOne(new QueryWrapper<KgEntity>()
-                    .eq("name", name)
-                    .eq("entity_type", draft.entityType)
-                    .eq("status", KgEntity.STATUS_ACTIVE)
-                    .last("LIMIT 1"));
-                return entity == null ? null : entity.getId();
-            }
-        }
-        return null;
-    }
-
     private static String truncate(String text, int max) {
         if (text == null) {
             return null;
         }
         return text.length() <= max ? text : text.substring(0, max);
-    }
-
-    private static String nullToEmpty(String s) {
-        return s == null ? "" : s;
     }
 
     private static java.util.Map<String, String> msg(String role, String content) {

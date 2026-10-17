@@ -14,7 +14,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
 
 /**
  * KG 图查询服务：批量实体查询、2 跳子图扩展。
@@ -32,11 +36,14 @@ public class KgRelationService {
 
     private final KgRelationMapper relationMapper;
     private final KgEntityMapper entityMapper;
+    private final KgScopeService scopeService;
 
     @Autowired
-    public KgRelationService(KgRelationMapper relationMapper, KgEntityMapper entityMapper) {
+    public KgRelationService(KgRelationMapper relationMapper, KgEntityMapper entityMapper,
+                             KgScopeService scopeService) {
         this.relationMapper = relationMapper;
         this.entityMapper = entityMapper;
+        this.scopeService = scopeService;
     }
 
     /** 批量查询实体（自动去重、剔除 null/非法 ID，保持入参顺序） */
@@ -58,7 +65,10 @@ public class KgRelationService {
         // 分批 IN 查询，防止超长 SQL
         for (int from = 0; from < idList.size(); from += MAX_IN_CLAUSE) {
             List<Long> batch = idList.subList(from, Math.min(from + MAX_IN_CLAUSE, idList.size()));
-            result.addAll(entityMapper.selectBatchIds(batch));
+            List<KgEntity> rows = entityMapper.selectBatchIds(batch);
+            if (rows != null) {
+                result.addAll(rows);
+            }
         }
         // 保持入参顺序返回
         result.sort((a, b) -> {
@@ -93,59 +103,159 @@ public class KgRelationService {
         }
     }
 
-    /**
-     * 从种子实体出发扩展 2 跳子图。
-     * 只取仍然有效的关系（valid_to IS NULL），最多返回 {@link #MAX_EXPAND_EDGES} 条边。
-     *
-     * @param seedIds 种子实体 ID（通常来自向量检索 top-k）
-     */
+    /** Legacy overload; callers with a user context should use the visibility-aware form. */
     public SubGraph expandTwoHops(Collection<Long> seedIds) {
+        return expandTwoHops(seedIds, null, null);
+    }
+
+    /** Fixed bidirectional two-hop traversal with visibility and time-window filtering. */
+    public SubGraph expandTwoHops(Collection<Long> seedIds, Long userId, KgTimeRange timeRange) {
         SubGraph graph = new SubGraph();
         if (seedIds == null || seedIds.isEmpty()) {
             return graph;
         }
-        List<Long> seeds = new ArrayList<>(new LinkedHashSet<>(seedIds));
-        if (seeds.size() > MAX_IN_CLAUSE) {
-            seeds = seeds.subList(0, MAX_IN_CLAUSE);
-        }
-        for (Long id : seeds) {
-            graph.entityIds.add(id);
-        }
-
-        // 第 1 跳：源是种子
-        List<KgRelation> firstHop = relationMapper.selectList(
-            new QueryWrapper<KgRelation>()
-                .in("source_id", seeds)
-                .isNull("valid_to"));
-        for (KgRelation edge : firstHop) {
-            graph.addEdge(edge);
-        }
-
-        // 第 2 跳：源是第 1 跳的目标（排除种子本身，避免大量回边挤占配额）
-        Set<Long> secondHopSources = new LinkedHashSet<>();
-        for (KgRelation edge : firstHop) {
-            Long target = edge.getTargetId();
-            if (target != null && !seeds.contains(target)) {
-                secondHopSources.add(target);
-            }
-        }
-        if (secondHopSources.isEmpty() || graph.edges.size() >= MAX_EXPAND_EDGES) {
+        List<Long> seeds = seedIds.stream().filter(id -> id != null && id > 0)
+            .distinct().limit(MAX_IN_CLAUSE).toList();
+        if (seeds.isEmpty()) {
             return graph;
         }
-        List<Long> sources = new ArrayList<>(secondHopSources);
-        for (int from = 0; from < sources.size() && graph.edges.size() < MAX_EXPAND_EDGES; from += MAX_IN_CLAUSE) {
-            List<Long> batch = sources.subList(from, Math.min(from + MAX_IN_CLAUSE, sources.size()));
-            List<KgRelation> secondHop = relationMapper.selectList(
-                new QueryWrapper<KgRelation>()
-                    .in("source_id", batch)
-                    .isNull("valid_to"));
-            for (KgRelation edge : secondHop) {
+        Set<Long> visibleSeeds = new LinkedHashSet<>();
+        for (KgEntity entity : getEntitiesByIds(seeds)) {
+            if (isVisibleActive(entity, userId)) {
+                visibleSeeds.add(entity.getId());
+            }
+        }
+        if (visibleSeeds.isEmpty()) {
+            return graph;
+        }
+        graph.entityIds.addAll(visibleSeeds);
+        Set<Long> seenEdges = new LinkedHashSet<>();
+        Set<Long> frontier = visibleSeeds;
+        for (int hop = 0; hop < 2 && !frontier.isEmpty()
+            && graph.edges.size() < MAX_EXPAND_EDGES; hop++) {
+            List<KgRelation> candidates = incidentEdges(frontier, userId, timeRange);
+            candidates.sort(Comparator.comparing(KgRelation::getId,
+                Comparator.nullsLast(Long::compareTo)));
+            Set<Long> endpointIds = new LinkedHashSet<>();
+            for (KgRelation edge : candidates) {
+                endpointIds.add(edge.getSourceId());
+                endpointIds.add(edge.getTargetId());
+            }
+            Map<Long, KgEntity> endpoints = new LinkedHashMap<>();
+            for (KgEntity entity : getEntitiesByIds(endpointIds)) {
+                endpoints.put(entity.getId(), entity);
+            }
+            Set<Long> nextFrontier = new LinkedHashSet<>();
+            for (KgRelation edge : candidates) {
                 if (graph.edges.size() >= MAX_EXPAND_EDGES) {
                     break;
                 }
+                if (edge.getId() == null || !seenEdges.add(edge.getId())
+                    || !isVisibleRelation(edge, userId, timeRange)
+                    || !isVisibleActive(endpoints.get(edge.getSourceId()), userId)
+                    || !isVisibleActive(endpoints.get(edge.getTargetId()), userId)) {
+                    continue;
+                }
+                graph.addEdge(edge);
+                if (!visibleSeeds.contains(edge.getSourceId())) {
+                    nextFrontier.add(edge.getSourceId());
+                }
+                if (!visibleSeeds.contains(edge.getTargetId())) {
+                    nextFrontier.add(edge.getTargetId());
+                }
+            }
+            frontier = nextFrontier;
+        }
+        return graph;
+    }
+
+    /** Bounded graph retrieval for questions covering every relation in a date window. */
+    public SubGraph visibleTemporalGraph(Long userId, KgTimeRange timeRange) {
+        SubGraph graph = new SubGraph();
+        if (timeRange == null) {
+            return graph;
+        }
+        QueryWrapper<KgRelation> query = new QueryWrapper<KgRelation>()
+            .isNotNull("valid_from").lt("valid_from", timeRange.endDate())
+            .and(w -> w.isNull("valid_to").or().gt("valid_to", timeRange.startDate()));
+        query.and(w -> {
+            w.eq("scope", KgEntity.SCOPE_GLOBAL);
+            if (userId != null && userId > 0) {
+                w.or().eq("scope", KgEntity.SCOPE_PRIVATE).eq("user_id", userId);
+                List<Long> teams = scopeService.visibleTeamIds(userId);
+                if (teams != null && !teams.isEmpty()) {
+                    w.or().eq("scope", KgEntity.SCOPE_TEAM).in("team_id", teams);
+                }
+            }
+        });
+        query.orderByAsc("id").last("LIMIT 1000");
+        List<KgRelation> candidates = relationMapper.selectList(query);
+        if (candidates == null || candidates.isEmpty()) {
+            return graph;
+        }
+        Set<Long> endpointIds = new LinkedHashSet<>();
+        for (KgRelation edge : candidates) {
+            endpointIds.add(edge.getSourceId());
+            endpointIds.add(edge.getTargetId());
+        }
+        Map<Long, KgEntity> endpoints = new LinkedHashMap<>();
+        for (KgEntity entity : getEntitiesByIds(endpointIds)) {
+            endpoints.put(entity.getId(), entity);
+        }
+        for (KgRelation edge : candidates) {
+            if (graph.edges.size() >= MAX_EXPAND_EDGES) {
+                break;
+            }
+            if (isVisibleRelation(edge, userId, timeRange)
+                && isVisibleActive(endpoints.get(edge.getSourceId()), userId)
+                && isVisibleActive(endpoints.get(edge.getTargetId()), userId)) {
                 graph.addEdge(edge);
             }
         }
         return graph;
+    }
+
+    private List<KgRelation> incidentEdges(Set<Long> frontier, Long userId, KgTimeRange timeRange) {
+        List<Long> ids = new ArrayList<>(frontier);
+        QueryWrapper<KgRelation> query = new QueryWrapper<KgRelation>()
+            .and(w -> w.in("source_id", ids).or().in("target_id", ids));
+        if (timeRange == null) {
+            Date now = KgTimeRange.now();
+            query.and(w -> w.isNull("valid_from").or().le("valid_from", now));
+            query.and(w -> w.isNull("valid_to").or().gt("valid_to", now));
+        } else {
+            query.isNotNull("valid_from").lt("valid_from", timeRange.endDate());
+            query.and(w -> w.isNull("valid_to").or().gt("valid_to", timeRange.startDate()));
+        }
+        query.and(w -> {
+            w.eq("scope", KgEntity.SCOPE_GLOBAL);
+            if (userId != null && userId > 0) {
+                w.or().eq("scope", KgEntity.SCOPE_PRIVATE).eq("user_id", userId);
+                List<Long> teams = scopeService.visibleTeamIds(userId);
+                if (teams != null && !teams.isEmpty()) {
+                    w.or().eq("scope", KgEntity.SCOPE_TEAM).in("team_id", teams);
+                }
+            }
+        });
+        query.orderByAsc("id").last("LIMIT 1000");
+        List<KgRelation> rows = relationMapper.selectList(query);
+        return rows == null ? new ArrayList<>() : new ArrayList<>(rows);
+    }
+
+    private boolean isVisibleActive(KgEntity entity, Long userId) {
+        return entity != null && KgEntity.STATUS_ACTIVE.equals(entity.getStatus())
+            && scopeService.canSee(entity.getScope(), entity.getTeamId(), entity.getUserId(), userId);
+    }
+
+    private boolean isVisibleRelation(KgRelation edge, Long userId, KgTimeRange timeRange) {
+        if (!scopeService.canSee(edge.getScope(), edge.getTeamId(), edge.getUserId(), userId)) {
+            return false;
+        }
+        if (timeRange != null) {
+            return timeRange.overlaps(edge);
+        }
+        Date now = KgTimeRange.now();
+        return (edge.getValidFrom() == null || !edge.getValidFrom().after(now))
+            && (edge.getValidTo() == null || edge.getValidTo().after(now));
     }
 }

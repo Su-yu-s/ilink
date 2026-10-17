@@ -30,17 +30,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.annotation.PreDestroy;
 import javax.servlet.http.HttpSession;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 
 /**
  * Agentic GraphRAG 问答接口（阶段 2 固定检索版 + 阶段 3 Agentic 版 + 阶段 5 流式版）。
@@ -53,25 +48,17 @@ public class GraphRagController {
 
     private static final int MAX_QUESTION_LEN = 500;
 
-    /** 快速答疑单次生成上限：提示词已要求短答，此上限只做兜底 */
-    private static final int QUICK_MAX_TOKENS = 500;
-
     /** SSE 流超时：Agentic 多轮探索比单轮答疑慢，留足余量 */
     private static final long SSE_TIMEOUT_MS = 300_000L;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /** SSE 推送线程池：多轮 ReAct 是分钟级长阻塞，与容器线程解耦。
-     * 修复 D-P1-7：有界队列 + AbortPolicy，池满立即拒绝（经 emitter 报错），不再静默挂起 */
-    private final ExecutorService sseExecutor = new ThreadPoolExecutor(
-        2, 4, 60L, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<>(8),
-        runnable -> {
-            Thread thread = new Thread(runnable, "kg-agentic-sse");
-            thread.setDaemon(true);
-            return thread;
-        },
-        new ThreadPoolExecutor.AbortPolicy());
+    /** SSE 推送线程池：多轮 ReAct 是分钟级长阻塞，与容器线程解耦 */
+    private final ExecutorService sseExecutor = Executors.newFixedThreadPool(2, runnable -> {
+        Thread thread = new Thread(runnable, "kg-agentic-sse");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     @PreDestroy
     void shutdownSseExecutor() {
@@ -80,9 +67,6 @@ public class GraphRagController {
 
     @Autowired
     private GraphRagService graphRagService;
-
-    @Autowired
-    private AiClient aiClient;
 
     @Autowired
     private cn.ilink.service.kg.AgenticGraphRagService agenticGraphRagService;
@@ -162,64 +146,6 @@ public class GraphRagController {
         }
         data.put("sources", sources);
         return Result.ok("查询成功", data).toResponseEntity();
-    }
-
-    /**
-     * 快速答疑（通用直答）：不检索知识图谱、不联网，单次 LLM 调用直接生成回答。
-     * 面向通用问题（竞赛常识 / 备赛方法 / 组队经验）；涉及站内数据的问题由提示词
-     * 约束转为通用建议，不编造平台条目。响应结构与 /query 一致（answer + citations），
-     * 前端渲染逻辑无需分支。
-     */
-    @PostMapping("/quick")
-    @ResponseBody
-    public ResponseEntity<Result<?>> quick(@RequestBody Map<String, Object> payload, HttpSession session) {
-        User user = ControllerUtils.requireUser(session);
-        if (user == null) {
-            return Result.unauthorized().toResponseEntity();
-        }
-        String question = parseQuestion(payload);
-        if (question == null) {
-            return Result.badRequest("问题不能为空，且不超过 " + MAX_QUESTION_LEN + " 字").toResponseEntity();
-        }
-        if (!aiAssistantService.isConfigured()) {
-            return Result.fail(503, "AI 服务未配置").toResponseEntity();
-        }
-        long start = System.currentTimeMillis();
-        try {
-            List<Map<String, String>> messages = new ArrayList<>();
-            messages.add(singleMessage("system", quickSystemPrompt()));
-            messages.add(singleMessage("user",
-                competitionContext(payload.get("competitionId")) + question));
-            AiClient.AiChatResult result = aiClient.chat(messages, QUICK_MAX_TOKENS);
-            Map<String, Object> data = new LinkedHashMap<>();
-            data.put("answer", result.content);
-            data.put("citations", new ArrayList<>());
-            data.put("mode", "quick");
-            data.put("elapsedMs", System.currentTimeMillis() - start);
-            return Result.ok("回答完成", data).toResponseEntity();
-        } catch (AiClient.AiUnavailableException e) {
-            log.warn("[GraphRAG] 快速答疑失败: {}", e.getMessage());
-            return Result.fail(502, "AI 服务暂时不可用，请稍后重试").toResponseEntity();
-        }
-    }
-
-    private static Map<String, String> singleMessage(String role, String content) {
-        Map<String, String> message = new LinkedHashMap<>();
-        message.put("role", role);
-        message.put("content", content);
-        return message;
-    }
-
-    /** 快速答疑系统提示词：直答定位 + 短答约束 + 防编造约束 + 当前日期 */
-    private String quickSystemPrompt() {
-        SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy年M月d日 EEEE", java.util.Locale.CHINESE);
-        return "你是高校竞赛协作平台 iLink 的 AI 助手，用简体中文回答。"
-            + "回答必须简短：先用一句话给结论，再给最多 3 条要点（每条不超过两行），总长控制在 200 字左右，"
-            + "使用简洁的 Markdown，不用表格、不用 emoji。"
-            + "本模式不检索任何资料：请凭可靠的通用知识直接回答；"
-            + "若问题涉及 iLink 平台内部的具体数据（如站内帖子、队伍、竞赛目录的具体条目），"
-            + "不要编造平台上的条目，基于通用经验给出可执行的建议即可。"
-            + "当前日期：" + dateFmt.format(Calendar.getInstance().getTime()) + "。";
     }
 
     /**
@@ -306,8 +232,7 @@ public class GraphRagController {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
         final Long userId = user.getId();
         final String q = competitionContext(payload.get("competitionId")) + question;
-        try {
-            sseExecutor.execute(() -> {
+        sseExecutor.execute(() -> {
             try {
                 AgenticGraphRagService.AgenticAnswer answer = agenticGraphRagService.query(q, userId,
                     new AgenticGraphRagService.AgenticStreamListener() {
@@ -350,10 +275,6 @@ public class GraphRagController {
                 emitter.complete();
             }
         });
-        } catch (RejectedExecutionException e) {
-            // 修复 D-P1-7：Agentic 任务分钟级长阻塞，池满时立即拒绝，避免前端"永久转圈"
-            return failedStream(503, "当前深度咨询人数较多，请稍后再试");
-        }
         return emitter;
     }
 

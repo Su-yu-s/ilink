@@ -118,7 +118,8 @@ class AgenticVsFastRagComparisonTest {
             .thenAnswer(inv -> queryRelations(inv.getArgument(0)));
 
         // 2 跳扩展与批量实体查询（注意：服务签名接收 Collection，GraphRagService 传入的是 Set）
-        when(relationService.expandTwoHops(any())).thenAnswer(inv -> expand(inv.getArgument(0)));
+        when(relationService.expandTwoHops(any(), any(), any()))
+            .thenAnswer(inv -> expand(inv.getArgument(0)));
         when(relationService.getEntitiesByIds(any())).thenAnswer(inv -> {
             List<KgEntity> result = new ArrayList<>();
             Object raw = inv.getArgument(0);
@@ -142,12 +143,21 @@ class AgenticVsFastRagComparisonTest {
         when(communityMapper.selectOne(any())).thenReturn((KgCommunity) null);
 
         // 组装 B2 与 B3
-        fastRag = new GraphRagService(embeddingService, relationService, entityMapper, aiClient);
+        when(scopeService.canSee(any(), any(), any(), any())).thenAnswer(inv -> {
+            KgEntity probe = new KgEntity();
+            probe.setScope(inv.getArgument(0));
+            probe.setTeamId(inv.getArgument(1));
+            probe.setUserId(inv.getArgument(2));
+            return canSee(probe, inv.getArgument(3));
+        });
+        fastRag = new GraphRagService(embeddingService, relationService, entityMapper, aiClient,
+            scopeService, docEntityMapper, mock(KgDocumentChunkService.class));
         List<GraphTool> tools = Arrays.asList(
             guarded(new SearchEntitiesTool(scopeService, entityMapper, embeddingService)),
             guarded(new ExpandNeighborsTool(scopeService, entityMapper, relationMapper)),
             guarded(new QueryTemporalTool(scopeService, entityMapper, relationMapper)),
-            guarded(new GetDocumentTool(scopeService, entityMapper, docEntityMapper)),
+            guarded(new GetDocumentTool(scopeService, entityMapper, docEntityMapper,
+                mock(KgDocumentChunkService.class))),
             guarded(new GetCommunitySummaryTool(scopeService, entityMapper, communityMapper,
                 relationService, new KgCommunityService(entityMapper, communityMapper, relationService, aiClient))));
         agentic = new AgenticGraphRagService(fastRag, traceMapper, aiClient, tools);
@@ -160,7 +170,8 @@ class AgenticVsFastRagComparisonTest {
     void singleHop_bothRetrieveGold() {
         seedVector(E_BLUECUP);
         when(aiClient.chat(anyList(), anyInt()))
-            .thenReturn(new AiClient.AiChatResult("蓝桥杯由工信部人才交流中心主办。", 10, 20));
+            .thenReturn(new AiClient.AiChatResult(
+                "蓝桥杯由工信部人才交流中心主办。#" + E_ORGANIZER + " r#1", 10, 20));
 
         GraphRagService.GraphRagAnswer fast = fastRag.query("蓝桥杯的主办单位是谁", OUTSIDER);
 
@@ -256,7 +267,7 @@ class AgenticVsFastRagComparisonTest {
 
         assertEquals(0, ag.citations.size(), "无召回时不应产生引用");
         assertTrue(ag.answer.contains("没有") || ag.answer.contains("建议"), "应明确说明无依据");
-        assertTrue(ag.rounds <= 8, "轮数必须在上限内");
+        assertTrue(ag.rounds <= AgenticGraphRagService.MAX_ROUNDS, "轮数必须在上限内");
     }
 
     @Test
@@ -378,6 +389,8 @@ class AgenticVsFastRagComparisonTest {
         relation.setSourceId(source);
         relation.setTargetId(target);
         relation.setRelationType(type);
+        relation.setScope(source == E_TEAM_POST ? KgEntity.SCOPE_TEAM : KgEntity.SCOPE_GLOBAL);
+        relation.setTeamId(source == E_TEAM_POST ? TEAM_ID : 0L);
         relation.setValidFrom(from);
         relation.setValidTo(to);
         return relation;

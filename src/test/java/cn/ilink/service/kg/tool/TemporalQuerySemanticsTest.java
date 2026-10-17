@@ -77,19 +77,19 @@ class TemporalQuerySemanticsTest {
     }
 
     @Test
-    @DisplayName("无时间窗：只查仍有效关系（valid_to IS NULL），且端点匹配")
+    @DisplayName("无时间窗：按当前时刻过滤有效关系，且端点匹配")
     void noWindow_onlyCurrentlyValid() {
         tool.execute(params(null), 7L);
         String sql = capturedSql();
 
         assertTrue(sql.contains("source_id"), "应包含端点匹配：" + sql);
         assertTrue(sql.contains("target_id"), "应包含端点匹配：" + sql);
-        assertTrue(sql.contains("valid_to IS NULL"), "无窗口应只取仍有效关系：" + sql);
-        assertFalse(sql.contains("valid_from"), "无窗口不应出现 valid_from 条件：" + sql);
+        assertTrue(sql.contains("valid_to IS NULL"), "无窗口应取未设置终止时间的关系：" + sql);
+        assertTrue(sql.contains("valid_from"), "无窗口应排除尚未生效的关系：" + sql);
     }
 
     @Test
-    @DisplayName("带完整时间窗：valid_from <= end 且 (valid_to IS NULL 或 valid_to >= start)")
+    @DisplayName("带完整时间窗：左闭右开区间相交")
     void fullWindow_intersectionSemantics() {
         Map<String, Object> range = new HashMap<>();
         range.put("start", "2026-03-01");
@@ -98,13 +98,13 @@ class TemporalQuerySemanticsTest {
         tool.execute(params(range), 7L);
         String sql = capturedSql();
 
-        assertTrue(sql.contains("valid_from <="), "应包含 valid_from <= end：" + sql);
+        assertTrue(sql.contains("valid_from <"), "应包含 valid_from < endExclusive：" + sql);
         assertTrue(sql.contains("valid_to IS NULL"), "窗口查询也要包含未失效边：" + sql);
-        assertTrue(sql.contains("valid_to >="), "应包含 valid_to >= start：" + sql);
+        assertTrue(sql.contains("valid_to >"), "应包含 valid_to > start：" + sql);
     }
 
     @Test
-    @DisplayName("只给 start：保留 valid_to >= start（无 valid_from 上界条件）")
+    @DisplayName("只给 start：保留 valid_to > start（无 valid_from 上界条件）")
     void startOnly() {
         Map<String, Object> range = new HashMap<>();
         range.put("start", "2026-03-01");
@@ -112,12 +112,12 @@ class TemporalQuerySemanticsTest {
         tool.execute(params(range), 7L);
         String sql = capturedSql();
 
-        assertTrue(sql.contains("valid_to >="), "应包含 valid_to >= start：" + sql);
-        assertFalse(sql.contains("valid_from <="), "只给 start 时不应出现 valid_from 上界：" + sql);
+        assertTrue(sql.contains("valid_to >"), "应包含 valid_to > start：" + sql);
+        assertFalse(sql.contains("valid_from <"), "只给 start 时不应出现 valid_from 上界：" + sql);
     }
 
     @Test
-    @DisplayName("只给 end：补充 valid_from <= end")
+    @DisplayName("只给 end：补充 valid_from < endExclusive")
     void endOnly() {
         Map<String, Object> range = new HashMap<>();
         range.put("end", "2026-03-31");
@@ -125,8 +125,8 @@ class TemporalQuerySemanticsTest {
         tool.execute(params(range), 7L);
         String sql = capturedSql();
 
-        assertTrue(sql.contains("valid_from <="), "应包含 valid_from <= end：" + sql);
-        assertFalse(sql.contains("valid_to >="), "只给 end 时不应出现 valid_to 下界：" + sql);
+        assertTrue(sql.contains("valid_from <"), "应包含 valid_from < endExclusive：" + sql);
+        assertFalse(sql.contains("valid_to >"), "只给 end 时不应出现 valid_to 下界：" + sql);
     }
 
     @Test

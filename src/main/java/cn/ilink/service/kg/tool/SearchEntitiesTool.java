@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 
 /** 入口检索：问题语义检索（向量优先，关键词兜底），返回 top-k 实体摘要 */
 @Component
@@ -56,10 +57,17 @@ public class SearchEntitiesTool extends AbstractGraphTool {
         }
 
         List<KgEntity> entities = searchByVector(query, topK, userId);
-        boolean vector = true;
-        if (entities.isEmpty()) {
-            entities = searchByKeyword(query, topK, userId);
-            vector = false;
+        boolean vector = !entities.isEmpty();
+        if (entities.size() < topK) {
+            List<KgEntity> backfill = searchByKeyword(query, topK, userId);
+            for (KgEntity entity : backfill) {
+                if (entities.stream().noneMatch(row -> row.getId().equals(entity.getId()))) {
+                    entities.add(entity);
+                    if (entities.size() >= topK) {
+                        break;
+                    }
+                }
+            }
         }
         if (entities.isEmpty()) {
             return errorJson("NO_RESULTS", "图谱中没有找到与 \"" + query + "\" 相关的实体，可换关键词再试");
@@ -70,7 +78,7 @@ public class SearchEntitiesTool extends AbstractGraphTool {
             rows.add(toRow(entity));
         }
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("retrieval", vector ? "vector" : "keyword");
+        result.put("retrieval", vector ? "vector+keyword" : "keyword");
         result.put("count", rows.size());
         result.put("entities", rows);
         return result;
@@ -79,13 +87,18 @@ public class SearchEntitiesTool extends AbstractGraphTool {
     private List<KgEntity> searchByVector(String query, int topK, Long userId) {
         try {
             float[] vec = embeddingService.embedText(query);
-            List<KgEmbeddingService.ScoredEntity> hits = embeddingService.searchTopK(vec, topK);
+            List<KgEmbeddingService.ScoredEntity> hits = embeddingService.searchTopK(vec,
+                Math.max(100, topK * 10));
             List<KgEntity> result = new ArrayList<>();
             for (KgEmbeddingService.ScoredEntity hit : hits) {
                 KgEntity entity = entityMapper.selectById(hit.entityId);
                 if (entity != null && KgEntity.STATUS_ACTIVE.equals(entity.getStatus())
-                        && scopeService.canSee(entity, userId)) {
+                        && scopeService.canSee(entity, userId)
+                        && result.stream().noneMatch(row -> row.getId().equals(entity.getId()))) {
                     result.add(entity);
+                    if (result.size() >= topK) {
+                        break;
+                    }
                 }
             }
             return result;
@@ -99,9 +112,47 @@ public class SearchEntitiesTool extends AbstractGraphTool {
         QueryWrapper<KgEntity> wrapper = new QueryWrapper<KgEntity>()
             .eq("status", KgEntity.STATUS_ACTIVE)
             .and(w -> w.like("display_name", keyword).or().like("name", keyword))
-            .last("LIMIT " + topK);
+            .orderByAsc("id")
+            .last("LIMIT " + Math.max(100, topK * 10));
         applyVisibility(wrapper, userId);
-        return entityMapper.selectList(wrapper);
+        Map<Long, KgEntity> candidates = new LinkedHashMap<>();
+        List<KgEntity> direct = entityMapper.selectList(wrapper);
+        for (KgEntity row : direct == null ? List.<KgEntity>of() : direct) {
+            if (visible(row, userId)) {
+                candidates.putIfAbsent(row.getId(), row);
+            }
+        }
+        if (candidates.size() < topK) {
+            QueryWrapper<KgEntity> scan = new QueryWrapper<KgEntity>()
+                .eq("status", KgEntity.STATUS_ACTIVE)
+                .orderByAsc("id").last("LIMIT 2000");
+            applyVisibility(scan, userId);
+            List<KgEntity> rows = entityMapper.selectList(scan);
+            for (KgEntity row : rows == null ? List.<KgEntity>of() : rows) {
+                if (!visible(row, userId) || row.getDisplayName() == null) {
+                    continue;
+                }
+                boolean named = query.contains(row.getDisplayName())
+                    || row.getName() != null && query.toLowerCase().contains(row.getName().toLowerCase());
+                boolean category = query.contains("竞赛") || query.contains("赛事")
+                    ? "COMPETITION".equals(row.getEntityType())
+                    : (query.contains("帖子") || query.contains("记录"))
+                        && "POST".equals(row.getEntityType());
+                if (named || category) {
+                    candidates.putIfAbsent(row.getId(), row);
+                }
+            }
+        }
+        return candidates.values().stream().sorted(Comparator
+            .comparingInt((KgEntity row) -> query.contains(row.getDisplayName())
+                ? row.getDisplayName().length() : 0).reversed()
+            .thenComparing(KgEntity::getId)).limit(topK).toList();
+    }
+
+    private boolean visible(KgEntity row, Long userId) {
+        return row != null && row.getId() != null
+            && KgEntity.STATUS_ACTIVE.equals(row.getStatus())
+            && scopeService.canSee(row, userId);
     }
 
     static Map<String, Object> toRow(KgEntity entity) {
@@ -109,7 +160,6 @@ public class SearchEntitiesTool extends AbstractGraphTool {
         row.put("entityId", entity.getId());
         row.put("name", entity.getDisplayName());
         row.put("entityType", entity.getEntityType());
-        row.put("description", entity.getDescription());
         return row;
     }
 }

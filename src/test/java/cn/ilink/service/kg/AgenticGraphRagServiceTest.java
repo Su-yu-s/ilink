@@ -64,6 +64,16 @@ class AgenticGraphRagServiceTest {
         return new AiClient.AiChatResult(content, 10, 20);
     }
 
+    @Test
+    void budgetStopNeverStartsPaidFallbackAndReleasesRequestScope() {
+        when(aiClient.chat(anyList(), anyInt())).thenThrow(
+            new cn.ilink.service.ai.ChatRequestBudget.BudgetStopException("TOKEN_RESERVATION_LIMIT"));
+        var answer = service.query("测试", 8L);
+        org.mockito.Mockito.verifyNoInteractions(fastRag);
+        org.junit.jupiter.api.Assertions.assertNull(cn.ilink.service.ai.ChatRequestBudget.current());
+        assertTrue(answer.trace.stream().anyMatch(step -> step.containsKey("requestBudget")));
+    }
+
     // ==================== 输出解析 ====================
 
     @Test
@@ -82,6 +92,15 @@ class AgenticGraphRagServiceTest {
             "Thought: 信息够了\nFinal Answer: 数学建模需要编程与写作能力。");
         assertTrue(step.isFinal());
         assertEquals("数学建模需要编程与写作能力。", step.finalAnswer);
+    }
+
+    @Test
+    void nestedFinalAnswerIsNotInvokedAsATool() {
+        var step = AgenticGraphRagService.parseStep("Thought: 完成\nAction: Final Answer: 页面底色是白色。");
+        assertTrue(step.isFinal());
+        assertEquals("页面底色是白色。", step.finalAnswer);
+        assertEquals(null, step.action);
+        assertFalse(AgenticGraphRagService.parseStep("Thought: 还需要检索").isFinal());
     }
 
     @Test

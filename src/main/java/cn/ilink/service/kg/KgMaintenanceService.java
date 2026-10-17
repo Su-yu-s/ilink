@@ -7,6 +7,7 @@ import cn.ilink.mapper.KgRelationMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import java.util.Date;
  * 只增不改的简化增量策略下，这是唯一让旧边失效的入口。
  */
 @Service
+@ConditionalOnProperty(name = "app.kg.maintenance.enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class KgMaintenanceService {
 

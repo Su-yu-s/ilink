@@ -20,6 +20,11 @@ import org.springframework.web.client.RestTemplate;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.text.Normalizer;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -46,19 +51,27 @@ public class AiClient {
         public final String reasoning;
         public final Integer promptTokens;
         public final Integer completionTokens;
+        public final String finishReason;
 
         public AiChatResult(String content, Integer promptTokens, Integer completionTokens) {
             this(content, null, promptTokens, completionTokens);
         }
 
         public AiChatResult(String content, String reasoning, Integer promptTokens, Integer completionTokens) {
+            this(content, reasoning, promptTokens, completionTokens, null);
+        }
+
+        public AiChatResult(String content, String reasoning, Integer promptTokens, Integer completionTokens,
+                            String finishReason) {
             this.content = content;
             this.reasoning = reasoning;
             this.promptTokens = promptTokens;
             this.completionTokens = completionTokens;
+            this.finishReason = finishReason;
         }
     }
 
+    private final HttpClient deadlineClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     private final AiProperties properties;
     private final RestTemplate restTemplate;
     /** 流式专用：读超时更宽松，见构造函数注释 */
@@ -88,7 +101,7 @@ public class AiClient {
     }
 
     /** 构造请求体（chat 与 streamChat 共用，避免两侧参数漂移）。 */
-    private ObjectNode buildRequestBody(List<Map<String, String>> messages, int maxTokens) {
+    ObjectNode buildRequestBody(List<Map<String, String>> messages, int maxTokens) {
         ObjectNode body = objectMapper.createObjectNode();
         body.put("model", properties.getModel());
         ArrayNode messagesNode = body.putArray("messages");
@@ -98,7 +111,7 @@ public class AiClient {
             node.put("content", message.get("content"));
         }
         body.put("max_tokens", maxTokens);
-        body.put("temperature", 0.3);
+        body.put("temperature", properties.getTemperature());
         // Qwen 3.7 系列默认开思考模式（单次 6~7 秒起步，且思考内容破坏结构化输出格式）。
         // 关闭后 0.5 秒级。该参数为 DashScope 专属，其他 OpenAI 兼容端点若不认识可移除此行。
         body.put("enable_thinking", false);
@@ -127,14 +140,25 @@ public class AiClient {
             throw new AiUnavailableException("AI 服务未配置");
         }
 
-        ObjectNode body = buildRequestBody(messages, cappedMaxTokens(maxTokens));
+        ChatRequestBudget budget = ChatRequestBudget.current();
+        int outputLimit = cappedMaxTokens(maxTokens);
+        if (budget != null) outputLimit = budget.completionLimit(outputLimit);
+        ObjectNode body = buildRequestBody(messages, outputLimit);
+        ChatRequestBudget.Reservation reservation = budget == null ? null
+            : budget.reserve(promptReservation(messages), body.path("max_tokens").asInt());
 
+        Integer promptUsed = null, completionUsed = null;
+        boolean successful = false;
         try {
-            ResponseEntity<String> response = restTemplate.postForEntity(
+            ResponseEntity<String> response = budget == null ? restTemplate.postForEntity(
                 properties.getBaseUrl().trim() + "/chat/completions",
                 new HttpEntity<>(body.toString(), buildHeaders()),
-                String.class);
+                String.class) : postWithDeadline(body, budget);
             JsonNode root = objectMapper.readTree(response.getBody());
+            JsonNode usage = root.path("usage");
+            promptUsed = usageValue(usage, "prompt_tokens");
+            completionUsed = usageValue(usage, "completion_tokens");
+            if (reservation != null) reservation.settle(promptUsed, completionUsed);
             JsonNode choices = root.path("choices");
             if (!choices.isArray() || choices.isEmpty()) {
                 log.warn("AI 响应缺少 choices: {}", response.getStatusCodeValue());
@@ -147,17 +171,27 @@ public class AiClient {
             }
             // 推理模型会在 reasoning_content 里给出思考过程；非推理模型该字段缺失，取空即可
             String reasoning = message.path("reasoning_content").asText("");
-            JsonNode usage = root.path("usage");
+            successful = true;
             return new AiChatResult(
                 content,
                 reasoning == null || reasoning.trim().isEmpty() ? null : reasoning.trim(),
                 usage.hasNonNull("prompt_tokens") ? usage.get("prompt_tokens").asInt() : null,
-                usage.hasNonNull("completion_tokens") ? usage.get("completion_tokens").asInt() : null);
+                usage.hasNonNull("completion_tokens") ? usage.get("completion_tokens").asInt() : null,
+                choices.get(0).path("finish_reason").asText(null));
+        } catch (ChatRequestBudget.BudgetStopException e) {
+            throw e;
         } catch (ResourceAccessException e) {
             // 超时 / 连接失败
             log.warn("AI 服务连接失败: {}", e.getMessage());
             throw new AiUnavailableException("AI 服务连接超时");
         } catch (RestClientResponseException e) {
+            try {
+                JsonNode usage = objectMapper.readTree(e.getResponseBodyAsString()).path("usage");
+                promptUsed = usageValue(usage, "prompt_tokens");
+                completionUsed = usageValue(usage, "completion_tokens");
+                if (reservation != null) reservation.settle(promptUsed, completionUsed);
+            } catch (ChatRequestBudget.BudgetStopException stop) { throw stop; }
+            catch (Exception ignored) { /* close retains the reservation and marks unknown usage */ }
             // 供应商返回 4xx/5xx，不把响应体细节抛给用户
             log.warn("AI 服务返回异常状态 {}: {}", e.getRawStatusCode(), e.getStatusText());
             throw new AiUnavailableException("AI 服务暂时不可用");
@@ -166,7 +200,45 @@ public class AiClient {
         } catch (Exception e) {
             log.warn("AI 调用解析失败: {}", e.getMessage());
             throw new AiUnavailableException("AI 返回内容无法解析");
+        } finally {
+            if (reservation != null) reservation.close();
+            new ChatUsage(promptUsed, completionUsed, successful).publish();
         }
+    }
+
+    private static Integer usageValue(JsonNode usage, String key) {
+        JsonNode value = usage.path(key);
+        return value.isIntegralNumber() && value.canConvertToInt() && value.intValue() >= 0 ? value.intValue() : null;
+    }
+
+    /** Conservative scheduling reservation, NOT supplier usage or an exact server tokenizer.
+     * Qwen text uses the SDK vocabulary; extra framing allowance must be calibrated per model.
+     * Any actual overrun is recorded as a hard defect and blocks further calls. */
+    int promptReservation(List<Map<String, String>> messages) {
+        long bound = 1024;
+        for (Map<String, String> message : messages) {
+            bound += 64;
+            for (String key : List.of("role", "content"))
+                bound += properties.getModel().startsWith("qwen")
+                    ? QwenTokenCounter.count(message.getOrDefault(key, ""))
+                    : Normalizer.normalize(message.getOrDefault(key, ""), Normalizer.Form.NFC)
+                        .getBytes(StandardCharsets.UTF_8).length;
+        }
+        return (int) Math.min(Integer.MAX_VALUE, bound);
+    }
+
+    private ResponseEntity<String> postWithDeadline(ObjectNode body, ChatRequestBudget budget) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(properties.getBaseUrl().trim() + "/chat/completions"))
+            .timeout(Duration.ofMillis(Math.min(properties.getTimeoutMs(), budget.remainingMillis())))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + properties.getApiKey().trim())
+            .POST(HttpRequest.BodyPublishers.ofString(body.toString())).build();
+        HttpResponse<String> response = deadlineClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 400) {
+            throw new RestClientResponseException("Supplier error", response.statusCode(), "Supplier error",
+                null, response.body().getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        }
+        return ResponseEntity.status(response.statusCode()).body(response.body());
     }
 
     /**
@@ -174,6 +246,9 @@ public class AiClient {
      * 思考过程与正文分属两个增量流，调用方可以据此「边思考边显示」。
      */
     public AiChatResult streamChat(List<Map<String, String>> messages, int maxTokens, StreamListener listener) {
+        if (ChatRequestBudget.current() != null) {
+            throw new ChatRequestBudget.BudgetStopException("STREAM_USAGE_UNSUPPORTED");
+        }
         if (!properties.isConfigured()) {
             throw new AiUnavailableException("AI 服务未配置");
         }

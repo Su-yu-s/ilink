@@ -129,7 +129,8 @@ class ProjectVsGenericAgenticTest {
 
         when(relationMapper.selectList(any(Wrapper.class)))
             .thenAnswer(inv -> queryRelations(inv.getArgument(0)));
-        when(relationService.expandTwoHops(any())).thenAnswer(inv -> expand(inv.getArgument(0)));
+        when(relationService.expandTwoHops(any(), any(), any()))
+            .thenAnswer(inv -> expand(inv.getArgument(0)));
         when(relationService.getEntitiesByIds(any())).thenAnswer(inv -> {
             List<KgEntity> result = new ArrayList<>();
             for (Object id : (java.util.Collection<?>) inv.getArgument(0)) {
@@ -147,7 +148,15 @@ class ProjectVsGenericAgenticTest {
         when(docEntityMapper.selectList(any())).thenReturn(List.of(mapping));
         when(communityMapper.selectOne(any())).thenReturn((KgCommunity) null);
 
-        fastRag = new GraphRagService(embeddingService, relationService, entityMapperStrict, aiClient);
+        when(scopeServiceStrict.canSee(any(), any(), any(), any())).thenAnswer(inv -> {
+            KgEntity probe = new KgEntity();
+            probe.setScope(inv.getArgument(0));
+            probe.setTeamId(inv.getArgument(1));
+            probe.setUserId(inv.getArgument(2));
+            return canSee(probe, inv.getArgument(3));
+        });
+        fastRag = new GraphRagService(embeddingService, relationService, entityMapperStrict, aiClient,
+            scopeServiceStrict, docEntityMapper, mock(KgDocumentChunkService.class));
 
         // ---- S_project：全部工具经权限中间件包装，且含时序工具 ----
         projectStack = new AgenticGraphRagService(fastRag, traceMapper, aiClient, Arrays.asList(

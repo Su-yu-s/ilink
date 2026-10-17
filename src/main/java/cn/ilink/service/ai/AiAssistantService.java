@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -303,7 +302,7 @@ public class AiAssistantService {
     }
 
     private static String normalizeTaskType(String value) {
-        String key = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        String key = value == null ? "" : value.trim().toLowerCase();
         return ALLOWED_TASK_TYPES.contains(key) ? key : "other";
     }
 

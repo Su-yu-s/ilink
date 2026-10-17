@@ -11,7 +11,7 @@
     'use strict';
 
     var WELCOME_TEXTS = {
-        fast: '你好，我是 AI 助手，直接回答竞赛、组队、备赛等通用问题，无需等待检索。需要探索站内资料时请切换到「深度检索」。',
+        fast: '你好，我是团队的 AI 助手。选中上方竞赛可针对该赛事提问，留空则按通用问题处理。可以问我报名条件、赛程节点、评审规则、材料准备等问题。',
         deep: '你好，我会在知识图谱里逐层探索，每一步推理过程都会展示给你看。选中上方竞赛可从该赛事开始探索。'
     };
     var PLACEHOLDERS = {
@@ -19,7 +19,7 @@
         deep: '描述你的复杂问题，我会深度探索…'
     };
     var HINTS = {
-        fast: '不检索站内资料，直接生成通用回答，速度最快',
+        fast: '一次性检索后直接生成答案，速度更快',
         deep: 'Agent 会自主探索知识图谱，多轮检索后给出可追溯的答案'
     };
     var FOOT_MODES = { fast: '快速答疑 · 即时响应', deep: '深度搜索 · 多轮探索' };
@@ -264,8 +264,6 @@
                 self.competitions = list;
                 list.forEach(function (c) {
                     if (!c || !c.id) return;
-                    // 页面可能已自行填充目录（如 team-space），避免重复选项
-                    if (select.querySelector('option[value="' + c.id + '"]')) return;
                     var name = c.name || c.title || ('竞赛 ' + c.id);
                     var option = document.createElement('option');
                     option.value = c.id;
@@ -454,28 +452,11 @@
     };
 
     ChatInstance.prototype.startSimpleCard = function () {
-        // 快速模式：无标题卡，仅一个轻量加载态；答案到达后原位替换正文
-        this.appendAgentRow('<div class="kgd-quick-loading"><span class="kgd-spin"></span>正在思考…</div>');
+        this.appendAgentRow(
+            '<div class="kgd-card-title" data-agc-ref="agentTitle">' +
+              '<span class="kgd-title-text">检索中</span><span class="kgd-spin"></span>' +
+            '</div>');
         this.traceBody = null;
-    };
-
-    /** 快速模式收尾：把加载气泡原位替换为纯答案正文（无「推理过程」「最终答案」标题） */
-    ChatInstance.prototype.finishQuickAnswer = function (answerText) {
-        var bubble = this.agentCard && this.agentCard.querySelector('.kgd-agent-bubble');
-        if (bubble) {
-            bubble.innerHTML = '<div class="kgd-answer-text kgd-md">' + renderMarkdownAnswer(answerText) + '</div>';
-        }
-        this.agentCard = null;
-        this.onNewContent();
-    };
-
-    ChatInstance.prototype.finishQuickError = function (message) {
-        var bubble = this.agentCard && this.agentCard.querySelector('.kgd-agent-bubble');
-        if (bubble) {
-            bubble.innerHTML = '<div class="kgd-quick-error">' + escapeHtml(message) + '</div>';
-        }
-        this.agentCard = null;
-        this.onNewContent();
     };
 
     ChatInstance.prototype.finishCard = function (rounds, toolCalls, fallback, stopped) {
@@ -677,20 +658,22 @@
 
     ChatInstance.prototype.fastQuery = function (question) {
         var self = this;
-        doFetch('/api/ai/graph-rag/quick', {
+        doFetch('/api/ai/graph-rag/query', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ question: question, competitionId: this.contextId() })
         }).then(function (resp) { return resp.json(); }).then(function (body) {
+            self.finishCard(null, 0, false, false);
             self.setBusy(false);
             if (!body || body.code !== 200) {
-                self.finishQuickError((body && body.message) || '回答失败，请稍后重试');
+                self.showError((body && body.message) || '回答失败，请稍后重试');
                 return;
             }
-            self.finishQuickAnswer(body.data.answer);
+            self.renderAnswer(body.data.answer, body.data.citations, null, false);
         }).catch(function () {
+            self.finishCard(null, 0, false, false);
             self.setBusy(false);
-            self.finishQuickError('网络异常，请稍后重试');
+            self.showError('网络异常，请稍后重试');
         });
     };
 

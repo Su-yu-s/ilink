@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /** 条件过滤：按实体类型 + 名称关键词组合筛选（如"所有 SKILL 类型含'建模'的实体"） */
@@ -54,7 +53,7 @@ public class FilterEntitiesTool extends AbstractGraphTool {
         String keyword = paramString(params, "keyword");
         int limit = Math.max(1, Math.min(MAX_LIMIT, paramInt(params, "limit", 10)));
         if (entityType != null) {
-            entityType = entityType.toUpperCase(Locale.ROOT);
+            entityType = entityType.toUpperCase();
             if (!KgIndexService.ALLOWED_ENTITY_TYPES.contains(entityType)) {
                 return errorJson("INVALID_PARAMS", "entity_type 只能取 COMPETITION/SKILL/TEACHER/ORGANIZATION/POST");
             }

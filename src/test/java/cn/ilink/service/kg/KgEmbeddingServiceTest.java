@@ -1,10 +1,18 @@
 package cn.ilink.service.kg;
 
+import cn.ilink.config.AiEmbeddingProperties;
+import cn.ilink.entity.KgEntityEmbedding;
+import cn.ilink.mapper.KgEntityEmbeddingMapper;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /** 余弦相似度与 float32 小端序列化的正确性 */
 class KgEmbeddingServiceTest {
@@ -63,5 +71,21 @@ class KgEmbeddingServiceTest {
         assertEquals(0x00, bytes[1] & 0xFF);
         assertEquals(0x80, bytes[2] & 0xFF);
         assertEquals(0x3F, bytes[3] & 0xFF);
+    }
+
+    @Test
+    void topKReturnsBestCandidateWhenAllSimilaritiesAreNegative() {
+        KgEntityEmbeddingMapper mapper = mock(KgEntityEmbeddingMapper.class);
+        KgEntityEmbedding row = new KgEntityEmbedding();
+        row.setEntityId(7L);
+        row.setVector(KgEmbeddingService.serializeVector(new float[]{-1f, 0f}));
+        when(mapper.selectList(any())).thenReturn(List.of(row));
+
+        KgEmbeddingService service = new KgEmbeddingService(new AiEmbeddingProperties(), mapper);
+        List<KgEmbeddingService.ScoredEntity> hits = service.searchTopK(new float[]{1f, 0f}, 1);
+
+        assertEquals(1, hits.size());
+        assertEquals(7L, hits.get(0).entityId);
+        assertEquals(-1.0, hits.get(0).score, 1e-9);
     }
 }

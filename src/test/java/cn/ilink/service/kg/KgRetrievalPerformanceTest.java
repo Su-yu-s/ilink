@@ -60,12 +60,17 @@ class KgRetrievalPerformanceTest {
         KgEntityMapper entityMapper = mock(KgEntityMapper.class);
         AiClient aiClient = mock(AiClient.class);
         when(aiClient.chat(anyList(), anyInt()))
-            .thenReturn(new AiClient.AiChatResult("基准答案", 10, 20));
+            .thenReturn(new AiClient.AiChatResult("基准答案 #1", 10, 20));
 
-        when(relationService.expandTwoHops(any())).thenReturn(buildSubGraph());
+        when(relationService.expandTwoHops(any(), any(), any())).thenReturn(buildSubGraph());
         when(relationService.getEntitiesByIds(any())).thenReturn(buildEntities(40));
 
-        graphRagService = new GraphRagService(embeddingService, relationService, entityMapper, aiClient);
+        KgScopeService scopeService = mock(KgScopeService.class);
+        when(scopeService.canSee(any(KgEntity.class), any())).thenReturn(true);
+        when(scopeService.canSee(any(), any(), any(), any())).thenReturn(true);
+        graphRagService = new GraphRagService(embeddingService, relationService, entityMapper, aiClient,
+            scopeService, mock(cn.ilink.mapper.KgDocEntityMapper.class),
+            mock(KgDocumentChunkService.class));
     }
 
     @Test
@@ -131,7 +136,7 @@ class KgRetrievalPerformanceTest {
             GraphRagService.GraphRagAnswer answer = graphRagService.query("数学建模需要哪些技能", 7L);
             long cost = System.nanoTime() - start;
             if (i == WARMUP) {
-                assertEquals("基准答案", answer.answer);
+                assertEquals("基准答案 #1", answer.answer);
             }
             if (i >= WARMUP) {
                 samples[i - WARMUP] = cost;

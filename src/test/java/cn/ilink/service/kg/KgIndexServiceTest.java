@@ -1,6 +1,8 @@
 package cn.ilink.service.kg;
 
 import cn.ilink.entity.KgEntity;
+import cn.ilink.entity.KgDocumentChunk;
+import cn.ilink.entity.KgRelation;
 import cn.ilink.entity.KgIndexTask;
 import cn.ilink.mapper.KgDocEntityMapper;
 import cn.ilink.mapper.KgEntityMapper;
@@ -36,6 +38,7 @@ class KgIndexServiceTest {
     private KgDocEntityMapper docEntityMapper;
     private KgIndexTaskMapper taskMapper;
     private KgEmbeddingService embeddingService;
+    private KgDocumentChunkService chunkService;
     private KgIndexService service;
 
     @BeforeEach
@@ -47,15 +50,17 @@ class KgIndexServiceTest {
         docEntityMapper = mock(KgDocEntityMapper.class);
         taskMapper = mock(KgIndexTaskMapper.class);
         embeddingService = mock(KgEmbeddingService.class);
+        chunkService = mock(KgDocumentChunkService.class);
         service = new KgIndexService(aiClient, entityMapper, relationMapper,
-            docEntityMapper, taskMapper, embeddingService);
+            docEntityMapper, taskMapper, embeddingService, chunkService);
     }
 
     private static final String GOOD_JSON = "{\"entities\":["
         + "{\"name\":\"数学建模\",\"display_name\":\"数学建模\",\"entity_type\":\"SKILL\",\"description\":null},"
         + "{\"name\":\"中国国际青年交流中心\",\"display_name\":\"中国国际青年交流中心\","
         + "\"entity_type\":\"ORGANIZATION\",\"description\":\"主办方\"}],"
-        + "\"relations\":[{\"source\":\"数学建模\",\"target\":\"中国国际青年交流中心\",\"relation_type\":\"MENTIONS\"}]}";
+        + "\"relations\":[{\"source\":\"数学建模\",\"target\":\"中国国际青年交流中心\",\"relation_type\":\"MENTIONS\","
+        + "\"source_quote\":\"数学建模由中国国际青年交流中心组织\",\"valid_from\":null,\"valid_to\":null}]}";
 
     // ==================== Prompt 约束 ====================
 
@@ -69,6 +74,12 @@ class KgIndexServiceTest {
         assertTrue(prompt.contains("HOSTED_BY"));
         assertTrue(prompt.contains("entities"));
         assertTrue(prompt.contains("relations"));
+        assertTrue(prompt.contains("source_quote"));
+        assertTrue(prompt.contains("PointROPE"));
+        assertTrue(prompt.contains("FileList"));
+        assertTrue(prompt.contains("300px"));
+        assertTrue(prompt.contains("项目、模块、开发日志的标题归为 POST"));
+        assertTrue(prompt.contains("Kanban/DnD API/Redis"));
         // few-shot 示例确实给出
         assertTrue(prompt.contains("中国研究生数学建模竞赛"));
     }
@@ -122,6 +133,159 @@ class KgIndexServiceTest {
         assertThrows(IllegalStateException.class, () -> service.parseExtraction("完全不是 JSON"));
     }
 
+    @Test
+    void parseExtractionRepairsStrayQuoteAfterClosedValue() {
+        // 复现 diag 实录：值正常闭合后又跟一个游离引号再接 }（Unexpected character '"'）
+        String raw = "{\"entities\":[{\"name\":\"MCP\",\"display_name\":\"MCP\","
+            + "\"entity_type\":\"SKILL\",\"description\":\"Model Context Protocol标准协议\"\n\"}],"
+            + "\"relations\":[]}";
+        KgIndexService.ExtractionResult result = service.parseExtraction(raw);
+        assertEquals(1, result.entities.size());
+        assertEquals("MCP", result.entities.get(0).name);
+    }
+
+    @Test
+    void parseExtractionLeavesTruncationToWindowRetry() {
+        // 截断（数组中途结束）不属于引号类损坏，必须抛给窗口拆分重试，不能静默吞半截数据
+        String truncated = "{\"entities\":[{\"name\":\"MCP\",\"display_name\":\"MCP\","
+            + "\"entity_type\":\"SKILL\"},{\"name\":\"etcd\"";
+        assertThrows(IllegalStateException.class, () -> service.parseExtraction(truncated));
+    }
+
+    @Test
+    void sourceBindingRejectsFabricatedRelationsAndDates() {
+        String content = "PointROPE 调用 FileList，输出宽度为 300px。数学建模由中国国际青年交流中心组织。";
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(81L);
+        chunk.setContent(content);
+        String raw = GOOD_JSON.replace("数学建模由中国国际青年交流中心组织",
+            "数学建模由中国国际青年交流中心组织")
+            .replace("\"valid_from\":null", "\"valid_from\":\"2026-03-01\"");
+        KgIndexService.ExtractionResult dated = service.parseExtraction(raw);
+        KgIndexService.bindSourceFacts(dated, content, List.of(chunk));
+        assertTrue(dated.relations.isEmpty(), "原文未出现的日期不得成为关系生效日期");
+
+        KgIndexService.ExtractionResult unsupported = service.parseExtraction(GOOD_JSON);
+        KgIndexService.bindSourceFacts(unsupported, "完全无关的正文", List.of(chunk));
+        assertTrue(unsupported.relations.isEmpty(), "引文必须出现在原始正文");
+    }
+
+    @Test
+    void titleAnchoredMentionNeedsAnExactTargetSpanAndCannotBecomeARequirement() {
+        String title = "智能学习助手";
+        String content = "后端采用 Python 和 Redis。";
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(82L);
+        chunk.setContent(content);
+        String mentionJson = "{\"entities\":["
+            + "{\"name\":\"智能学习助手\",\"entity_type\":\"POST\"},"
+            + "{\"name\":\"Python\",\"entity_type\":\"SKILL\"}],"
+            + "\"relations\":[{\"source\":\"智能学习助手\",\"target\":\"Python\","
+            + "\"relation_type\":\"MENTIONS\",\"source_quote\":\"后端采用 Python 和 Redis\"}]}";
+        KgIndexService.ExtractionResult mention = service.parseExtraction(mentionJson);
+        KgIndexService.bindSourceFacts(mention, content, List.of(chunk), title);
+        assertEquals(1, mention.relations.size());
+        assertEquals(82L, mention.relations.get(0).sourceChunkId);
+
+        KgIndexService.ExtractionResult wrongTitle = service.parseExtraction(mentionJson);
+        KgIndexService.bindSourceFacts(wrongTitle, content, List.of(chunk), "另一篇文章");
+        assertTrue(wrongTitle.relations.isEmpty());
+
+        KgIndexService.ExtractionResult requirement = service.parseExtraction(
+            mentionJson.replace("MENTIONS", "REQUIRES"));
+        KgIndexService.bindSourceFacts(requirement, content, List.of(chunk), title);
+        assertTrue(requirement.relations.isEmpty());
+    }
+
+    @Test
+    void technicalNamesCreateOnlyCitedTitleMentions() {
+        String title = "团队协作模块开发日志";
+        String content = "任务协作看板（Kanban）支持拖拽。后端接 DnD API，缓存使用 Redis。";
+        KgIndexService.ExtractionResult extraction = service.parseExtraction(
+            "{\"entities\":[{\"name\":\"团队协作模块开发日志\",\"entity_type\":\"POST\"}],"
+                + "\"relations\":[]}");
+        assertEquals(3, KgIndexService.addTechnicalEntities(extraction, content, title));
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(91L);
+        chunk.setContent(content);
+        KgIndexService.addTitleMentions(extraction, content, List.of(chunk), title);
+
+        assertEquals(List.of("Kanban", "DnD", "Redis"), extraction.entities.stream()
+            .filter(entity -> "SKILL".equals(entity.entityType))
+            .map(entity -> entity.name).toList());
+        assertEquals(3, extraction.relations.size());
+        assertTrue(extraction.relations.stream().allMatch(relation ->
+            "MENTIONS".equals(relation.relationType)
+                && Long.valueOf(91).equals(relation.sourceChunkId)
+                && content.contains(relation.sourceQuote)));
+    }
+
+    @Test
+    void titleMentionsDoNotMatchInsideOtherTechnicalIdentifiers() {
+        String title = "接口开发记录";
+        String content = "后端使用 JSONL 记录事件。";
+        KgIndexService.ExtractionResult extraction = service.parseExtraction(
+            "{\"entities\":[{\"name\":\"接口开发记录\",\"entity_type\":\"POST\"},"
+                + "{\"name\":\"JS\",\"entity_type\":\"SKILL\"}],\"relations\":[]}");
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(92L);
+        chunk.setContent(content);
+        KgIndexService.addTitleMentions(extraction, content, List.of(chunk), title);
+        assertTrue(extraction.relations.isEmpty());
+    }
+
+    @Test
+    void technicalRecoveryRejectsGenericCapitalizedWordsAndUnrelatedProse() {
+        KgIndexService.ExtractionResult extraction = service.parseExtraction(
+            "{\"entities\":[{\"name\":\"团队空间\",\"entity_type\":\"POST\"}],"
+                + "\"relations\":[]}");
+        String content = "Link 团队空间采用 Inter 无衬线字体，Primary 按钮旁展示 Demo。"
+            + " 技术细节：看板采用 Kanban，后端接 DnD API。";
+        assertEquals(2, KgIndexService.addTechnicalEntities(extraction, content, "Link 团队空间"));
+        assertEquals(List.of("Kanban", "DnD"), extraction.entities.stream()
+            .filter(entity -> "SKILL".equals(entity.entityType))
+            .map(entity -> entity.name).toList());
+    }
+
+    @Test
+    void sourceBindingPreservesExplicitDateAndExactTechnicalTokens() {
+        String content = "自2026-03-01起，PointROPE 使用 FileList 输出 300px 宽度。";
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(82L);
+        chunk.setContent(content);
+        String raw = "{\"entities\":["
+            + "{\"name\":\"PointROPE\",\"entity_type\":\"SKILL\"},"
+            + "{\"name\":\"FileList\",\"entity_type\":\"SKILL\"}],"
+            + "\"relations\":[{\"source\":\"PointROPE\",\"target\":\"FileList\","
+            + "\"relation_type\":\"RELATED_TO\",\"source_quote\":\"自2026-03-01起，PointROPE 使用 FileList 输出 300px 宽度\","
+            + "\"valid_from\":\"2026-03-01\",\"valid_to\":null}]}";
+        KgIndexService.ExtractionResult result = service.parseExtraction(raw);
+        KgIndexService.bindSourceFacts(result, content, List.of(chunk));
+        assertEquals(1, result.relations.size());
+        assertEquals(82L, result.relations.get(0).sourceChunkId);
+        assertEquals(java.time.LocalDate.of(2026, 3, 1), result.relations.get(0).validFrom);
+        assertTrue(result.relations.get(0).sourceQuote.contains("300px"));
+    }
+
+    @Test
+    void sourceBindingRecoversExactSpanWhenModelParaphrasesQuote() {
+        String content = "竞赛名称：全国大学生数学建模竞赛；主办方：中国工业与应用数学学会。";
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(83L);
+        chunk.setContent(content);
+        String raw = "{\"entities\":["
+            + "{\"name\":\"全国大学生数学建模竞赛\",\"entity_type\":\"COMPETITION\"},"
+            + "{\"name\":\"中国工业与应用数学学会\",\"entity_type\":\"ORGANIZATION\"}],"
+            + "\"relations\":[{\"source\":\"全国大学生数学建模竞赛\","
+            + "\"target\":\"中国工业与应用数学学会\",\"relation_type\":\"HOSTED_BY\","
+            + "\"source_quote\":\"这个竞赛由学会主办\",\"valid_from\":null,\"valid_to\":null}]}";
+        KgIndexService.ExtractionResult result = service.parseExtraction(raw);
+        KgIndexService.bindSourceFacts(result, content, List.of(chunk));
+        assertEquals(1, result.relations.size());
+        assertEquals(content, result.relations.get(0).sourceQuote);
+        assertEquals(83L, result.relations.get(0).sourceChunkId);
+    }
+
     // ==================== 名字归一化 ====================
 
     @Test
@@ -137,13 +301,15 @@ class KgIndexServiceTest {
 
     @Test
     void processTaskMarksDoneOnSuccess() {
-        // 调用序列：对齐 e1 → 对齐 e2 → 解析 source → 解析 target（对齐阶段命中已有实体，走 docCount 更新）
+        // 对齐后的 ID 必须直接来自本任务，不能跨 scope 再查同名实体。
         when(entityMapper.selectOne(any())).thenReturn(
-            entityWithId(11L, "数学建模", "SKILL"),
-            entityWithId(22L, "中国国际青年交流中心", "ORGANIZATION"),
             entityWithId(11L, "数学建模", "SKILL"),
             entityWithId(22L, "中国国际青年交流中心", "ORGANIZATION"));
         when(aiClient.chat(anyList(), anyInt())).thenReturn(new AiClient.AiChatResult(GOOD_JSON, 10, 20));
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(501L);
+        chunk.setContent("数学建模由中国国际青年交流中心组织");
+        when(chunkService.listIndexedByDocument(any())).thenReturn(List.of(chunk));
 
         KgIndexTask task = task();
         service.processTask(task);
@@ -152,8 +318,43 @@ class KgIndexServiceTest {
         verify(taskMapper).updateById(captor.capture());
         assertEquals(KgIndexTask.DONE, captor.getValue().getStatus());
         assertNotNull(captor.getValue().getFinishedAt());
-        verify(relationMapper).insert(any(cn.ilink.entity.KgRelation.class));
+        ArgumentCaptor<KgRelation> relation = ArgumentCaptor.forClass(KgRelation.class);
+        verify(relationMapper).insert(relation.capture());
+        assertEquals("数学建模由中国国际青年交流中心组织", relation.getValue().getFactText());
+        assertEquals(501L, relation.getValue().getSourceChunkId());
+        assertEquals("POST:100", relation.getValue().getSourceDocId());
+        assertEquals(null, relation.getValue().getValidFrom());
         verify(docEntityMapper, org.mockito.Mockito.times(2)).insert(any(cn.ilink.entity.KgDocEntity.class));
+        verify(chunkService).index(task);
+    }
+
+    @Test
+    void sameRelationshipFromTwoDocumentsKeepsSeparateProvenance() {
+        when(entityMapper.selectOne(any())).thenReturn(
+            entityWithId(11L, "数学建模", "SKILL"),
+            entityWithId(22L, "中国国际青年交流中心", "ORGANIZATION"),
+            entityWithId(11L, "数学建模", "SKILL"),
+            entityWithId(22L, "中国国际青年交流中心", "ORGANIZATION"));
+        when(aiClient.chat(anyList(), anyInt())).thenReturn(new AiClient.AiChatResult(GOOD_JSON, 10, 20));
+        when(chunkService.listIndexedByDocument(any())).thenAnswer(invocation -> {
+            KgIndexTask current = invocation.getArgument(0);
+            KgDocumentChunk chunk = new KgDocumentChunk();
+            chunk.setId(current.getDocId() + 400);
+            chunk.setContent(current.getContent());
+            return List.of(chunk);
+        });
+        KgIndexTask first = task();
+        KgIndexTask second = task();
+        second.setDocId(101L);
+        service.processTask(first);
+        service.processTask(second);
+
+        ArgumentCaptor<KgRelation> saved = ArgumentCaptor.forClass(KgRelation.class);
+        verify(relationMapper, org.mockito.Mockito.times(2)).insert(saved.capture());
+        assertEquals("POST:100", saved.getAllValues().get(0).getSourceDocId());
+        assertEquals("POST:101", saved.getAllValues().get(1).getSourceDocId());
+        assertEquals(500L, saved.getAllValues().get(0).getSourceChunkId());
+        assertEquals(501L, saved.getAllValues().get(1).getSourceChunkId());
     }
 
     @Test
@@ -207,6 +408,89 @@ class KgIndexServiceTest {
         assertFalse(userPrompt.length() > KgIndexService.MAX_CONTENT_CHARS + 2000);
     }
 
+    @Test
+    void extractionWindowsCoverTheEndOfLongDocuments() {
+        String early = "数学建模由中国国际青年交流中心组织";
+        String late = "智能学习助手需要掌握Python";
+        KgIndexTask task = task();
+        task.setContent(early + "填".repeat(4000) + late);
+        KgDocumentChunk first = new KgDocumentChunk();
+        first.setId(501L);
+        first.setContent(early);
+        KgDocumentChunk last = new KgDocumentChunk();
+        last.setId(502L);
+        last.setContent(late);
+        when(chunkService.listIndexedByDocument(task)).thenReturn(List.of(first, last));
+        when(aiClient.chat(anyList(), anyInt())).thenReturn(
+            new AiClient.AiChatResult(GOOD_JSON, 10, 20),
+            new AiClient.AiChatResult("{\"entities\":["
+                + "{\"name\":\"智能学习助手\",\"entity_type\":\"POST\"},"
+                + "{\"name\":\"Python\",\"entity_type\":\"SKILL\"}],"
+                + "\"relations\":[{\"source\":\"智能学习助手\",\"target\":\"Python\","
+                + "\"relation_type\":\"REQUIRES\",\"source_quote\":\"智能学习助手需要掌握Python\"}]}"
+                , 10, 20));
+        when(entityMapper.selectOne(any())).thenReturn(
+            entityWithId(11L, "数学建模", "SKILL"),
+            entityWithId(12L, "中国国际青年交流中心", "ORGANIZATION"),
+            entityWithId(13L, "智能学习助手", "POST"),
+            entityWithId(14L, "Python", "SKILL"));
+
+        service.processTask(task);
+
+        ArgumentCaptor<KgRelation> relations = ArgumentCaptor.forClass(KgRelation.class);
+        verify(relationMapper, org.mockito.Mockito.times(2)).insert(relations.capture());
+        assertEquals("智能学习助手需要掌握Python", relations.getAllValues().get(1).getFactText());
+        assertEquals(502L, relations.getAllValues().get(1).getSourceChunkId());
+        assertEquals(KgIndexTask.DONE, task.getStatus());
+    }
+
+    @Test
+    void malformedLargeWindowIsRetriedOnSmallerOverlappingWindows() {
+        KgIndexTask task = task();
+        task.setContent("数学建模由中国国际青年交流中心组织。".repeat(75));
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(701L);
+        chunk.setContent(task.getContent());
+        when(chunkService.listIndexedByDocument(task)).thenReturn(List.of(chunk));
+        when(aiClient.chat(anyList(), anyInt()))
+            .thenReturn(new AiClient.AiChatResult("{\"entities\":[", 10, 20),
+                new AiClient.AiChatResult(GOOD_JSON, 10, 20),
+                new AiClient.AiChatResult(GOOD_JSON, 10, 20));
+        when(entityMapper.selectOne(any())).thenReturn(
+            entityWithId(11L, "数学建模", "SKILL"),
+            entityWithId(12L, "中国国际青年交流中心", "ORGANIZATION"));
+
+        service.processTask(task);
+
+        assertEquals(KgIndexTask.DONE, task.getStatus());
+        verify(aiClient, org.mockito.Mockito.times(3)).chat(anyList(), anyInt());
+        verify(relationMapper).insert(any(KgRelation.class));
+    }
+
+    @Test
+    void globalGraphIdentityDoesNotIncludeAuthorOrTeam() {
+        when(aiClient.chat(anyList(), anyInt()))
+            .thenReturn(new AiClient.AiChatResult(GOOD_JSON, 10, 20));
+        when(entityMapper.selectOne(any())).thenReturn(
+            entityWithId(11L, "数学建模", "SKILL"),
+            entityWithId(12L, "中国国际青年交流中心", "ORGANIZATION"));
+        KgDocumentChunk chunk = new KgDocumentChunk();
+        chunk.setId(501L);
+        chunk.setContent(task().getContent());
+        when(chunkService.listIndexedByDocument(any())).thenReturn(List.of(chunk));
+        KgIndexTask task = task();
+        task.setScope(KgEntity.SCOPE_GLOBAL);
+        task.setTeamId(7L);
+        task.setUserId(25L);
+
+        service.processTask(task);
+
+        ArgumentCaptor<KgRelation> relation = ArgumentCaptor.forClass(KgRelation.class);
+        verify(relationMapper).insert(relation.capture());
+        assertEquals(0L, relation.getValue().getTeamId());
+        assertEquals(0L, relation.getValue().getUserId());
+    }
+
     // ==================== 入队幂等 ====================
 
     @Test
@@ -234,7 +518,7 @@ class KgIndexServiceTest {
         task.setDocType("POST");
         task.setDocId(100L);
         task.setTitle("测试文档");
-        task.setContent("这是一篇关于数学建模的测试正文");
+        task.setContent("数学建模由中国国际青年交流中心组织");
         task.setStatus(KgIndexTask.RUNNING);
         task.setRetryCount(0);
         return task;

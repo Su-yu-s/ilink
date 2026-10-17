@@ -94,7 +94,8 @@ app:
     base-url: ${DASHSCOPE_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
     api-key: ${DASHSCOPE_API_KEY:}
     model: ${DASHSCOPE_MODEL:qwen3.7-flash}
-    max-tokens: 2048
+    # 全局生成硬上限：图谱抽取（密集技术文档 JSON 实测 3700+ token）需要 6144，其余调用方各自传 ≤2048
+    max-tokens: ${AI_MAX_TOKENS:6144}
     timeout-ms: 60000
     # 联网搜索：Bing 公开网页搜索为 AI 答疑补充上下文（AI_SEARCH_ENABLED=false 可关闭）
     search-enabled: ${AI_SEARCH_ENABLED:true}

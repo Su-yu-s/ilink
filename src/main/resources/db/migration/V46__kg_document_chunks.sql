@@ -1,0 +1,21 @@
+CREATE TABLE `kg_document_chunk` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT,
+    `doc_type` VARCHAR(32) NOT NULL,
+    `doc_id` BIGINT NOT NULL,
+    `ordinal_no` INT NOT NULL,
+    `title` VARCHAR(255) NULL,
+    `content` TEXT NOT NULL,
+    `start_offset` INT NOT NULL,
+    `end_offset` INT NOT NULL,
+    `scope` VARCHAR(16) NOT NULL DEFAULT 'GLOBAL',
+    `team_id` BIGINT NOT NULL DEFAULT 0,
+    `user_id` BIGINT NOT NULL DEFAULT 0,
+    `embedding_model` VARCHAR(64) NULL,
+    `embedding_dim` INT NULL,
+    `embedding` BLOB NULL,
+    `content_hash` CHAR(64) NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_chunk_doc_ordinal` (`doc_type`, `doc_id`, `ordinal_no`),
+    INDEX `idx_chunk_doc` (`doc_type`, `doc_id`),
+    INDEX `idx_chunk_scope` (`scope`, `team_id`, `user_id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
