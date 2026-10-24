@@ -131,6 +131,21 @@ final class GraphClassificationContract {
                           boolean complete, int uncertainCount) {
         DecisionParsed { groups = List.copyOf(groups); failures = List.copyOf(failures); }
 
+        List<Integer> missingCandidateIds() {
+            return diagnosticIds(failures, "CLASSIFICATION_OMITTED_CANDIDATE:");
+        }
+
+        /**
+         * A rewrite can be structurally valid for every recognised group and still omit only a small
+         * number of candidates. Only that shape may enter the bounded closure stage; duplicate IDs,
+         * invalid proofs and unknown states keep the existing fail-closed path.
+         */
+        boolean onlyOmittedCandidates() {
+            return !groups.isEmpty() && !missingCandidateIds().isEmpty()
+                && failures.stream().allMatch(failure ->
+                    failure.startsWith("CLASSIFICATION_OMITTED_CANDIDATE:"));
+        }
+
         Map<String, Object> diagnosticsMetadata() { return diagnosticsMetadata(false); }
 
         Map<String, Object> diagnosticsMetadata(boolean semanticVerdictAccepted) {
@@ -175,7 +190,7 @@ final class GraphClassificationContract {
         Set<Long> anchors = new LinkedHashSet<>();
         for (SubjectScopeLedger.SubjectScope scope : scopes.subjects())
             if (scope.exact()) anchors.add(scope.entityId());
-        String targetType = targetType(intent.focusText());
+        String targetType = intent.requestedEntityType();
         Map<Identity, Set<Long>> relationMap = new LinkedHashMap<>();
         java.util.Date at = KgTimeRange.now();
         for (EvidenceLedger.RelationFact edge : ledger.relations().stream()
@@ -237,13 +252,6 @@ final class GraphClassificationContract {
         metadata.put("candidates", List.copyOf(rows));
         return new Catalog(true, "", candidates, inventory.toString(), metadata,
             scopes.queryComplete(), inventoryComplete, intent.focusText());
-    }
-
-    private static String targetType(String focus) {
-        if (focus.contains("技能") || focus.contains("技术栈")) return "SKILL";
-        if (focus.contains("竞赛") || focus.contains("赛事")) return "COMPETITION";
-        if (focus.contains("机构") || focus.contains("组织")) return "ORGANIZATION";
-        return null;
     }
 
     private static Map<String, Object> candidateMetadata(Candidate candidate) {
@@ -329,6 +337,31 @@ final class GraphClassificationContract {
 
     /** Stage B production parser. It never repairs a proposal or assigns omitted members to U. */
     static DecisionParsed parseDecisions(String raw, Catalog catalog) {
+        return parseDecisions(raw, catalog, null);
+    }
+
+    /**
+     * Parse one bounded closure proposal. Every returned ID must belong to {@code expectedIds}, and
+     * every expected ID must be disposed of exactly once. IDs already assigned by the first rewrite
+     * are unexpected here, which prevents a closure call from silently replacing an existing group.
+     */
+    static DecisionParsed parseDecisionClosure(String raw, Catalog catalog, Set<Integer> expectedIds) {
+        Set<String> failures = new LinkedHashSet<>();
+        if (expectedIds == null || expectedIds.isEmpty()) {
+            failures.add("CLASSIFICATION_CLOSURE_EMPTY_REQUEST");
+            return failedDecisions(failures, "CLASSIFICATION_CLOSURE_INVALID_SCOPE");
+        }
+        for (int id : expectedIds) {
+            if (catalog.candidate(id) == null) {
+                failures.add("CLASSIFICATION_CLOSURE_INVALID_SCOPE");
+                failures.add("CLASSIFICATION_UNKNOWN_CANDIDATE:" + id);
+            }
+        }
+        if (!failures.isEmpty()) return failedDecisions(failures, "CLASSIFICATION_CLOSURE_INVALID_SCOPE");
+        return parseDecisions(raw, catalog, Set.copyOf(expectedIds));
+    }
+
+    private static DecisionParsed parseDecisions(String raw, Catalog catalog, Set<Integer> expectedIds) {
         Set<String> failures = new LinkedHashSet<>();
         if (!catalog.requested()) failures.add("CLASSIFICATION_NOT_REQUESTED");
         if (!catalog.inventoryComplete()) failures.add("CLASSIFICATION_INVENTORY_INCOMPLETE");
@@ -346,7 +379,8 @@ final class GraphClassificationContract {
         // plus one OUTSIDE_TYPE group over seven candidates and was rejected purely for that).
         // The real integrity guards below are untouched: every candidate exactly once, no unknown
         // numbers, and every I/E group must carry valid proofs.
-        if (root.path("groups").size() > catalog.candidates().size() + 1)
+        int scopeSize = expectedIds == null ? catalog.candidates().size() : expectedIds.size();
+        if (root.path("groups").size() > scopeSize + 1)
             return failedDecisions(failures, "CLASSIFICATION_TOO_MANY_GROUPS");
         List<DecisionGroup> groups = new ArrayList<>();
         Set<Integer> assigned = new LinkedHashSet<>();
@@ -388,15 +422,56 @@ final class GraphClassificationContract {
                 failures.add("CLASSIFICATION_GROUP:" + groupIndex + ":PROOFS:NONEMPTY_VALID_IDS_REQUIRED");
             }
             for (int id : ids) {
+                if (expectedIds != null && !expectedIds.contains(id))
+                    failures.add("CLASSIFICATION_UNEXPECTED_CANDIDATE:" + id);
                 if (!assigned.add(id)) failures.add("CLASSIFICATION_DUPLICATE_CANDIDATE:" + id);
                 if (state == State.U) uncertainCount++;
             }
             groups.add(new DecisionGroup(state, reason, ids, proofs));
         }
-        for (Candidate candidate : catalog.candidates())
-            if (!assigned.contains(candidate.number()))
-                failures.add("CLASSIFICATION_OMITTED_CANDIDATE:" + candidate.number());
+        if (expectedIds == null) {
+            for (Candidate candidate : catalog.candidates())
+                if (!assigned.contains(candidate.number()))
+                    failures.add("CLASSIFICATION_OMITTED_CANDIDATE:" + candidate.number());
+        } else {
+            expectedIds.stream().sorted().filter(id -> !assigned.contains(id))
+                .forEach(id -> failures.add("CLASSIFICATION_OMITTED_CANDIDATE:" + id));
+        }
         return new DecisionParsed(groups, List.copyOf(failures), failures.isEmpty(), uncertainCount);
+    }
+
+    /** Merge a validated closure with the recognised rewrite without repairing either proposal. */
+    static DecisionParsed mergeDecisionClosure(DecisionParsed proposal,
+            DecisionParsed closure, Catalog catalog, Set<Integer> expectedIds) {
+        Set<String> failures = new LinkedHashSet<>();
+        if (proposal == null || closure == null || catalog == null || expectedIds == null
+            || expectedIds.isEmpty()) {
+            failures.add("CLASSIFICATION_CLOSURE_MERGE_INVALID");
+            return failedDecisions(failures, "CLASSIFICATION_CLOSURE_MERGE_INVALID");
+        }
+        if (!closure.complete())
+            failures.addAll(closure.failures());
+        Set<Integer> expected = new LinkedHashSet<>(expectedIds);
+        Set<Integer> closureIds = new LinkedHashSet<>();
+        for (DecisionGroup group : closure.groups()) for (int id : group.ids()) {
+            if (!expected.contains(id)) failures.add("CLASSIFICATION_UNEXPECTED_CANDIDATE:" + id);
+            if (!closureIds.add(id)) failures.add("CLASSIFICATION_DUPLICATE_CANDIDATE:" + id);
+        }
+        expected.stream().filter(id -> !closureIds.contains(id))
+            .forEach(id -> failures.add("CLASSIFICATION_OMITTED_CANDIDATE:" + id));
+
+        List<DecisionGroup> groups = new ArrayList<>(proposal.groups());
+        groups.addAll(closure.groups());
+        Set<Integer> allAssigned = new LinkedHashSet<>();
+        int uncertain = 0;
+        for (DecisionGroup group : groups) for (int id : group.ids()) {
+            if (!allAssigned.add(id)) failures.add("CLASSIFICATION_DUPLICATE_CANDIDATE:" + id);
+            if (group.state() == State.U) uncertain++;
+        }
+        for (Candidate candidate : catalog.candidates())
+            if (!allAssigned.contains(candidate.number()))
+                failures.add("CLASSIFICATION_OMITTED_CANDIDATE:" + candidate.number());
+        return new DecisionParsed(groups, List.copyOf(failures), failures.isEmpty(), uncertain);
     }
 
     private static DecisionParsed failedDecisions(Set<String> failures, String reason) {

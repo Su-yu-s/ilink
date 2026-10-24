@@ -1,6 +1,8 @@
 package cn.ilink.exception;
 
 import cn.ilink.common.Result;
+import cn.ilink.collab.TeamCollabException;
+import cn.ilink.teamagent.TeamAgentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.util.List;
+import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -157,9 +160,44 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Result.forbidden());
     }
 
+    @ExceptionHandler(TeamAgentException.class)
+    public ResponseEntity<Result<?>> handleTeamAgentException(TeamAgentException e) {
+        int code = e.getErrorCode().status().value();
+        Result<?> result = Result.fail(code, e.getMessage())
+            .withExtra(Map.of(
+                "errorCode", e.getErrorCode().name(),
+                "requestId", e.getRequestId() == null ? "" : e.getRequestId(),
+                "retryable", e.getErrorCode().retryable()
+            ));
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(e.getErrorCode().status());
+        if (e.getRetryAfterSeconds() != null) {
+            response.header("Retry-After", String.valueOf(e.getRetryAfterSeconds()));
+        }
+        return response.body(result);
+    }
+
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<Result<?>> handleNoHandlerFoundException(NoHandlerFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Result.notFound("请求的资源不存在"));
+    }
+
+    /**
+     * 协作资产业务错误：状态码与稳定 errorCode 由枚举决定，不回显堆栈、路径或 SQL。
+     */
+    @ExceptionHandler(TeamCollabException.class)
+    public ResponseEntity<Result<?>> handleTeamCollabException(TeamCollabException e) {
+        TeamCollabException.Code code = e.code();
+        if (code.status().is5xxServerError()) {
+            log.error("协作资产服务异常: {} - {}", code.name(), e.getMessage());
+        } else {
+            log.info("协作资产请求被拒绝: {} - {}", code.name(), e.getMessage());
+        }
+        String message = e.getMessage() == null || e.getMessage().isBlank()
+            ? "协作资产操作未完成" : e.getMessage();
+        return ResponseEntity.status(code.status())
+            .cacheControl(org.springframework.http.CacheControl.noStore().mustRevalidate())
+            .body(Result.fail(code.status().value(), message)
+                .withExtra(java.util.Map.of("errorCode", code.name())));
     }
 
     @ExceptionHandler(DataAccessException.class)

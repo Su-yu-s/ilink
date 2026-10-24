@@ -44,8 +44,41 @@ public class EvidenceLedger {
     private final Map<Long, RelationFact> relations = new LinkedHashMap<>();
     private final Map<Long, ChunkFact> chunks = new LinkedHashMap<>();
     private final Set<String> successfulTools = new LinkedHashSet<>();
+    private final Set<Long> documentedChunkIds = new LinkedHashSet<>();
     private final java.util.ArrayList<ToolCoverage> coverage = new java.util.ArrayList<>();
     private final java.util.ArrayList<NeighborPage> neighborPages = new java.util.ArrayList<>();
+
+    /**
+     * Test and replay construction for tool observations that have already passed authorization.
+     * Production always uses the mapper-backed constructor and addToolResult path.
+     */
+    static EvidenceLedger preAuthorized(Collection<EntityFact> entityFacts,
+                                        Collection<RelationFact> relationFacts,
+                                        Collection<ChunkFact> chunkFacts,
+                                        Collection<String> successfulToolNames) {
+        return preAuthorized(entityFacts, relationFacts, chunkFacts, successfulToolNames, List.of());
+    }
+
+    /**
+     * Offline reproducers may also carry an already permission-checked temporal coverage row.
+     * Production callers continue to derive coverage from successful tool observations.
+     */
+    static EvidenceLedger preAuthorized(Collection<EntityFact> entityFacts,
+                                        Collection<RelationFact> relationFacts,
+                                        Collection<ChunkFact> chunkFacts,
+                                        Collection<String> successfulToolNames,
+                                        Collection<ToolCoverage> coverageRows) {
+        EvidenceLedger ledger = new EvidenceLedger(null, null, null, null);
+        if (entityFacts != null)
+            entityFacts.forEach(entity -> ledger.entities.put(entity.id(), entity));
+        if (relationFacts != null)
+            relationFacts.forEach(relation -> ledger.relations.put(relation.id(), relation));
+        if (chunkFacts != null)
+            chunkFacts.forEach(chunk -> ledger.chunks.put(chunk.id(), chunk));
+        if (successfulToolNames != null) ledger.successfulTools.addAll(successfulToolNames);
+        if (coverageRows != null) ledger.coverage.addAll(coverageRows);
+        return ledger;
+    }
 
     public EvidenceLedger(KgEntityMapper entityMapper, KgRelationMapper relationMapper,
                           KgDocumentChunkMapper chunkMapper, KgScopeService scopeService) {
@@ -64,6 +97,12 @@ public class EvidenceLedger {
             return;
         }
         successfulTools.add(toolName);
+        if ("get_document".equals(toolName) || "search_documents".equals(toolName)) {
+            for (Map<String, Object> row : rows(root.get("chunks"))) {
+                Long chunkId = id(row.get("chunkId"));
+                if (chunkId != null) documentedChunkIds.add(chunkId);
+            }
+        }
         for (Map<String, Object> row : rows(root.get("entities"))) {
             addEntity(id(row.get("entityId")), row.get("name"), userId);
         }
@@ -95,6 +134,15 @@ public class EvidenceLedger {
 
     public boolean containsChunk(Long id) {
         return chunks.containsKey(id);
+    }
+
+    /**
+     * A document/search tool returned this chunk before the evidence ledger accepted its authoritative
+     * row. This distinction matters for trace-only replays: a blocked or duplicate row is still a real
+     * retrieved source, while an ID that appeared only in model prose is not.
+     */
+    public boolean wasDocumented(Long id) {
+        return documentedChunkIds.contains(id);
     }
 
     public Optional<EntityFact> entity(Long id) {
@@ -268,8 +316,7 @@ public class EvidenceLedger {
             return;
         }
         KgDocumentChunk chunk = chunkMapper.selectById(id);
-        if (chunk == null || !scopeService.canSee(chunk.getScope(), chunk.getTeamId(),
-            chunk.getUserId(), userId)
+        if (chunk == null || !scopeService.canSeeChunk(chunk, userId)
             || !chunk.getDocType().equals(reported.get("docType"))
             || !chunk.getDocId().equals(id(reported.get("docId")))) {
             return;
@@ -285,8 +332,7 @@ public class EvidenceLedger {
             return;
         }
         KgDocumentChunk chunk = chunkMapper.selectById(relation.sourceChunkId());
-        if (chunk == null || !scopeService.canSee(chunk.getScope(), chunk.getTeamId(),
-            chunk.getUserId(), userId)
+        if (chunk == null || !scopeService.canSeeChunk(chunk, userId)
             || !(chunk.getDocType() + ":" + chunk.getDocId())
                 .equals(relation.sourceDocId())) {
             return;

@@ -138,6 +138,73 @@ class AgenticGraphRagServiceTest {
             "{\"entityId\":1,\"name\":\"数学建模\"}"));
     }
 
+    @Test
+    void relationFocusRemovalUsesLongestArtifactAndKeepsEmbeddedConstraintCharacters() {
+        assertTrue(AgenticGraphRagService.relationFocusIsArtifactOnly("了技术技能"));
+        assertTrue(AgenticGraphRagService.relationFocusIsArtifactOnly("知识图谱 直接 了 竞赛"));
+        assertTrue(AgenticGraphRagService.relationFocusIsArtifactOnly("有 项 种"));
+
+        assertFalse(AgenticGraphRagService.relationFocusIsArtifactOnly("有关"));
+        assertFalse(AgenticGraphRagService.relationFocusIsArtifactOnly("有效"));
+        assertFalse(AgenticGraphRagService.relationFocusIsArtifactOnly("项目"));
+        assertFalse(AgenticGraphRagService.relationFocusIsArtifactOnly("种类"));
+        assertFalse(AgenticGraphRagService.relationFocusIsArtifactOnly("仅直接"));
+    }
+
+    @Test
+    void authorizedSourceCanAnswerAZeroTargetRelationQuestion() {
+        String question = "知识图谱里 iLink 平台本身（ilink 实体）直接关联了哪些竞赛？";
+        EvidenceLedger ledger = mock(EvidenceLedger.class);
+        when(ledger.chunks()).thenReturn(List.of(
+            new EvidenceLedger.ChunkFact(379L, "POST", 1L, "iLink-平台介绍",
+                "平台定位、开发背景与整体目标。", 0, 100),
+            new EvidenceLedger.ChunkFact(380L, "POST", 1L, "iLink-平台介绍",
+                "参与“互联网+”创新创业大赛、挑战杯、数学建模竞赛。", 101, 200)));
+
+        assertTrue(AgenticGraphRagService.hasSubjectSourceForRequestedProperty(question, ledger));
+    }
+
+    @Test
+    void relatedSourceWithoutTheRequestedPropertyKeepsTheDisambiguationExit() {
+        String question = "知识图谱里 iLink 平台本身（ilink 实体）直接关联了哪些竞赛？";
+        EvidenceLedger ledger = mock(EvidenceLedger.class);
+        when(ledger.chunks()).thenReturn(List.of(
+            new EvidenceLedger.ChunkFact(379L, "POST", 1L, "iLink-平台介绍",
+                "平台定位、开发背景与整体目标。", 0, 100),
+            new EvidenceLedger.ChunkFact(381L, "POST", 1L, "iLink-平台介绍",
+                "团队协作、权限管理和任务看板。", 101, 200)));
+
+        assertFalse(AgenticGraphRagService.hasSubjectSourceForRequestedProperty(question, ledger));
+    }
+
+    @Test
+    void sourceAboutAnotherSubjectCannotBypassTheDisambiguationExit() {
+        String question = "知识图谱里 iLink 平台本身（ilink 实体）直接关联了哪些竞赛？";
+        EvidenceLedger ledger = mock(EvidenceLedger.class);
+        when(ledger.chunks()).thenReturn(List.of(
+            new EvidenceLedger.ChunkFact(382L, "POST", 2L, "其他平台介绍",
+                "参与挑战杯和数学建模竞赛。", 0, 100)));
+
+        assertFalse(AgenticGraphRagService.hasSubjectSourceForRequestedProperty(question, ledger));
+    }
+
+    @Test
+    void temporalPreflightResolvesRecordCandidatesWithoutBroadShortNameMatching() {
+        String question = "2026 年 3 月 25 日以后，团队空间与视觉重构相关记录还关联着哪些竞赛？";
+        EvidenceLedger ledger = mock(EvidenceLedger.class);
+        when(ledger.entities()).thenReturn(List.of(
+            new EvidenceLedger.EntityFact(1965L, "Link 团队空间模块", "POST", ""),
+            new EvidenceLedger.EntityFact(1725L, "iLink 团队空间模块开发成果", "POST", ""),
+            new EvidenceLedger.EntityFact(1735L, "前端页面视觉重构升级报告", "POST", ""),
+            new EvidenceLedger.EntityFact(1973L, "挑战杯全国大学生课外学术科技作品竞赛", "COMPETITION", "")));
+
+        List<Long> ids = AgenticGraphRagService.temporalSeeds(question, ledger).stream()
+            .map(EvidenceLedger.EntityFact::id).toList();
+
+        assertTrue(ids.containsAll(List.of(1965L, 1725L, 1735L)));
+        assertFalse(ids.contains(1973L));
+    }
+
     // ==================== 工具分发 ====================
 
     @Test

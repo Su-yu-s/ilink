@@ -15,7 +15,8 @@ final class TemporalAnswerScope {
 
     record SubjectResolution(String requestedName, Resolution resolution, Long entityId,
                              String entityName, String entityType, List<Long> matchingEntityIds,
-                             boolean windowComplete) {
+                             boolean windowComplete, String matchedAlias,
+                             QueryIntent.AliasTier matchTier, List<Long> competingEntityIds) {
         boolean exact() { return resolution == Resolution.EXACT; }
     }
 
@@ -60,10 +61,90 @@ final class TemporalAnswerScope {
                 row.put("entityName", subject.entityName());
                 row.put("entityType", subject.entityType());
                 row.put("matchingEntityIds", subject.matchingEntityIds());
+                row.put("matchedAlias", subject.matchedAlias());
+                row.put("matchTier", subject.matchTier() == null ? null : subject.matchTier().name());
+                row.put("competingEntityIds", subject.competingEntityIds());
                 row.put("windowComplete", subject.windowComplete());
                 rows.add(row);
             }
             result.put("subjects", List.copyOf(rows));
+            return result;
+        }
+    }
+
+    /**
+     * A temporal question may name a group of records by a distinctive title fragment rather than
+     * by one exact entity name. Keep that interpretation separate from exact subject identity:
+     * record-scoped lists are allowed only for explicit positive list questions, one complete
+     * window query for every selected record, and one unambiguous permission-checked record for
+     * every requested group. They never authorize absence, counts, binary checks or exhaustive
+     * collection claims.
+     */
+    record RecordGroup(String requested, String matchedCore,
+                       List<EvidenceLedger.EntityFact> members) {
+        RecordGroup {
+            members = List.copyOf(members);
+        }
+        boolean completeFor(List<KgTimeRange> windows, EvidenceLedger ledger) {
+            return !members.isEmpty() && windows.stream().allMatch(window -> members.stream()
+                .allMatch(entity -> ledger.completeTemporal(entity.id(), window)));
+        }
+    }
+
+    record RecordScope(List<RecordGroup> groups, List<KgTimeRange> windows, boolean allWindowsComplete,
+                       boolean requestedRecordsConfirmed, Map<Long, Boolean> memberCoverage) {
+        RecordScope {
+            groups = List.copyOf(groups);
+            windows = List.copyOf(windows);
+            memberCoverage = memberCoverage == null ? Map.of() : Map.copyOf(memberCoverage);
+        }
+
+        List<Long> missingCompleteMemberIds() {
+            return memberCoverage.entrySet().stream()
+                .filter(entry -> !Boolean.TRUE.equals(entry.getValue()))
+                .map(Map.Entry::getKey).sorted().toList();
+        }
+
+        boolean hasIncompleteMembers() {
+            return memberCoverage.values().stream()
+                .anyMatch(complete -> !Boolean.TRUE.equals(complete));
+        }
+
+        Map<String, Object> metadata() {
+            List<Map<String, Object>> rows = new ArrayList<>();
+            for (RecordGroup group : groups) {
+                Map<String, Object> row = new LinkedHashMap<>();
+                row.put("requested", group.requested());
+                row.put("matchedCore", group.matchedCore());
+                row.put("memberEntityIds", group.members().stream()
+                    .map(EvidenceLedger.EntityFact::id).toList());
+                row.put("memberEntityNames", group.members().stream()
+                    .map(EvidenceLedger.EntityFact::name).toList());
+                row.put("memberWindowCoverage", group.members().stream().collect(
+                    java.util.stream.Collectors.toMap(
+                        EvidenceLedger.EntityFact::id,
+                        entity -> windows.stream().map(window -> {
+                            Map<String, Object> coverage = new LinkedHashMap<>();
+                            coverage.put("startInclusive", window.startInclusive().toString());
+                            coverage.put("endExclusive", window.endExclusive().toString());
+                            coverage.put("complete", Boolean.TRUE.equals(memberCoverage.get(entity.id())));
+                            return coverage;
+                        }).toList(),
+                        (left, right) -> left, LinkedHashMap::new)));
+                row.put("completeMembers", group.members().stream()
+                    .filter(entity -> Boolean.TRUE.equals(memberCoverage.get(entity.id())))
+                    .map(EvidenceLedger.EntityFact::id).toList());
+                row.put("missingCompleteMembers", group.members().stream()
+                    .filter(entity -> !Boolean.TRUE.equals(memberCoverage.get(entity.id())))
+                    .map(EvidenceLedger.EntityFact::id).toList());
+                rows.add(row);
+            }
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("policy", "temporal-record-group-v1");
+            result.put("allWindowsComplete", allWindowsComplete);
+            result.put("requestedRecordsConfirmed", requestedRecordsConfirmed);
+            result.put("missingCompleteMemberIds", missingCompleteMemberIds());
+            result.put("groups", rows);
             return result;
         }
     }
@@ -91,6 +172,9 @@ final class TemporalAnswerScope {
         "(?:不能|无法|尚不能|尚未|未能|不应|不得|禁止|避免).{0,30}"
             + "(?:证明|确认|证实|确定|认定|判断|断言|声称|认为|说|表述)"
             + "|(?:没有|缺少|缺乏)证据.{0,20}(?:证明|确认|证实|断言)");
+    private static final Pattern RECORD_TAIL = Pattern.compile(
+        "(?:(?:相关|有关)的?)?(?:记录|日志|报告|文档|帖子)(?:相关)?(?:还提到|提到)?\\s*$");
+    private static final Pattern RECORD_GROUP_CONNECTOR = Pattern.compile("\\s*(?:与|和|及)\\s*");
 
     private TemporalAnswerScope() { }
 
@@ -132,9 +216,11 @@ final class TemporalAnswerScope {
         QueryIntent.SubjectRequests request = QueryIntent.subjectRequests(question);
         List<SubjectResolution> subjects = new ArrayList<>();
         for (String requested : request.subjects()) {
-            List<EvidenceLedger.EntityFact> exact = ledger.entities().stream()
+            List<QueryIntent.ExactSubjectMatch> exactMatches =
                 // 括号同位语只用于名称对齐（iLink 平台（Agentic GraphRAG 项目）→ iLink Agentic GraphRAG）。
-                .filter(entity -> QueryIntent.sameSubjectName(requested, entity.name()))
+                QueryIntent.bestExactMatches(requested, ledger.entities());
+            List<EvidenceLedger.EntityFact> exact = exactMatches.stream()
+                .map(QueryIntent.ExactSubjectMatch::entity)
                 .sorted(Comparator.comparing(EvidenceLedger.EntityFact::id)).toList();
             List<EvidenceLedger.EntityFact> matches = exact.isEmpty() ? ledger.entities().stream()
                 .filter(entity -> new QueryIntent(List.of(requested), "", false).matchesSubject(entity.name()))
@@ -143,11 +229,19 @@ final class TemporalAnswerScope {
                 : matches.size() > 1 ? Resolution.AMBIGUOUS
                 : matches.isEmpty() ? Resolution.UNRESOLVED : Resolution.FUZZY_UNCONFIRMED;
             EvidenceLedger.EntityFact anchor = matches.size() == 1 ? matches.get(0) : null;
+            QueryIntent.ExactSubjectMatch selectedMatch = resolution == Resolution.EXACT
+                ? exactMatches.get(0) : exactMatches.stream().findFirst().orElse(null);
+            List<Long> competingEntityIds = resolution == Resolution.EXACT
+                ? exact.stream().filter(entity -> !Objects.equals(entity.id(), anchor.id()))
+                    .map(EvidenceLedger.EntityFact::id).toList()
+                : matches.stream().map(EvidenceLedger.EntityFact::id).toList();
             boolean complete = anchor != null && !windows.isEmpty()
                 && windows.stream().allMatch(window -> ledger.completeTemporal(anchor.id(), window));
             subjects.add(new SubjectResolution(requested, resolution, anchor == null ? null : anchor.id(),
                 anchor == null ? null : anchor.name(), anchor == null ? null : anchor.type(),
-                matches.stream().map(EvidenceLedger.EntityFact::id).toList(), complete));
+                matches.stream().map(EvidenceLedger.EntityFact::id).toList(), complete,
+                selectedMatch == null ? null : selectedMatch.matchedAlias(),
+                selectedMatch == null ? null : selectedMatch.tier(), competingEntityIds));
         }
         boolean windowComplete = request.complete() && !subjects.isEmpty()
             && subjects.stream().allMatch(subject -> subject.entityId() != null && subject.windowComplete());
@@ -169,6 +263,100 @@ final class TemporalAnswerScope {
         }
         return new Analysis(false, request.complete(), request.reason(), windows, subjects,
             windowComplete, conditional, title);
+    }
+
+    static RecordScope recordScope(String question, QueryEvidencePlan plan, EvidenceLedger ledger,
+                                   List<EvidenceLedger.EntityFact> selected) {
+        List<KgTimeRange> windows = plan.timeRanges().isEmpty()
+            ? plan.timeRange().map(List::of).orElseGet(List::of) : plan.timeRanges();
+        List<RecordGroup> groups = new ArrayList<>();
+        List<String> requestedGroups = requestedRecordGroups(question);
+        for (String requested : requestedGroups) {
+            String core = QueryIntent.normalize(
+                RECORD_TAIL.matcher(requested.trim()).replaceFirst("").trim());
+            if (core.length() < 4) continue;
+            List<EvidenceLedger.EntityFact> candidates = selected.stream()
+                .filter(entity -> entity != null && entity.name() != null && !"SKILL".equals(entity.type()))
+                .filter(entity -> QueryIntent.normalize(entity.name()).contains(core))
+                .sorted(Comparator.comparing(EvidenceLedger.EntityFact::id))
+                .toList();
+            if (!candidates.isEmpty()) {
+                groups.add(new RecordGroup(requested.trim(), core, candidates));
+            }
+        }
+        Map<Long, Boolean> memberCoverage = new LinkedHashMap<>();
+        for (RecordGroup group : groups) {
+            for (EvidenceLedger.EntityFact member : group.members()) {
+                boolean complete = !windows.isEmpty() && windows.stream()
+                    .allMatch(window -> ledger.completeTemporal(member.id(), window));
+                memberCoverage.put(member.id(), complete);
+            }
+        }
+        boolean allWindowsComplete = !groups.isEmpty() && !windows.isEmpty()
+            && groups.stream().allMatch(group -> group.completeFor(windows, ledger));
+        boolean positiveRecordsQuestion = question != null
+            && plan.requiresTemporal() && !plan.historicalStatus()
+            && !REQUIRES_CONFIRMED_SUBJECT.matcher(question).find()
+            && POSITIVE_COMPETITION_LIST.matcher(question).find();
+        boolean recordsComplete = positiveRecordsQuestion && !groups.isEmpty()
+            && requestedGroups.size() == groups.size();
+        return new RecordScope(groups, windows, allWindowsComplete,
+            recordsComplete && allWindowsComplete, memberCoverage);
+    }
+
+    static RecordScope recordScopeFromGroups(String question, QueryEvidencePlan plan,
+                                             EvidenceLedger ledger,
+                                             List<RecordGroup> explicitGroups) {
+        List<KgTimeRange> windows = plan.timeRanges().isEmpty()
+            ? plan.timeRange().map(List::of).orElseGet(List::of) : plan.timeRanges();
+        List<RecordGroup> groups = explicitGroups == null ? List.of() : explicitGroups.stream()
+            .filter(group -> group != null && !group.members().isEmpty())
+            .toList();
+        Map<Long, Boolean> memberCoverage = new LinkedHashMap<>();
+        for (RecordGroup group : groups) {
+            for (EvidenceLedger.EntityFact member : group.members()) {
+                memberCoverage.put(member.id(), !windows.isEmpty() && windows.stream()
+                    .allMatch(window -> ledger.completeTemporal(member.id(), window)));
+            }
+        }
+        boolean allWindowsComplete = !groups.isEmpty() && !windows.isEmpty()
+            && groups.stream().allMatch(group -> group.completeFor(windows, ledger));
+        boolean positiveRecordsQuestion = question != null
+            && plan.requiresTemporal() && !plan.historicalStatus()
+            && !REQUIRES_CONFIRMED_SUBJECT.matcher(question).find()
+            && POSITIVE_COMPETITION_LIST.matcher(question).find();
+        return new RecordScope(groups, windows, allWindowsComplete,
+            positiveRecordsQuestion && allWindowsComplete, memberCoverage);
+    }
+
+    /**
+     * A record group can be named by a descriptive title fragment ("团队空间", "视觉重构")
+     * rather than by the exact full entity name. The caller passes only permission-checked
+     * candidates; membership remains textual and completeness is checked per member.
+     */
+    static List<EvidenceLedger.EntityFact> titleGroupMembers(String key,
+                                                              List<EvidenceLedger.EntityFact> selected) {
+        String normalized = QueryIntent.normalize(key);
+        if (normalized.isBlank()) return List.of();
+        return selected.stream()
+            .filter(entity -> entity != null && entity.name() != null
+                && !"SKILL".equals(entity.type()))
+            .filter(entity -> QueryIntent.normalize(entity.name()).contains(normalized))
+            .sorted(Comparator.comparing(EvidenceLedger.EntityFact::id))
+            .toList();
+    }
+
+
+    private static List<String> requestedRecordGroups(String question) {
+        LinkedHashSet<String> groups = new LinkedHashSet<>();
+        for (String subject : QueryIntent.subjectRequests(question).subjects()) {
+            for (String requested : RECORD_GROUP_CONNECTOR.split(subject)) {
+                String trimmed = requested.trim();
+                String core = RECORD_TAIL.matcher(trimmed).replaceFirst("").trim();
+                if (QueryIntent.normalize(core).length() >= 4) groups.add(trimmed);
+            }
+        }
+        return List.copyOf(groups);
     }
 
     private static boolean abbreviatedTitle(String requested, String canonical) {

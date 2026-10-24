@@ -224,6 +224,33 @@ public class TeamLibraryController {
         }
     }
 
+    /** 重新建立检索索引：索引失败/失效/跳过的文件可由上传者或队长重试 */
+    @PostMapping("/team/{teamId}/library/files/{fileId}/reindex")
+    @ResponseBody
+    public ResponseEntity<Result<?>> reindex(@PathVariable Long teamId,
+                                             @PathVariable Long fileId,
+                                             HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
+        TeamDemand team = teamDemandService.getById(teamId);
+        if (team == null) {
+            return Result.notFound(MSG_TEAM_NOT_FOUND).toResponseEntity();
+        }
+        if (!isTeamParticipant(team, user)) {
+            return Result.forbidden().toResponseEntity();
+        }
+        try {
+            libraryService.reindex(fileId, user.getId(), isTeamLeader(team, user));
+            return Result.ok("已重新提交检索索引", null).toResponseEntity();
+        } catch (IllegalArgumentException e) {
+            return Result.badRequest(e.getMessage()).toResponseEntity();
+        } catch (IllegalStateException e) {
+            return Result.fail(403, e.getMessage()).toResponseEntity();
+        }
+    }
+
     @DeleteMapping("/team/{teamId}/library/files/{fileId}")
     @ResponseBody
     public ResponseEntity<Result<?>> delete(@PathVariable Long teamId,

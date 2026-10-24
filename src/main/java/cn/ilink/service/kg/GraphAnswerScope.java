@@ -13,7 +13,8 @@ final class GraphAnswerScope {
     private record Candidate(Long id, Long anchorId, String direction, String relationType,
                              String name, String entityType) { }
     record Scope(boolean requested, boolean sourceOnly, boolean queryComplete, boolean inventoryComplete,
-                 String text, Set<Long> relationIds, int candidateCount, int shownCount) {
+                 String text, Set<Long> relationIds, int candidateCount, int shownCount,
+                 boolean targetEntityUnresolved) {
         boolean limited() { return requested && (sourceOnly || !queryComplete || !inventoryComplete); }
         String instruction() {
             if (!requested) return "";
@@ -34,14 +35,12 @@ final class GraphAnswerScope {
         QueryEvidencePlan plan = QueryEvidencePlan.fromQuestion(question);
         if (!intent.graphRequested() || !plan.requiresRelation() || plan.requiresTemporal()
             || RecommendationEvidencePolicy.isRecommendationQuery(question))
-            return new Scope(false, false, true, true, "", Set.of(), 0, 0);
+            return new Scope(false, false, true, true, "", Set.of(), 0, 0, false);
         SubjectScopeLedger.Analysis subjectScopes = SubjectScopeLedger.assess(question, ledger);
         Set<Long> anchors = new LinkedHashSet<>();
         for (SubjectScopeLedger.SubjectScope subject : subjectScopes.subjects())
             if (subject.exact()) anchors.add(subject.entityId());
-        String focus = intent.focusText();
-        String targetType = focus.contains("技能") || focus.contains("技术栈") ? "SKILL"
-            : focus.contains("竞赛") || focus.contains("赛事") ? "COMPETITION" : null;
+        String targetType = intent.requestedEntityType();
         Map<String, Candidate> candidates = new LinkedHashMap<>();
         java.util.Date currentAt = KgTimeRange.now();
         for (EvidenceLedger.RelationFact edge : ledger.relations().stream()
@@ -84,7 +83,9 @@ final class GraphAnswerScope {
             shown++;
         }
         if (candidates.isEmpty()) text.append("未取得符合主体/类型要求的图谱候选；不能凭原文建立关系。\n");
+        boolean unresolvedOnly = !complete && !subjectScopes.subjects().isEmpty()
+            && subjectScopes.subjects().stream().allMatch(subject -> !subject.exact());
         return new Scope(true, !complete && candidates.isEmpty(), complete, inventoryComplete,
-            text.toString(), Set.copyOf(shownIds), candidates.size(), shown);
+            text.toString(), Set.copyOf(shownIds), candidates.size(), shown, unresolvedOnly);
     }
 }

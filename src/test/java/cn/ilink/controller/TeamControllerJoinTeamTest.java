@@ -35,6 +35,7 @@ class TeamControllerJoinTeamTest {
                                           TeamMembershipService membershipService) {
         return new TeamController(
             teamDemandService,
+            mock(cn.ilink.mapper.TeamDemandMapper.class),
             teamApplicationService,
             mock(UserService.class),
             mock(NotificationService.class),
@@ -43,7 +44,10 @@ class TeamControllerJoinTeamTest {
             membershipService,
             mock(TeamInviteService.class),
             mock(cn.ilink.service.impl.CompetitionServiceImpl.class),
-            mock(cn.ilink.service.TeamLibraryService.class));
+            mock(cn.ilink.service.TeamLibraryService.class),
+            mock(cn.ilink.teamagent.TeamAgentLifecycleService.class),
+            mock(cn.ilink.service.TeamAgentDataCleanupService.class),
+            mock(cn.ilink.collab.TeamCollaborationCleanupService.class));
     }
 
     private User joiner() {

@@ -5,6 +5,51 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ChatRequestBudgetTest {
+    @Test void closureStageUsesTheCompactVerdictCap() {
+        var budget = new ChatRequestBudget();
+        try (var scope = budget.bind();
+             var stage = ChatRequestBudget.stage(ChatRequestBudget.Stage.CLOSURE)) {
+            assertEquals(ChatRequestBudget.CLOSURE_COMPLETION_LIMIT, budget.completionLimit(1200));
+        }
+    }
+
+    @Test void protectedFinalVerifierSlotCannotBeSpentByEarlierStages() {
+        var budget = new ChatRequestBudget();
+        try (var scope = budget.bind(); var stage = ChatRequestBudget.stage(ChatRequestBudget.Stage.GENERATE)) {
+            try (var reservation = budget.reserve(4000, 200)) { reservation.settle(4000, 200); }
+        }
+        try (var scope = budget.bind()) {
+            var protection = budget.protect(5000, "FINAL_CLASSIFICATION_VERIFIER");
+            try (var stage = ChatRequestBudget.stage(ChatRequestBudget.Stage.CLOSURE)) {
+                assertTrue(budget.canReserve(1000, 160));
+                assertFalse(budget.canReserve(6641, 160));
+                try (var reservation = budget.reserve(1000, 160)) { reservation.settle(900, 20); }
+                assertFalse(budget.canReserve(1, 1));
+            }
+            assertEquals(5880, budget.remainingTokens());
+            protection.release();
+            assertEquals(10_880, budget.remainingTokens());
+            assertThrows(ChatRequestBudget.BudgetStopException.class,
+                () -> budget.reserve(10_981, 1));
+        }
+    }
+
+    @Test void releasingProtectionIsIdempotentAndAudited() {
+        var budget = new ChatRequestBudget();
+        try (var scope = budget.bind()) {
+            var protection = budget.protect(1234, "FINAL_CLASSIFICATION_VERIFIER");
+            assertEquals(16_000 - 1234, budget.remainingTokens());
+            protection.release();
+            protection.release();
+            assertEquals(16_000, budget.remainingTokens());
+            @SuppressWarnings("unchecked")
+            var records = (java.util.List<java.util.Map<String, Object>>)
+                budget.snapshot().get("protectedReservations");
+            assertEquals(1, records.size());
+            assertEquals(Boolean.TRUE, records.get(0).get("released"));
+        }
+    }
+
     @Test void refundsOnlyKnownUsageAndKeepsUnknownReservation() {
         ChatRequestBudget budget = new ChatRequestBudget();
         try (var scope = budget.bind(); var stage = ChatRequestBudget.stage(ChatRequestBudget.Stage.REACT)) {

@@ -10,21 +10,31 @@ import cn.ilink.mapper.KgEntityMapper;
 import cn.ilink.mapper.KgIndexTaskMapper;
 import cn.ilink.mapper.KgRelationMapper;
 import cn.ilink.service.ai.AiClient;
+import cn.ilink.teamagent.TeamAgentHashes;
+import cn.ilink.collab.TeamCollaborationIndexBridge;
+import cn.ilink.entity.TeamLibraryFile;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -51,6 +61,12 @@ public class KgIndexService {
     static final int EXTRACTION_OVERLAP_CHARS = 400;
     private static final int MAX_EXTRACTION_SPLIT_DEPTH = 3;
     static final int MAX_TECH_ENTITIES_PER_DOCUMENT = 24;
+    /** Library files publish only their leading section; the cap keeps chunk
+     *  count and extraction cost bounded for a single upload. */
+    static final int MAX_TEAM_FILE_INDEX_CHARS = 60_000;
+    static final String DOC_TYPE_TEAM_FILE = "TEAM_FILE";
+    private static final Pattern TEAM_FILE_MARKER = Pattern.compile(
+        "^\\[team-library-file:(\\d{1,18}):(\\d{1,18})\\]$");
     private static final Pattern TECH_TOKEN = Pattern.compile(
         "(?<![A-Za-z0-9_])([A-Z][A-Za-z0-9]*(?:[-_.][A-Za-z0-9]+)*)(?![A-Za-z0-9_])");
     private static final Pattern TECH_CONTEXT = Pattern.compile(
@@ -89,6 +105,14 @@ public class KgIndexService {
     private final KgEmbeddingService embeddingService;
     private final KgDocumentChunkService chunkService;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final TransactionTemplate publicationTransaction;
+
+    /**
+     * Resolved lazily: the bridge itself depends on this service, so an eager
+     * constructor reference would create a bean cycle.
+     */
+    @Autowired(required = false)
+    private ObjectProvider<TeamCollaborationIndexBridge> teamFileBridge;
 
     @Autowired
     public KgIndexService(AiClient aiClient,
@@ -97,7 +121,8 @@ public class KgIndexService {
                           KgDocEntityMapper docEntityMapper,
                           KgIndexTaskMapper taskMapper,
                           KgEmbeddingService embeddingService,
-                          KgDocumentChunkService chunkService) {
+                          KgDocumentChunkService chunkService,
+                          PlatformTransactionManager transactionManager) {
         this.aiClient = aiClient;
         this.entityMapper = entityMapper;
         this.relationMapper = relationMapper;
@@ -105,20 +130,79 @@ public class KgIndexService {
         this.taskMapper = taskMapper;
         this.embeddingService = embeddingService;
         this.chunkService = chunkService;
+        this.publicationTransaction = new TransactionTemplate(transactionManager);
+        this.publicationTransaction.setPropagationBehavior(
+            TransactionDefinition.PROPAGATION_REQUIRED);
+        // Chunk replacement deletes a key range and inserts new ordinal values.
+        // REPEATABLE READ turns those range deletes into gap locks, so two
+        // documents can deadlock while inserting into the shared unique index.
+        // READ COMMITTED keeps row-level fencing while avoiding phantom gap locks.
+        this.publicationTransaction.setIsolationLevel(Connection.TRANSACTION_READ_COMMITTED);
     }
 
     // ==================== 任务入队 ====================
 
-    /**
-     * 把一篇文档加入索引队列（同 docType+docId 幂等：已存在则跳过）。
-     */
+    /** Backward-compatible upsert entry. */
     public boolean enqueue(String docType, Long docId, String title, String content,
                            String scope, Long teamId, Long userId) {
+        return enqueueUpsert(docType, docId, title, content, scope, teamId, userId);
+    }
+
+    /**
+     * Merge a source revision into the single queue row for this document.
+     */
+    public boolean enqueueUpsert(String docType, Long docId, String title, String content,
+                                 String scope, Long teamId, Long userId) {
+        return enqueueUpsert(docType, docId, title, content, scope, teamId, userId, 0);
+    }
+
+    private boolean enqueueUpsert(String docType, Long docId, String title, String content,
+                                  String scope, Long teamId, Long userId, int retry) {
+        Date now = new Date();
+        String sourceHash = TeamAgentHashes.contentHash("kg-source", content);
         KgIndexTask existing = taskMapper.selectOne(new QueryWrapper<KgIndexTask>()
             .eq("doc_type", docType).eq("doc_id", docId));
         if (existing != null) {
-            log.info("[KG] 文档已入过索引队列，跳过: {}#{}", docType, docId);
-            return false;
+            String normalizedScope = scope == null ? KgEntity.SCOPE_GLOBAL : scope;
+            long normalizedTeamId = teamId == null ? 0L : teamId;
+            long normalizedUserId = userId == null ? 0L : userId;
+            if (KgIndexTask.OPERATION_UPSERT.equals(existing.getOperation())
+                && Objects.equals(existing.getTitle(), title)
+                && Objects.equals(existing.getSourceHash(), sourceHash)
+                && Objects.equals(existing.getScope(), normalizedScope)
+                && Objects.equals(existing.getTeamId(), normalizedTeamId)
+                && Objects.equals(existing.getUserId(), normalizedUserId)) {
+                return false;
+            }
+            long revision = existing.getRequestedRevision() == null ? 0L : existing.getRequestedRevision();
+            UpdateWrapper<KgIndexTask> merge = new UpdateWrapper<KgIndexTask>()
+                .eq("id", existing.getId())
+                .eq("requested_revision", revision)
+                .set("title", title)
+                .set("content", content)
+                .set("status", KgIndexTask.PENDING)
+                .set("retry_count", 0)
+                .set("error_msg", null)
+                .set("scope", normalizedScope)
+                .set("team_id", normalizedTeamId)
+                .set("user_id", normalizedUserId)
+                .set("requested_revision", revision + 1)
+                .set("source_hash", sourceHash)
+                .set("operation", KgIndexTask.OPERATION_UPSERT)
+                .set("available_at", now)
+                .set("lease_owner", null)
+                .set("lease_token", null)
+                .set("lease_until", null)
+                .set("finished_at", null)
+                .set("updated_at", now);
+            if (taskMapper.update(null, merge) > 0) {
+                return true;
+            }
+            // A worker may claim the same queue row between our SELECT and
+            // UPDATE. Retry from a fresh snapshot so the new content is not
+            // silently merged behind an older immutable claim.
+            return retry < 4 && enqueueUpsert(
+                docType, docId, title, content, scope, teamId, userId, retry + 1);
         }
         KgIndexTask task = new KgIndexTask();
         task.setDocType(docType);
@@ -130,12 +214,20 @@ public class KgIndexService {
         task.setScope(scope == null ? KgEntity.SCOPE_GLOBAL : scope);
         task.setTeamId(teamId == null ? 0L : teamId);
         task.setUserId(userId == null ? 0L : userId);
+        task.setRequestedRevision(1L);
+        task.setProcessedRevision(0L);
+        task.setSourceHash(sourceHash);
+        task.setOperation(KgIndexTask.OPERATION_UPSERT);
+        task.setAvailableAt(now);
+        task.setCreatedAt(now);
+        task.setUpdatedAt(now);
         try {
             taskMapper.insert(task);
             return true;
         } catch (DuplicateKeyException e) {
-            log.info("[KG] 并发入队冲突，跳过: {}#{}", docType, docId);
-            return false;
+            log.info("[KG] 并发入队冲突，改为合并修订: {}#{}", docType, docId);
+            return retry < 4 && enqueueUpsert(
+                docType, docId, title, content, scope, teamId, userId, retry + 1);
         } catch (Exception e) {
             // 索引是业务的附加能力：入队失败绝不能影响发帖/创建主流程
             log.warn("[KG] 任务入队失败（不影响业务）: {}#{}, {}", docType, docId, e.getMessage());
@@ -143,12 +235,78 @@ public class KgIndexService {
         }
     }
 
+    /**
+     * Publish an invisible tombstone revision. Physical graph cleanup is performed
+     * by the worker before the task reaches DONE.
+     */
+    public boolean enqueueDelete(String docType, Long docId, String scope, Long teamId, Long userId) {
+        return enqueueDelete(docType, docId, scope, teamId, userId, 0);
+    }
+
+    private boolean enqueueDelete(String docType, Long docId, String scope, Long teamId,
+                                  Long userId, int retry) {
+        Date now = new Date();
+        KgIndexTask existing = taskMapper.selectOne(new QueryWrapper<KgIndexTask>()
+            .eq("doc_type", docType).eq("doc_id", docId));
+        if (existing == null) {
+            KgIndexTask task = new KgIndexTask();
+            task.setDocType(docType);
+            task.setDocId(docId);
+            task.setTitle(null);
+            task.setContent(null);
+            task.setStatus(KgIndexTask.PENDING);
+            task.setRetryCount(0);
+            task.setScope(scope == null ? KgEntity.SCOPE_TEAM : scope);
+            task.setTeamId(teamId == null ? 0L : teamId);
+            task.setUserId(userId == null ? 0L : userId);
+            task.setRequestedRevision(1L);
+            task.setProcessedRevision(0L);
+            task.setSourceHash(TeamAgentHashes.contentHash("kg-source", "DELETE:" + docType + ":" + docId));
+            task.setOperation(KgIndexTask.OPERATION_DELETE);
+            task.setAvailableAt(now);
+            task.setCreatedAt(now);
+            task.setUpdatedAt(now);
+            try {
+                return taskMapper.insert(task) > 0;
+            } catch (DuplicateKeyException e) {
+                return retry < 4 && enqueueDelete(
+                    docType, docId, scope, teamId, userId, retry + 1);
+            }
+        }
+        long revision = existing.getRequestedRevision() == null ? 0L : existing.getRequestedRevision();
+        if (taskMapper.update(null, new UpdateWrapper<KgIndexTask>()
+            .eq("id", existing.getId())
+            .eq("requested_revision", revision)
+            .set("title", null)
+            .set("content", null)
+            .set("status", KgIndexTask.PENDING)
+            .set("retry_count", 0)
+            .set("error_msg", null)
+            .set("requested_revision", revision + 1)
+            .set("source_hash",
+                TeamAgentHashes.contentHash("kg-source", "DELETE:" + docType + ":" + docId))
+            .set("operation", KgIndexTask.OPERATION_DELETE)
+            .set("available_at", now)
+            .set("lease_owner", null)
+            .set("lease_token", null)
+            .set("lease_until", null)
+            .set("finished_at", null)
+            .set("updated_at", now)) > 0) {
+            return true;
+        }
+        return retry < 4 && enqueueDelete(docType, docId, scope, teamId, userId, retry + 1);
+    }
+
     // ==================== 任务处理（由 Worker 调用） ====================
 
     /** 处理单个任务：成功 DONE；可重试异常回 PENDING；超过 MAX_RETRY 置 FAILED。 */
     public void processTask(KgIndexTask task) {
         try {
-            doProcess(task);
+            if (KgIndexTask.OPERATION_DELETE.equalsIgnoreCase(task.getOperation())) {
+                cleanupDeletedSource(task);
+            } else {
+                doProcess(task);
+            }
             task.setStatus(KgIndexTask.DONE);
             task.setErrorMsg(null);
             task.setFinishedAt(new Date());
@@ -170,8 +328,155 @@ public class KgIndexService {
         }
     }
 
+    /**
+     * Fenced worker entry. A stale worker whose lease token or requested
+     * revision changed may not publish a result or finalize the queue row.
+     */
+    public void processTask(KgIndexTask task, String workerId, String leaseToken) {
+        if (task == null || leaseToken == null || leaseToken.isBlank()) {
+            processTask(task);
+            return;
+        }
+        try {
+            publicationTransaction.executeWithoutResult(status -> {
+                assertLeaseCurrent(task, workerId, leaseToken);
+                if (KgIndexTask.OPERATION_DELETE.equalsIgnoreCase(task.getOperation())) {
+                    cleanupDeletedSource(task);
+                } else {
+                    doProcess(task);
+                }
+                assertLeaseCurrent(task, workerId, leaseToken);
+                finishTaskFenced(task, workerId, leaseToken, true, null);
+            });
+        } catch (LeaseLostException e) {
+            log.info("[KG] 忽略过期 Worker 结果: task={}, worker={}", task.getId(), workerId);
+        } catch (Exception e) {
+            int retries = task.getRetryCount() == null ? 0 : task.getRetryCount();
+            int nextRetry = retries + 1;
+            String message = truncate(e.getMessage(), 1000);
+            boolean failedFinally = nextRetry >= MAX_RETRY;
+            task.setRetryCount(nextRetry);
+            task.setErrorMsg(message);
+            if (failedFinally) {
+                log.warn("[KG] 任务 {} 最终失败: {}", task.getId(), message);
+            } else {
+                log.warn("[KG] 任务 {} 失败待重试({}/{}): {}",
+                    task.getId(), nextRetry, MAX_RETRY, message);
+            }
+            try {
+                publicationTransaction.executeWithoutResult(status ->
+                    finishTaskFenced(task, workerId, leaseToken, false, message));
+            } catch (RuntimeException finalizeError) {
+                log.warn("[KG] 任务 {} 失败状态未能落库: {}",
+                    task.getId(), finalizeError.getMessage());
+            }
+        }
+    }
+
+    /** Extend only the lease owned by the exact current worker token. */
+    public boolean renewLease(KgIndexTask task, String workerId, String leaseToken, long leaseSeconds) {
+        if (task == null || task.getId() == null || leaseToken == null || leaseToken.isBlank()) {
+            return false;
+        }
+        Date now = new Date();
+        Date until = new Date(now.getTime() + Math.max(30L, leaseSeconds) * 1000L);
+        int updated = taskMapper.update(null, new UpdateWrapper<KgIndexTask>()
+            .eq("id", task.getId())
+            .eq("status", KgIndexTask.RUNNING)
+            .eq("requested_revision",
+                task.getRequestedRevision() == null ? 0L : task.getRequestedRevision())
+            .eq("lease_owner", workerId)
+            .eq("lease_token", leaseToken)
+            .set("lease_until", until)
+            .set("updated_at", now));
+        if (updated == 1) task.setLeaseUntil(until);
+        return updated == 1;
+    }
+
+    private void assertLeaseCurrent(KgIndexTask task, String workerId, String leaseToken) {
+        KgIndexTask current = taskMapper.selectById(task.getId());
+        if (current == null
+            || !KgIndexTask.RUNNING.equals(current.getStatus())
+            || !java.util.Objects.equals(workerId, current.getLeaseOwner())
+            || !java.util.Objects.equals(leaseToken, current.getLeaseToken())
+            || !java.util.Objects.equals(
+                task.getRequestedRevision() == null ? 0L : task.getRequestedRevision(),
+                current.getRequestedRevision() == null ? 0L : current.getRequestedRevision())) {
+            throw new LeaseLostException();
+        }
+    }
+
+    private void finishTaskFenced(KgIndexTask task, String workerId, String leaseToken,
+                                  boolean success, String error) {
+        Date now = new Date();
+        int retries = task.getRetryCount() == null ? 0 : task.getRetryCount();
+        String status;
+        if (success) {
+            status = KgIndexTask.DONE;
+        } else if (retries >= MAX_RETRY) {
+            status = KgIndexTask.FAILED;
+        } else {
+            status = KgIndexTask.PENDING;
+        }
+        UpdateWrapper<KgIndexTask> update = new UpdateWrapper<KgIndexTask>()
+            .eq("id", task.getId())
+            .eq("status", KgIndexTask.RUNNING)
+            .eq("requested_revision",
+                task.getRequestedRevision() == null ? 0L : task.getRequestedRevision())
+            .eq("lease_owner", workerId)
+            .eq("lease_token", leaseToken)
+            .set("status", status)
+            .set("retry_count", retries)
+            .set("error_msg", success ? null : error)
+            .set("lease_owner", null)
+            .set("lease_token", null)
+            .set("lease_until", null)
+            .set("available_at", KgIndexTask.PENDING.equals(status)
+                ? new Date(now.getTime() + retryDelayMillis(retries)) : null)
+            .set("updated_at", now);
+        if (success) {
+            update.set("processed_revision", task.getRequestedRevision())
+                .set("finished_at", now);
+        } else if (KgIndexTask.FAILED.equals(status)) {
+            update.set("finished_at", now);
+        } else {
+            update.set("finished_at", null);
+        }
+        if (taskMapper.update(null, update) != 1) {
+            if (success) {
+                // Roll back every source/chunk/entity write with the failed
+                // publication transaction.
+                throw new LeaseLostException();
+            }
+            // A newer revision or another worker already owns the row.
+            log.info("[KG] 任务 {} 失败终态被 fence 拒绝（已产生新修订或租约变化）", task.getId());
+        }
+    }
+
+    private static long retryDelayMillis(int retries) {
+        return Math.min(60_000L, 2_000L * Math.max(1, retries));
+    }
+
+    private void cleanupDeletedSource(KgIndexTask task) {
+        String docRef = task.getDocType() + ":" + task.getDocId();
+        chunkService.deleteByDocument(task);
+        relationMapper.delete(new QueryWrapper<KgRelation>().eq("source_doc_id", docRef));
+        docEntityMapper.delete(new QueryWrapper<KgDocEntity>()
+            .eq("doc_type", task.getDocType()).eq("doc_id", task.getDocId()));
+    }
+
+    private static final class LeaseLostException extends RuntimeException {}
+
     private void doProcess(KgIndexTask task) {
+        TeamFilePrepare prepared = prepareTeamFile(task);
+        if (!prepared.publish()) {
+            return;
+        }
         chunkService.index(task);
+        if (prepared.file() != null) {
+            TeamCollaborationIndexBridge bridge = requireTeamFileBridge();
+            bridge.markReady(prepared.file());
+        }
         String content = KgSourceText.clean(task.getContent());
         if (content.trim().isEmpty()) {
             log.info("[KG] 任务 {} 正文为空，直接完成", task.getId());
@@ -279,6 +584,79 @@ public class KgIndexService {
         log.info("[KG] 任务 {} 完成: {}#{} 抽出 {} 实体 / {} 关系",
             task.getId(), task.getDocType(), task.getDocId(),
             extraction.entities.size(), extraction.relations.size());
+    }
+
+    /**
+     * Resolve a TEAM_FILE queue entry against its live library row before any
+     * publication. The marker carries the content revision so a worker that
+     * started before a newer upload can never publish or mark the new state.
+     */
+    private TeamFilePrepare prepareTeamFile(KgIndexTask task) {
+        if (task == null || !DOC_TYPE_TEAM_FILE.equalsIgnoreCase(task.getDocType())) {
+            return new TeamFilePrepare(true, null);
+        }
+        TeamCollaborationIndexBridge bridge = requireTeamFileBridge();
+        Matcher marker = TEAM_FILE_MARKER.matcher(
+            task.getContent() == null ? "" : task.getContent().trim());
+        if (!marker.matches() || !Objects.equals(task.getDocId(),
+            Long.valueOf(marker.group(1)))) {
+            throw new IllegalStateException("TEAM_FILE_MARKER_INVALID");
+        }
+        Long fileId = Long.valueOf(marker.group(1));
+        Long revision = Long.valueOf(marker.group(2));
+        TeamCollaborationIndexBridge.ExtractWorkerResult result =
+            bridge.extractForWorker(fileId, revision, task.getTeamId(), task.getLeaseToken());
+        switch (result.status()) {
+            case "DELETED" -> {
+                // The delete was already tombstoned into the queue and the file
+                // row was marked STALE by TeamLibraryService, so remove the
+                // graph slices and stop here without touching the source row.
+                cleanupDeletedSource(task);
+                log.info("[KG] 团队资料 {} 已删除，清理索引片段", fileId);
+                return new TeamFilePrepare(false, null);
+            }
+            case "STALE" -> {
+                // A newer revision already requeued this source; leave its state alone.
+                log.info("[KG] 忽略团队资料旧修订任务: file={}, revision={}", fileId, revision);
+                return new TeamFilePrepare(false, null);
+            }
+            case "SKIPPED" -> {
+                chunkService.deleteByDocument(task);
+                bridge.markSkipped(result.file(), result.errorCode(), result.safeMessage());
+                log.info("[KG] 团队资料 {} 不建立正文索引: {}", fileId, result.errorCode());
+                return new TeamFilePrepare(false, null);
+            }
+            case "FAILED" -> {
+                bridge.markFailed(result.file(), result.errorCode(), result.safeMessage());
+                throw new IllegalStateException(result.errorCode() + ": " + result.safeMessage());
+            }
+            default -> {
+                String text = result.content() == null ? "" : result.content().trim();
+                if (text.length() > MAX_TEAM_FILE_INDEX_CHARS) {
+                    text = text.substring(0, MAX_TEAM_FILE_INDEX_CHARS);
+                }
+                if (text.isEmpty()) {
+                    chunkService.deleteByDocument(task);
+                    bridge.markSkipped(result.file(), "NO_TEXT", "文件没有可提取的文本层");
+                    return new TeamFilePrepare(false, null);
+                }
+                task.setContent(text);
+                bridge.markIndexing(result.file());
+                return new TeamFilePrepare(true, result.file());
+            }
+        }
+    }
+
+    private TeamCollaborationIndexBridge requireTeamFileBridge() {
+        TeamCollaborationIndexBridge bridge =
+            teamFileBridge == null ? null : teamFileBridge.getIfAvailable();
+        if (bridge == null) {
+            throw new IllegalStateException("TEAM_FILE_INDEX_BRIDGE_UNAVAILABLE");
+        }
+        return bridge;
+    }
+
+    private record TeamFilePrepare(boolean publish, TeamLibraryFile file) {
     }
 
     static List<String> extractionWindows(String content) {

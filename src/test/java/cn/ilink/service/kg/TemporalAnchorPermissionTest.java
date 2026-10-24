@@ -55,8 +55,8 @@ class TemporalAnchorPermissionTest {
         QueryIntent intent = QueryIntent.fromQuestion(question);
         java.util.LinkedHashMap<Long, EvidenceLedger.EntityFact> selected = new java.util.LinkedHashMap<>();
         for (String subject : intent.subjects()) {
-            List<EvidenceLedger.EntityFact> exact = ledger.entities().stream()
-                .filter(entity -> QueryIntent.sameSubjectName(subject, entity.name())).toList();
+            List<EvidenceLedger.EntityFact> exact = QueryIntent.bestExactMatches(subject, ledger.entities())
+                .stream().map(QueryIntent.ExactSubjectMatch::entity).toList();
             if (exact.size() == 1) {
                 selected.put(exact.get(0).id(), exact.get(0));
                 continue;

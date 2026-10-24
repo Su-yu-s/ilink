@@ -340,7 +340,7 @@ async function request(url, options = {}) {
         }
 
         const code = data && Number(data.code);
-        if (code !== 200) {
+        if (!response.ok || code !== 200) {
             let userMessage = (data && data.message) || '请求失败';
             let messageType = 'error';
             let shouldRedirectLogin = false;
@@ -377,6 +377,7 @@ async function request(url, options = {}) {
             error._ilinkHandled = true;
             error.response = data;
             error.status = response.status;
+            error.errorCode = data && ((data.extra && data.extra.errorCode) || data.errorCode);
             throw error;
         }
 

@@ -57,7 +57,8 @@
                             <div class="notification-dropdown__empty" th:text="#{header.notifications.empty}">暂无通知</div>
                         </div>
                     </div>
-                    <a th:href="@{/profile.html}" class="il-header__user-link">
+                    <a th:href="@{/profile.html}" class="il-header__user-link"
+                       th:attr="aria-label=#{header.user.openProfile}">
                         <div class="il-header__avatar-container"
                              th:with="avatarRenderable=${currentUser.avatar != null && !currentUser.avatar.isEmpty() && (#strings.startsWith(currentUser.avatar, '/uploads/') || #strings.startsWith(currentUser.avatar, '/images/avatars/') || (#strings.startsWith(currentUser.avatar, 'http') && #strings.contains(currentUser.avatar, '/uploads/')))}">
                             <!-- Avatar Image：仅渲染站内受管上传地址与内置头像，避免存量外链假地址产生加载错误 -->
@@ -79,7 +80,9 @@
                         <span class="il-header__username" th:text="${currentUser.displayName}">用户</span>
                     </a>
                     <div class="il-header__dropdown" id="userDropdown">
-                        <button class="il-header__dropdown-toggle" id="userDropdownToggle" type="button" aria-expanded="false" aria-haspopup="true">
+                        <button class="il-header__dropdown-toggle" id="userDropdownToggle" type="button"
+                                aria-expanded="false" aria-haspopup="true"
+                                th:attr="aria-label=#{header.user.openMenu}">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
                         <div class="il-header__dropdown-menu">

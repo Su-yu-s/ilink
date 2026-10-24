@@ -9,11 +9,16 @@ import cn.ilink.mapper.KgEntityMapper;
 import cn.ilink.mapper.KgIndexTaskMapper;
 import cn.ilink.mapper.KgRelationMapper;
 import cn.ilink.service.ai.AiClient;
+import cn.ilink.teamagent.TeamAgentHashes;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.SimpleTransactionStatus;
 
+import java.sql.Connection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,6 +31,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +45,7 @@ class KgIndexServiceTest {
     private KgIndexTaskMapper taskMapper;
     private KgEmbeddingService embeddingService;
     private KgDocumentChunkService chunkService;
+    private PlatformTransactionManager transactionManager;
     private KgIndexService service;
 
     @BeforeEach
@@ -51,8 +58,11 @@ class KgIndexServiceTest {
         taskMapper = mock(KgIndexTaskMapper.class);
         embeddingService = mock(KgEmbeddingService.class);
         chunkService = mock(KgDocumentChunkService.class);
+        transactionManager = mock(PlatformTransactionManager.class);
+        when(transactionManager.getTransaction(any()))
+            .thenAnswer(ignored -> new SimpleTransactionStatus());
         service = new KgIndexService(aiClient, entityMapper, relationMapper,
-            docEntityMapper, taskMapper, embeddingService, chunkService);
+            docEntityMapper, taskMapper, embeddingService, chunkService, transactionManager);
     }
 
     private static final String GOOD_JSON = "{\"entities\":["
@@ -503,6 +513,25 @@ class KgIndexServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void enqueueSkipsUnchangedRevisionWithoutResettingLease() {
+        KgIndexTask existing = new KgIndexTask();
+        existing.setId(9L);
+        existing.setTitle("标题");
+        existing.setOperation(KgIndexTask.OPERATION_UPSERT);
+        existing.setSourceHash(TeamAgentHashes.contentHash("kg-source", "正文"));
+        existing.setScope(KgEntity.SCOPE_GLOBAL);
+        existing.setTeamId(0L);
+        existing.setUserId(0L);
+        when(taskMapper.selectOne(any(Wrapper.class))).thenReturn(existing);
+
+        assertFalse(service.enqueue("POST", 1L, "标题", "正文", "GLOBAL", 0L, 0L));
+
+        verify(taskMapper, never()).update(any(), any());
+        verify(taskMapper, never()).insert(any(KgIndexTask.class));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void enqueueInsertsPendingTask() throws Exception {
         when(taskMapper.selectOne(any(Wrapper.class))).thenReturn(null);
         assertTrue(service.enqueue("POST", 1L, "标题", "正文", "TEAM", 3L, 5L));
@@ -510,6 +539,112 @@ class KgIndexServiceTest {
         verify(taskMapper).insert(captor.capture());
         assertEquals(KgIndexTask.PENDING, captor.getValue().getStatus());
         assertEquals(3L, captor.getValue().getTeamId());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void enqueueRetriesWhenAWorkerClaimsTheRevisionBetweenReadAndMerge() {
+        KgIndexTask existing = new KgIndexTask();
+        existing.setId(9L);
+        existing.setTitle("旧标题");
+        existing.setOperation(KgIndexTask.OPERATION_UPSERT);
+        existing.setSourceHash(TeamAgentHashes.contentHash("kg-source", "旧正文"));
+        existing.setScope(KgEntity.SCOPE_GLOBAL);
+        existing.setTeamId(0L);
+        existing.setUserId(0L);
+        existing.setRequestedRevision(3L);
+        when(taskMapper.selectOne(any(Wrapper.class))).thenReturn(existing);
+        when(taskMapper.update(any(), any())).thenReturn(0, 1);
+
+        assertTrue(service.enqueue("POST", 1L, "新标题", "新正文", "GLOBAL", 0L, 0L));
+
+        verify(taskMapper, times(2)).update(any(), any());
+        verify(taskMapper, never()).insert(any(KgIndexTask.class));
+    }
+
+    @Test
+    void staleWorkerCanNeverPublishGraphData() {
+        KgIndexTask task = task();
+        task.setLeaseOwner("worker-a");
+        task.setLeaseToken("old-token");
+        task.setRequestedRevision(2L);
+        KgIndexTask current = task();
+        current.setLeaseOwner("worker-b");
+        current.setLeaseToken("new-token");
+        current.setRequestedRevision(2L);
+        when(taskMapper.selectById(1L)).thenReturn(current);
+
+        service.processTask(task, "worker-a", "old-token");
+
+        verify(aiClient, never()).chat(anyList(), anyInt());
+        verify(chunkService, never()).index(any());
+        verify(entityMapper, never()).insert(any(KgEntity.class));
+        verify(relationMapper, never()).insert(any(KgRelation.class));
+        verify(taskMapper, never()).update(any(), any());
+    }
+
+    @Test
+    void revisionAdvanceDuringPublicationRollsBackTheWorkerTransaction() {
+        KgIndexTask task = task();
+        task.setOperation(KgIndexTask.OPERATION_DELETE);
+        task.setLeaseOwner("worker-a");
+        task.setLeaseToken("lease-a");
+        task.setRequestedRevision(2L);
+        KgIndexTask current = task();
+        current.setOperation(KgIndexTask.OPERATION_DELETE);
+        current.setLeaseOwner("worker-a");
+        current.setLeaseToken("lease-a");
+        current.setRequestedRevision(2L);
+        KgIndexTask advanced = task();
+        advanced.setOperation(KgIndexTask.OPERATION_UPSERT);
+        advanced.setLeaseOwner("worker-b");
+        advanced.setLeaseToken("lease-b");
+        advanced.setRequestedRevision(3L);
+        when(taskMapper.selectById(1L)).thenReturn(current, advanced);
+
+        service.processTask(task, "worker-a", "lease-a");
+
+        verify(chunkService).deleteByDocument(task);
+        verify(transactionManager).rollback(any());
+        verify(taskMapper, never()).update(any(), any());
+    }
+
+    @Test
+    void failedPublicationRollsBackThenWritesRetryStateSeparately() {
+        KgIndexTask task = task();
+        task.setLeaseOwner("worker-a");
+        task.setLeaseToken("lease-a");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+        when(taskMapper.update(any(), any())).thenReturn(1);
+        org.mockito.Mockito.doThrow(new IllegalStateException("chunk publish failed"))
+            .when(chunkService).index(task);
+
+        service.processTask(task, "worker-a", "lease-a");
+
+        verify(transactionManager).rollback(any());
+        verify(taskMapper).update(any(), any());
+        assertEquals(1, task.getRetryCount());
+        assertEquals("chunk publish failed", task.getErrorMsg());
+        verify(aiClient, never()).chat(anyList(), anyInt());
+    }
+
+    @Test
+    void publicationUsesReadCommittedToAvoidChunkRangeDeadlocks() {
+        KgIndexTask task = task();
+        task.setLeaseOwner("worker-a");
+        task.setLeaseToken("lease-a");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+        org.mockito.Mockito.doThrow(new IllegalStateException("stop after opening transaction"))
+            .when(chunkService).index(task);
+
+        service.processTask(task, "worker-a", "lease-a");
+
+        ArgumentCaptor<TransactionDefinition> definitions =
+            ArgumentCaptor.forClass(TransactionDefinition.class);
+        verify(transactionManager, org.mockito.Mockito.atLeastOnce())
+            .getTransaction(definitions.capture());
+        assertTrue(definitions.getAllValues().stream().allMatch(definition ->
+            definition.getIsolationLevel() == Connection.TRANSACTION_READ_COMMITTED));
     }
 
     private static KgIndexTask task() {

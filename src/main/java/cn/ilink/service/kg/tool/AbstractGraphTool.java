@@ -2,6 +2,7 @@ package cn.ilink.service.kg.tool;
 
 import cn.ilink.entity.KgEntity;
 import cn.ilink.service.kg.KgScopeService;
+import cn.ilink.teamagent.TeamAgentScopeContext;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
 import java.util.List;
@@ -50,6 +51,7 @@ public abstract class AbstractGraphTool implements GraphTool {
         List<Long> teamIds = scopeService.visibleTeamIds(userId);
         boolean hasTeams = !teamIds.isEmpty();
         boolean hasUser = userId != null && userId > 0;
+        boolean teamAgentScoped = TeamAgentScopeContext.current() != null;
         wrapper.and(w -> {
             w.eq("scope", KgEntity.SCOPE_GLOBAL);
             if (hasTeams) {
@@ -57,7 +59,7 @@ public abstract class AbstractGraphTool implements GraphTool {
             } else {
                 w.or(o -> o.eq("scope", KgEntity.SCOPE_TEAM).eq("team_id", -1L));
             }
-            if (hasUser) {
+            if (hasUser && !teamAgentScoped) {
                 w.or(o -> o.eq("scope", KgEntity.SCOPE_PRIVATE).eq("user_id", userId));
             } else {
                 w.or(o -> o.eq("scope", KgEntity.SCOPE_PRIVATE).eq("user_id", -1L));

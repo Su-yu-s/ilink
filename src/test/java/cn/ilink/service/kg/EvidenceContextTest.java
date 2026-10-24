@@ -76,4 +76,19 @@ class EvidenceContextTest {
         var result = EvidenceContext.select("团队空间简白风格的页面底色和文字色分别是什么？", ledger);
         assertTrue(result.text().contains("#fafafa"));
     }
+
+    @Test void positiveCompetitionListPrefersTheSpanThatNamesSeveralEvents() {
+        EvidenceLedger ledger = mock(EvidenceLedger.class);
+        String adjacent = "平台面向竞赛团队，提供协作、消息与作品沉淀。";
+        String list = "赛事目录收录「示例创新赛」「示例挑战赛」和「示例建模赛」。";
+        when(ledger.chunks()).thenReturn(List.of(
+            new EvidenceLedger.ChunkFact(11L, "POST", 7L, "平台介绍", adjacent, 0, adjacent.length()),
+            new EvidenceLedger.ChunkFact(12L, "POST", 7L, "平台介绍", list, 100, 100 + list.length())));
+        when(ledger.entities()).thenReturn(List.of());
+        when(ledger.relations()).thenReturn(List.of());
+        var result = EvidenceContext.select("平台直接关联了哪些竞赛？", ledger);
+        assertTrue(result.text().contains(list), result.text());
+        assertTrue(EvidenceContext.competitionListScore(list)
+            > EvidenceContext.competitionListScore(adjacent));
+    }
 }

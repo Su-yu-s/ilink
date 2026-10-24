@@ -653,6 +653,15 @@
     }
 
     async function loadTasks() {
+        // Task APIs are available only after the team has reached TEAMING.
+        // Opening a recruiting team must remain a clean read-only workspace,
+        // not trigger an avoidable 400 on every page load.
+        if (!teamInfo || String(teamInfo.status || '').toUpperCase() !== 'TEAMING') {
+            tasks = [];
+            renderBoard();
+            syncReviewBoardEntry();
+            return true;
+        }
         try {
             var data = await api('/tasks?teamId=' + encodeURIComponent(teamId), { silent: true });
             tasks = Array.isArray(data) ? data.map(adaptTask) : [];
@@ -1032,15 +1041,26 @@
         });
 
         if (currentPanelId === 'chat-panel') {
+            stopLibraryIndexPolling();
             loadChatHistory();
             if (!isConnected && !stompClient) connectWebSocket();
         } else if (currentPanelId === 'members-panel') {
+            stopLibraryIndexPolling();
             loadMembers();
         } else if (currentPanelId === 'library-panel') {
+            libraryIndexPollAttempts = 0;
             loadLibraryTree(libraryTrashView);
         } else if (currentPanelId === 'ai-panel') {
+            stopLibraryIndexPolling();
             loadAiPanel();
+        } else if (currentPanelId === 'collab-panel') {
+            stopLibraryIndexPolling();
+            if (!isConnected && !stompClient) connectWebSocket();
+            if (window.teamCollab && typeof window.teamCollab.reload === 'function') {
+                window.teamCollab.reload();
+            }
         } else {
+            stopLibraryIndexPolling();
             loadTasks();
         }
     }
@@ -1129,6 +1149,17 @@
                         appendChatMessage(JSON.parse(frame.body));
                     } catch (error) {
                         console.warn('解析聊天消息失败', error);
+                    }
+                });
+                stompClient.subscribe('/topic/team/' + teamId + '/collaboration', function (frame) {
+                    try {
+                        var event = JSON.parse(frame.body);
+                        if (window.teamCollab
+                            && typeof window.teamCollab.remoteChanged === 'function') {
+                            window.teamCollab.remoteChanged(event);
+                        }
+                    } catch (error) {
+                        console.warn('解析协作资产事件失败', error);
                     }
                 });
                 loadMembers();
@@ -1231,24 +1262,6 @@
             return Number(member.userId) === Number(currentUserId) &&
                 (member.isLeader === true || member.role === '队长' || member.role === 'LEADER');
         });
-    }
-
-    // AI 拆解权限：已分配任务仅被分配者本人可拆解；未分配任务仅队长兜底
-    function canAiBreakdown(task) {
-        if (!task) return false;
-        // 已完成/已取消的任务没有拆解的意义
-        var raw = String(task.status || '').toUpperCase();
-        if (raw === 'COMPLETED' || raw === 'CANCELLED') return false;
-        // 拆解只允许一层：子任务不能再拆；已经拆过的任务也不再提供入口，免得重复生成同一批
-        if (task.parentTaskId != null) return false;
-        if (hasSubtasks(task.id)) return false;
-        if (task.assignedTo == null) return currentUserIsLeader();
-        return Number(task.assignedTo) === Number(currentUserId);
-    }
-
-    /** 该任务是否已经拆解过（存在以它为父任务的子任务） */
-    function hasSubtasks(taskId) {
-        return tasks.some(function (t) { return Number(t.parentTaskId) === Number(taskId); });
     }
 
     // 批阅权限：与后端 /tasks/{id}/review 的判定一致（队长或已批准导师），由 /info 下发
@@ -1403,163 +1416,14 @@
     }
 
     // ============ AI 助手 / 周报 辅助 ============
-    var aiBreakdownTaskId = null;
-    var aiSubtasks = [];
     var weeklyReportData = null;
 
-    // ============ AI 协作面板（竞赛答疑 + 任务拆解） ============
-    var aiCompetitions = [];
-
     async function loadAiPanel() {
-        renderAiTaskPicker();
-        if (!aiCompetitions.length) {
-            try {
-                aiCompetitions = await api('/competitions?size=100');
-                aiCompetitions = Array.isArray(aiCompetitions) ? aiCompetitions : [];
-            } catch (error) {
-                aiCompetitions = [];
-            }
-            renderAiCompetitionSelect();
+        if (window.teamAgentWorkbench
+            && typeof window.teamAgentWorkbench.activate === 'function') {
+            return window.teamAgentWorkbench.activate();
         }
-        return true;
-    }
-
-    // AI 答疑上下文：隐藏 select 仍是状态源（agentic-chat 读写它的 value），
-    // 展示层换成自定义搜索下拉，避免原生 select 展开态与整体风格脱节
-    function renderAiCompetitionSelect() {
-        var select = byId('aiCompetitionSelect');
-        if (!select) return;
-        // 首项为「通用提问」：不绑定竞赛，靠联网搜索 + 模型知识作答
-        var options = '<option value="">通用提问（不绑定竞赛）</option>';
-        options += aiCompetitions.map(function (c) {
-            var name = c.name || c.title || ('竞赛 ' + (c.id || ''));
-            return '<option value="' + Number(c.id) + '">' + escapeHtml(name) + '</option>';
-        }).join('');
-        select.innerHTML = options;
-
-        var combo = byId('aiCompCombo');
-        if (!combo || combo.dataset.rendered) { syncComboLabel(); return; }
-        combo.dataset.rendered = '1';
-
-        var trigger = byId('aiCompComboTrigger');
-        var menu = byId('aiCompComboMenu');
-        var list = byId('aiCompComboList');
-        var search = byId('aiCompComboSearch');
-
-        function syncComboLabel() {
-            var label = byId('aiCompComboLabel');
-            if (!label || !select) return;
-            var opt = select.options[select.selectedIndex];
-            label.textContent = opt ? opt.textContent : '通用提问（不绑定竞赛）';
-        }
-
-        function comboItems(kw) {
-            var all = [{ value: '', name: '通用提问（不绑定竞赛）' }].concat(aiCompetitions.map(function (c) {
-                return { value: String(Number(c.id)), name: c.name || c.title || ('竞赛 ' + (c.id || '')), organizer: c.organizer || '' };
-            }));
-            kw = (kw || '').trim().toLowerCase();
-            return kw ? all.filter(function (it) {
-                return (it.name + ' ' + (it.organizer || '')).toLowerCase().indexOf(kw) >= 0;
-            }) : all;
-        }
-
-        function renderComboList(kw) {
-            var current = select.value;
-            var items = comboItems(kw);
-            list.innerHTML = items.length ? items.map(function (it) {
-                return '<button type="button" class="ai-comp-combo__item' +
-                    (it.value === current ? ' is-active' : '') +
-                    '" role="option" data-value="' + it.value + '">' +
-                    escapeHtml(it.name) +
-                    '</button>';
-            }).join('') : '<div class="ai-comp-combo__empty">没有匹配的竞赛，试试其他关键词</div>';
-            Array.prototype.forEach.call(list.querySelectorAll('.ai-comp-combo__item'), function (btn) {
-                btn.addEventListener('click', function () {
-                    select.value = btn.dataset.value;
-                    select.dispatchEvent(new Event('change'));
-                    syncComboLabel();
-                    closeMenu();
-                });
-            });
-        }
-
-        function openMenu() {
-            menu.hidden = false;
-            trigger.setAttribute('aria-expanded', 'true');
-            search.value = '';
-            renderComboList('');
-            setTimeout(function () { search.focus(); }, 0);
-        }
-
-        function closeMenu() {
-            menu.hidden = true;
-            trigger.setAttribute('aria-expanded', 'false');
-        }
-
-        trigger.addEventListener('click', function (e) {
-            e.stopPropagation();
-            menu.hidden ? openMenu() : closeMenu();
-        });
-        menu.addEventListener('click', function (e) { e.stopPropagation(); });
-        search.addEventListener('input', function () { renderComboList(search.value); });
-        search.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') { closeMenu(); trigger.focus(); }
-        });
-        document.addEventListener('click', function (e) {
-            if (!menu.hidden && !combo.contains(e.target)) closeMenu();
-        });
-        select.addEventListener('change', syncComboLabel);
-        syncComboLabel();
-    }
-
-    function renderAiTaskPicker() {
-        var box = byId('aiTaskPicker');
-        if (!box) return;
-        var badge = byId('aiLeaderOnlyBadge');
-        var isLeader = !!(teamInfo && teamInfo.isLeader);
-        var candidates = tasks.filter(function (t) {
-            var s = normalizeStatus(t.status);
-            return s === 'todo' || s === 'in_progress';
-        });
-        // 存在别人负责的任务时提示"仅任务负责人可发起"，解释为何部分任务没有拆解按钮
-        var hasLocked = candidates.some(function (t) { return !canAiBreakdown(t); });
-        if (badge) badge.hidden = !hasLocked;
-        if (!candidates.length) {
-            box.innerHTML = '<div class="ai-task-empty">暂无待拆解的任务，先在任务看板创建任务</div>';
-            return;
-        }
-        box.innerHTML = candidates.map(function (t) {
-            return '<div class="ai-task-row">' +
-                '<div class="ai-task-row__meta">' +
-                    '<span class="ai-task-row__title">' + escapeHtml(t.taskTitle || '（无标题）') + '</span>' +
-                    '<span class="ai-task-row__status">' + escapeHtml(statusLabel(t.status)) + '</span>' +
-                '</div>' +
-                (canAiBreakdown(t)
-                    ? '<button type="button" class="btn btn-sm btn-outline-primary" onclick="teamSpace.openAiBreakdown(' + Number(t.id) + ')">AI 拆解</button>'
-                    : '') +
-                '</div>';
-        }).join('');
-    }
-
-    // 正在排队滚动的容器。每来一个 token 就读一次 scrollHeight 会强制同步回流，
-    // 是流式输出卡顿的主要来源；同一帧内只滚一次，读到的是当帧最终高度。
-    function showAiBreakdownPreview() {
-        byId('aiBreakdownPreview').hidden = false;
-        byId('aiBreakdownResult').hidden = true;
-        var confirmBtn = byId('aiBreakdownConfirmBtn');
-        confirmBtn.hidden = false;
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = '确认拆解';
-        byId('aiBreakdownRegenBtn').hidden = true;
-        byId('aiCreateSubtasksBtn').hidden = true;
-    }
-
-    // 剥离 emoji/表情符号（AI 输出除非偶尔带表情，前端兜底清洗）
-    function stripEmoji(text) {
-        return String(text == null ? '' : text)
-            .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}\u{200D}]/gu, '')
-            .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '')
-            .replace(/[ \t]{2,}/g, ' ');
+        return false;
     }
 
     function reportTaskLine(item) {
@@ -1778,9 +1642,6 @@
                         ? '<button type="button" class="btn btn-primary" onclick="teamSpace.openSubmitReview(' + Number(task.id) + ')">提交审阅</button>'
                         : '<button type="button" class="btn btn-primary" onclick="teamSpace.markTaskComplete(' + Number(task.id) + ')">标记完成</button>';
                 }
-                var aiButton = canAiBreakdown(task)
-                    ? '<button type="button" class="btn btn-outline-primary" onclick="teamSpace.openAiBreakdown(' + Number(task.id) + ')">AI 拆解</button>'
-                    : '';
                 // 待审核的任务只对接队长/导师：批阅走团队详情页的完整工作台（材料预览 + 逐份点评）
                 var reviewButton = statusKey === 'review' && canReviewTasks()
                     ? '<a class="btn btn-primary" href="/team-detail.html?id=' + encodeURIComponent(teamId) +
@@ -1788,7 +1649,6 @@
                     : '';
                 footer.innerHTML =
                     '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>' +
-                    aiButton +
                     advanceButton +
                     deliverButton +
                     reviewButton +
@@ -1937,106 +1797,6 @@
             textarea.style.height = 'auto';
             textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
         },
-        // ============ AI 任务拆解 ============
-        openAiBreakdown: function (taskId) {
-            var task = tasks.find(function (item) { return Number(item.id) === Number(taskId); });
-            if (!task) {
-                notify('任务不存在', 'error');
-                return;
-            }
-            if (!canAiBreakdown(task)) {
-                notify('只有任务的被分配者本人可以使用 AI 拆解', 'warning');
-                return;
-            }
-            aiBreakdownTaskId = Number(taskId);
-            setText('aiPreviewTitle', task.taskTitle || '（无标题）');
-            setText('aiPreviewDesc', task.taskDescription || '（无描述）');
-            setText('aiPreviewDeadline', task.deadline ? formatDate(task.deadline) : '未设置');
-            showAiBreakdownPreview();
-            bootstrap.Modal.getOrCreateInstance(byId('aiBreakdownModal')).show();
-        },
-        resetAiBreakdownPreview: function () {
-            showAiBreakdownPreview();
-        },
-        confirmAiBreakdown: async function () {
-            var btn = byId('aiBreakdownConfirmBtn');
-            if (!btn || btn.disabled) return;
-            btn.disabled = true;
-            // 加载态只留一个转圈：耗时长短不确定，写死秒数反而误导
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-label="AI 拆解中"></span>';
-            try {
-                var list = await api('/team/' + teamId + '/ai/task-breakdown', {
-                    method: 'POST',
-                    body: JSON.stringify({ taskId: aiBreakdownTaskId })
-                });
-                aiSubtasks = Array.isArray(list) ? list : [];
-                var box = byId('aiSubtaskList');
-                if (box) {
-                    box.innerHTML = aiSubtasks.map(function (item, index) {
-                        return '<label class="ai-subtask-item">' +
-                            '<input type="checkbox" class="ai-subtask-check" data-index="' + index + '" checked>' +
-                            '<span class="ai-subtask-body">' +
-                                '<strong>' + escapeHtml(stripEmoji(item.title || '子任务')) + '</strong>' +
-                                (item.description ? '<small>' + escapeHtml(stripEmoji(item.description)) + '</small>' : '') +
-                                '<em>' + escapeHtml(typeLabel(item.taskType)) + ' · ' + escapeHtml(priorityLabel(item.priority)) + ' · ' + Number(item.estimatedHours || 0) + ' 小时</em>' +
-                            '</span>' +
-                        '</label>';
-                    }).join('');
-                }
-                byId('aiBreakdownPreview').hidden = true;
-                byId('aiBreakdownResult').hidden = false;
-                byId('aiBreakdownConfirmBtn').hidden = true;
-                byId('aiBreakdownRegenBtn').hidden = false;
-                byId('aiCreateSubtasksBtn').hidden = false;
-            } catch (error) {
-                notify(error.message || 'AI 拆解失败，请稍后重试', 'error');
-                btn.disabled = false;
-                btn.textContent = '确认拆解';
-            }
-        },
-        createSelectedSubtasks: async function () {
-            var checks = Array.prototype.slice.call(document.querySelectorAll('.ai-subtask-check'));
-            var selected = checks.filter(function (check) { return check.checked; });
-            if (!selected.length) {
-                notify('请至少勾选一个子任务', 'warning');
-                return;
-            }
-            var btn = byId('aiCreateSubtasksBtn');
-            if (btn) btn.disabled = true;
-            var parentTask = tasks.find(function (item) { return Number(item.id) === Number(aiBreakdownTaskId); });
-            var created = 0;
-            try {
-                for (var i = 0; i < selected.length; i++) {
-                    var item = aiSubtasks[Number(selected[i].dataset.index)];
-                    if (!item) continue;
-                    await api('/team/' + teamId + '/tasks', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            taskTitle: String(stripEmoji(item.title) || '').slice(0, 100),
-                            taskDescription: String(stripEmoji(item.description) || '').slice(0, 500),
-                            taskType: item.taskType || 'other',
-                            priority: Number(item.priority || 2),
-                            estimatedHours: Number(item.estimatedHours || 2),
-                            deadline: parentTask && parentTask.deadline ? new Date(parentTask.deadline).toISOString() : null,
-                            // 子任务归属原任务的被分配者（拆解人即被分配者本人），无归属时回落当前用户
-                            assignedTo: parentTask && parentTask.assignedTo != null
-                                ? Number(parentTask.assignedTo)
-                                : currentUserId,
-                            // 记下来源，后端据此挡住「子任务再拆」的无限套娃
-                            parentTaskId: Number(aiBreakdownTaskId)
-                        })
-                    });
-                    created++;
-                }
-                bootstrap.Modal.getInstance(byId('aiBreakdownModal'))?.hide();
-                await loadTasks();
-                notify('已创建 ' + created + ' 个子任务', 'success');
-            } catch (error) {
-                notify((error.message || '创建失败') + (created > 0 ? '（已成功创建 ' + created + ' 个）' : ''), 'error');
-            } finally {
-                if (btn) btn.disabled = false;
-            }
-        },
         // ============ 团队周报（本地聚合） ============
         generateWeeklyReport: async function () {
             var body = byId('weeklyReportBody');
@@ -2070,10 +1830,12 @@
         },
         // ============ 团队资料库 ============
         loadLibrary: function () {
+            libraryIndexPollAttempts = 0;
             return loadLibraryTree(libraryTrashView);
         },
         toggleLibraryTrash: function () {
             libraryTrashView = !libraryTrashView;
+            libraryIndexPollAttempts = 0;
             loadLibraryTree(libraryTrashView);
         },
         libraryPickFiles: function () {
@@ -2144,6 +1906,19 @@
             } catch (error) {
                 notify(error.message || '恢复失败', 'error');
             }
+        },
+        /** 重新建立检索索引：索引失败/失效/跳过时可重试，重试后自动轮询结果 */
+        libraryReindex: async function (fileId) {
+            try {
+                var resp = await api('/team/' + teamId + '/library/files/' + Number(fileId) + '/reindex', {
+                    method: 'POST'
+                });
+                notify(resp && resp.message ? resp.message : '已重新提交检索索引', 'success');
+                libraryIndexPollAttempts = 0;
+                loadLibraryTree(libraryTrashView);
+            } catch (error) {
+                notify(error.message || '重新索引请求失败', 'error');
+            }
         }
     };
 
@@ -2152,6 +1927,10 @@
     var libraryTrashView = false;
     var librarySelectedFileId = null;
     var librarySelectedFolder = null;
+    var libraryIndexPollTimer = null;
+    var libraryIndexPollAttempts = 0;
+    var LIBRARY_INDEX_POLL_MS = 1500;
+    var LIBRARY_INDEX_POLL_MAX = 40;
     var LIBRARY_CONFLICT_PREF_KEY = 'ilink_library_conflict_strategy';
     var LIBRARY_PROGRESS_THRESHOLD = 20 * 1024 * 1024; // 大于 20MB 显示上传进度条（后端单文件上限 50MB）
 
@@ -2171,6 +1950,7 @@
     function loadLibraryTree(trash) {
         var box = byId('libraryTree');
         if (!box) return Promise.resolve(false);
+        stopLibraryIndexPolling();
         box.innerHTML = '<div class="panel-loading">加载中...</div>';
         var trashBtn = byId('libraryTrashBtn');
         if (trashBtn) {
@@ -2192,12 +1972,46 @@
                 } else {
                     clearLibraryPreview();
                 }
+                scheduleLibraryIndexPolling();
                 return true;
             })
             .catch(function (error) {
                 box.innerHTML = '<div class="library-empty">' + escapeHtml(error.message || '资料库加载失败') + '</div>';
                 return false;
             });
+    }
+
+    function hasPendingLibraryIndex(nodes) {
+        return (nodes || []).some(function (node) {
+            if (node.isFolder) return hasPendingLibraryIndex(node.children);
+            return node.indexStatus === 'PENDING' || node.indexStatus === 'INDEXING';
+        });
+    }
+
+    function stopLibraryIndexPolling() {
+        if (libraryIndexPollTimer) {
+            window.clearTimeout(libraryIndexPollTimer);
+            libraryIndexPollTimer = null;
+        }
+        if (currentPanelId !== 'library-panel' || libraryTrashView) {
+            libraryIndexPollAttempts = 0;
+        }
+    }
+
+    function scheduleLibraryIndexPolling() {
+        if (libraryTrashView || currentPanelId !== 'library-panel') {
+            return;
+        }
+        if (!hasPendingLibraryIndex(libraryTreeData)) {
+            libraryIndexPollAttempts = 0;
+            return;
+        }
+        if (libraryIndexPollAttempts >= LIBRARY_INDEX_POLL_MAX) return;
+        libraryIndexPollTimer = window.setTimeout(function () {
+            libraryIndexPollTimer = null;
+            libraryIndexPollAttempts += 1;
+            loadLibraryTree(libraryTrashView);
+        }, LIBRARY_INDEX_POLL_MS);
     }
 
     function clearLibraryPreview() {
@@ -2211,13 +2025,17 @@
         var head = byId('libraryPvHead');
         if (!head) return;
         librarySelectedFileId = Number(node.id);
+        var downloadName = libraryDownloadName(node);
         var sub = window.ILinkPreview.typeLabel(node.fileType, node.name) +
             (node.fileSize ? ' · ' + window.ILinkPreview.formatSize(node.fileSize) : '') +
             ' · ' + (node.uploaderName || '') + (node.isMentor ? '（导师）' : '');
         var actions = '<a class="library-pv-action" href="' + escapeHtml(node.fileUrl || '#') + '" download="' +
-            escapeHtml(node.name) + '">下载</a>';
+            escapeHtml(downloadName) + '">下载</a>';
         if (libraryCanManage(node)) {
             actions += '<button type="button" class="library-pv-action" onclick="teamSpace.libraryRenamePrompt(' + Number(node.id) + ')">重命名</button>' +
+                (LIBRARY_INDEX_RETRYABLE.indexOf(node.indexStatus) >= 0
+                    ? '<button type="button" class="library-pv-action" onclick="teamSpace.libraryReindex(' + Number(node.id) + ')">重新建立检索索引</button>'
+                    : '') +
                 '<button type="button" class="library-pv-action library-pv-action--danger" onclick="libraryDeleteWithReferences(' + Number(node.id) + ')">删除</button>';
         }
         head.innerHTML =
@@ -2377,6 +2195,14 @@
             okBtn.addEventListener('click', submit);
             overlay.addEventListener('click', function (e) { if (e.target === overlay) close(null); });
             document.addEventListener('keydown', onKey, true);
+            if (input) {
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        submit();
+                    }
+                });
+            }
             setTimeout(function () { if (input) { input.focus(); input.select(); } else { okBtn.focus(); } }, 0);
         });
     }
@@ -2461,6 +2287,7 @@
                         '<span class="library-row__icon">' + window.ILinkPreview.fileIcon(node.fileType, node.name) + '</span>' +
                         '<span class="library-row__name" title="' + escapeHtml(node.name) + '">' + escapeHtml(node.name) + '</span>' +
                         (node.isMentor ? '<span class="library-row__mentor">导</span>' : '') +
+                        libraryIndexBadge(node) +
                         '<span class="library-row__size">' + escapeHtml(window.ILinkPreview.formatSize(node.fileSize) || '') + '</span>';
                     if (Number(node.id) === Number(librarySelectedFileId)) row.classList.add('active');
                     row.addEventListener('click', function (e) {
@@ -2484,6 +2311,30 @@
         return (node.children || []).some(function (c) {
             return c.name.toLowerCase().includes(keyword) || (c.isFolder && librarySubtreeHasMatch(c, keyword));
         });
+    }
+
+    var LIBRARY_INDEX_LABELS = {
+        PENDING: '等待检索',
+        INDEXING: '正在建立索引',
+        READY: '可被 AI 检索',
+        FAILED: '索引失败',
+        STALE: '索引已失效',
+        SKIPPED: '不参与检索'
+    };
+
+    /** 只有已经结束或失效的状态才提供重试入口；排队/进行中的状态点了也没用 */
+    var LIBRARY_INDEX_RETRYABLE = ['FAILED', 'STALE', 'SKIPPED'];
+
+    /** 仅显示当前有效文件的可检索状态；回收站中的文件不暗示仍可检索。 */
+    function libraryIndexBadge(node) {
+        if (libraryTrashView || !node.indexStatus) return '';
+        var label = LIBRARY_INDEX_LABELS[node.indexStatus] || '索引状态未知';
+        var title = node.indexError && (node.indexStatus === 'FAILED' || node.indexStatus === 'SKIPPED')
+            ? label + '：' + node.indexError
+            : label;
+        return '<span class="library-row__index library-row__index--' +
+            escapeHtml(String(node.indexStatus).toLowerCase()) + '" title="' +
+            escapeHtml(title) + '">' + escapeHtml(label) + '</span>';
     }
 
     // ============ 拖拽移动（文件夹行 = 放进该目录，文件树空白处 = 移到根目录） ============
@@ -2613,6 +2464,9 @@
             if (libraryCanManage(node)) {
                 items.push({ label: '重命名', fn: function () { teamSpace.libraryRenamePrompt(node.id); } });
                 items.push({ label: '移动到…', fn: function () { teamSpace.libraryMovePrompt(node.id); } });
+                if (LIBRARY_INDEX_RETRYABLE.indexOf(node.indexStatus) >= 0) {
+                    items.push({ label: '重新建立检索索引', fn: function () { teamSpace.libraryReindex(node.id); } });
+                }
                 items.push({ label: '删除', danger: true, fn: function () { libraryDeleteWithReferences(node.id); } });
             }
         }
@@ -2644,10 +2498,15 @@
         if (!node.fileUrl) return;
         var a = document.createElement('a');
         a.href = node.fileUrl;
-        a.download = node.name;
+        a.download = libraryDownloadName(node);
         document.body.appendChild(a);
         a.click();
         a.remove();
+    }
+
+    /** 下载时恢复上传时的文件名；保留两者产生的 "(1)" 只用于列表区分，不写回原文件名。 */
+    function libraryDownloadName(node) {
+        return node.originalFileName || node.name;
     }
 
     // 上传：kind=library 上传 → 登记（同名冲突处理）。>20MB 展示进度条。
@@ -2715,11 +2574,13 @@
             })
         }).then(function (resp) {
             hideLibraryProgress();
-            if (resp && resp.data && resp.data.conflict) {
-                resolveLibraryConflict(parentId, file, uploaded, resp.data.existing);
+            // api() 已解包 Result.data；冲突对象就在这里，不能再读一层 resp.data。
+            if (resp && resp.conflict) {
+                resolveLibraryConflict(parentId, file, uploaded, resp.existing);
                 return;
             }
             notify('「' + file.name + '」已上传', 'success');
+            libraryIndexPollAttempts = 0;
             loadLibraryTree(libraryTrashView);
         }).catch(function (error) {
             hideLibraryProgress();
@@ -2846,8 +2707,12 @@
         });
         var taskModal = byId('createTaskModal');
         if (taskModal) taskModal.addEventListener('hidden.bs.modal', function () { editingTaskId = null; });
-        // 所有 API 请求并行发出，消除串行等待
-        await Promise.allSettled([loadCurrentUser(), loadTeamInfo(), loadMembers(), loadTasks()]);
+        // 任务接口依赖团队状态；其余请求仍并行，task 请求在 /info 完成后立即发出。
+        await Promise.allSettled([
+            loadCurrentUser(),
+            loadTeamInfo().then(function () { return loadTasks(); }),
+            loadMembers()
+        ]);
         // 并行完成后统一刷新依赖多数据源的 UI
         if (teamInfo) renderOverview(teamInfo);
         updateCreateTaskBtn();

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -191,6 +192,39 @@ class ClassificationProofCatalogTest {
         assertEquals(9L, metadata.get(0).get("chunkId"));
         assertTrue(catalog.validate(ledger, List.of("p2")).isEmpty());
         assertFalse(catalog.render(List.of("p2")).contains("Vue 用于界面。"));
+    }
+
+    @Test
+    void closurePackingCoversMembersWithOnlyTheirSentProofsAndKeepsWholeSpans() {
+        var ledger = ledger(List.of(chunk(9, 6, "Vue 用于界面。Rust 用于服务端。Arduino 用于硬件。")), List.of());
+        var catalog = ClassificationProofCatalog.prepare(QUESTION, ledger, List.of(101L, 102L));
+        var packed = catalog.packClosure(Map.of(
+            1, List.of("p1", "p3"),
+            2, List.of("p2", "p3")), 1_000, ledger);
+        assertTrue(packed.withinBudget());
+        assertEquals(List.of(1, 2), packed.coveredCandidateIds());
+        assertFalse(packed.proofIds().isEmpty());
+        assertTrue(packed.proofIds().stream().allMatch(Set.of("p1", "p2", "p3")::contains));
+        for (var span : catalog.spans().stream().filter(proof -> packed.proofIds().contains(proof.id())).toList())
+            assertTrue(packed.text().contains(span.text()));
+    }
+
+    @Test
+    void closurePackingMergesOverlapButNeverUsesAnUnsentProof() {
+        String body = "abcdefghij";
+        var ledger = ledger(List.of(chunk(9, 6, body)), List.of());
+        var catalog = ClassificationProofCatalog.fromAuthorizedSpans(List.of(
+            new ClassificationProofCatalog.ProofSpan("p1", 9L, "POST", 6L, "演示项目",
+                0, 6, "abcdef", Set.of()),
+            new ClassificationProofCatalog.ProofSpan("p2", 9L, "POST", 6L, "演示项目",
+                3, 10, "defghij", Set.of()),
+            new ClassificationProofCatalog.ProofSpan("p3", 9L, "POST", 6L, "演示项目",
+                9, 10, "j", Set.of())), Map.of("p1", 1, "p2", 1, "p3", 1));
+        var packed = catalog.packClosure(Map.of(1, List.of("p1"), 2, List.of("p2")), 1_000, ledger);
+        assertEquals(List.of("p1", "p2"), packed.proofIds());
+        assertTrue(packed.text().contains("p1,p2=c#9@0:10"));
+        assertTrue(packed.text().contains(body));
+        assertFalse(packed.proofIds().contains("p3"));
     }
 
     private static EvidenceLedger ledger(List<EvidenceLedger.ChunkFact> chunks,

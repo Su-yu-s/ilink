@@ -55,6 +55,7 @@ class GraphToolsTest {
         // 所有默认可见
         when(scopeService.canSee(any(), any())).thenReturn(true);
         when(scopeService.canSee(any(), any(), any(), any())).thenReturn(true);
+        when(scopeService.canSeeChunk(any(KgDocumentChunk.class), any())).thenReturn(true);
         when(scopeService.visibleTeamIds(any())).thenReturn(List.of());
 
         searchTool = new SearchEntitiesTool(scopeService, entityMapper, embeddings);
@@ -257,7 +258,7 @@ class GraphToolsTest {
         privateChunk.setUserId(99L);
         privateChunk.setContent("私人秘密");
         when(chunkService.listByDocument("POST", 77L, 1L)).thenReturn(List.of(privateChunk));
-        when(scopeService.canSee(KgEntity.SCOPE_PRIVATE, null, 99L, 1L)).thenReturn(false);
+        when(scopeService.canSeeChunk(privateChunk, 1L)).thenReturn(false);
 
         Object result = documentTool.execute(Map.of("entity_id", 1L), 1L);
 
@@ -283,7 +284,7 @@ class GraphToolsTest {
         privateChunk.setContent("私人秘密");
         when(chunkService.retrieve("文件上传 bug", 1L, 8))
             .thenReturn(List.of(visible, privateChunk));
-        when(scopeService.canSee(KgEntity.SCOPE_PRIVATE, null, 99L, 1L)).thenReturn(false);
+        when(scopeService.canSeeChunk(privateChunk, 1L)).thenReturn(false);
 
         Map<String, Object> result = (Map<String, Object>) searchDocumentsTool.execute(
             Map.of("query", "文件上传 bug"), 1L);

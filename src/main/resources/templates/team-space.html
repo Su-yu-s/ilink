@@ -9,7 +9,8 @@
     <link rel="stylesheet" th:href="@{/css/team-space.css}">
     <link rel="stylesheet" th:href="@{/css/team-space-refresh.css}">
     <link rel="stylesheet" th:href="@{/css/team-invite.css}">
-    <link rel="stylesheet" th:href="@{/css/agentic-chat.css}">
+    <link rel="stylesheet" th:href="@{/css/team-agent-workbench.css}">
+    <link rel="stylesheet" th:href="@{/css/team-collab.css}">
 </head>
 <body data-app-page="team-space" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -93,11 +94,18 @@
                         </svg>
                         <span>团队资料</span>
                     </button>
+                    <button class="sidebar-nav-item" data-panel="collab-panel" type="button">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <path d="M14 2v6h6M8 13h8M8 17h5"/>
+                        </svg>
+                        <span th:text="#{ui.teamSpace.collab}">协作资产</span>
+                    </button>
                     <button class="sidebar-nav-item" data-panel="ai-panel" type="button">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/>
                         </svg>
-                        <span>AI 协作</span>
+                        <span>Agent 工作台</span>
                     </button>
 
                     <div class="sidebar-members-card" id="sidebarMembersCard">
@@ -272,110 +280,214 @@
                     </div>
                 </section>
 
-                <section class="workspace-panel" id="ai-panel" aria-label="AI 协作">
-                    <div class="panel-header">
-                    </div>
-                    <!-- AI 答疑（左）+ 任务拆解（右）：沿用原双栏布局 -->
-                    <div class="ai-collab-grid">
-                <section class="ai-collab-card ai-collab-card--qa" id="agcInline" data-agc-instance="inline" aria-labelledby="aiQaTitle">
-                    <div class="ai-collab-card__header">
-                        <h2 class="ai-collab-card__title" id="aiQaTitle">AI 智能答疑</h2>
-                        <div class="kgd-mode" style="margin-left:8px;" role="group" aria-label="问答模式切换">
-                            <button type="button" data-agc-ref="modeFast">
-                                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-bolt"/></svg>
-                                快速答疑
-                            </button>
-                            <button type="button" data-agc-ref="modeDeep" class="kgd-active">
-                                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-search"/></svg>
-                                深度搜索
-                            </button>
-                        </div>
-                        <select class="d-none" id="aiCompetitionSelect" data-agc-ref="context" aria-hidden="true" tabindex="-1">
-                            <option value="">加载竞赛中...</option>
-                        </select>
-                        <div class="ai-comp-combo" id="aiCompCombo">
-                            <button type="button" class="ai-comp-combo__trigger" id="aiCompComboTrigger"
-                                    aria-haspopup="listbox" aria-expanded="false" aria-label="选择提问上下文">
-                                <svg class="ai-comp-combo__icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-                                <span class="ai-comp-combo__label" id="aiCompComboLabel">通用提问（不绑定竞赛）</span>
-                                <svg class="ai-comp-combo__chev" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-                            </button>
-                            <div class="ai-comp-combo__menu" id="aiCompComboMenu" hidden>
-                                <div class="ai-comp-combo__searchwrap">
-                                    <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-                                    <input type="text" class="ai-comp-combo__search" id="aiCompComboSearch"
-                                           placeholder="搜索竞赛名称…" autocomplete="off">
+                <!-- 协作资产：文档 / 表格 / 竞赛材料 三页签 -->
+                <section class="workspace-panel" id="collab-panel" aria-label="协作资产">
+                    <div class="tc-shell" id="teamCollab" aria-busy="false">
+                        <header class="tc-head">
+                            <div class="tc-tabs" role="tablist" aria-label="协作资产类型">
+                                <button class="tc-tab active" type="button" role="tab" data-tc-tab="docs" aria-selected="true" th:text="#{ui.teamSpace.collabDocs}">文档</button>
+                                <button class="tc-tab" type="button" role="tab" data-tc-tab="sheets" aria-selected="false" th:text="#{ui.teamSpace.collabSheets}">表格</button>
+                                <button class="tc-tab" type="button" role="tab" data-tc-tab="materials" aria-selected="false" th:text="#{ui.teamSpace.collabMaterials}">材料</button>
+                            </div>
+                            <div class="tc-head__actions" id="tcHeadActions"></div>
+                        </header>
+                        <div class="tc-banner" id="tcBanner" hidden role="status"
+                             aria-live="polite" aria-atomic="true"></div>
+
+                        <div class="tc-view" data-tc-view="docs">
+                            <aside class="tc-list">
+                                <div class="tc-list__head">
+                                    <span>团队文档</span>
+                                    <span class="tc-count" id="tcDocCount">0</span>
                                 </div>
-                                <div class="ai-comp-combo__list" id="aiCompComboList" role="listbox" aria-label="竞赛候选"></div>
+                                <div class="tc-list__search">
+                                    <input class="tc-search" id="tcDocSearch" type="search"
+                                           maxlength="60" autocomplete="off" placeholder="搜索文档标题">
+                                </div>
+                                <div class="tc-list__body" id="tcDocList">
+                                    <div class="tc-empty">加载中…</div>
+                                </div>
+                            </aside>
+                            <div class="tc-main" id="tcDocMain">
+                                <div class="tc-empty tc-empty--center">选择左侧文档查看内容，或新建一份团队文档</div>
+                            </div>
+                        </div>
+
+                        <div class="tc-view" data-tc-view="sheets" hidden>
+                            <aside class="tc-list">
+                                <div class="tc-list__head">
+                                    <span>团队表格</span>
+                                    <span class="tc-count" id="tcSheetCount">0</span>
+                                </div>
+                                <div class="tc-list__search">
+                                    <input class="tc-search" id="tcSheetSearch" type="search"
+                                           maxlength="60" autocomplete="off" placeholder="搜索表格标题">
+                                </div>
+                                <div class="tc-list__body" id="tcSheetList">
+                                    <div class="tc-empty">加载中…</div>
+                                </div>
+                            </aside>
+                            <div class="tc-main" id="tcSheetMain">
+                                <div class="tc-empty tc-empty--center">选择左侧表格查看或编辑</div>
+                            </div>
+                        </div>
+
+                        <div class="tc-view tc-view--full" data-tc-view="materials" hidden>
+                            <div class="tc-material" id="tcMaterial">
+                                <div class="tc-empty tc-empty--center">加载中…</div>
                             </div>
                         </div>
                     </div>
-                    <div class="kgd-hint" data-agc-ref="hint" style="margin:0 0 12px;">Agent 会自主探索知识图谱，多轮检索后给出可追溯的答案</div>
-                    <div class="kgd-chatwrap">
-                        <div class="kgd-chat" data-agc-ref="chat">
-                            <div class="kgd-row" data-agc-ref="welcome">
-                                <div class="kgd-avatar"><svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-spark"/></svg></div>
-                                <div class="kgd-bubble">
-                                    <div class="kgd-bubble-text" data-agc-ref="welcomeText">你好，我会在知识图谱里逐层探索，每一步推理过程都会展示给你看。选中上方竞赛可从该赛事开始探索，也可以问我报名条件、赛程节点、评审规则等问题。</div>
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" class="kgd-scrollbadge" data-agc-ref="scrollbadge" aria-label="回到底部">
-                            <span class="kgd-count" data-agc-ref="badgeCount">1</span>
-                            <svg fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-down"/></svg>
-                        </button>
-                    </div>
-                    <div class="kgd-composer">
-                        <div class="kgd-error" data-agc-ref="error"></div>
-                        <div class="kgd-inputwrap">
-                            <div class="kgd-inputbox">
-                                <textarea data-agc-ref="input" rows="1" maxlength="500" placeholder="描述你的复杂问题，我会深度探索…" aria-label="问题输入框"></textarea>
-                                <div class="kgd-tplmenu" data-agc-ref="tplmenu">
-                                    <div class="kgd-tplitem" data-agc-tpl="请总结这段内容的三个要点">总结这段内容的三个要点 <span class="kgd-k">/sum</span></div>
-                                    <div class="kgd-tplitem" data-agc-tpl="请生成三个不同的替代版本">生成三个不同的替代版本 <span class="kgd-k">/alt</span></div>
-                                    <div class="kgd-tplitem" data-agc-tpl="请以表格形式重新组织上述内容">以表格形式重新组织 <span class="kgd-k">/table</span></div>
-                                    <div class="kgd-tplitem" data-agc-tpl="请从读者视角指出其中的论证漏洞">从读者视角指出论证漏洞 <span class="kgd-k">/crit</span></div>
-                                </div>
-                            </div>
-                            <button type="button" class="kgd-sendbtn" data-agc-ref="send">
-                                发送
-                                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-send"/></svg>
-                            </button>
-                        </div>
-                        <div class="kgd-foot">
-                            <span class="kgd-lockhint">
-                                <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href="#kgd-i-lock"/></svg>
-                                仅发送问题与公开竞赛信息，不泄露聊天记录。
-                            </span>
-                            <span><span data-agc-ref="footMode">深度搜索 · 多轮探索</span></span>
+
+                    <div class="tc-dialog" id="tcDialog" hidden>
+                        <div class="tc-dialog__panel" role="dialog" aria-modal="true" aria-labelledby="tcDialogTitle">
+                            <header class="tc-dialog__head">
+                                <h3 id="tcDialogTitle">操作</h3>
+                                <button class="tc-dialog__close" type="button" aria-label="关闭" onclick="teamCollab.closeDialog()">×</button>
+                            </header>
+                            <div class="tc-dialog__body" id="tcDialogBody"></div>
+                            <footer class="tc-dialog__foot" id="tcDialogFoot"></footer>
                         </div>
                     </div>
                 </section>
-                        <section class="ai-collab-card ai-collab-card--tasks" aria-labelledby="aiTasksTitle">
-                            <div class="ai-collab-card__header">
-                                <h2 class="ai-collab-card__title" id="aiTasksTitle">任务拆解</h2>
-                                <span class="ai-leader-only" id="aiLeaderOnlyBadge" hidden>仅任务负责人可发起</span>
+
+                <section class="workspace-panel team-agent-panel" id="ai-panel" aria-label="Agent 工作台">
+                    <div class="taw-shell" id="teamAgentWorkbench" aria-busy="true">
+                        <header class="taw-contextbar">
+                            <div class="taw-contextbar__identity">
+                                <span class="taw-mark" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l1.5 4.7L18 9.2l-4.5 1.5L12 15.4l-1.5-4.7L6 9.2l4.5-1.5L12 3z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z"/></svg>
+                                </span>
+                                <div>
+                                    <h2>团队 Agent 工作台</h2>
+                                    <p id="tawContextSummary">正在读取团队上下文…</p>
+                                </div>
                             </div>
-                            <p class="ai-collab-hint">选择一个待办或进行中的任务，AI 会给出子任务建议，勾选确认后创建，负责人默认为你自己。</p>
-                            <div class="ai-task-picker" id="aiTaskPicker">
-                                <div class="panel-loading">加载中...</div>
-                            </div>
-                        </section>
+                            <div class="taw-contextbar__meta" id="tawContextMeta"></div>
+                            <button class="taw-icon-btn taw-conversation-toggle" id="tawConversationToggle" type="button" aria-label="展开会话列表" aria-expanded="false">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                            </button>
+                        </header>
+
+                        <div class="taw-layout">
+                            <aside class="taw-conversations" id="tawConversations" aria-label="Agent 会话">
+                                <div class="taw-conversations__head">
+                                    <span>会话</span>
+                                    <button type="button" class="taw-new-chat" id="tawNewConversation" aria-label="新建会话">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                                    </button>
+                                </div>
+                                <div class="taw-conversation-list" id="tawConversationList">
+                                    <div class="taw-loading-lines" aria-label="加载会话"><span></span><span></span><span></span></div>
+                                </div>
+                                <button class="taw-load-more" id="tawMoreConversations" type="button" hidden>加载更多会话</button>
+                                <p class="taw-private-note">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+                                    会话默认仅你可见
+                                </p>
+                            </aside>
+
+                            <section class="taw-chat" id="tawChat" aria-label="Agent 对话">
+                                <div class="taw-mobile-tabs" role="tablist" aria-label="工作台区域">
+                                    <button type="button" class="active" data-taw-mobile-tab="chat" role="tab" aria-selected="true">对话</button>
+                                    <button type="button" data-taw-mobile-tab="trace" role="tab" aria-selected="false">执行</button>
+                                    <button type="button" data-taw-mobile-tab="actions" role="tab" aria-selected="false">动作</button>
+                                </div>
+                                <div class="taw-messages" id="tawMessages" aria-live="polite">
+                                    <div class="taw-welcome" id="tawWelcome">
+                                        <div class="taw-welcome__symbol" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 18l5-12 5 12"/><path d="M9 14h6"/><path d="M4 20h16"/></svg>
+                                        </div>
+                                        <p class="taw-eyebrow">基于 Agentic GraphRAG</p>
+                                        <h3>把竞赛资料与团队协作，<br>放进同一个可核验的工作台。</h3>
+                                        <p class="taw-welcome__desc">检索当前团队可访问的知识、读取结构化任务事实，并在你确认后执行受控动作。</p>
+                                        <div class="taw-capabilities">
+                                            <button type="button" data-taw-prompt="汇总当前团队的任务数量、完成率和逾期情况" data-taw-mode="AUTO">
+                                                <span class="taw-capability-icon is-metric" aria-hidden="true">01</span>
+                                                <strong>团队态势</strong><small>来自数据库的确定性统计</small>
+                                            </button>
+                                            <button type="button" data-taw-prompt="巡检当前团队逾期、未指派和长期待审核的任务风险" data-taw-mode="AUTO">
+                                                <span class="taw-capability-icon is-risk" aria-hidden="true">02</span>
+                                                <strong>风险巡检</strong><small>只分析你有权读取的任务</small>
+                                            </button>
+                                            <button type="button" data-taw-prompt="根据当前任务帮我制定下一阶段行动计划" data-taw-mode="ACTION_PLAN">
+                                                <span class="taw-capability-icon is-action" aria-hidden="true">03</span>
+                                                <strong>任务规划</strong><small>先生成提案，再由你确认</small>
+                                            </button>
+                                        </div>
+                                        <div class="taw-scope-note">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                            <span id="tawScopeNote">当前团队数据 + 相关公开竞赛资料；不读取私聊、通知和 PRIVATE 图谱。</span>
+                                        </div>
+                                    </div>
+                                    <div class="taw-message-list" id="tawMessageList"></div>
+                                </div>
+
+                                <div class="taw-live-status" id="tawLiveStatus" hidden aria-live="polite">
+                                    <span class="taw-live-indicator" aria-hidden="true"></span>
+                                    <span id="tawLiveStatusText">正在准备…</span>
+                                    <button type="button" id="tawCancelRun">停止</button>
+                                </div>
+
+                                <div class="taw-composer">
+                                    <div class="taw-composer__modes" role="group" aria-label="回答模式">
+                                        <button type="button" class="active" data-taw-mode-option="AUTO">自动</button>
+                                        <button type="button" data-taw-mode-option="KNOWLEDGE_QUICK">快速知识</button>
+                                        <button type="button" data-taw-mode-option="KNOWLEDGE_DEEP">深度检索</button>
+                                    </div>
+                                    <div class="taw-composer__box">
+                                        <textarea id="tawInput" rows="2" maxlength="500" placeholder="询问团队事实、竞赛资料，或让 Agent 制定任务计划…" aria-label="向团队 Agent 提问"></textarea>
+                                        <div class="taw-composer__footer">
+                                            <span>Enter 发送 · Shift + Enter 换行</span>
+                                            <button class="taw-send" id="tawSend" type="button" aria-label="发送">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="taw-composer__note">Agent 只会执行你确认的动作；不会修改成员、解散团队或审核任务。</p>
+                                </div>
+                            </section>
+
+                            <aside class="taw-inspector" id="tawInspector" aria-label="执行上下文">
+                                <div class="taw-inspector__tabs" role="tablist">
+                                    <button type="button" class="active" data-taw-inspector-tab="trace" role="tab" aria-selected="true">执行过程</button>
+                                    <button type="button" data-taw-inspector-tab="actions" role="tab" aria-selected="false">待确认动作 <span id="tawActionBadge" hidden>0</span></button>
+                                </div>
+                                <div class="taw-inspector__body">
+                                    <section class="taw-inspector-pane active" data-taw-pane="trace">
+                                        <div class="taw-scope-card">
+                                            <span>本轮数据范围</span>
+                                            <strong id="tawReadMode">正在读取…</strong>
+                                            <small id="tawFreshness">知识索引状态未知</small>
+                                        </div>
+                                        <div class="taw-trace-head"><span>处理步骤</span><span id="tawRunState">空闲</span></div>
+                                        <div class="taw-trace-list" id="tawTraceList">
+                                            <div class="taw-empty-mini">发送问题后，可在这里查看工具、范围和进度。</div>
+                                        </div>
+                                        <details class="taw-limits">
+                                            <summary>能力与边界</summary>
+                                            <ul id="tawLimits"></ul>
+                                        </details>
+                                    </section>
+                                    <section class="taw-inspector-pane" data-taw-pane="actions">
+                                        <div class="taw-actions-head">
+                                            <div><strong>动作提案</strong><span>由你选择并确认</span></div>
+                                            <button type="button" id="tawRefreshActions" aria-label="刷新动作">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+                                            </button>
+                                        </div>
+                                        <div class="taw-action-list" id="tawActionList">
+                                            <div class="taw-empty-mini">暂无需要确认的动作。</div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </aside>
+                        </div>
                     </div>
                 </section>
             </section>
         </div>
     </main>
-
-    <!-- 中央 AI 答疑卡接入 Agentic GraphRAG（内嵌实例；挂载后全站悬浮入口自动隐藏，避免双入口） -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (window.agenticChat) {
-                var el = document.getElementById('agcInline');
-                if (el) { window.agenticChat.mountInline(el); }
-            }
-        });
-    </script>
 
     <button class="create-task-fab" id="createTaskFab" type="button" onclick="teamSpace.openCreateModal()" aria-label="创建任务" hidden>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -404,6 +516,20 @@
             </div>
         </section>
     </div>
+
+    <dialog class="taw-dialog" id="tawConfirmDialog" aria-labelledby="tawDialogTitle">
+        <form method="dialog">
+            <div class="taw-dialog__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h16.9a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+            </div>
+            <h2 id="tawDialogTitle">确认操作</h2>
+            <p id="tawDialogText"></p>
+            <div class="taw-dialog__actions">
+                <button value="cancel" class="taw-btn taw-btn--ghost">取消</button>
+                <button value="confirm" class="taw-btn taw-btn--danger" id="tawDialogConfirm">确认</button>
+            </div>
+        </form>
+    </dialog>
 
     <div class="modal fade" id="createTaskModal" tabindex="-1" aria-labelledby="createTaskTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -510,40 +636,6 @@
         </div>
     </div>
 
-    <!-- AI 任务拆解（预览确认 + 子任务勾选） -->
-    <div class="modal fade" id="aiBreakdownModal" tabindex="-1" aria-labelledby="aiBreakdownTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 class="modal-title h5" id="aiBreakdownTitle">AI 任务拆解</h2>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="aiBreakdownPreview">
-                        <dl class="ai-preview-fields">
-                            <dt>任务标题</dt>
-                            <dd id="aiPreviewTitle"></dd>
-                            <dt>任务描述</dt>
-                            <dd id="aiPreviewDesc"></dd>
-                            <dt>截止日期</dt>
-                            <dd id="aiPreviewDeadline"></dd>
-                        </dl>
-                    </div>
-                    <div id="aiBreakdownResult" hidden>
-                        <p class="ai-result-hint">AI 建议的子任务如下，勾选后创建（负责人默认为你自己，创建后可再调整）：</p>
-                        <div id="aiSubtaskList" class="ai-subtask-list"></div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                    <button type="button" class="btn btn-outline-secondary" id="aiBreakdownRegenBtn" hidden onclick="teamSpace.resetAiBreakdownPreview()">重新预览</button>
-                    <button type="button" class="btn btn-primary" id="aiBreakdownConfirmBtn" onclick="teamSpace.confirmAiBreakdown()">确认拆解</button>
-                    <button type="button" class="btn btn-primary" id="aiCreateSubtasksBtn" hidden onclick="teamSpace.createSelectedSubtasks()">创建选中任务</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- 提交审阅：需批阅的任务由被指派人交付材料 -->
     <div class="modal fade" id="submitReviewModal" tabindex="-1" aria-labelledby="submitReviewTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -599,5 +691,9 @@
     <script th:src="@{/js/file-preview.js}"></script>
     <script th:src="@{/js/team-invite.js}"></script>
     <script th:src="@{/js/team-space.js}"></script>
+    <script th:src="@{/lib/marked.min.js}"></script>
+    <script th:src="@{/lib/preview/purify.min.js}"></script>
+    <script th:src="@{/js/team-agent-workbench.js}"></script>
+    <script th:src="@{/js/team-collab.js}"></script>
 </body>
 </html>

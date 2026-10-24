@@ -14,6 +14,9 @@ public class KgAgentTrace {
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
+    private Long teamId;
+    private Long conversationId;
+    private Long runId;
     private String question;
     /** 推理链 JSON：[{round,thought,action,actionInput,observation}] */
     private String trace;

@@ -15,7 +15,8 @@ final class SubjectScopeLedger {
 
     record SubjectScope(String requestedName, Resolution resolution, Long entityId, String entityName,
                         List<Long> matchingEntityIds, boolean queryComplete, List<Long> relationIds,
-                        Set<String> relationTypes) {
+                        Set<String> relationTypes, String matchedAlias,
+                        QueryIntent.AliasTier matchTier, List<Long> competingEntityIds) {
         boolean exact() { return resolution == Resolution.EXACT; }
     }
 
@@ -36,6 +37,9 @@ final class SubjectScopeLedger {
                 row.put("entityId", subject.entityId());
                 row.put("entityName", subject.entityName());
                 row.put("matchingEntityIds", subject.matchingEntityIds());
+                row.put("matchedAlias", subject.matchedAlias());
+                row.put("matchTier", subject.matchTier() == null ? null : subject.matchTier().name());
+                row.put("competingEntityIds", subject.competingEntityIds());
                 row.put("queryComplete", subject.queryComplete());
                 row.put("relationIds", subject.relationIds());
                 row.put("relationTypes", subject.relationTypes().stream().sorted().toList());
@@ -125,8 +129,10 @@ final class SubjectScopeLedger {
         List<SubjectScope> scopes = new ArrayList<>();
         java.util.Date currentAt = KgTimeRange.now();
         for (String subject : requested.subjects()) {
-            List<EvidenceLedger.EntityFact> exact = ledger.entities().stream()
-                .filter(entity -> QueryIntent.sameSubjectName(subject, entity.name()))
+            List<QueryIntent.ExactSubjectMatch> exactMatches =
+                QueryIntent.bestExactMatches(subject, ledger.entities());
+            List<EvidenceLedger.EntityFact> exact = exactMatches.stream()
+                .map(QueryIntent.ExactSubjectMatch::entity)
                 .sorted(Comparator.comparing(EvidenceLedger.EntityFact::id)).toList();
             List<EvidenceLedger.EntityFact> matching = exact.isEmpty() ? ledger.entities().stream()
                 .filter(entity -> new QueryIntent(List.of(subject), "", false).matchesSubject(entity.name()))
@@ -135,6 +141,12 @@ final class SubjectScopeLedger {
                 : matching.size() > 1 ? Resolution.AMBIGUOUS
                 : matching.isEmpty() ? Resolution.UNRESOLVED : Resolution.FUZZY_UNCONFIRMED;
             EvidenceLedger.EntityFact anchor = resolution == Resolution.EXACT ? exact.get(0) : null;
+            QueryIntent.ExactSubjectMatch selectedMatch = resolution == Resolution.EXACT
+                ? exactMatches.get(0) : exactMatches.stream().findFirst().orElse(null);
+            List<Long> competingEntityIds = resolution == Resolution.EXACT
+                ? exact.stream().filter(entity -> !Objects.equals(entity.id(), anchor.id()))
+                    .map(EvidenceLedger.EntityFact::id).toList()
+                : matching.stream().map(EvidenceLedger.EntityFact::id).toList();
             List<EvidenceLedger.RelationFact> activeRelations = anchor == null ? List.of() : ledger.relations().stream()
                 .filter(edge -> Objects.equals(edge.sourceId(), anchor.id()) || Objects.equals(edge.targetId(), anchor.id()))
                 .filter(edge -> (edge.validFrom() == null || !edge.validFrom().after(currentAt))
@@ -144,7 +156,10 @@ final class SubjectScopeLedger {
                 anchor == null ? null : anchor.name(), matching.stream().map(EvidenceLedger.EntityFact::id).toList(),
                 anchor != null && ledger.completeRelations("expand_neighbors", anchor.id()),
                 activeRelations.stream().map(EvidenceLedger.RelationFact::id).toList(),
-                Set.copyOf(activeRelations.stream().map(EvidenceLedger.RelationFact::type).toList())));
+                Set.copyOf(activeRelations.stream().map(EvidenceLedger.RelationFact::type).toList()),
+                selectedMatch == null ? null : selectedMatch.matchedAlias(),
+                selectedMatch == null ? null : selectedMatch.tier(),
+                competingEntityIds));
         }
         return new Analysis(scopes, requested.complete(), requested.reason());
     }

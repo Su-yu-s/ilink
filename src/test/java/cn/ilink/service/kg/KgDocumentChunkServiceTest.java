@@ -69,7 +69,8 @@ class KgDocumentChunkServiceTest {
         KgDocumentChunk low = chunk(2L, "GLOBAL", "unrelated", new float[]{0f, 1f});
         KgDocumentChunk privateChunk = chunk(3L, "PRIVATE", "private PointROPE", new float[]{1f, 0f});
         when(mapper.selectList(any())).thenReturn(List.of(privateChunk, low, high));
-        when(scope.canSee(eq("GLOBAL"), any(), any(), eq(8L))).thenReturn(true);
+        when(scope.canSeeChunk(any(KgDocumentChunk.class), eq(8L))).thenAnswer(inv ->
+            "GLOBAL".equals(((KgDocumentChunk) inv.getArgument(0)).getScope()));
         when(embeddings.embedText("PointROPE")).thenReturn(new float[]{1f, 0f});
 
         List<KgDocumentChunk> hits = service.retrieve("PointROPE", 8L, 2);
@@ -86,7 +87,7 @@ class KgDocumentChunkServiceTest {
             mapper, embeddings, scope, new AiEmbeddingProperties());
         KgDocumentChunk hit = chunk(9L, "GLOBAL", "LitePT 使用 PointROPE", null);
         when(mapper.selectList(any())).thenReturn(List.of(hit));
-        when(scope.canSee(eq("GLOBAL"), any(), any(), eq(8L))).thenReturn(true);
+        when(scope.canSeeChunk(any(KgDocumentChunk.class), eq(8L))).thenReturn(true);
         when(embeddings.embedText("PointROPE")).thenThrow(new IllegalStateException("offline"));
 
         assertEquals(List.of(9L), service.retrieve("PointROPE", 8L, 8).stream()
@@ -104,7 +105,7 @@ class KgDocumentChunkServiceTest {
         KgDocumentChunk textual = chunk(2L, "GLOBAL",
             "2026年3月团队空间模块关联互联网+竞赛", null);
         when(mapper.selectList(any())).thenReturn(List.of(embedded, textual));
-        when(scope.canSee(eq("GLOBAL"), any(), any(), eq(8L))).thenReturn(true);
+        when(scope.canSeeChunk(any(KgDocumentChunk.class), eq(8L))).thenReturn(true);
         when(embeddings.embedText(any())).thenReturn(new float[]{1f, 0f});
 
         assertTrue(service.retrieve("2026年3月团队空间模块关联哪些竞赛", 8L, 2)

@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,7 +26,22 @@ public class AnswerEvidenceVerifier {
     private static final Pattern DIRECTED_RELATION = Pattern.compile(
         "#(\\d+)\\s*-\\[([A-Z_]+)\\]->\\s*[^#]{0,50}#(\\d+)");
     private static final Pattern EXACT_NUMBER = Pattern.compile(
-        "(?i)(?<![\\p{L}\\p{N}])\\d+(?:\\.\\d+)?\\s*(?:px|%|ms|GB|MB|kb|万元|人)(?![\\p{L}\\p{N}])");
+        "(?i)(?<![#A-Za-z0-9])\\d+(?:\\.\\d+)?\\s*(?:px|%|ms|GB|MB|kb|万元|人)(?![A-Za-z0-9])");
+    private static final Pattern VIEWPORT_PAIR = Pattern.compile(
+        "(?i)(?<![#A-Za-z0-9])(?<first>\\d{3,5})\\s*(?:px)?\\s*"
+            + "(?:[/×xX*])\\s*(?<second>\\d{3,5})\\s*(?:px)?(?![A-Za-z0-9])");
+    private static final Pattern VIEWPORT_CONTEXT = Pattern.compile(
+        "视口|分辨率|屏幕|桌面端?|平板|移动端?|宽度|高度|尺寸");
+    private static final Pattern VIEWPORT_NON_PIXEL_UNIT = Pattern.compile(
+        "(?i)(?<![#A-Za-z0-9])\\d{3,5}\\s*(?:em|rem|pt|vh|vw|cm|mm|in)(?![A-Za-z0-9])");
+    private static final Pattern VIEWPORT_BARE_NUMBER = Pattern.compile(
+        "(?<![#A-Za-z0-9])(?<number>\\d{3,5})(?![A-Za-z0-9.])");
+    private static final Pattern VIEWPORT_DIMENSION_CONTEXT = Pattern.compile(
+        "视口|分辨率|屏幕|宽度|高度|尺寸");
+    private static final Pattern LITERAL_QUOTE_QUESTION = Pattern.compile(
+        "哪(?:句|一?句话)|什么话|原话|原文(?:称|写|说|表述)|怎么表述|如何表述|原文摘录");
+    private static final Pattern ANSWER_QUOTE = Pattern.compile(
+        "[“「『]([^”」』]{4,160})[”」』]");
     private final ObjectMapper json = new ObjectMapper();
 
     /**
@@ -129,13 +145,32 @@ public class AnswerEvidenceVerifier {
                 reasons.add("RELATION_MISMATCH:" + triples.group());
             }
         }
+        Matcher viewportPairs = VIEWPORT_PAIR.matcher(answer);
+        while (viewportPairs.find()) {
+            if (!hasViewportContext(answer, viewportPairs.start(), viewportPairs.end())) continue;
+            if (!viewportPairSupported(viewportPairs.group("first"), viewportPairs.group("second"), ledger)) {
+                reasons.add("UNSUPPORTED_VIEWPORT_PAIR:" + viewportPairs.group());
+            }
+        }
+        Matcher invalidUnits = VIEWPORT_NON_PIXEL_UNIT.matcher(answer);
+        while (invalidUnits.find()) {
+            if (hasViewportContext(answer, invalidUnits.start(), invalidUnits.end()))
+                reasons.add("UNSUPPORTED_VIEWPORT_UNIT:" + invalidUnits.group());
+        }
+        Matcher bareNumbers = VIEWPORT_BARE_NUMBER.matcher(answer);
+        while (bareNumbers.find()) {
+            String number = bareNumbers.group("number");
+            if (!hasDimensionContext(answer, bareNumbers.start(), bareNumbers.end())) {
+                if (viewportBareNumberSupported(ledger, number))
+                    reasons.add("UNSUPPORTED_VIEWPORT_NUMBER:" + bareNumbers.group());
+                continue;
+            }
+            if (!viewportBareNumberSupported(ledger, number))
+                reasons.add("UNSUPPORTED_VIEWPORT_NUMBER:" + bareNumbers.group());
+        }
         Matcher numbers = EXACT_NUMBER.matcher(answer);
         while (numbers.find()) {
-            String number = numbers.group().replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
-            boolean found = ledger.chunks().stream().anyMatch(chunk ->
-                chunk.text() != null && chunk.text().replaceAll("\\s+", "")
-                    .toLowerCase(Locale.ROOT).contains(number));
-            if (!found) {
+            if (!exactNumberSupported(numbers.group(), ledger)) {
                 reasons.add("UNSUPPORTED_EXACT_FACT:" + numbers.group());
             }
         }
@@ -162,10 +197,91 @@ public class AnswerEvidenceVerifier {
         return result(reasons, entityIds, relationIds, chunkIds);
     }
 
+    /**
+     * A generator may add the CSS dimension unit to a bare viewport number copied from the same
+     * cited source sentence. Keep this exception narrower than general unit normalization: it only
+     * applies to px values already present as a number inside a viewport width/height pair.
+     */
+    private static boolean exactNumberSupported(String answerNumber, EvidenceLedger ledger) {
+        String number = normalizeNumber(answerNumber);
+        if (containsExactNumber(ledger, number)) return true;
+        if (!number.endsWith("px") || number.length() == 2) return false;
+        String bare = number.substring(0, number.length() - 2);
+        if (!bare.matches("\\d+(?:\\.\\d+)?") || ledger == null) return false;
+        return ledger.chunks().stream().anyMatch(chunk ->
+            chunk.text() != null && viewportBareNumberSupported(chunk.text(), bare));
+    }
+
+    private static boolean containsExactNumber(EvidenceLedger ledger, String number) {
+        return ledger != null && ledger.chunks().stream().anyMatch(chunk ->
+            chunk.text() != null && normalizeWhitespace(chunk.text()).contains(number));
+    }
+
+    private static boolean viewportPairSupported(String first, String second, EvidenceLedger ledger) {
+        if (ledger == null) return false;
+        return ledger.chunks().stream().anyMatch(chunk ->
+            chunk.text() != null && viewportPairSupported(chunk.text(), first, second));
+    }
+
+    private static boolean viewportBareNumberSupported(EvidenceLedger ledger, String bare) {
+        if (ledger == null) return false;
+        return ledger.chunks().stream().anyMatch(chunk ->
+            chunk.text() != null && viewportBareNumberSupported(chunk.text(), bare));
+    }
+
+    private static boolean viewportPairSupported(String source, String first, String second) {
+        Matcher matcher = VIEWPORT_PAIR.matcher(source);
+        while (matcher.find()) {
+            if (!hasViewportContext(source, matcher.start(), matcher.end())) continue;
+            if (first.equals(matcher.group("first")) && second.equals(matcher.group("second"))) return true;
+        }
+        return false;
+    }
+
+    private static boolean viewportBareNumberSupported(String source, String bare) {
+        Matcher matcher = VIEWPORT_PAIR.matcher(source);
+        while (matcher.find()) {
+            if (!hasViewportContext(source, matcher.start(), matcher.end())) continue;
+            if (bare.equals(matcher.group("first")) || bare.equals(matcher.group("second"))) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasViewportContext(String source, int start, int end) {
+        int from = Math.max(0, start - 48);
+        int to = Math.min(source.length(), end + 48);
+        return VIEWPORT_CONTEXT.matcher(source.substring(from, to)).find();
+    }
+
+    private static boolean hasDimensionContext(String source, int start, int end) {
+        int from = Math.max(0, start - 24);
+        int to = Math.min(source.length(), end + 24);
+        return VIEWPORT_DIMENSION_CONTEXT.matcher(source.substring(from, to)).find();
+    }
+
+    private static String normalizeNumber(String number) {
+        return number == null ? "" : normalizeWhitespace(number).toLowerCase(Locale.ROOT);
+    }
+
+    private static String normalizeWhitespace(String text) {
+        return text == null ? "" : text.replaceAll("\\s+", "");
+    }
+
     /** Question-aware absence checks run before any paid semantic request. */
     public VerificationResult verify(String question, String answer, EvidenceLedger ledger,
                                      QueryEvidencePlan plan) {
         VerificationResult checked = verify(answer, ledger, plan);
+        if (question != null && LITERAL_QUOTE_QUESTION.matcher(question).find()
+            && !answeredWithLiteralSourcePhrase(answer, checked.usedChunkIds(), ledger)) {
+            checked = addReason(checked, "LITERAL_SOURCE_QUOTE_REQUIRED");
+        } else if (question != null && LITERAL_QUOTE_QUESTION.matcher(question).find()) {
+            SourcePhraseSelector.Selection selection = SourcePhraseSelector.select(
+                question, checked.usedChunkIds().stream().sorted().map(ledger::chunk)
+                    .flatMap(java.util.Optional::stream).toList()).orElse(null);
+            if (selection != null && !SourcePhraseSelector.quotesSelection(answer, selection)) {
+                checked = addReason(checked, "LITERAL_SOURCE_QUOTE_CONFLICT:c#" + selection.chunkId());
+            }
+        }
         if (question != null && plan != null && plan.requiresRelation() && !plan.requiresTemporal()
             && (QueryIntent.fromQuestion(question).graphRequested()
                 || answer != null && answer.contains("图谱"))
@@ -176,6 +292,32 @@ public class AnswerEvidenceVerifier {
         for (String reason : TemporalAnswerScope.absenceViolations(question, plan, ledger, answer))
             checked = addReason(checked, reason);
         return checked;
+    }
+
+    /**
+     * A "which exact sentence" request is satisfied only by a quoted phrase that literally occurs
+     * in a cited source span. Returning a different sentence from the same chunk, even a plausible
+     * summary of it, does not answer the request. Coding spans are ignored so an identifier such as
+     * {@code someFunction()} cannot count as the requested prose quotation.
+     */
+    static boolean answeredWithLiteralSourcePhrase(String answer, Set<Long> chunkIds,
+                                                    EvidenceLedger ledger) {
+        if (answer == null || ledger == null || chunkIds == null) return false;
+        List<String> sources = chunkIds.stream().sorted().map(ledger::chunk)
+            .flatMap(java.util.Optional::stream).map(EvidenceLedger.ChunkFact::text)
+            .filter(Objects::nonNull).toList();
+        if (sources.isEmpty()) return false;
+        Matcher quote = ANSWER_QUOTE.matcher(answer);
+        while (quote.find()) {
+            String phrase = quote.group(1)
+                .replaceAll("(?s)```.*?```|`[^`]*`", "")
+                .replaceAll("[*_\\s]", "").trim();
+            if (QueryIntent.normalize(phrase).length() < 4 || phrase.contains("()")) continue;
+            for (String source : sources) {
+                if (QueryIntent.normalize(source).contains(QueryIntent.normalize(phrase))) return true;
+            }
+        }
+        return false;
     }
 
     /** One narrow model check for paraphrased platform claims; uncertain output is rejected. */
@@ -423,7 +565,10 @@ public class AnswerEvidenceVerifier {
         if (prefix.isEmpty() || prefix.contains(actualName)) {
             return false;
         }
-        if (prefix.matches(".*(?:实体|条目|节点|记录|来源|文档|帖子|关系|主体|对象)\\s*")) {
+        // Relation tuples commonly place a short role label directly before an endpoint ID:
+        // "主体 #1866 -> 候选 #1867". The label describes the structural slot, not a prose name.
+        // The relation ID, direction, type and endpoint types are checked separately below.
+        if (prefix.matches(".*(?:主体|候选|对象|源端?|目标端?|端点|实体|条目|节点|记录|来源|文档|帖子|关系)\\s*")) {
             return false;
         }
         // A named noun phrase next to #ID must match the stored entity name.

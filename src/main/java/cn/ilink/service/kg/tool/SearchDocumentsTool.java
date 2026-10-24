@@ -47,7 +47,7 @@ public class SearchDocumentsTool extends AbstractGraphTool {
         int topK = Math.max(1, Math.min(20, paramInt(params, "top_k", 8)));
         List<Map<String, Object>> rows = new ArrayList<>();
         for (KgDocumentChunk chunk : chunks.retrieve(query, userId, topK)) {
-            if (!scopeService.canSee(chunk.getScope(), chunk.getTeamId(), chunk.getUserId(), userId)) {
+            if (!scopeService.canSeeChunk(chunk, userId)) {
                 continue;
             }
             Map<String, Object> row = new LinkedHashMap<>();

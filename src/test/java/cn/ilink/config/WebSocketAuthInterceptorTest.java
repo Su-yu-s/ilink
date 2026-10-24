@@ -54,6 +54,18 @@ class WebSocketAuthInterceptorTest {
     }
 
     @Test
+    void collaborationTopicSubscriptionRequiresTeamParticipation() {
+        User user = user(7L);
+        given(teamAccessService.isTeamParticipant(12L, 7L)).willReturn(true);
+
+        assertDoesNotThrow(() -> interceptor.preSend(
+            message(StompCommand.SUBSCRIBE, "/topic/team/12/collaboration", user), null));
+
+        assertThrows(AccessDeniedException.class, () -> interceptor.preSend(
+            message(StompCommand.SUBSCRIBE, "/topic/team/13/collaboration", user), null));
+    }
+
+    @Test
     void chatSendRequiresTeamParticipation() {
         User user = user(7L);
         given(teamAccessService.isTeamParticipant(12L, 7L)).willReturn(true);

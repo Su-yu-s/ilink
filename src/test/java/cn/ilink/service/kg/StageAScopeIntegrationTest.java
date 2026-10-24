@@ -81,7 +81,10 @@ class StageAScopeIntegrationTest {
         var answer = service(ledger, ai, expanded).query(QUESTION, 8L);
         assertEquals(List.of(1L, 2L), expanded);
         assertFalse(answer.trace.stream().anyMatch(step -> "STRUCTURED_HOST_SUMMARY".equals(step.get("answerMode"))));
-        assertTrue(answer.trace.stream().anyMatch(step -> "PARTIAL".equals(step.get("answerCoverage"))));
+        assertTrue(answer.trace.stream().anyMatch(step ->
+            "SOURCE_SCOPED_RECORD_ANSWER".equals(step.get("answerMode"))
+                && "SOURCE_SCOPED".equals(step.get("answerCoverage"))
+                && "PARTIAL".equals(step.get("graphCoverage"))), answer.trace.toString());
         Map<?, ?> scope = latestScope(answer);
         assertEquals(2, scope.get("requestedCount"));
         assertEquals(false, scope.get("queryComplete"));

@@ -56,6 +56,11 @@ PRODUCT.md
 audit_results.json
 corruption_report.txt
 
+# === 本地临时产物归档（不入库，可整目录删除） ===
+local-artifacts/
+.tmp_*
+InspectIntent.*
+
 # === 开发脚本与草稿 ===
 scripts/
 searchbar-demos/

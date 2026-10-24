@@ -54,10 +54,12 @@ class GraphClassificationFlowTest {
         var fixture = fixture(); var ai = mock(AiClient.class); var trace = trace();
         String omitted = "{\"groups\":[{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]}]}";
         when(ai.chat(anyList(), anyInt())).thenReturn(response(PARTITION, "stop"),
-            response("{\"facts\":", "length"), response(omitted, "stop"));
+            response("{\"facts\":", "length"), response(omitted, "stop"),
+            response("{\"groups\":[]}", "stop"));
         var result = run(fixture, ai, trace);
         assertFalse(result.supported()); assertEquals("", result.answer());
-        assertEquals(List.of(1200, AnswerEvidenceVerifier.VERDICT_COMPLETION_BUDGET, 1200), limits(ai, 3));
+        assertEquals(List.of(1200, AnswerEvidenceVerifier.VERDICT_COMPLETION_BUDGET, 1200,
+            cn.ilink.service.ai.ChatRequestBudget.CLOSURE_COMPLETION_LIMIT), limits(ai, 4));
         List<Map<String, Object>> audits = trace.stream()
             .filter(step -> step.containsKey("classificationVerificationResult")).toList();
         assertEquals(1, audits.size()); assertEquals("GENERATE", audits.get(0).get("proposalStage"));
@@ -77,6 +79,7 @@ class GraphClassificationFlowTest {
         assertFalse(result.supported()); assertEquals("", result.answer());
         assertEquals(List.of(1200, 1200), limits(ai, 2));
         assertTrue(trace.toString().contains("CLASSIFICATION_MEMBER_EVIDENCE_MISSING:2"));
+        assertTrue(trace.toString().contains("CLASSIFICATION_MEMBER_PROOF_NOT_CITED:2:p2"));
         assertTrue(trace.stream().noneMatch(step -> step.containsKey("classificationVerificationResult")));
         assertTrue(trace.stream().noneMatch(step -> step.containsKey("verificationEvidence")));
         assertTrue(trace.stream().noneMatch(step -> "STRUCTURED_GRAPH_CLASSIFICATION".equals(step.get("answerMode"))));
@@ -89,13 +92,16 @@ class GraphClassificationFlowTest {
         when(ai.chat(anyList(), anyInt())).thenReturn(response(incorrect, "stop"),
             response(PARTITION, "stop"), response(SUPPORTED, "stop"));
         assertTrue(run(fixture, ai, trace).supported());
-        assertEquals(List.of(1200, 1200, AnswerEvidenceVerifier.VERDICT_COMPLETION_BUDGET), limits(ai, 3));
+        assertEquals(List.of(1200, 1200, AnswerEvidenceVerifier.VERDICT_COMPLETION_BUDGET),
+            limits(ai, 3));
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<Map<String, String>>> messages = ArgumentCaptor.forClass(List.class);
         verify(ai, times(3)).chat(messages.capture(), anyInt());
         String revision = messages.getAllValues().get(1).get(1).get("content");
         assertTrue(revision.contains("candidateId=2")); assertTrue(revision.contains("status=SENT_NOT_CITED"));
-        assertTrue(revision.contains("sentRelevantProofIds=[p2]"));
+        assertTrue(revision.contains("visibleMemberProofIds=[p2]"));
+        assertTrue(revision.contains("proofs只能引用本次修复证据中该成员的visibleMemberProofIds"));
+        assertFalse(revision.contains("原稿中该成员自己的sentRelevantProofIds"));
         assertFalse(revision.contains("availableRelevantProofIds="));
         assertTrue(trace.stream().noneMatch(step -> "VERIFY".equals(step.get("verificationStage"))));
         assertTrue(trace.stream().anyMatch(step -> "EXTRA".equals(step.get("verificationStage"))));
@@ -110,7 +116,11 @@ class GraphClassificationFlowTest {
         Object hints = trace.stream().filter(step -> step.containsKey("classificationRepairHints"))
             .map(step -> step.get("classificationRepairHints")).findFirst().orElseThrow();
         assertEquals(List.of(), hints);
-        assertEquals(List.of(1200, 1200, AnswerEvidenceVerifier.VERDICT_COMPLETION_BUDGET), limits(ai, 3));
+        String rewrite = rewriteInput(ai);
+        assertTrue(rewrite.contains("按完整候选目录和授权原文重新生成"));
+        assertTrue(rewrite.contains("【授权原文证明"));
+        assertEquals(List.of(1200, 1200, AnswerEvidenceVerifier.VERDICT_COMPLETION_BUDGET),
+            limits(ai, 3));
     }
 
     @Test
@@ -263,7 +273,7 @@ class GraphClassificationFlowTest {
         assertTrue(rewrite.contains("CLASSIFICATION_GROUP:1:PROOFS:1:FORMAT_EXPECTED_SINGLE_P_ID"));
         assertTrue(rewrite.contains("candidateId=1"));
         assertTrue(rewrite.contains("groupIndexes=[1, 2]"));
-        assertTrue(rewrite.contains("不得由程序代选归属"));
+        assertTrue(rewrite.contains("程序不会代选归属"));
         assertTrue(trace.stream().noneMatch(step -> step.containsKey("verificationEvidence")));
         assertTrue(trace.stream().filter(step -> step.containsKey("classificationDisposition"))
             .map(step -> (Map<?, ?>) step.get("classificationDisposition"))
@@ -294,11 +304,12 @@ class GraphClassificationFlowTest {
     void rewriteOmissionsAreNotReportedAsDiagnosticsKnownBeforeTheRewrite() {
         var fixture = fixture(); var ai = mock(AiClient.class); var trace = trace();
         String omitted = "{\"groups\":[{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]}]}";
-        when(ai.chat(anyList(), anyInt())).thenReturn(response("{\"groups\":[", "length"), response(omitted, "stop"));
+        when(ai.chat(anyList(), anyInt())).thenReturn(response("{\"groups\":[", "length"),
+            response(omitted, "stop"), response("{\"groups\":[]}", "stop"));
         assertFalse(run(fixture, ai, trace).supported());
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<Map<String, String>>> messages = ArgumentCaptor.forClass(List.class);
-        verify(ai, times(2)).chat(messages.capture(), eq(1200));
+        verify(ai, times(3)).chat(messages.capture(), anyInt());
         String rewriteInput = messages.getAllValues().get(1).get(1).get("content");
         assertTrue(rewriteInput.contains("CLASSIFICATION_INVALID_JSON"));
         assertFalse(rewriteInput.contains("CLASSIFICATION_OMITTED_CANDIDATE:2"));
@@ -364,19 +375,143 @@ class GraphClassificationFlowTest {
     void parsedOmissionProvidesSentSourceHintsWithoutAssigningOrPublishingTheMissingMember() {
         var fixture = fixture(); var ai = mock(AiClient.class); var trace = trace();
         String omitted = "{\"groups\":[{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]}]}";
-        when(ai.chat(anyList(), anyInt())).thenReturn(response(omitted, "stop"), response(omitted, "stop"));
+        when(ai.chat(anyList(), anyInt())).thenReturn(response(omitted, "stop"), response(omitted, "stop"),
+            response("{\"groups\":[]}", "stop"));
         var result = run(fixture, ai, trace);
         assertFalse(result.supported()); assertEquals("", result.answer());
         assertEquals(List.of(Map.of("candidateId", 2, "state", "UNASSIGNED", "status", "UNASSIGNED",
-            "sentRelevantProofIds", List.of("p2"))), repairHints(trace));
+            "sentRelevantProofIds", List.of("p2"), "requiredProofIds", List.of("p2"))), repairHints(trace));
         var generated = firstTraceMap(trace, "classificationDisposition");
         assertEquals(List.of(2), generated.get("missingCandidateIds"));
         assertEquals(Boolean.FALSE, generated.get("partitionComplete"));
         String rewrite = rewriteInput(ai);
-        assertTrue(rewrite.contains("status=UNASSIGNED")); assertTrue(rewrite.contains("sentRelevantProofIds=[p2]"));
-        assertTrue(rewrite.contains("不是类别真值")); assertTrue(rewrite.contains("程序不代选I/E/U或补证明"));
+        assertTrue(rewrite.contains("status=UNASSIGNED")); assertTrue(rewrite.contains("visibleMemberProofIds=[p2]"));
+        assertTrue(rewrite.contains("未装入上下文的编号不可引用"));
+        assertTrue(rewrite.contains("不是类别真值")); assertTrue(rewrite.contains("程序不会代选归属、I/E/U或补证明"));
         assertTrue(result.verification().reasons().contains("CLASSIFICATION_OMITTED_CANDIDATE:2"));
-        assertEquals(List.of(1200, 1200), limits(ai, 2));
+        assertEquals(List.of(1200, 1200, cn.ilink.service.ai.ChatRequestBudget.CLOSURE_COMPLETION_LIMIT),
+            limits(ai, 3));
+        assertTrue(trace.stream().noneMatch(step -> step.containsKey("verificationEvidence")
+            || "STRUCTURED_GRAPH_CLASSIFICATION".equals(step.get("answerMode"))));
+    }
+
+    @Test
+    void omissionOnlyRewriteGetsOneBoundedClosureAndStillRequiresSemanticVerification() {
+        var fixture = fixture(); var ai = mock(AiClient.class); var trace = trace();
+        String omitted = "{\"groups\":[{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]}]}";
+        String closure = "{\"groups\":[{\"s\":\"E\",\"reason\":\"OUTSIDE_ATTRIBUTE\",\"ids\":\"2\",\"proofs\":[\"p2\"]}]}";
+        when(ai.chat(anyList(), anyInt())).thenReturn(response(omitted, "stop"), response(omitted, "stop"),
+            response(closure, "stop"), response(SUPPORTED, "stop"));
+
+        var result = run(fixture, ai, trace);
+
+        assertTrue(result.supported());
+        assertEquals(List.of(1200, 1200, cn.ilink.service.ai.ChatRequestBudget.CLOSURE_COMPLETION_LIMIT,
+            AnswerEvidenceVerifier.VERDICT_COMPLETION_BUDGET), limits(ai, 4));
+        Map<?, ?> audit = firstTraceMap(trace, "classificationClosure");
+        assertEquals(List.of(2), audit.get("requestedCandidateIds"));
+        assertEquals(Boolean.TRUE, audit.get("closureParseComplete"));
+        assertEquals(Boolean.TRUE, audit.get("merged"));
+        assertEquals(Boolean.TRUE, audit.get("existingGroupsImmutable"));
+        assertEquals(Boolean.TRUE, audit.get("semanticVerificationStillRequired"));
+        assertTrue(trace.stream().filter(step -> step.containsKey("classificationDisposition"))
+            .map(step -> (Map<?, ?>) step.get("classificationDisposition"))
+            .anyMatch(disposition -> "REWRITE+CLOSURE".equals(disposition.get("proposalStage"))));
+        assertTrue(trace.stream().anyMatch(step -> "EXTRA".equals(step.get("verificationStage"))));
+    }
+
+    @Test
+    void closureProtectsTheFinalVerifierBeforeItSpendsCapacity() {
+        var fixture = fixture(); var ai = mock(AiClient.class); var trace = trace();
+        String omitted = "{\"groups\":[{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]}]}";
+        String closure = "{\"groups\":[{\"s\":\"E\",\"reason\":\"OUTSIDE_ATTRIBUTE\",\"ids\":\"2\",\"proofs\":[\"p2\"]}]}";
+        ChatRequestBudget requestBudget = new ChatRequestBudget();
+        List<Boolean> observedProtection = new ArrayList<>();
+        when(ai.chat(anyList(), anyInt())).thenAnswer(call -> {
+            List<?> messages = call.getArgument(0);
+            int limit = call.getArgument(1);
+            int protectedBefore = ((Number) requestBudget.snapshot().get("protectedTokens")).intValue();
+            observedProtection.add(protectedBefore > 0);
+            try (var reservation = requestBudget.reserve(120, limit)) {
+                reservation.settle(100, Math.min(20, limit));
+            }
+            int index = observedProtection.size();
+            return index == 1 ? response(omitted, "stop")
+                : index == 2 ? response(omitted, "stop")
+                : index == 3 ? response(closure, "stop")
+                : response(SUPPORTED, "stop");
+        });
+
+        GraphClassificationFlow.Outcome result;
+        try (var scope = requestBudget.bind()) { result = run(fixture, ai, trace); }
+
+        assertTrue(result.supported(), result.verification().reasons().toString());
+        assertEquals(List.of(false, false, true, false), observedProtection);
+        assertEquals(0, requestBudget.snapshot().get("protectedTokens"));
+        assertEquals(Map.of(ChatRequestBudget.Stage.GENERATE, 1, ChatRequestBudget.Stage.REWRITE, 1,
+            ChatRequestBudget.Stage.CLOSURE, 1, ChatRequestBudget.Stage.EXTRA, 1),
+            requestBudget.snapshot().get("stageRequests"));
+        Map<?, ?> closureAudit = firstTraceMap(trace, "classificationClosure");
+        assertTrue(((Number) closureAudit.get("finalVerifierProtectedTokens")).intValue() > 0);
+        Map<?, ?> finalAudit = firstTraceMap(trace, "classificationFinalReservation");
+        assertEquals(Boolean.TRUE, finalAudit.get("withinProtection"));
+        assertEquals(Boolean.TRUE, finalAudit.get("finalRequestWillDispatch"));
+        assertTrue(((Number) finalAudit.get("actualReservationBound")).intValue()
+            <= ((Number) finalAudit.get("plannedReservation")).intValue());
+        Map<?, ?> semanticAudit = firstTraceMap(trace, "classificationVerificationResult");
+        assertEquals("ACCEPTED", semanticAudit.get("status"));
+        assertEquals("RESPONSE_RECEIVED", semanticAudit.get("supplierDispatchStatus"));
+        assertEquals(Boolean.TRUE, semanticAudit.get("rawVerdictPresent"));
+        assertTrue(((Number) semanticAudit.get("rawVerdictLength")).intValue() > 0);
+        assertEquals(Boolean.TRUE, semanticAudit.get("semanticAccepted"));
+    }
+
+    @Test
+    void closureFailsClosedInsteadOfConsumingAnUnprotectedFinalVerifierSlot() {
+        var fixture = fixture(); var ai = mock(AiClient.class); var trace = trace();
+        String omitted = "{\"groups\":[{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]}]}";
+        ChatRequestBudget requestBudget = new ChatRequestBudget();
+        when(ai.chat(anyList(), anyInt())).thenAnswer(call -> {
+            int index = requestBudget.snapshot().get("modelRequests") == null ? 0
+                : ((Number) requestBudget.snapshot().get("modelRequests")).intValue();
+            int limit = call.getArgument(1);
+            int promptBound = index == 0 ? 100 : 14_000;
+            try (var reservation = requestBudget.reserve(promptBound, limit)) {
+                reservation.settle(promptBound, 20);
+            }
+            return response(omitted, "stop");
+        });
+
+        GraphClassificationFlow.Outcome result;
+        try (var scope = requestBudget.bind()) { result = run(fixture, ai, trace); }
+
+        assertFalse(result.supported());
+        verify(ai, times(2)).chat(anyList(), anyInt());
+        Map<?, ?> closureAudit = firstTraceMap(trace, "classificationClosure");
+        assertEquals(Boolean.FALSE, closureAudit.get("modelRequested"));
+        assertTrue(Set.of("FINAL_VERIFIER_BOUND_UNAVAILABLE", "TOKEN_FINAL_VERIFIER_UNRESERVABLE",
+            "CLOSURE_DOES_NOT_FIT_AFTER_FINAL_VERIFIER_RESERVED").contains(closureAudit.get("reason")));
+        assertFalse(((Map<?, ?>) requestBudget.snapshot().get("stageRequests"))
+            .containsKey(ChatRequestBudget.Stage.CLOSURE));
+    }
+
+    @Test
+    void closureCannotReplaceAnExistingMemberOrPublishAnInexactScope() {
+        var fixture = fixture(); var ai = mock(AiClient.class); var trace = trace();
+        String omitted = "{\"groups\":[{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]}]}";
+        when(ai.chat(anyList(), anyInt())).thenReturn(response(omitted, "stop"),
+            response(omitted, "stop"), response(PARTITION, "stop"));
+
+        var result = run(fixture, ai, trace);
+
+        assertFalse(result.supported());
+        assertEquals("", result.answer());
+        assertEquals(List.of(1200, 1200, cn.ilink.service.ai.ChatRequestBudget.CLOSURE_COMPLETION_LIMIT),
+            limits(ai, 3));
+        Map<?, ?> audit = firstTraceMap(trace, "classificationClosure");
+        assertEquals(Boolean.FALSE, audit.get("closureParseComplete"));
+        assertEquals(Boolean.FALSE, audit.get("merged"));
+        assertTrue(audit.get("closureFailures").toString().contains("CLASSIFICATION_UNEXPECTED_CANDIDATE:1"));
         assertTrue(trace.stream().noneMatch(step -> step.containsKey("verificationEvidence")
             || "STRUCTURED_GRAPH_CLASSIFICATION".equals(step.get("answerMode"))));
     }
@@ -392,8 +527,9 @@ class GraphClassificationFlowTest {
             assertFalse(result.supported()); assertEquals("", result.answer());
             assertEquals(List.of(Map.of("candidateId", candidateId,
                 "state", candidateId == 1 ? "I" : "E", "status", "SENT_NOT_CITED",
-                "sentRelevantProofIds", List.of(omittedProof))), repairHints(trace));
-            assertTrue(rewriteInput(ai).contains("sentRelevantProofIds=[" + omittedProof + "]"));
+                "sentRelevantProofIds", List.of(omittedProof),
+                "requiredProofIds", List.of(omittedProof))), repairHints(trace));
+            assertTrue(rewriteInput(ai).contains("visibleMemberProofIds=[" + omittedProof + "]"));
             assertTrue(result.verification().reasons().contains("CLASSIFICATION_PROOF_REQUIRED"));
             assertEquals(List.of(1200, 1200), limits(ai, 2));
             assertTrue(trace.stream().noneMatch(step -> step.containsKey("verificationEvidence")
@@ -409,7 +545,7 @@ class GraphClassificationFlowTest {
         var result = run(fixture, ai, trace);
         assertFalse(result.supported()); assertEquals("", result.answer());
         assertEquals(List.of(Map.of("candidateId", 1, "state", "E", "status", "SENT_NOT_CITED",
-            "sentRelevantProofIds", List.of("p1"))), repairHints(trace));
+            "sentRelevantProofIds", List.of("p1"), "requiredProofIds", List.of("p1"))), repairHints(trace));
         assertEquals(List.of(Map.of("candidateId", 1, "groupIndexes", List.of(1, 2),
             "states", List.of("I", "E"), "assignmentCount", 2)),
             firstTraceMap(trace, "classificationDisposition").get("duplicateCandidateOwnership"));
@@ -420,7 +556,7 @@ class GraphClassificationFlowTest {
         assertTrue(owners.stream().allMatch(row -> Boolean.TRUE.equals(row.get("retrievalOnly"))
             && Boolean.TRUE.equals(row.get("semanticSupportNotEstablished"))));
         String rewrite = rewriteInput(ai);
-        assertTrue(rewrite.contains("groupIndexes=[1, 2]")); assertTrue(rewrite.contains("不得由程序代选归属"));
+        assertTrue(rewrite.contains("groupIndexes=[1, 2]")); assertTrue(rewrite.contains("程序不会代选归属"));
         assertTrue(result.verification().reasons().contains("CLASSIFICATION_DUPLICATE_CANDIDATE:1"));
         assertEquals(List.of(1200, 1200), limits(ai, 2));
         assertTrue(trace.stream().noneMatch(step -> step.containsKey("verificationEvidence")
@@ -432,11 +568,12 @@ class GraphClassificationFlowTest {
         var fixture = fixture(); var ai = mock(AiClient.class); var trace = trace();
         String missingProof = PARTITION.replace("[\"p2\"]", "[]");
         String deletedGroup = "{\"groups\":[{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]}]}";
-        when(ai.chat(anyList(), anyInt())).thenReturn(response(missingProof, "stop"), response(deletedGroup, "stop"));
+        when(ai.chat(anyList(), anyInt())).thenReturn(response(missingProof, "stop"),
+            response(deletedGroup, "stop"), response("{\"groups\":[]}", "stop"));
         var result = run(fixture, ai, trace);
         assertFalse(result.supported()); assertEquals("", result.answer());
         assertEquals(List.of(Map.of("candidateId", 2, "state", "E", "status", "SENT_NOT_CITED",
-            "sentRelevantProofIds", List.of("p2"))), repairHints(trace));
+            "sentRelevantProofIds", List.of("p2"), "requiredProofIds", List.of("p2"))), repairHints(trace));
         var attempts = trace.stream().filter(step -> step.containsKey("classificationDisposition"))
             .map(step -> (Map<?, ?>) step.get("classificationDisposition")).toList();
         assertEquals(List.of("MATCH", "OUTSIDE_ATTRIBUTE"), attempts.get(0).get("reasonCodes"));
@@ -446,7 +583,8 @@ class GraphClassificationFlowTest {
         assertTrue(rewriteInput(ai).contains("不得删除一整组以逃避其proofs错误"));
         assertTrue(result.verification().reasons().contains("CLASSIFICATION_OMITTED_CANDIDATE:2"));
         assertEquals(1, trace.stream().filter(step -> step.containsKey("rewriteResult")).count());
-        assertEquals(List.of(1200, 1200), limits(ai, 2));
+        assertEquals(List.of(1200, 1200, cn.ilink.service.ai.ChatRequestBudget.CLOSURE_COMPLETION_LIMIT),
+            limits(ai, 3));
         assertTrue(trace.stream().noneMatch(step -> step.containsKey("verificationEvidence")
             || "STRUCTURED_GRAPH_CLASSIFICATION".equals(step.get("answerMode"))));
     }
@@ -461,7 +599,9 @@ class GraphClassificationFlowTest {
         assertEquals(List.of(), repairHints(trace));
         assertEquals("UNAVAILABLE", firstTraceMap(trace, "classificationDisposition").get("proposalParseStatus"));
         String rewrite = rewriteInput(ai);
-        assertTrue(rewrite.contains("逐成员证据诊断（仅当前已展示出处索引，不是类别真值）：[]"));
+        assertTrue(rewrite.contains("首稿无法形成可修复的成员级诊断"));
+        assertTrue(rewrite.contains("按完整候选目录和授权原文重新生成"));
+        assertFalse(rewrite.contains("逐成员缺陷（仅出处诊断，不是类别真值）：[]"));
         assertFalse(rewrite.contains("status=UNASSIGNED"));
         assertTrue(result.verification().reasons().contains("CLASSIFICATION_INVALID_JSON"));
         assertEquals(List.of(1200, 1200), limits(ai, 2));
@@ -572,7 +712,7 @@ class GraphClassificationFlowTest {
     private static String rewriteInput(AiClient ai) {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<Map<String, String>>> messages = ArgumentCaptor.forClass(List.class);
-        verify(ai, times(2)).chat(messages.capture(), eq(1200));
+        verify(ai, atLeast(2)).chat(messages.capture(), anyInt());
         return messages.getAllValues().get(1).get(1).get("content");
     }
 

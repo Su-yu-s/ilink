@@ -31,4 +31,15 @@ public class TeamLibraryFile {
     private Boolean isPurged;
     private Date createdAt;
     private Date updatedAt;
+    private Long contentRevision;
+    private String indexStatus;
+    private String indexError;
+    private Date indexedAt;
+
+    public static final String INDEX_PENDING = "PENDING";
+    public static final String INDEX_INDEXING = "INDEXING";
+    public static final String INDEX_READY = "READY";
+    public static final String INDEX_FAILED = "FAILED";
+    public static final String INDEX_STALE = "STALE";
+    public static final String INDEX_SKIPPED = "SKIPPED";
 }

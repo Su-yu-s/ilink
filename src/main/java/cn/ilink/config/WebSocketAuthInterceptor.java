@@ -26,7 +26,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Component
 public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
-    private static final Pattern TEAM_TOPIC_DESTINATION = Pattern.compile("^/topic/team/(\\d+)$");
+    private static final Pattern TEAM_TOPIC_DESTINATION = Pattern.compile(
+        "^/topic/team/(\\d+)(?:/collaboration)?$");
     private static final Pattern NOTIFICATION_DESTINATION = Pattern.compile(
         "^/topic/notification/(\\d+)(?:/(?:unread|mark-all-read))?$");
     private static final Pattern CHAT_DESTINATION = Pattern.compile("^/app/chat/(\\d+)$");

@@ -80,6 +80,13 @@ logging:
 
 app:
   public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8090}
+  team-agent:
+    enabled: ${TEAM_AGENT_ENABLED:true}
+    actions-enabled: ${TEAM_AGENT_ACTIONS_ENABLED:true}
+    deep-graph-rag-enabled: ${TEAM_AGENT_DEEP_GRAPH_RAG_ENABLED:true}
+    worker-concurrency: ${TEAM_AGENT_WORKER_CONCURRENCY:4}
+    queue-capacity: ${TEAM_AGENT_QUEUE_CAPACITY:32}
+    lease-seconds: ${TEAM_AGENT_LEASE_SECONDS:120}
   mail:
     # 发件人须为 Resend 已验证域名下的地址（ilink.work 已验证）
     from: "${APP_MAIL_FROM:iLink <noreply@ilink.work>}"

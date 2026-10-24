@@ -41,7 +41,8 @@ class SavedEvidenceContextReplayTest {
         Map<String, List<String>> expectations = Map.of(
             "E15", List.of("{bizType}/yyyy/MM/dd/", "按日期"),
             "E20", List.of("#fafafa", "#171717"),
-            "E25", List.of("72px", "56px"));
+            "E25", List.of("72px", "56px"),
+            "M1", List.of("c#380", "「互联网+」", "「挑战杯」", "「数模」"));
         for (var expected : expectations.entrySet()) {
             JsonNode row = rows.get(expected.getKey());
             assertTrue(row != null, expected.getKey() + " missing from saved batches");

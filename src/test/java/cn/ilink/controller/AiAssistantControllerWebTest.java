@@ -190,7 +190,7 @@ class AiAssistantControllerWebTest {
                 .session(session)
                 .contentType("application/json")
                 .content("{\"taskId\":11}"))
-            .andExpect(status().isOk())
+            .andExpect(status().isServiceUnavailable())
             .andExpect(jsonPath("$.code").value(503));
 
         verify(aiAssistantService, never()).breakdownTask(any(), any());

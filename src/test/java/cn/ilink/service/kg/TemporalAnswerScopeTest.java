@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -179,6 +180,52 @@ class TemporalAnswerScopeTest {
         TemporalAnswerScope.Analysis result = TemporalAnswerScope.assess("2026年3月和4月有哪些竞赛关联记录？", plan, ledger);
         assertFalse(result.resolvedWindowComplete());
         assertFalse(result.requestedScopeComplete());
+    }
+
+    @Test
+    void everyRecordGroupMemberNeedsACompleteWindowBeforeScopeIsComplete() {
+        EvidenceLedger ledger = ledger(List.of(
+            post(1725, "iLink 团队空间模块开发成果"),
+            post(1965, "Link 团队空间模块"),
+            post(1735, "前端页面视觉重构升级报告")),
+            List.of(), List.of());
+        when(ledger.completeTemporal(1725L, MARCH)).thenReturn(true);
+        when(ledger.completeTemporal(1735L, MARCH)).thenReturn(true);
+        QueryEvidencePlan plan = QueryEvidencePlan.fromQuestion(
+            "2026年3月，团队空间与视觉重构相关记录还关联着哪些竞赛？");
+        TemporalAnswerScope.RecordScope result = TemporalAnswerScope.recordScope(
+            "2026年3月，团队空间与视觉重构相关记录还关联着哪些竞赛？",
+            plan, ledger, List.copyOf(ledger.entities()));
+        assertFalse(result.allWindowsComplete());
+        assertFalse(result.requestedRecordsConfirmed());
+        assertTrue(result.hasIncompleteMembers());
+        assertTrue(result.missingCompleteMemberIds().contains(1965L));
+        Map<String, Object> metadata = result.metadata();
+        assertEquals(false, metadata.get("allWindowsComplete"));
+        assertTrue(((List<?>) metadata.get("missingCompleteMemberIds")).contains(1965L));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> groups = (List<Map<String, Object>>) metadata.get("groups");
+        assertTrue(groups.stream().anyMatch(group ->
+            ((List<?>) group.get("missingCompleteMembers")).contains(1965L)));
+    }
+
+    @Test
+    void multipleRecordGroupsAreCompleteOnlyWhenEveryMemberAndWindowIsComplete() {
+        EvidenceLedger ledger = ledger(List.of(
+            post(1725, "iLink 团队空间模块开发成果"),
+            post(1965, "Link 团队空间模块"),
+            post(1735, "前端页面视觉重构升级报告")),
+            List.of(), List.of());
+        for (long id : List.of(1725L, 1965L, 1735L))
+            when(ledger.completeTemporal(id, MARCH)).thenReturn(true);
+        String question = "2026年3月，团队空间与视觉重构相关记录还关联着哪些竞赛？";
+        TemporalAnswerScope.RecordScope result = TemporalAnswerScope.recordScope(
+            question, QueryEvidencePlan.fromQuestion(question), ledger,
+            List.copyOf(ledger.entities()));
+        assertTrue(result.allWindowsComplete());
+        assertTrue(result.requestedRecordsConfirmed());
+        assertTrue(result.missingCompleteMemberIds().isEmpty());
+        assertEquals(2, result.groups().size());
     }
 
     @Test

@@ -14,6 +14,7 @@ import cn.ilink.entity.ProjectMilestone;
 import cn.ilink.entity.RecommendationLog;
 import cn.ilink.entity.TaskComment;
 import cn.ilink.entity.TaskParticipant;
+import cn.ilink.entity.TaskReview;
 import cn.ilink.entity.TaskSubmission;
 import cn.ilink.entity.TeacherApplication;
 import cn.ilink.entity.TeamApplication;
@@ -31,6 +32,7 @@ import cn.ilink.mapper.ProjectMilestoneMapper;
 import cn.ilink.mapper.RecommendationLogMapper;
 import cn.ilink.mapper.TaskCommentMapper;
 import cn.ilink.mapper.TaskParticipantMapper;
+import cn.ilink.mapper.TaskReviewMapper;
 import cn.ilink.mapper.TaskSubmissionMapper;
 import cn.ilink.mapper.TeamLibraryFileMapper;
 import cn.ilink.mapper.TeamTaskMapper;
@@ -41,6 +43,10 @@ import cn.ilink.service.impl.ProjectApplicationServiceImpl;
 import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
+import cn.ilink.service.kg.KgIndexService;
+import cn.ilink.teamagent.TeamAgentLifecycleService;
+import cn.ilink.teamagent.TeamTaskCommandService;
+import cn.ilink.teamagent.TeamTaskCommands;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.slf4j.Logger;
@@ -55,6 +61,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -76,6 +83,7 @@ public class AdminDataService {
     private final CommunityPostFavoriteMapper communityPostFavoriteMapper;
     private final TeamTaskMapper teamTaskMapper;
     private final TaskParticipantMapper taskParticipantMapper;
+    private final TaskReviewMapper taskReviewMapper;
     private final TaskCommentMapper taskCommentMapper;
     private final TaskSubmissionMapper taskSubmissionMapper;
     private final ProjectMilestoneMapper projectMilestoneMapper;
@@ -84,12 +92,22 @@ public class AdminDataService {
     private final RecommendationLogMapper recommendationLogMapper;
     private final NotificationMapper notificationMapper;
     private final UserSkillMapper userSkillMapper;
+    private final KgIndexService kgIndexService;
+    private final TeamTaskCommandService teamTaskCommandService;
+    private final TeamAgentLifecycleService teamAgentLifecycleService;
     private final RememberMeService rememberMeService;
     private final UserSessionRegistry sessionRegistry;
 
     /** 管理删除时向内容所有者发通知；测试环境未装配时为 null，发通知处已判空跳过 */
     @Autowired(required = false)
     private NotificationService notificationService;
+
+    @Autowired(required = false)
+    private TeamAgentDataCleanupService teamAgentDataCleanupService;
+
+    /** M3 协作资产清理；测试环境未装配时为 null，删除处已判空跳过 */
+    @Autowired(required = false)
+    private cn.ilink.collab.TeamCollaborationCleanupService teamCollaborationCleanupService;
 
     public AdminDataService(UserService userService,
                             TeamDemandServiceImpl teamDemandService,
@@ -104,6 +122,7 @@ public class AdminDataService {
                             CommunityPostFavoriteMapper communityPostFavoriteMapper,
                             TeamTaskMapper teamTaskMapper,
                             TaskParticipantMapper taskParticipantMapper,
+                            TaskReviewMapper taskReviewMapper,
                             TaskCommentMapper taskCommentMapper,
                             TaskSubmissionMapper taskSubmissionMapper,
                             ProjectMilestoneMapper projectMilestoneMapper,
@@ -112,6 +131,9 @@ public class AdminDataService {
                             RecommendationLogMapper recommendationLogMapper,
                             NotificationMapper notificationMapper,
                             UserSkillMapper userSkillMapper,
+                            KgIndexService kgIndexService,
+                            TeamTaskCommandService teamTaskCommandService,
+                            TeamAgentLifecycleService teamAgentLifecycleService,
                             RememberMeService rememberMeService,
                             UserSessionRegistry sessionRegistry) {
         this.userService = userService;
@@ -127,6 +149,7 @@ public class AdminDataService {
         this.communityPostFavoriteMapper = communityPostFavoriteMapper;
         this.teamTaskMapper = teamTaskMapper;
         this.taskParticipantMapper = taskParticipantMapper;
+        this.taskReviewMapper = taskReviewMapper;
         this.taskCommentMapper = taskCommentMapper;
         this.taskSubmissionMapper = taskSubmissionMapper;
         this.projectMilestoneMapper = projectMilestoneMapper;
@@ -135,6 +158,9 @@ public class AdminDataService {
         this.recommendationLogMapper = recommendationLogMapper;
         this.notificationMapper = notificationMapper;
         this.userSkillMapper = userSkillMapper;
+        this.kgIndexService = kgIndexService;
+        this.teamTaskCommandService = teamTaskCommandService;
+        this.teamAgentLifecycleService = teamAgentLifecycleService;
         this.rememberMeService = rememberMeService;
         this.sessionRegistry = sessionRegistry;
     }
@@ -145,11 +171,36 @@ public class AdminDataService {
     public void deleteUser(Long userId) {
         User user = userService.getById(userId);
         if (user == null) throw new NoSuchElementException("\u7528\u6237\u4e0d\u5b58\u5728");
+        teamAgentLifecycleService.requireNoInFlightForAccountDeletion(userId);
 
         List<Long> teamIds = teamDemandService.list(
             new LambdaQueryWrapper<TeamDemand>().eq(TeamDemand::getCreatorId, userId))
             .stream().map(TeamDemand::getId).collect(Collectors.toList());
         teamIds.forEach(id -> deleteTeamInternal(id, null));
+
+        // Remaining memberships must go through the same release path as a
+        // normal leave/removal. Only unfinished assignments are cleared;
+        // completed work keeps its historical assignee and participant trail.
+        Set<Long> remainingTeamIds = teamApplicationService.list(
+                new LambdaQueryWrapper<TeamApplication>()
+                    .eq(TeamApplication::getUserId, userId)
+                    .eq(TeamApplication::getStatus, TeamMembershipService.STATUS_APPROVED))
+            .stream().map(TeamApplication::getTeamId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+        teamTaskMapper.selectList(new LambdaQueryWrapper<TeamTask>()
+                .eq(TeamTask::getAssignedTo, userId))
+            .stream().map(TeamTask::getTeamId)
+            .filter(Objects::nonNull)
+            .forEach(remainingTeamIds::add);
+        for (Long teamId : remainingTeamIds) {
+            if (teamDemandService.getById(teamId) == null) continue;
+            teamAgentLifecycleService.onMemberAccessRevoked(
+                teamId, userId, "账号已注销，权限已收回");
+            teamTaskCommandService.releaseMemberTasks(
+                new TeamTaskCommands.ReleaseMemberTasks(
+                    teamId, userId, userId, "ACCOUNT_DELETED", null));
+        }
 
         List<Long> postIds = communityPostService.list(
             new LambdaQueryWrapper<CommunityPost>().eq(CommunityPost::getAuthorId, userId))
@@ -174,11 +225,8 @@ public class AdminDataService {
                 .in(TaskComment::getParentId, userCommentIds)
                 .set(TaskComment::getParentId, null));
         }
-        taskParticipantMapper.delete(new LambdaQueryWrapper<TaskParticipant>().eq(TaskParticipant::getUserId, userId));
         taskCommentMapper.delete(new LambdaQueryWrapper<TaskComment>().eq(TaskComment::getUserId, userId));
         taskSubmissionMapper.delete(new LambdaQueryWrapper<TaskSubmission>().eq(TaskSubmission::getSubmitterId, userId));
-        teamTaskMapper.update(null, new LambdaUpdateWrapper<TeamTask>()
-            .eq(TeamTask::getAssignedTo, userId).set(TeamTask::getAssignedTo, null));
         projectMilestoneMapper.delete(new LambdaQueryWrapper<ProjectMilestone>().eq(ProjectMilestone::getCreatedBy, userId));
 
         teamApplicationService.remove(new LambdaQueryWrapper<TeamApplication>().eq(TeamApplication::getUserId, userId));
@@ -210,6 +258,13 @@ public class AdminDataService {
             .eq(RecommendationLog::getUserId, userId)
             .or().eq(RecommendationLog::getRecommendedUserId, userId));
         userSkillMapper.delete(new LambdaQueryWrapper<UserSkill>().eq(UserSkill::getUserId, userId));
+
+        if (teamAgentDataCleanupService != null) {
+            teamAgentDataCleanupService.deleteUserData(userId);
+        }
+        if (teamCollaborationCleanupService != null) {
+            teamCollaborationCleanupService.anonymizeUser(userId);
+        }
 
         if (!userService.removeById(userId)) {
             throw new IllegalStateException("\u7528\u6237\u5220\u9664\u5931\u8d25");
@@ -289,6 +344,10 @@ public class AdminDataService {
 
     private void deleteTeamInternal(Long teamId, String reason) {
         TeamDemand team = teamDemandService.getById(teamId);
+        // Stop Agent writers before the private trail is hard-deleted. Without
+        // this lifecycle step a worker that already owns a lease can finish
+        // against rows that no longer exist and leak its admission permit.
+        teamAgentLifecycleService.onTeamDissolved(teamId);
         // 管理端删除不可恢复，至少要让队员知道发生了什么（队长自行解散会通知，这里原来不发任何通知）
         notifyTeamMembersBeforeDelete(teamId, team == null ? null : team.getTitle(), reason);
         Set<Long> taskIds = teamTaskMapper.selectList(
@@ -314,6 +373,14 @@ public class AdminDataService {
         notificationMapper.delete(new LambdaQueryWrapper<Notification>()
             .eq(Notification::getRelatedId, teamId)
             .in(Notification::getType, "TEAM_APPLY", "TEAM_APPROVED", "TEAM_REJECTED", "TASK_ASSIGNED", "TASK_SUBMITTED"));
+        if (teamAgentDataCleanupService != null) {
+            teamAgentDataCleanupService.deleteTeamData(teamId);
+        }
+        // 协作文档/表格/版本/租约/ACL/材料/事件同样按团队归属，必须同步清理，
+        // 否则会留下 team_id 指向不存在队伍的孤儿行。
+        if (teamCollaborationCleanupService != null) {
+            teamCollaborationCleanupService.deleteTeamData(teamId);
+        }
         if (!teamDemandService.removeById(teamId)) {
             throw new IllegalStateException("\u961f\u4f0d\u5220\u9664\u5931\u8d25");
         }
@@ -362,8 +429,14 @@ public class AdminDataService {
 
     private void deleteTasks(Set<Long> taskIds) {
         if (taskIds == null || taskIds.isEmpty()) return;
+        List<TeamTask> tasks = teamTaskMapper.selectBatchIds(taskIds);
+        for (TeamTask task : tasks) {
+            kgIndexService.enqueueDelete("TASK", task.getId(),
+                cn.ilink.entity.KgEntity.SCOPE_TEAM, task.getTeamId(), task.getCreatedBy());
+        }
         taskSubmissionMapper.delete(new LambdaQueryWrapper<TaskSubmission>().in(TaskSubmission::getTaskId, taskIds));
         taskCommentMapper.delete(new LambdaQueryWrapper<TaskComment>().in(TaskComment::getTaskId, taskIds));
+        taskReviewMapper.delete(new LambdaQueryWrapper<TaskReview>().in(TaskReview::getTaskId, taskIds));
         taskParticipantMapper.delete(new LambdaQueryWrapper<TaskParticipant>().in(TaskParticipant::getTaskId, taskIds));
         teamTaskMapper.deleteBatchIds(taskIds);
     }

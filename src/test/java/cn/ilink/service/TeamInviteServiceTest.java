@@ -5,6 +5,9 @@ import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.TeamApplicationMapper;
 import cn.ilink.mapper.TeamDemandMapper;
+import cn.ilink.teamagent.TeamTaskCommandService;
+import cn.ilink.teamagent.TeamTaskCommands;
+import cn.ilink.teamagent.TeamAgentLifecycleService;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
@@ -41,9 +44,11 @@ class TeamInviteServiceTest {
     private TeamApplicationMapper teamApplicationMapper;
     private TeamDemandMapper teamDemandMapper;
     private TeamMembershipService membershipService;
-    private TeamTaskService teamTaskService;
+    private TeamTaskCommandService teamTaskCommandService;
+    private TeamAgentLifecycleService teamAgentLifecycleService;
     private NotificationService notificationService;
     private UserService userService;
+    private cn.ilink.collab.TeamCollaborationCleanupService collaborationCleanupService;
     private TeamInviteService service;
 
     @BeforeEach
@@ -53,13 +58,18 @@ class TeamInviteServiceTest {
         teamApplicationMapper = mock(TeamApplicationMapper.class);
         teamDemandMapper = mock(TeamDemandMapper.class);
         membershipService = mock(TeamMembershipService.class);
-        teamTaskService = mock(TeamTaskService.class);
+        teamTaskCommandService = mock(TeamTaskCommandService.class);
+        teamAgentLifecycleService = mock(TeamAgentLifecycleService.class);
         notificationService = mock(NotificationService.class);
         userService = mock(UserService.class);
+        collaborationCleanupService =
+            mock(cn.ilink.collab.TeamCollaborationCleanupService.class);
         service = new TeamInviteService(teamDemandService, teamApplicationService, teamApplicationMapper,
-            teamDemandMapper, membershipService, teamTaskService, notificationService, userService);
+            teamDemandMapper, membershipService, teamTaskCommandService, teamAgentLifecycleService,
+            notificationService, userService, collaborationCleanupService);
 
         when(teamDemandService.getById(TEAM_ID)).thenReturn(team("OPEN"));
+        when(teamDemandMapper.selectByIdForUpdate(TEAM_ID)).thenReturn(team("OPEN"));
         when(membershipService.canManageMembers(any(), eq(OWNER_ID))).thenReturn(true);
         when(membershipService.isFull(any())).thenReturn(false);
     }
@@ -222,7 +232,8 @@ class TeamInviteServiceTest {
         service.removeMember(TEAM_ID, 9L, 9L);
 
         assertEquals(TeamMembershipService.STATUS_LEFT, me.getStatus());
-        verify(teamTaskService).update(any());
+        verify(collaborationCleanupService).revokeMemberAccess(TEAM_ID, 9L);
+        verify(teamTaskCommandService).releaseMemberTasks(any(TeamTaskCommands.ReleaseMemberTasks.class));
         // 自己退出不需要给自己发通知
         verify(notificationService, never()).create(anyLong(), anyLong(), any(), any(), any(), anyLong());
     }

@@ -1,9 +1,13 @@
 package cn.ilink.service.kg;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -11,7 +15,12 @@ import java.util.regex.Pattern;
 public record QueryIntent(List<String> subjects, String focusText, boolean graphRequested) {
     private static final Pattern QUOTED = Pattern.compile("[「《“\"]([^」》”\"]{2,80})[」》”\"]");
     private static final Pattern PARENTHETICAL = Pattern.compile("[（(]([^）)]{2,60})[）)]");
-    private static final String[] GENERIC_HEADS = { "平台", "系统", "项目", "模块" };
+    /**
+     * 名称尾部的说明性后缀，不属于名称本身。通用中心词（平台/系统/项目/模块）、自我指代词
+     * （本身/自身/自己，说明前后指的是同一个对象）与类型词（实体）可以叠加，剥离时反复进行。
+     */
+    private static final String[] CORE_SUFFIXES =
+        { "平台", "系统", "项目", "模块", "本身", "自身", "自己", "实体" };
     private static final Pattern DATES = Pattern.compile(
         "20\\d{2}\\s*年(?:\\s*\\d{1,2}\\s*月(?:\\s*\\d{1,2}\\s*日)?)?"
             + "|20\\d{2}-\\d{1,2}(?:-\\d{1,2})?|\\d{1,2}\\s*月\\s*\\d{1,2}\\s*日"
@@ -31,7 +40,39 @@ public record QueryIntent(List<String> subjects, String focusText, boolean graph
             + "|提到过|提及|分别|各自|由什么|由谁|是否|有哪些|有哪|哪些|有什么|按(?:什么|哪些|哪)"
             + "|哪个|哪种|什么"
             + "|的(?:主办|承办|组织|关系|技能|技术栈|报名|颜色|操作|步骤|界面|功能|高度|宽度|尺寸|大小|规则|样式|布局|结构|流程|数量)"
+            // 属性请求尾部同样不是主体名称：“X 的技术细节是什么”里的主体是 X。
+            // 只列属性词，避免把“X 的技术方案”这类本身就是主体名称的短语切断。
+            + "|的(?:技术|实现|设计|核心|主要|关键|具体|详细)?"
+            + "(?:细节|要点|内容|特点|原理|机制|思路|做法|方案|用途|作用|优势|缺点|定义|含义|参数|配置|指标|说明)"
             + "|关联|关系");
+    /**
+     * 主体尾部的情态副词不属于名称：例如 “iLink 平台本身（ilink 实体）直接关联了哪些竞赛”
+     * 在 “关联” 处切断后还剩一个 “直接”。这些词不能作为专有名称结尾，剥离后仍保留原始请求名。
+     */
+    private static final Pattern SUBJECT_TRAILING_ADVERB = Pattern.compile(
+        "(?:直接|间接|到底|究竟|明确|确切|仍然|同时|并且|还|又|也)\\s*$");
+
+    /**
+     * Alias strength is deliberately ordered. A short core name may locate a candidate, but it
+     * cannot turn a more specific composite name into an ambiguous subject.
+     */
+    public enum AliasTier {
+        EXACT_ORIGINAL(100),
+        COMPOSITE(80),
+        PARENTHETICAL(60),
+        SHORT_CORE(40);
+
+        private final int strength;
+
+        AliasTier(int strength) { this.strength = strength; }
+
+        public int strength() { return strength; }
+    }
+
+    public record AliasForm(String normalized, AliasTier tier) { }
+
+    /** One permission-checked entity and the alias that caused it to survive the highest tier. */
+    public record ExactSubjectMatch(EvidenceLedger.EntityFact entity, String matchedAlias, AliasTier tier) { }
 
     /** Extraction completeness is separate from whether a retrieved entity looks similar. */
     public record SubjectRequests(List<String> subjects, boolean complete, String reason) {
@@ -116,8 +157,9 @@ public record QueryIntent(List<String> subjects, String focusText, boolean graph
             .replaceFirst("^(?:知识图谱里|知识图谱中|图谱里|图谱中)[，,：:\\s]*", "")
             .replaceFirst("^(?:请)?(?:比较|对比|查询|列举|说明)[，,：:\\s]*", "");
         Matcher end = SUBJECT_END.matcher(withoutDates);
-        return (end.find() ? withoutDates.substring(0, end.start()) : withoutDates)
+        String header = (end.find() ? withoutDates.substring(0, end.start()) : withoutDates)
             .trim().replaceAll("^[，,：:至到及和\\s]+|[，,：:。？?\\s]+$", "");
+        return SUBJECT_TRAILING_ADVERB.matcher(header).replaceAll("").trim();
     }
 
     private static SubjectRequests boundedSubjects(LinkedHashSet<String> subjects, boolean complete, String reason) {
@@ -127,6 +169,24 @@ public record QueryIntent(List<String> subjects, String focusText, boolean graph
     }
 
     public String primarySubject() { return subjects.isEmpty() ? null : subjects.get(0); }
+
+    /**
+     * A relation-list request is still public even though primarySubject only exposes the first name.
+     */
+    public String requestedEntityType() {
+        String text = normalize(focusText);
+        if (text.contains("技能") || text.contains("技术栈") || text.contains("技术技能")) return "SKILL";
+        if (text.contains("竞赛") || text.contains("赛事") || text.contains("子赛")
+            || text.contains("大赛") || text.contains("比赛")) return "COMPETITION";
+        if (text.contains("组织") || text.contains("机构")) return "ORGANIZATION";
+        if (text.contains("帖子") || text.contains("记录") || text.contains("文档")) return "POST";
+        for (String subject : subjects) {
+            String name = normalize(subject);
+            if (name.contains("竞赛") || name.contains("赛事") || name.contains("子赛")
+                || name.contains("大赛") || name.contains("比赛")) return "COMPETITION";
+        }
+        return null;
+    }
 
     public boolean matchesSubject(String name) {
         String candidate = normalize(name);
@@ -151,6 +211,37 @@ public record QueryIntent(List<String> subjects, String focusText, boolean graph
         return !target.isEmpty() && aliasForms(requested).stream().anyMatch(target::equals);
     }
 
+    /**
+     * Returns only entities matched at the strongest alias tier shared by the candidate set.
+     * A lower-tier short name never competes with a unique composite match.
+     */
+    public static List<ExactSubjectMatch> bestExactMatches(
+        String requested, Collection<EvidenceLedger.EntityFact> entities
+    ) {
+        if (entities == null || entities.isEmpty()) return List.of();
+        List<AliasForm> aliases = aliasFormsByStrength(requested);
+        if (aliases.isEmpty()) return List.of();
+        List<ExactSubjectMatch> matches = new ArrayList<>();
+        for (EvidenceLedger.EntityFact entity : entities) {
+            if (entity == null) continue;
+            String candidate = normalize(entity.name());
+            if (candidate.isEmpty()) continue;
+            AliasForm best = null;
+            for (AliasForm alias : aliases) {
+                if (!alias.normalized().equals(candidate)) continue;
+                if (best == null || alias.tier().strength() > best.tier().strength()) best = alias;
+            }
+            if (best != null) matches.add(new ExactSubjectMatch(entity, best.normalized(), best.tier()));
+        }
+        if (matches.isEmpty()) return List.of();
+        int strongest = matches.stream().mapToInt(match -> match.tier().strength()).max().orElse(0);
+        return matches.stream()
+            .filter(match -> match.tier().strength() == strongest)
+            .sorted(Comparator.comparing(match -> match.entity().id(),
+                Comparator.nullsLast(Comparator.naturalOrder())))
+            .toList();
+    }
+
     public String searchQuery(String fallback) {
         if (subjects.isEmpty()) return fallback;
         return String.join(" ", subjects) + (focusText.isBlank() ? "" : " " + focusText);
@@ -171,21 +262,56 @@ public record QueryIntent(List<String> subjects, String focusText, boolean graph
      * 括号同位语与通用中心词不属于名称主体：
      * iLink 平台（Agentic GraphRAG 项目）→ iLink Agentic GraphRAG。
      * 只用于把请求名对齐到已授权实体，不改变原始请求名，便于审计。
+     *
+     * <p>括号外的名称与括号内的名称都单独作为候选：请求 “iLink 平台本身（ilink 实体）”
+     * 指向的就是实体 ilink，而不是 “ilinkilink”。括号只是同名补充说明，
+     * 因此不能只保留拼接形式。
      */
     static List<String> aliasForms(String text) {
+        return aliasFormsByStrength(text).stream().map(AliasForm::normalized).toList();
+    }
+
+    static List<AliasForm> aliasFormsByStrength(String text) {
         String source = text == null ? "" : text;
-        List<String> forms = new ArrayList<>();
-        forms.add(normalize(source));
+        Map<String, AliasTier> forms = new LinkedHashMap<>();
+        addAlias(forms, normalize(source), AliasTier.EXACT_ORIGINAL);
+        addAlias(forms, coreName(normalize(source)), AliasTier.SHORT_CORE);
         Matcher inner = PARENTHETICAL.matcher(source);
         while (inner.find()) {
-            String outer = normalize(source.substring(0, inner.start()));
-            String nested = normalize(inner.group(1));
-            for (String head : GENERIC_HEADS) {
-                if (outer.endsWith(head)) outer = outer.substring(0, outer.length() - head.length());
-                if (nested.endsWith(head)) nested = nested.substring(0, nested.length() - head.length());
-            }
-            if (!outer.isEmpty() && !nested.isEmpty()) forms.add(outer + nested);
+            String outer = coreName(normalize(source.substring(0, inner.start())));
+            String nested = coreName(normalize(inner.group(1)));
+            if (!outer.isEmpty() && !nested.isEmpty()) addAlias(forms, outer + nested, AliasTier.COMPOSITE);
+            addAlias(forms, outer, AliasTier.SHORT_CORE);
+            addAlias(forms, nested, AliasTier.PARENTHETICAL);
         }
-        return forms;
+        return forms.entrySet().stream()
+            .map(entry -> new AliasForm(entry.getKey(), entry.getValue()))
+            .toList();
+    }
+
+    /**
+     * A short core needs at least four normalized characters. Even then it is a low-strength
+     * candidate and cannot outrank a composite or parenthetical alias.
+     */
+    private static void addAlias(Map<String, AliasTier> forms, String alias, AliasTier tier) {
+        if (alias == null || alias.isEmpty()) return;
+        if (tier == AliasTier.SHORT_CORE && alias.length() < 4) return;
+        AliasTier existing = forms.get(alias);
+        if (existing == null || tier.strength() > existing.strength()) forms.put(alias, tier);
+    }
+
+    /** 去掉通用中心词、自我指代与类型后缀，只留下名称本身；后缀可叠加，所以反复剥离。 */
+    private static String coreName(String value) {
+        String core = value;
+        for (boolean changed = true; changed; ) {
+            changed = false;
+            for (String suffix : CORE_SUFFIXES) {
+                if (core.length() > suffix.length() && core.endsWith(suffix)) {
+                    core = core.substring(0, core.length() - suffix.length());
+                    changed = true;
+                }
+            }
+        }
+        return core;
     }
 }

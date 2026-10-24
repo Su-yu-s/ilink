@@ -29,6 +29,8 @@ public class TeamTask {
     private Date createdAt;
     private Date updatedAt;
     private Date completedAt;
+    /** 乐观锁版本；所有任务写入都以旧版本为条件。 */
+    private Integer version;
 
     public enum TaskStatus {
         PENDING("待处理"),

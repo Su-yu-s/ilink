@@ -159,6 +159,7 @@ class DefectReproTest {
             mock(cn.ilink.service.TeamMembershipService.class);
         TeamController controller = new TeamController(
             teamDemandService,
+            mock(cn.ilink.mapper.TeamDemandMapper.class),
             teamApplicationService,
             mock(UserService.class),
             mock(NotificationService.class),
@@ -167,7 +168,10 @@ class DefectReproTest {
             membershipService,
             mock(cn.ilink.service.TeamInviteService.class),
             mock(cn.ilink.service.impl.CompetitionServiceImpl.class),
-            mock(cn.ilink.service.TeamLibraryService.class));
+            mock(cn.ilink.service.TeamLibraryService.class),
+            mock(cn.ilink.teamagent.TeamAgentLifecycleService.class),
+            mock(cn.ilink.service.TeamAgentDataCleanupService.class),
+            mock(cn.ilink.collab.TeamCollaborationCleanupService.class));
 
         TeamDemand team = new TeamDemand();
         team.setId(9L);

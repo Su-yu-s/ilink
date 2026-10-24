@@ -5,6 +5,7 @@ import cn.ilink.entity.KgDocumentChunk;
 import cn.ilink.entity.KgEntity;
 import cn.ilink.entity.KgIndexTask;
 import cn.ilink.mapper.KgDocumentChunkMapper;
+import cn.ilink.mapper.KgIndexTaskMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,14 +33,23 @@ public class KgDocumentChunkService {
     private final KgEmbeddingService embeddings;
     private final KgScopeService scopeService;
     private final AiEmbeddingProperties properties;
+    private final KgIndexTaskMapper indexTaskMapper;
 
     @Autowired
     public KgDocumentChunkService(KgDocumentChunkMapper mapper, KgEmbeddingService embeddings,
-                                  KgScopeService scopeService, AiEmbeddingProperties properties) {
+                                  KgScopeService scopeService, AiEmbeddingProperties properties,
+                                  KgIndexTaskMapper indexTaskMapper) {
         this.mapper = mapper;
         this.embeddings = embeddings;
         this.scopeService = scopeService;
         this.properties = properties;
+        this.indexTaskMapper = indexTaskMapper;
+    }
+
+    /** Compatibility constructor for isolated retrieval/chunk tests. */
+    KgDocumentChunkService(KgDocumentChunkMapper mapper, KgEmbeddingService embeddings,
+                           KgScopeService scopeService, AiEmbeddingProperties properties) {
+        this(mapper, embeddings, scopeService, properties, null);
     }
 
     public static List<KgDocumentChunk> split(KgIndexTask task) {
@@ -79,6 +89,7 @@ public class KgDocumentChunkService {
     /** Replace all chunks from one document; textual evidence survives embedding outages. */
     @Transactional
     public void index(KgIndexTask task) {
+        assertWriteFence(task);
         List<KgDocumentChunk> desired = split(task);
         List<KgDocumentChunk> current = listIndexedByDocument(task);
         if (sameSource(current, desired)) {
@@ -98,6 +109,38 @@ public class KgDocumentChunkService {
                     chunk.getDocType(), chunk.getDocId(), chunk.getOrdinalNo());
             }
             mapper.insert(chunk);
+        }
+    }
+
+    /** Remove every indexed slice belonging to a deleted source document. */
+    @Transactional
+    public int deleteByDocument(KgIndexTask task) {
+        if (task == null) return 0;
+        assertWriteFence(task);
+        return mapper.delete(new QueryWrapper<KgDocumentChunk>()
+            .eq("doc_type", task.getDocType())
+            .eq("doc_id", task.getDocId()));
+    }
+
+    /**
+     * Lock the queue row for the duration of the chunk publication. A newer
+     * enqueue either commits first (making this fence fail) or waits until the
+     * current publication commits and then schedules a fresh revision.
+     */
+    private void assertWriteFence(KgIndexTask task) {
+        if (task == null || task.getLeaseToken() == null || task.getLeaseToken().isBlank()
+            || indexTaskMapper == null) {
+            return;
+        }
+        KgIndexTask current = indexTaskMapper.selectByIdForUpdate(task.getId());
+        if (current == null
+            || !KgIndexTask.RUNNING.equals(current.getStatus())
+            || !java.util.Objects.equals(task.getLeaseToken(), current.getLeaseToken())
+            || !java.util.Objects.equals(task.getLeaseOwner(), current.getLeaseOwner())
+            || !java.util.Objects.equals(
+                task.getRequestedRevision() == null ? 0L : task.getRequestedRevision(),
+                current.getRequestedRevision() == null ? 0L : current.getRequestedRevision())) {
+            throw new IllegalStateException("KG_INDEX_LEASE_LOST");
         }
     }
 
@@ -141,7 +184,7 @@ public class KgDocumentChunkService {
         int limit = Math.max(1, Math.min(20, k));
         List<KgDocumentChunk> visible = new ArrayList<>();
         for (KgDocumentChunk row : mapper.selectList(visibleQuery(userId))) {
-            if (scopeService.canSee(row.getScope(), row.getTeamId(), row.getUserId(), userId)) {
+            if (scopeService.canSeeChunk(row, userId)) {
                 visible.add(row);
             }
         }
@@ -210,7 +253,7 @@ public class KgDocumentChunkService {
         List<KgDocumentChunk> rows = mapper.selectList(visibleQuery(userId)
             .eq("doc_type", docType).eq("doc_id", docId).orderByAsc("ordinal_no"));
         return rows.stream().filter(row ->
-            scopeService.canSee(row.getScope(), row.getTeamId(), row.getUserId(), userId)).toList();
+            scopeService.canSeeChunk(row, userId)).toList();
     }
 
     private QueryWrapper<KgDocumentChunk> visibleQuery(Long userId) {

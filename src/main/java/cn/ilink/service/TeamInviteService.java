@@ -2,14 +2,15 @@ package cn.ilink.service;
 
 import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.TeamDemand;
-import cn.ilink.entity.TeamTask;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.TeamApplicationMapper;
 import cn.ilink.mapper.TeamDemandMapper;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
+import cn.ilink.teamagent.TeamAgentLifecycleService;
+import cn.ilink.teamagent.TeamTaskCommandService;
+import cn.ilink.teamagent.TeamTaskCommands;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,26 +42,33 @@ public class TeamInviteService {
     private final TeamApplicationMapper teamApplicationMapper;
     private final TeamDemandMapper teamDemandMapper;
     private final TeamMembershipService membershipService;
-    private final TeamTaskService teamTaskService;
+    private final TeamTaskCommandService teamTaskCommandService;
+    private final TeamAgentLifecycleService teamAgentLifecycleService;
     private final NotificationService notificationService;
     private final UserService userService;
+    private final cn.ilink.collab.TeamCollaborationCleanupService collaborationCleanupService;
 
     public TeamInviteService(TeamDemandServiceImpl teamDemandService,
                              TeamApplicationServiceImpl teamApplicationService,
                              TeamApplicationMapper teamApplicationMapper,
                              TeamDemandMapper teamDemandMapper,
                              TeamMembershipService membershipService,
-                             TeamTaskService teamTaskService,
+                             TeamTaskCommandService teamTaskCommandService,
+                             TeamAgentLifecycleService teamAgentLifecycleService,
                              NotificationService notificationService,
-                             UserService userService) {
+                             UserService userService,
+                             cn.ilink.collab.TeamCollaborationCleanupService
+                                 collaborationCleanupService) {
         this.teamDemandService = teamDemandService;
         this.teamApplicationService = teamApplicationService;
         this.teamApplicationMapper = teamApplicationMapper;
         this.teamDemandMapper = teamDemandMapper;
         this.membershipService = membershipService;
-        this.teamTaskService = teamTaskService;
+        this.teamTaskCommandService = teamTaskCommandService;
+        this.teamAgentLifecycleService = teamAgentLifecycleService;
         this.notificationService = notificationService;
         this.userService = userService;
+        this.collaborationCleanupService = collaborationCleanupService;
     }
 
     /** 单个用户的邀请结果 */
@@ -198,7 +206,7 @@ public class TeamInviteService {
     /** 移除成员；传入本人即为主动退出。 */
     @Transactional(rollbackFor = Exception.class)
     public void removeMember(Long teamId, Long operatorId, Long targetUserId) {
-        TeamDemand team = requireTeam(teamId);
+        TeamDemand team = requireTeamForUpdate(teamId);
         boolean self = Objects.equals(operatorId, targetUserId);
         if (self && TeamMembershipService.isOwner(team, operatorId)) {
             throw new TeamMembershipException(400, "你是团队创建者，请先转让创建者或解散团队");
@@ -217,17 +225,11 @@ public class TeamInviteService {
         if (teamApplicationMapper.updateById(row) != 1) {
             throw new IllegalStateException("成员状态更新失败");
         }
-        // 人走了，未完成的任务不能还挂在他名下。
-        // 这里用字符串列名的 UpdateWrapper：方法级 lambda（TeamTask::getXxx）需要 MyBatis 的
-        // TableInfo 缓存，单测里没有完整上下文会直接抛异常，写成列名才能被单测覆盖。
-        teamTaskService.update(new UpdateWrapper<TeamTask>()
-            .eq("team_id", teamId)
-            .eq("assigned_to", targetUserId)
-            .set("assigned_to", null)
-            .set("updated_at", new Date()));
-        // 修复 D-P2-3：同步清掉其 task_participant 行，否则 canAccessTask 仍会放行
-        // 已离开的成员查看任务、发评论（仅有 submit 会因 assigned_to 为空被 403）
-        teamTaskService.removeParticipantFromTeamTasks(teamId, targetUserId);
+        collaborationCleanupService.revokeMemberAccess(teamId, targetUserId);
+        teamAgentLifecycleService.onMemberAccessRevoked(teamId, targetUserId,
+            self ? "成员已退出团队" : "成员已被移出团队");
+        teamTaskCommandService.releaseMemberTasks(new TeamTaskCommands.ReleaseMemberTasks(
+            teamId, operatorId, targetUserId, self ? "LEAVE" : "REMOVE", null));
 
         if (!self) {
             notificationService.create(targetUserId, operatorId, "TEAM_MEMBER_REMOVED", "已离开团队",
@@ -263,6 +265,14 @@ public class TeamInviteService {
 
     private TeamDemand requireTeam(Long teamId) {
         TeamDemand team = teamId == null ? null : teamDemandService.getById(teamId);
+        if (team == null) {
+            throw new TeamMembershipException(404, "团队不存在");
+        }
+        return team;
+    }
+
+    private TeamDemand requireTeamForUpdate(Long teamId) {
+        TeamDemand team = teamId == null ? null : teamDemandMapper.selectByIdForUpdate(teamId);
         if (team == null) {
             throw new TeamMembershipException(404, "团队不存在");
         }

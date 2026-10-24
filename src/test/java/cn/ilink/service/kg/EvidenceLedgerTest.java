@@ -37,6 +37,9 @@ class EvidenceLedgerTest {
             KgEntity.SCOPE_GLOBAL.equals(((KgEntity) inv.getArgument(0)).getScope()));
         when(scopes.canSee(any(), any(), any(), any())).thenAnswer(inv ->
             KgEntity.SCOPE_GLOBAL.equals(inv.getArgument(0)));
+        when(scopes.canSeeChunk(any(KgDocumentChunk.class), any())).thenAnswer(inv ->
+            KgEntity.SCOPE_GLOBAL.equals(
+                ((KgDocumentChunk) inv.getArgument(0)).getScope()));
 
         when(entities.selectById(42L)).thenReturn(entity(42, "LitePT 论文", "POST"));
         when(entities.selectById(43L)).thenReturn(entity(43, "点云", "SKILL"));

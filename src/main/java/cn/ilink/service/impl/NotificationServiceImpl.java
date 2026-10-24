@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -115,12 +117,7 @@ public class NotificationServiceImpl implements NotificationService {
         n.setCreatedAt(new Date());
         boolean inserted = notificationMapper.insert(n) > 0;
         if (inserted) {
-            // 写入后实时推送通知和未读数
-            CacheEvictUtils.evictUnreadCount(dto.getUserId());
-            NotificationVO vo = convertToVO(Collections.singletonList(n)).get(0);
-            notificationPushService.sendNotification(dto.getUserId(), vo);
-            int unreadCount = getUnreadCount(dto.getUserId());
-            notificationPushService.sendUnreadCount(dto.getUserId(), unreadCount);
+            pushAfterCommit(n);
         }
         return inserted;
     }
@@ -184,11 +181,7 @@ public class NotificationServiceImpl implements NotificationService {
         n.setCreatedAt(new Date());
         notificationMapper.insert(n);
 
-        // 写入后立即推送通知和未读数变更
-        CacheEvictUtils.evictUnreadCount(userId);
-        NotificationVO vo = convertToVO(Collections.singletonList(n)).get(0);
-        notificationPushService.sendNotification(userId, vo);
-        notificationPushService.sendUnreadCount(userId, getUnreadCount(userId));
+        pushAfterCommit(n);
     }
 
     @Override
@@ -229,6 +222,34 @@ public class NotificationServiceImpl implements NotificationService {
             return value;
         }
         return value.substring(0, max);
+    }
+
+    /**
+     * Database writes are the source of truth. WebSocket delivery must never
+     * make a rolled-back notification observable, so an active transaction
+     * defers both notification and unread-count pushes until commit.
+     */
+    private void pushAfterCommit(Notification notification) {
+        Runnable push = () -> {
+            Long userId = notification.getUserId();
+            if (userId == null) return;
+            CacheEvictUtils.evictUnreadCount(userId);
+            NotificationVO vo = convertToVO(Collections.singletonList(notification)).get(0);
+            notificationPushService.sendNotification(userId, vo);
+            notificationPushService.sendUnreadCount(userId, getUnreadCount(userId));
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+            && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        push.run();
+                    }
+                });
+        } else {
+            push.run();
+        }
     }
 
     private List<NotificationVO> convertToVO(List<Notification> notifications) {        List<NotificationVO> vos = notifications.stream().map(n -> {

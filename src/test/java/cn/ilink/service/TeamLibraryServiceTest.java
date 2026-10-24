@@ -34,6 +34,9 @@ class TeamLibraryServiceTest {
     @Mock
     private TeamLibraryFileMapper libraryFileMapper;
 
+    @Mock
+    private cn.ilink.collab.TeamCollaborationIndexBridge collaborationIndexBridge;
+
     @InjectMocks
     private TeamLibraryService libraryService;
 
@@ -116,5 +119,79 @@ class TeamLibraryServiceTest {
             () -> libraryService.move(50L, 7L, false, null));
         assertEquals("只有文件上传者或队长可以执行此操作", error.getMessage());
         verify(libraryFileMapper, never()).update(any(), any());
+    }
+
+    private static TeamLibraryFile indexedNode(Long id, String name, String indexStatus) {
+        TeamLibraryFile file = node(id, null, name, false, 7L);
+        file.setFileUrl("/uploads/library/" + name);
+        file.setIndexStatus(indexStatus);
+        file.setContentRevision(3L);
+        return file;
+    }
+
+    @Test
+    void failedIndexCanBeRetriedByUploader() {
+        TeamLibraryFile file = indexedNode(60L, "方案.pdf", TeamLibraryFile.INDEX_FAILED);
+        when(libraryFileMapper.selectById(60L)).thenReturn(file);
+
+        libraryService.reindex(60L, 7L, false);
+
+        verify(collaborationIndexBridge).enqueueUpsert(file);
+    }
+
+    @Test
+    void skippedAndStaleIndexAreAlsoRetryable() {
+        TeamLibraryFile skipped = indexedNode(61L, "扫描件.tiff", TeamLibraryFile.INDEX_SKIPPED);
+        TeamLibraryFile stale = indexedNode(62L, "旧表格.xlsx", TeamLibraryFile.INDEX_STALE);
+        when(libraryFileMapper.selectById(61L)).thenReturn(skipped);
+        when(libraryFileMapper.selectById(62L)).thenReturn(stale);
+
+        libraryService.reindex(61L, 7L, true);
+        libraryService.reindex(62L, 7L, true);
+
+        verify(collaborationIndexBridge).enqueueUpsert(skipped);
+        verify(collaborationIndexBridge).enqueueUpsert(stale);
+    }
+
+    @Test
+    void retryingWhileIndexIsQueuedOrRunningIsRejected() {
+        for (String status : new String[]{TeamLibraryFile.INDEX_PENDING, TeamLibraryFile.INDEX_INDEXING}) {
+            TeamLibraryFile file = indexedNode(63L, "方案.pdf", status);
+            when(libraryFileMapper.selectById(63L)).thenReturn(file);
+
+            IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> libraryService.reindex(63L, 7L, false));
+            assertEquals("索引正在进行中，请稍后查看结果", error.getMessage());
+        }
+        verify(collaborationIndexBridge, never()).enqueueUpsert(any());
+    }
+
+    @Test
+    void folderAndTrashedFileCannotBeReindexed() {
+        TeamLibraryFile folder = node(64L, null, "竞赛", true, 7L);
+        when(libraryFileMapper.selectById(64L)).thenReturn(folder);
+        IllegalArgumentException folderError = assertThrows(IllegalArgumentException.class,
+            () -> libraryService.reindex(64L, 7L, false));
+        assertEquals("文件夹不需要建立检索索引", folderError.getMessage());
+
+        TeamLibraryFile trashed = indexedNode(65L, "回收.pdf", TeamLibraryFile.INDEX_FAILED);
+        trashed.setIsDeleted(true);
+        when(libraryFileMapper.selectById(65L)).thenReturn(trashed);
+        IllegalArgumentException trashError = assertThrows(IllegalArgumentException.class,
+            () -> libraryService.reindex(65L, 7L, false));
+        assertEquals("回收站中的文件需要先从回收站恢复", trashError.getMessage());
+
+        verify(collaborationIndexBridge, never()).enqueueUpsert(any());
+    }
+
+    @Test
+    void memberCannotReindexOthersFile() {
+        when(libraryFileMapper.selectById(66L))
+            .thenReturn(indexedNode(66L, "他人文件.pdf", TeamLibraryFile.INDEX_FAILED));
+
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+            () -> libraryService.reindex(66L, 8L, false));
+        assertEquals("只有文件上传者或队长可以执行此操作", error.getMessage());
+        verify(collaborationIndexBridge, never()).enqueueUpsert(any());
     }
 }

@@ -76,7 +76,8 @@ class SubjectScopeLedgerTest {
             List.of(relation(10, 1, 2, "PART_OF")));
         when(ledger.completeRelations("expand_neighbors", 1L)).thenReturn(true);
         when(ledger.completeRelations("expand_neighbors", 2L)).thenReturn(true);
-        GraphAnswerScope.Scope scope = GraphAnswerScope.describe(QUESTION, ledger);
+        GraphAnswerScope.Scope scope = GraphAnswerScope.describe(
+            "知识图谱里，" + PARENT + "与" + CHILD + "有哪些关系？", ledger);
         assertEquals(2, scope.candidateCount());
         assertEquals(2, scope.shownCount());
         assertEquals(java.util.Set.of(10L), scope.relationIds());

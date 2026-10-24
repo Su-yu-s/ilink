@@ -5,6 +5,9 @@ import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.TeamApplicationMapper;
 import cn.ilink.mapper.TeamDemandMapper;
+import cn.ilink.teamagent.TeamAgentLifecycleService;
+import cn.ilink.teamagent.TeamTaskCommandService;
+import cn.ilink.teamagent.TeamTaskCommands;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,9 +37,11 @@ class TeamOwnershipServiceTest {
     private TeamDemandMapper teamDemandMapper;
     private TeamApplicationMapper teamApplicationMapper;
     private TeamMembershipService membershipService;
-    private TeamTaskService teamTaskService;
+    private TeamTaskCommandService teamTaskCommandService;
+    private TeamAgentLifecycleService teamAgentLifecycleService;
     private NotificationService notificationService;
     private UserService userService;
+    private cn.ilink.collab.TeamCollaborationCleanupService collaborationCleanupService;
     private TeamOwnershipService service;
 
     @BeforeEach
@@ -43,11 +49,15 @@ class TeamOwnershipServiceTest {
         teamDemandMapper = mock(TeamDemandMapper.class);
         teamApplicationMapper = mock(TeamApplicationMapper.class);
         membershipService = mock(TeamMembershipService.class);
-        teamTaskService = mock(TeamTaskService.class);
+        teamTaskCommandService = mock(TeamTaskCommandService.class);
+        teamAgentLifecycleService = mock(TeamAgentLifecycleService.class);
         notificationService = mock(NotificationService.class);
         userService = mock(UserService.class);
+        collaborationCleanupService =
+            mock(cn.ilink.collab.TeamCollaborationCleanupService.class);
         service = new TeamOwnershipService(teamDemandMapper, teamApplicationMapper, membershipService,
-            teamTaskService, notificationService, userService);
+            teamTaskCommandService, teamAgentLifecycleService, notificationService, userService,
+            collaborationCleanupService);
 
         when(teamDemandMapper.selectByIdForUpdate(TEAM_ID)).thenReturn(team("OPEN"));
         when(teamDemandMapper.update(any(), any())).thenReturn(1);
@@ -155,7 +165,13 @@ class TeamOwnershipServiceTest {
         // 软删：只改状态，协作历史（任务/群聊/里程碑）全部保留
         verify(teamDemandMapper, never()).deleteById(anyLong());
         verify(teamApplicationMapper).update(any(), any());
-        verify(teamTaskService).update(any());
+        verify(teamTaskCommandService).cancelOpenTasksForDissolution(
+            any(TeamTaskCommands.CancelOpenTasksForDissolution.class));
+        verify(collaborationCleanupService).invalidateTeamLeases(TEAM_ID);
+        org.mockito.InOrder order = inOrder(teamTaskCommandService, teamDemandMapper);
+        order.verify(teamTaskCommandService).cancelOpenTasksForDissolution(
+            any(TeamTaskCommands.CancelOpenTasksForDissolution.class));
+        order.verify(teamDemandMapper).update(any(), any());
         verify(notificationService).create(eq(MEMBER_ID), eq(OWNER_ID), eq("TEAM_DISSOLVED"),
             any(String.class), any(String.class), eq(TEAM_ID));
         // 待确认的邀请要作废，不能再有人点到「同意加入」

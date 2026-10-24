@@ -1,5 +1,6 @@
 package cn.ilink.service;
 
+import cn.ilink.collab.TeamCollaborationIndexBridge;
 import cn.ilink.entity.TaskSubmission;
 import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.TeamLibraryFile;
@@ -57,6 +58,9 @@ public class TeamLibraryService {
     /** 彻底删除资料库文件时同步清理磁盘上的物理文件，避免只抹库、文件留在 uploads 里 */
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private TeamCollaborationIndexBridge collaborationIndexBridge;
 
     /** 上传文件的访问前缀，用于校验资料库登记的文件地址确实来自本站上传 */
     @org.springframework.beans.factory.annotation.Value("${file.access-url-prefix:/uploads/}")
@@ -237,6 +241,7 @@ public class TeamLibraryService {
         file.setIsPurged(false);
         file.setCreatedAt(new Date());
         libraryFileMapper.insert(file);
+        enqueueIndexUpsert(file);
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("conflict", false);
         result.put("file", toNode(file, uploadersOf(teamId, Set.of(userId))));
@@ -277,6 +282,7 @@ public class TeamLibraryService {
         }
         libraryFileMapper.updateById(update);
         file.setName(trimmed);
+        enqueueIndexUpsert(file);
         return file;
     }
 
@@ -304,6 +310,29 @@ public class TeamLibraryService {
         libraryFileMapper.update(null, new LambdaUpdateWrapper<TeamLibraryFile>()
             .eq(TeamLibraryFile::getId, fileId)
             .set(TeamLibraryFile::getParentId, targetParentId));
+        file.setParentId(targetParentId);
+        enqueueIndexUpsert(file);
+    }
+
+    /**
+     * 重新建立检索索引（上传者或队长）：索引失败、已失效或被跳过的文件可重试。
+     * 排队中的文件不重复入队，避免一次点击产生两条队列任务。
+     */
+    public void reindex(Long fileId, Long userId, boolean isLeader) {
+        TeamLibraryFile file = requireFile(fileId);
+        requireManagePermission(file, userId, isLeader);
+        if (Boolean.TRUE.equals(file.getIsFolder())) {
+            throw new IllegalArgumentException("文件夹不需要建立检索索引");
+        }
+        if (Boolean.TRUE.equals(file.getIsDeleted())) {
+            throw new IllegalArgumentException("回收站中的文件需要先从回收站恢复");
+        }
+        String status = file.getIndexStatus();
+        if (TeamLibraryFile.INDEX_PENDING.equals(status)
+            || TeamLibraryFile.INDEX_INDEXING.equals(status)) {
+            throw new IllegalArgumentException("索引正在进行中，请稍后查看结果");
+        }
+        enqueueIndexUpsert(file);
     }
 
     /** 目标目录不能是被移动文件夹自身或它的子孙，否则树会成环 */
@@ -352,6 +381,7 @@ public class TeamLibraryService {
         update.setDeletedAt(new Date());
         update.setDeletedBy(userId);
         libraryFileMapper.updateById(update);
+        enqueueIndexDelete(file);
     }
 
     /** 恢复（仅队长）：恢复节点及其所有已删除的祖先，保证树路径完整 */
@@ -385,12 +415,13 @@ public class TeamLibraryService {
     }
 
     private void markRestored(Long fileId) {
-        TeamLibraryFile update = new TeamLibraryFile();
-        update.setId(fileId);
-        update.setIsDeleted(false);
-        update.setDeletedAt(null);
-        update.setDeletedBy(null);
-        libraryFileMapper.updateById(update);
+        libraryFileMapper.update(null, new LambdaUpdateWrapper<TeamLibraryFile>()
+            .eq(TeamLibraryFile::getId, fileId)
+            .set(TeamLibraryFile::getIsDeleted, false)
+            .set(TeamLibraryFile::getDeletedAt, null)
+            .set(TeamLibraryFile::getDeletedBy, null));
+        TeamLibraryFile restored = libraryFileMapper.selectById(fileId);
+        enqueueIndexUpsert(restored);
     }
 
     /** 彻底删除（仅队长，不可逆）：文件夹级联；抹去 file_url 使记录不可再访问 */
@@ -414,6 +445,7 @@ public class TeamLibraryService {
         // 否则库记录消失但 uploads 里永久留档（历史实现只抹了 file_url，文件仍在）。
         if (!Boolean.TRUE.equals(file.getIsFolder())) {
             deletePhysicalFile(file.getFileUrl());
+            enqueueIndexDelete(file);
         }
         TeamLibraryFile update = new TeamLibraryFile();
         update.setId(file.getId());
@@ -533,6 +565,7 @@ public class TeamLibraryService {
         for (TeamLibraryFile file : files) {
             if (!Boolean.TRUE.equals(file.getIsFolder())) {
                 deletePhysicalFile(file.getFileUrl());
+                enqueueIndexDelete(file);
             }
         }
         return libraryFileMapper.delete(new LambdaQueryWrapper<TeamLibraryFile>()
@@ -636,6 +669,7 @@ public class TeamLibraryService {
         node.put("id", file.getId());
         node.put("parentId", file.getParentId());
         node.put("name", file.getName());
+        node.put("originalFileName", file.getOriginalFileName());
         node.put("isFolder", Boolean.TRUE.equals(file.getIsFolder()));
         node.put("fileType", file.getFileType());
         node.put("fileSize", file.getFileSize());
@@ -647,8 +681,30 @@ public class TeamLibraryService {
             : "未知成员");
         node.put("isMentor", isMentorUploader(file));
         node.put("createdAt", file.getCreatedAt());
+        node.put("contentRevision", file.getContentRevision());
+        node.put("indexStatus", file.getIndexStatus());
+        node.put("indexError", file.getIndexError());
+        node.put("indexedAt", file.getIndexedAt());
         node.put("children", new ArrayList<Map<String, Object>>());
         return node;
+    }
+
+    private void enqueueIndexUpsert(TeamLibraryFile file) {
+        try {
+            collaborationIndexBridge.enqueueUpsert(file);
+        } catch (Exception e) {
+            log.warn("团队资料索引入队失败（不影响文件操作） fileId={}: {}",
+                file == null ? null : file.getId(), e.getMessage());
+        }
+    }
+
+    private void enqueueIndexDelete(TeamLibraryFile file) {
+        try {
+            collaborationIndexBridge.enqueueDelete(file);
+        } catch (Exception e) {
+            log.warn("团队资料索引删除登记失败（不影响文件操作） fileId={}: {}",
+                file == null ? null : file.getId(), e.getMessage());
+        }
     }
 
     /** 导师标签：上传者是团队的 MENTOR 成员（只做展示，不参与权限） */

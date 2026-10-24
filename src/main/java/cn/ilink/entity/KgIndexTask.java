@@ -27,6 +27,14 @@ public class KgIndexTask {
     private String scope;
     private Long teamId;
     private Long userId;
+    private Long requestedRevision;
+    private Long processedRevision;
+    private String sourceHash;
+    private String operation;
+    private Date availableAt;
+    private String leaseOwner;
+    private String leaseToken;
+    private Date leaseUntil;
     private Date createdAt;
     private Date updatedAt;
     private Date finishedAt;
@@ -35,4 +43,7 @@ public class KgIndexTask {
     public static final String RUNNING = "RUNNING";
     public static final String DONE = "DONE";
     public static final String FAILED = "FAILED";
+
+    public static final String OPERATION_UPSERT = "UPSERT";
+    public static final String OPERATION_DELETE = "DELETE";
 }

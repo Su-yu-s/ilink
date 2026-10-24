@@ -89,8 +89,7 @@ public class GetDocumentTool extends AbstractGraphTool {
                 if (chunks.size() >= 8) {
                     break;
                 }
-                if (!scopeService.canSee(chunk.getScope(), chunk.getTeamId(),
-                    chunk.getUserId(), userId)) {
+                if (!scopeService.canSeeChunk(chunk, userId)) {
                     continue;
                 }
                 Map<String, Object> text = new LinkedHashMap<>();

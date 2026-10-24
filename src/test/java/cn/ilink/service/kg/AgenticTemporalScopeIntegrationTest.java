@@ -1,12 +1,20 @@
 package cn.ilink.service.kg;
 
+import cn.ilink.entity.KgEntity;
+import cn.ilink.entity.KgRelation;
 import cn.ilink.mapper.KgAgentTraceMapper;
+import cn.ilink.mapper.KgDocumentChunkMapper;
+import cn.ilink.mapper.KgEntityMapper;
+import cn.ilink.mapper.KgRelationMapper;
 import cn.ilink.service.ai.AiClient;
 import cn.ilink.service.kg.tool.GraphTool;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -31,7 +40,8 @@ class AgenticTemporalScopeIntegrationTest {
     void completeWindowWithShortDocumentTitleIsConditionalAndMakesNoChatRequest() {
         AiClient ai = mock(AiClient.class);
         var answer = service(ledger(TITLE, true, true), ai).query(question(SHORT_TITLE), 8L);
-        assertTrue(answer.answer.contains("若你指的是《" + TITLE + "》"));
+        assertTrue(answer.answer.contains("若你指的是《" + TITLE + "》"),
+            "answer=" + answer.answer + " trace=" + answer.trace);
         assertFalse(answer.answer.contains("仅覆盖本次可核对部分"));
         assertTrue(answer.answer.contains("r#10"));
         assertEquals("CONDITIONAL", last(answer, "answerCoverage"));
@@ -48,7 +58,8 @@ class AgenticTemporalScopeIntegrationTest {
     void truncatedWindowKeepsPartialWarningEvenWithDocumentTitleEvidence() {
         AiClient ai = mock(AiClient.class);
         var answer = service(ledger(TITLE, false, true), ai).query(question(SHORT_TITLE), 8L);
-        assertTrue(answer.answer.contains("仅覆盖本次可核对部分"));
+        assertTrue(answer.answer.contains("仅覆盖本次可核对部分"),
+            "answer=" + answer.answer + " trace=" + answer.trace);
         assertEquals("PARTIAL", last(answer, "answerCoverage"));
         assertEquals(false, ((Map<?, ?>) last(answer, "temporalAnswerScope")).get("resolvedWindowComplete"));
         verifyNoInteractions(ai);
@@ -72,6 +83,73 @@ class AgenticTemporalScopeIntegrationTest {
         assertTrue(answer.answer.contains("没有符合所问条件的竞赛关联"));
         assertEquals("COMPLETE", last(answer, "answerCoverage"));
         assertEquals(true, ((Map<?, ?>) last(answer, "temporalAnswerScope")).get("requestedScopeComplete"));
+        verifyNoInteractions(ai);
+    }
+
+    @Test
+    void recordGroupsWithIncompleteMemberWindowsReturnVerifiedPartialAnswerWithCitations() {
+        String query = "2026 年 3 月 25 日以后，团队空间与视觉重构相关记录还关联着哪些竞赛？";
+        EvidenceLedger ledger = temporalGroupLedger();
+        AiClient ai = mock(AiClient.class);
+
+        var answer = new AgenticGraphRagService(mock(GraphRagService.class),
+            mock(KgAgentTraceMapper.class), ai, List.of(
+                searchTool(List.of(
+                    new EvidenceLedger.EntityFact(1725L, "iLink 团队空间模块开发成果", "POST", ""),
+                    new EvidenceLedger.EntityFact(1965L, "Link 团队空间模块", "POST", ""),
+                    new EvidenceLedger.EntityFact(1735L, "前端页面视觉重构升级报告", "POST", ""),
+                    new EvidenceLedger.EntityFact(1973L, "挑战杯全国大学生课外学术科技作品竞赛",
+                        "COMPETITION", ""))),
+                temporalTool(true)),
+            factory(ledger)).query(query, 8L);
+
+        assertTrue(answer.answer.contains("挑战杯全国大学生课外学术科技作品竞赛"),
+            "answer=" + answer.answer + " trace=" + answer.trace + " citations=" + answer.citations);
+        assertTrue(answer.answer.contains("尚未完成所问时间窗查询"), answer.answer);
+        assertTrue(answer.answer.contains("Link 团队空间模块（#1965）"), answer.answer);
+        assertFalse(answer.answer.contains("iLink 团队空间模块开发成果（#1725）"),
+            answer.answer);
+        assertFalse(answer.answer.contains("前端页面视觉重构升级报告（#1735）"),
+            answer.answer);
+        for (long relationId : List.of(10L, 12L)) {
+            assertTrue(answer.citations.stream().anyMatch(citation ->
+                Long.valueOf(relationId).equals(citation.get("relationId"))),
+                "missing r#" + relationId + " citations=" + answer.citations);
+        }
+        assertEquals("PARTIAL", last(answer, "answerCoverage"));
+        assertEquals("TEMPORAL_RECORD_MEMBERS_INCOMPLETE", last(answer, "coverageReason"));
+        assertFalse("COMPLETE".equals(last(answer, "answerCoverage")));
+        verifyNoInteractions(ai);
+    }
+
+    @Test
+    void recordGroupsWithEveryMemberWindowCompleteCanReturnCompleteAnswer() {
+        String query = "2026 年 3 月 25 日以后，团队空间与视觉重构相关记录还关联着哪些竞赛？";
+        EvidenceLedger ledger = temporalGroupLedger();
+        AiClient ai = mock(AiClient.class);
+
+        var answer = new AgenticGraphRagService(mock(GraphRagService.class),
+            mock(KgAgentTraceMapper.class), ai, List.of(
+                searchTool(List.of(
+                    new EvidenceLedger.EntityFact(1725L, "iLink 团队空间模块开发成果", "POST", ""),
+                    new EvidenceLedger.EntityFact(1965L, "Link 团队空间模块", "POST", ""),
+                    new EvidenceLedger.EntityFact(1735L, "前端页面视觉重构升级报告", "POST", ""),
+                    new EvidenceLedger.EntityFact(1973L, "挑战杯全国大学生课外学术科技作品竞赛",
+                        "COMPETITION", ""))),
+                temporalTool(false)),
+            factory(ledger)).query(query, 8L);
+
+        assertTrue(answer.answer.contains("挑战杯全国大学生课外学术科技作品竞赛"),
+            "answer=" + answer.answer + " trace=" + answer.trace + " citations=" + answer.citations);
+        assertEquals("COMPLETE", last(answer, "answerCoverage"));
+        assertEquals("AUTHORIZED_RECORD_GROUPS", last(answer, "coverageReason"));
+        assertFalse(answer.answer.contains("本次授权查询范围内没有已确认的正向匹配"),
+            answer.answer);
+        for (long relationId : List.of(10L, 11L, 12L)) {
+            assertTrue(answer.citations.stream().anyMatch(citation ->
+                Long.valueOf(relationId).equals(citation.get("relationId"))),
+                "missing r#" + relationId + " citations=" + answer.citations);
+        }
         verifyNoInteractions(ai);
     }
 
@@ -179,6 +257,106 @@ class AgenticTemporalScopeIntegrationTest {
         };
         return new AgenticGraphRagService(mock(GraphRagService.class), mock(KgAgentTraceMapper.class),
             ai, List.of(temporal), factory);
+    }
+
+    private static EvidenceLedgerFactory factory(EvidenceLedger ledger) {
+        EvidenceLedgerFactory factory = mock(EvidenceLedgerFactory.class);
+        when(factory.create()).thenReturn(ledger);
+        return factory;
+    }
+
+    private static GraphTool searchTool(List<EvidenceLedger.EntityFact> entities) {
+        return new GraphTool() {
+            public String getName() { return "search_entities"; }
+            public String getDescription() { return "temporal group fixture"; }
+            public String getParametersSchema() { return "{}"; }
+            public Object execute(Map<String, Object> params, Long userId) {
+                List<Map<String, Object>> rows = entities.stream()
+                    .filter(entity -> QueryIntent.normalize(entity.name())
+                        .contains(QueryIntent.normalize(String.valueOf(params.get("query")))))
+                    .map(entity -> Map.<String, Object>of(
+                        "entityId", entity.id(), "name", entity.name(),
+                        "entityType", entity.type()))
+                    .toList();
+                return Map.of("entities", rows);
+            }
+        };
+    }
+
+    private static GraphTool temporalTool(boolean incomplete) {
+        return new GraphTool() {
+            public String getName() { return "query_temporal"; }
+            public String getDescription() { return "temporal group fixture"; }
+            public String getParametersSchema() { return "{}"; }
+            public Object execute(Map<String, Object> params, Long userId) {
+                Long entityId = Long.valueOf(String.valueOf(params.get("entity_id")));
+                boolean missing = incomplete && entityId == 1965L;
+                long relationId = switch (entityId.intValue()) {
+                    case 1725 -> 10L;
+                    case 1965 -> 11L;
+                    case 1735 -> 12L;
+                    default -> throw new IllegalArgumentException("unexpected temporal entity: " + entityId);
+                };
+                List<Map<String, Object>> relations = missing ? List.of()
+                    : List.of(Map.of("relationId", relationId, "sourceId", entityId,
+                        "targetId", 1973L, "relationType", "RELATED_TO",
+                        "validFrom", "2026-03-25", "validTo", "2026-04-30"));
+                Map<?, ?> requested = params.get("time_range") instanceof Map<?, ?> map ? map : Map.of();
+                String start = requested.get("start") == null
+                    ? "2026-03-26" : String.valueOf(requested.get("start"));
+                String end = requested.get("end") == null
+                    ? "9999-12-31" : String.valueOf(requested.get("end"));
+                return Map.of("relations", relations, "coverage", Map.of(
+                    "complete", !missing, "truncated", false, "returned", relations.size(),
+                    "scope", Map.of("entityId", entityId,
+                        "startInclusive", start,
+                        "endExclusive", "9999-12-31".equals(end) ? end
+                            : LocalDate.parse(end, DateTimeFormatter.ISO_DATE).plusDays(1).toString())));
+            }
+        };
+    }
+
+    private static EvidenceLedger temporalGroupLedger() {
+        Map<Long, KgEntity> entities = new LinkedHashMap<>();
+        for (EvidenceLedger.EntityFact fact : List.of(
+            new EvidenceLedger.EntityFact(1725L, "iLink 团队空间模块开发成果", "POST", ""),
+            new EvidenceLedger.EntityFact(1965L, "Link 团队空间模块", "POST", ""),
+            new EvidenceLedger.EntityFact(1735L, "前端页面视觉重构升级报告", "POST", ""),
+            new EvidenceLedger.EntityFact(1973L, "挑战杯全国大学生课外学术科技作品竞赛",
+                "COMPETITION", ""))) {
+            KgEntity entity = new KgEntity();
+            entity.setId(fact.id());
+            entity.setDisplayName(fact.name());
+            entity.setEntityType(fact.type());
+            entity.setScope(KgEntity.SCOPE_GLOBAL);
+            entity.setStatus(KgEntity.STATUS_ACTIVE);
+            entities.put(entity.getId(), entity);
+        }
+        Map<Long, KgRelation> relations = new LinkedHashMap<>();
+        Map<Long, Long> relationSources = Map.of(10L, 1725L, 11L, 1965L, 12L, 1735L);
+        relationSources.forEach((relationId, sourceId) -> {
+            KgRelation relation = new KgRelation();
+            relation.setId(relationId);
+            relation.setSourceId(sourceId);
+            relation.setTargetId(1973L);
+            relation.setRelationType(KgRelation.RELATED_TO);
+            relation.setValidFrom(day("2026-03-25"));
+            relation.setValidTo(day("2026-04-30"));
+            relation.setScope(KgEntity.SCOPE_GLOBAL);
+            relations.put(relationId, relation);
+        });
+        KgEntityMapper entityMapper = mock(KgEntityMapper.class);
+        KgRelationMapper relationMapper = mock(KgRelationMapper.class);
+        KgDocumentChunkMapper chunkMapper = mock(KgDocumentChunkMapper.class);
+        when(entityMapper.selectById(anyLong())).thenAnswer(invocation ->
+            entities.get(((Number) invocation.getArgument(0)).longValue()));
+        when(relationMapper.selectById(anyLong())).thenAnswer(invocation ->
+            relations.get(((Number) invocation.getArgument(0)).longValue()));
+        when(chunkMapper.selectById(anyLong())).thenReturn(null);
+        KgScopeService scopes = mock(KgScopeService.class);
+        when(scopes.canSee(any(KgEntity.class), any())).thenReturn(true);
+        when(scopes.canSee(any(), any(), any(), any())).thenReturn(true);
+        return new EvidenceLedger(entityMapper, relationMapper, chunkMapper, scopes);
     }
 
     private static Object last(AgenticGraphRagService.AgenticAnswer answer, String key) {

@@ -148,6 +148,22 @@ class TeamLibraryControllerWebTest {
     }
 
     @Test
+    void registerFileReturnsConflictObjectAtDataRoot() throws Exception {
+        given(libraryService.registerFile(eq(3L), eq(7L), any(), eq("方案.pdf"), any(), any(), eq(null)))
+            .willReturn(Map.of("conflict", true,
+                "existing", Map.of("name", "方案.pdf", "fileSize", 100)));
+
+        // 前端 request() 已解包 Result.data；冲突字段必须直接位于 data，而不是再嵌套 data.data。
+        mockMvc.perform(post("/api/team/3/library/files").session(memberSession)
+                .contentType("application/json")
+                .content("{\"name\":\"方案.pdf\",\"url\":\"/uploads/library/a.pdf\",\"size\":100}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.conflict").value(true))
+            .andExpect(jsonPath("$.data.existing.name").value("方案.pdf"))
+            .andExpect(jsonPath("$.data.data").doesNotExist());
+    }
+
+    @Test
     void deleteOthersFileSurfaces403() throws Exception {
         // 权限校验在 Service 层：抛 IllegalStateException 时 Controller 映射为 403
         given(libraryService.softDelete(eq(50L), eq(7L), eq(false)))
@@ -247,5 +263,55 @@ class TeamLibraryControllerWebTest {
                 .content("{\"parentId\":11}"))
             .andExpect(status().isOk());
         verify(libraryService).move(50L, 9L, true, 11L);
+    }
+
+    @Test
+    void uploaderCanRequestReindex() throws Exception {
+        mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(memberSession))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+        verify(libraryService).reindex(50L, 7L, false);
+    }
+
+    @Test
+    void leaderReindexUsesLeaderFlag() throws Exception {
+        mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(leaderSession))
+            .andExpect(status().isOk());
+        verify(libraryService).reindex(50L, 9L, true);
+    }
+
+    @Test
+    void outsiderCannotRequestReindex() throws Exception {
+        User outsider = new User();
+        outsider.setId(99L);
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("user", outsider);
+        given(teamApplicationService.count(any(Wrapper.class))).willReturn(0L);
+
+        mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(session))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
+        verify(libraryService, never()).reindex(any(), any(), anyBoolean());
+    }
+
+    @Test
+    void reindexWhileRunningSurfaces400() throws Exception {
+        willThrow(new IllegalArgumentException("索引正在进行中，请稍后查看结果"))
+            .given(libraryService).reindex(any(), any(), anyBoolean());
+
+        mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(memberSession))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(400))
+            .andExpect(jsonPath("$.message").value("索引正在进行中，请稍后查看结果"));
+    }
+
+    @Test
+    void reindexWithoutPermissionSurfaces403() throws Exception {
+        willThrow(new IllegalStateException("只有文件上传者或队长可以执行此操作"))
+            .given(libraryService).reindex(any(), any(), anyBoolean());
+
+        mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(memberSession))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.code").value(403));
     }
 }

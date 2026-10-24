@@ -9,7 +9,7 @@ import java.util.function.LongSupplier;
 
 /** Request-local accounting. Unknown paid usage stops further dispatch instead of becoming zero. */
 public final class ChatRequestBudget {
-    public enum Stage { PLAN, REACT, GENERATE, VERIFY, REWRITE, EXTRA }
+    public enum Stage { PLAN, REACT, GENERATE, VERIFY, REWRITE, CLOSURE, EXTRA }
 
     public static final class BudgetStopException extends RuntimeException {
         public BudgetStopException(String reason) { super(reason); }
@@ -21,7 +21,8 @@ public final class ChatRequestBudget {
     private final LongSupplier nanoClock;
     private final long deadline;
     private Stage stage = Stage.EXTRA;
-    private int requests, tools, charged, actual, unknown;
+    private int requests, tools, charged, actual, unknown, protectedTokens;
+    private final List<Map<String, Object>> protectedReservations = new ArrayList<>();
     private String stopped;
 
     public ChatRequestBudget() { this(System::nanoTime); }
@@ -46,6 +47,7 @@ public final class ChatRequestBudget {
             case PLAN -> 384;
             case REACT -> 256;
             case GENERATE, REWRITE -> 1200;
+            case CLOSURE -> CLOSURE_COMPLETION_LIMIT;
             case VERIFY, EXTRA -> VERDICT_COMPLETION_LIMIT;
         };
         return Math.min(requested, limit);
@@ -61,6 +63,14 @@ public final class ChatRequestBudget {
      * alone would only hide truncation again.
      */
     public static final int VERDICT_COMPLETION_LIMIT = 768;
+
+    /**
+     * Closure emits only a compact set of missing candidate groups. Keeping its output slot smaller
+     * lets the workflow reserve the post-closure semantic verifier before spending closure capacity.
+     * The cap is not a correctness shortcut: the response and merged partition still pass every
+     * ordinary protocol and semantic check.
+     */
+    public static final int CLOSURE_COMPLETION_LIMIT = 160;
 
     public static Scope stage(Stage stage) {
         ChatRequestBudget budget = current();
@@ -98,11 +108,79 @@ public final class ChatRequestBudget {
         int stageLimit = stage == Stage.REACT ? 5 : 1;
         if (calls.getOrDefault(stage, 0) >= stageLimit) stop("STAGE_LIMIT_" + stage);
         long amount = (long) promptBound + outputLimit;
-        if (amount > 16_000 - charged) stop("TOKEN_RESERVATION_LIMIT");
+        if (amount > 16_000 - charged - protectedTokens)
+            stop(protectedTokens > 0 ? "TOKEN_PROTECTED_FINAL_VERIFIER" : "TOKEN_RESERVATION_LIMIT");
         requests++;
         calls.merge(stage, 1, Integer::sum);
         charged += (int) amount;
         return new Reservation((int) amount, promptBound, outputLimit);
+    }
+
+    /**
+     * Reserve future capacity without making a model request. This is used to hold the final
+     * semantic-verification slot before an optional closure call spends shared request capacity.
+     */
+    public Protection protect(int amount, String purpose) {
+        check();
+        if (amount < 1) throw new IllegalArgumentException("Invalid protected reservation");
+        if ((long) amount > 16_000L - charged - protectedTokens)
+            stop("TOKEN_FINAL_VERIFIER_UNRESERVABLE");
+        protectedTokens += amount;
+        Map<String, Object> record = new LinkedHashMap<>();
+        record.put("purpose", purpose == null ? "UNSPECIFIED" : purpose);
+        record.put("protectedTokens", amount);
+        protectedReservations.add(record);
+        return new Protection(record, amount);
+    }
+
+    public boolean canProtect(int amount) {
+        check();
+        return amount > 0 && (long) amount <= 16_000L - charged - protectedTokens;
+    }
+
+    public boolean canReserve(int promptBound, int outputLimit) {
+        check();
+        return promptBound >= 0 && outputLimit >= 1 && requests < 10
+            && calls.getOrDefault(stage, 0) < (stage == Stage.REACT ? 5 : 1)
+            && (long) promptBound + outputLimit <= 16_000L - charged - protectedTokens;
+    }
+
+    public int remainingTokens() {
+        check();
+        return Math.max(0, 16_000 - charged - protectedTokens);
+    }
+
+    /** Exact scheduler bound used for the Qwen evaluation model; framing is provider-conservative. */
+    public static int qwenPromptReservationBound(List<Map<String, String>> messages) {
+        long bound = 1024;
+        for (Map<String, String> message : messages == null ? List.<Map<String, String>>of() : messages) {
+            bound += 64;
+            for (String key : List.of("role", "content"))
+                bound += QwenTokenCounter.count(message.getOrDefault(key, ""));
+        }
+        return (int) Math.min(Integer.MAX_VALUE, bound);
+    }
+
+    public final class Protection implements AutoCloseable {
+        private final Map<String, Object> record;
+        private final int amount;
+        private boolean released;
+
+        private Protection(Map<String, Object> record, int amount) {
+            this.record = record;
+            this.amount = amount;
+        }
+
+        public int amount() { return amount; }
+
+        public void release() {
+            if (released) return;
+            released = true;
+            protectedTokens = Math.max(0, protectedTokens - amount);
+            record.put("released", true);
+        }
+
+        @Override public void close() { release(); }
     }
 
     public final class Reservation implements AutoCloseable {
@@ -133,7 +211,11 @@ public final class ChatRequestBudget {
             record.put("elapsedMs", (nanoClock.getAsLong() - started) / 1_000_000);
             long total = (long) prompt + completion;
             actual = (int) Math.min(Integer.MAX_VALUE, actual + total);
-            charged = (int) Math.min(Integer.MAX_VALUE, charged - amount + total);
+            // A successful request's reservation is replaced by known usage. The clamp is a
+            // defensive guard for malformed/legacy accounting; all current reserve paths keep
+            // charged >= amount, so it does not alter normal settlement.
+            int released = Math.min(charged, amount);
+            charged = (int) Math.min(Integer.MAX_VALUE, charged - released + total);
             if (prompt > promptBound || completion > outputLimit || charged > 16_000)
                 stop("RESERVATION_EXCEEDED");
             check();
@@ -160,6 +242,8 @@ public final class ChatRequestBudget {
         result.put("supplierTokensKnown", actual);
         result.put("chargedTokens", charged);
         result.put("unknownUsageRequests", unknown);
+        result.put("protectedTokens", protectedTokens);
+        result.put("protectedReservations", protectedReservations.stream().map(Map::copyOf).toList());
         result.put("stopReason", stopped == null ? "" : stopped);
         return result;
     }

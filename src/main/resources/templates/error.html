@@ -8,9 +8,9 @@
 <body style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:sans-serif;background:#fafafa;">
     <div style="text-align:center;padding:40px;">
         <h1 style="font-size:24px;color:#111827;"
-            th:text="${status != null && status == 403} ? #messages.msg('error.403.title') : #messages.msg('error.generic.title')">页面加载失败</h1>
+            th:text="${status != null && status == 403 ? #messages.msg('error.403.title') : #messages.msg('error.generic.title')}">页面加载失败</h1>
         <p style="color:#6b7280;margin-top:8px;"
-           th:text="${status != null && status == 403} ? #messages.msg('error.403.hint') : #messages.msg('error.generic.hint')">请返回首页重试</p>
+           th:text="${status != null && status == 403 ? #messages.msg('error.403.hint') : #messages.msg('error.generic.hint')}">请返回首页重试</p>
         <p style="color:#9ca3af;margin-top:4px;font-size:13px;"
            th:if="${status != null}" th:text="${status + (error != null ? ' ' + error : '')}">500</p>
         <a href="/" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#111827;color:#fff;text-decoration:none;border-radius:8px;" th:text="#{legal.backHome}">返回首页</a>

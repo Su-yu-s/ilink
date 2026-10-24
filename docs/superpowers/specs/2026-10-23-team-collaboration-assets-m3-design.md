@@ -1,7 +1,7 @@
 # 高校竞赛协作平台 M3 团队协作资产设计
 
 - 日期：2026-10-23
-- 状态：用户已确认方案，待书面规格复核后进入实施
+- 状态：M3 代码、V49–V51 迁移、自动化测试及浏览器主流程验收已完成（1311 用例全绿）；仍有集成测试深度和性能压测限制，详见实施计划第 12 章
 - 上游设计：
   - `docs/superpowers/specs/2026-10-22-team-agent-workbench-design.md`
   - `docs/superpowers/specs/2026-10-22-ai-collab-system-integrated-ui-design.md`
@@ -245,7 +245,7 @@ Team Agent
 - `reviewed_by/reviewed_at`
 - `version`
 
-`team_material_requirement.review_status/current_review_id/review_version` 共同保存当前状态摘要，所有更新在同一事务内追加新的 `team_material_review` 并条件更新要求行。Agent 只能创建 `NEEDS_REVIEW` 状态和候选证据，不能把材料标记为 `MET`。`MET/PARTIAL/MISSING` 必须来自真人操作。
+`team_material_requirement.review_status/current_review_id/review_version` 共同保存当前状态摘要，所有更新在同一事务内追加新的 `team_material_review` 并条件更新要求行。Agent 只能创建 `NEEDS_REVIEW` 状态和候选证据，不能把材料标记为 `MET`。`MET/PARTIAL/MISSING` 必须来自真人操作，并由队长、导师或该要求创建者作出。普通可写成员可把材料标记为 `NEEDS_REVIEW`；证据提交者本人可移除自己关联的证据。
 
 ### 5.5 资料索引状态
 
@@ -292,16 +292,19 @@ Agent 触发的同一业务操作继续写入 `team_agent_audit_log`，并通过
 服务端事务步骤：
 
 1. 再次鉴权团队、资产范围、编辑权限、团队状态。
-2. 校验租约 token、用户与过期时间。
-3. 校验 `baseVersion == asset.version`。
-4. 规范化内容并计算哈希。
-5. 条件更新 `version = version + 1`。
-6. 插入版本快照和协作事件。
-7. 合并 `kg_index_task` 修订。
-8. 提交。
-9. 提交后推送 WebSocket 变更。
+2. 校验客户端请求 ID，并按团队、资产和请求 ID 查询已提交事件。
+3. 相同请求 ID 且规范化载荷哈希一致时，直接返回当前资产，不重复写入。
+4. 相同请求 ID 但载荷哈希不一致时返回 409 `REQUEST_ID_REUSED`。
+5. 校验租约 token、用户与过期时间。
+6. 校验 `baseVersion == asset.version`。
+7. 规范化内容并计算哈希。
+8. 条件更新 `version = version + 1`。
+9. 插入版本快照和带 `requestHash` 的协作事件。
+10. 合并 `kg_index_task` 修订。
+11. 提交。
+12. 提交后只推送不含资产身份和版本的通用 WebSocket 失效信号。
 
-相同幂等键和相同载荷重放时返回原结果；不同载荷复用相同幂等键返回 409 `REQUEST_ID_REUSED`。
+相同幂等键和相同载荷重放时返回原结果；不同载荷复用相同幂等键返回 409 `REQUEST_ID_REUSED`。幂等检查先于版本与租约检查，使“服务端已提交但客户端没收到响应”的重试可以安全成功。该编辑模型是租约 + 乐观锁，不提供字符级实时合并，不使用 OT/CRDT。
 
 ### 6.3 冲突
 
@@ -485,7 +488,9 @@ Worker 必须：
 ### 12.1 公共
 
 - `GET /api/team/{teamId}/collaboration/bootstrap`
-- `GET /api/team/{teamId}/collaboration/events?afterId=...`
+- WebSocket 订阅 `/topic/team/{teamId}/collaboration`，仅接收 `{kind:"COLLABORATION_CHANGED", occurredAt}` 失效信号
+
+不提供协作事件列表 API。事件表只用于幂等、审计与业务追溯；WebSocket 不携带资产类型、资产 ID、版本、事件类型或内容，客户端收到信号后通过鉴权 REST 接口重新读取。
 
 ### 12.2 文档
 
@@ -712,3 +717,12 @@ M3 只有同时满足以下条件才可标记完成：
 10. 全量测试 0 失败、0 错误，迁移可在 MySQL 5.7 重复执行。
 11. 文档和论文只声明已经过验证的能力。
 12. 系统不存在聊天已读状态或消息已读回执。
+
+## 19. 实施验收记录（2026-10-24）
+
+1. 自动化门禁：`172` 个测试类、`1311` 个用例，`0` 失败、`0` 错误、`22` 跳过。
+2. 数据库迁移：MySQL 5.7 首次执行完成 schema `50 → 51`；再次启动为 `up to date. No migration necessary`。
+3. 协作资产链路：团队 `93` 可写，文档、表格、材料矩阵和 Agent 工作台均可加载；团队 `83` 为只读，不请求任务接口，不渲染创建入口，回收站不提供恢复或彻底删除操作。
+4. 回收站链路：文档和表格均已完成删除、回收站展示、恢复、再次删除和彻底删除的真实验收；只读团队仅可查看。
+5. 浏览器质量：`1440×900`、`1280×900`、`1024×768`、`768×900`、`390×844`、`1280×600` 均无页面横向溢出；工具栏按宽度换行，表格使用自身横向滚动，回收站弹窗完整位于视口内。
+6. 运行质量：上述浏览器流程中未出现 `4xx/5xx`、控制台错误或页面异常；资料索引实际显示“可被 AI 检索”。

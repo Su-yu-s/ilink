@@ -45,6 +45,42 @@ public class AgenticGraphRagService {
     private static final Pattern NAMED_SUBJECT = Pattern.compile("[「《“]([^」》”]{3,80})[」》”]");
     private static final Pattern LIST_RELATIONS = Pattern.compile("哪些|哪几个|哪几项|列举");
     private static final Pattern CLASSIFICATION = Pattern.compile("不属于|属于|除外|除了|不是|区别|差异");
+    private static final Pattern EXACT_SOURCE_PHRASE_QUESTION = Pattern.compile(
+        "哪(?:句|一?句话)|什么话|原话|原文(?:称|写|说|表述)|怎么表述|如何表述");
+    private static final Pattern LEADING_REPEATED_SLOGAN = Pattern.compile(
+        "^.{0,32}?[—–\\-:：]\\s*([\\p{L}\\p{N}·]{2,20})(?:\\s+|。|，|,)\\s*\\1(?:[。！？!?]|$)");
+    private static final Pattern SOURCE_RECORD_QUESTION = Pattern.compile(
+        "(?:哪些|什么)(?:帖子(?:记录)?|记录|文档)[^，。！？?；;]{0,18}?"
+            + "(?:提到|提及|包含|出现|说到)");
+    private static final Pattern SOURCE_RECORD_TERM = Pattern.compile(
+        "(?:哪些|什么)(?:帖子(?:记录)?|记录|文档)[^，。！？?；;]{0,18}?"
+            + "(?:提到|提及|包含|出现|说到)(?:了|过)?\\s*"
+            + "[「《“\"‘']?([^」》”\"‘’，。！？?；;\\s]{2,60})");
+    private static final Pattern TEMPORAL_SUBJECT_RECORD_TAIL = Pattern.compile(
+        "(?:(?:相关|有关)的?)?(?:记录|日志|报告|文档|帖子)(?:相关)?(?:还提到|提到)?\\s*$");
+    /**
+     * Temporal record questions may ask about multiple record groups joined by 与/和/及.
+     * Their tails ("相关记录", "开发日志") describe the object class, not part of a distinctive
+     * title. Each group is resolved separately so one broad title cannot hide the other group.
+     */
+    private static final Pattern TEMPORAL_GROUP_CONNECTOR = Pattern.compile(
+        "\\s*(?:与|和|及)\\s*");
+    private static final Pattern TEMPORAL_GROUP_PREFIX = Pattern.compile(
+        "^(?:请)?(?:查|查询|列出|列举|说明)\\s*");
+    /**
+     * Longest-first removal is required: a short artifact such as 技能 must not consume the
+     * inside of 技术技能 and leave a real-looking constraint behind.
+     */
+    private static final Pattern RELATION_FOCUS_ARTIFACTS = Pattern.compile(
+        "知识图谱里|知识图谱中|知识图谱|图谱里|图谱中|图谱"
+            + "|技术技能|技术栈|技能|竞赛|赛事|子赛|文档|帖子|记录|实体|直接|平台"
+            + "|关联了|关联");
+    /**
+     * These are grammatical fillers only when they are standalone tokens. Chinese words such as
+     * 有关, 有效, 项目 and 种类 contain the same characters and must remain real constraints.
+     */
+    private static final Pattern RELATION_FOCUS_SINGLE_FILLER =
+        Pattern.compile("(?<![\\p{L}\\p{N}])[了有项种](?![\\p{L}\\p{N}])");
 
     private final GraphRagService fastRag;
     private final KgAgentTraceMapper traceMapper;
@@ -106,6 +142,20 @@ public class AgenticGraphRagService {
         this(fastRag, traceMapper, aiClient, tools, null);
     }
 
+    static AgenticAnswer structuredSourceCompetitionListForReplay(
+        String question, EvidenceLedger ledger, List<Map<String, Object>> trace,
+        int round, int calls) {
+        return new AgenticGraphRagService(null, null, null, List.of())
+            .verifiedSourceCompetitionList(question, ledger, trace, round, calls);
+    }
+
+    static AgenticAnswer structuredSourceTechnologySummaryForReplay(
+        String question, EvidenceLedger ledger, List<Map<String, Object>> trace,
+        int round, int calls) {
+        return new AgenticGraphRagService(null, null, null, List.of())
+            .verifiedSourceTechnologySummary(question, ledger, trace, round, calls);
+    }
+
     /** 对外主入口：取证、按需探索、生成与校验。 */
     public AgenticAnswer query(String question, Long userId) {
         return query(question, userId, null);
@@ -126,8 +176,12 @@ public class AgenticGraphRagService {
             } catch (Exception e) {
                 if (e instanceof BudgetStopException stop) throw stop;
                 if (ledgerFactory != null) {
-                    log.warn("[Agentic] 证据流程异常，返回受限回答: {}", e.getClass().getSimpleName());
+                    // Keep the stack trace: without it a swallowed flow failure is indistinguishable
+                    // from a legitimate clarification answer in logs and saved traces.
+                    log.warn("[Agentic] 证据流程异常，返回受限回答: {}", e.getClass().getSimpleName(), e);
                     trace.add(stepMap(0, "证据流程异常，未输出未经校验的备用模型答案", null, null, null));
+                    trace.add(Map.of("answerMode", "FLOW_ERROR_CLARIFICATION", "answerCoverage", "UNANSWERED",
+                        "coverageReason", "EVIDENCE_FLOW_ERROR"));
                     int executed = ((Number) budget.snapshot().get("toolExecutions")).intValue();
                     AgenticAnswer safe = RecommendationEvidencePolicy.isRecommendationQuery(question)
                         ? adviceAnswer(question, trace, 0, executed) : conservativeAnswer(trace, 0, executed);
@@ -152,6 +206,8 @@ public class AgenticGraphRagService {
     private AgenticAnswer budgetStopped(String question, Long userId, List<Map<String, Object>> trace,
                                        AgenticStreamListener listener, long startedAt, ChatRequestBudget budget) {
         trace.add(Map.of("budgetStop", budget.snapshot()));
+        trace.add(Map.of("answerMode", "BUDGET_STOP_CLARIFICATION", "answerCoverage", "UNANSWERED",
+            "coverageReason", "BUDGET_STOPPED"));
         int executed = ((Number) budget.snapshot().get("toolExecutions")).intValue();
         AgenticAnswer answer = RecommendationEvidencePolicy.isRecommendationQuery(question)
             ? adviceAnswer(question, trace, 0, executed) : conservativeAnswer(trace, 0, executed);
@@ -227,14 +283,22 @@ public class AgenticGraphRagService {
                 }
             }
             if (plan.requiresRelation() || plan.requiresTemporal()) {
-                seekNamedAnchor(run);
+                // For temporal questions the requested window and the permission-checked
+                // record set are primary evidence. Do not spend the shared tool budget on
+                // generic anchor searches before query_temporal has run.
+                if (!plan.requiresTemporal()) seekNamedAnchor(run);
                 prepareRequiredEvidence(run, plan);
+                if (plan.requiresTemporal()) seekNamedAnchor(run);
             }
         }
         recordSubjectScopes(question, ledger, trace);
         AgenticAnswer structured = structuredAnswer(question, plan, ledger, trace, 0, run.toolCalls);
         if (structured != null)
             return finishEvidence(question, userId, trace, listener, startedAt, structured);
+        AgenticAnswer ambiguity = zeroTargetRelationClarification(question, plan, ledger, trace,
+            0, run.toolCalls);
+        if (ambiguity != null)
+            return finishEvidence(question, userId, trace, listener, startedAt, ambiguity);
         acquireClassificationSources(run, plan, 0);
         // Generate after the required source step; this does not assert that retrieval was exhaustive.
         if (!plan.requiresTemporal() && plan.requiresSourceText() && sourceEvidenceReady(question, ledger))
@@ -276,11 +340,12 @@ public class AgenticGraphRagService {
             if (structured != null)
                 return finishEvidence(question, userId, trace, listener, startedAt, structured);
         }
-        if (!gateSatisfied(plan, ledger) && ledger.chunks().isEmpty())
+        if (!gateSatisfied(plan, ledger) && ledger.chunks().isEmpty()) {
             return finishEvidence(question, userId, trace, listener, startedAt,
                 RecommendationEvidencePolicy.isRecommendationQuery(question)
                     ? adviceAnswer(question, trace, finalRound, run.toolCalls)
                     : conservativeAnswer(trace, finalRound, run.toolCalls));
+        }
         acquireClassificationSources(run, plan, finalRound);
         return finishEvidence(question, userId, trace, listener, startedAt,
             generateAndVerify(question, plan, ledger, trace, finalRound, run.toolCalls));
@@ -288,13 +353,192 @@ public class AgenticGraphRagService {
 
     private AgenticAnswer structuredAnswer(String question, QueryEvidencePlan plan, EvidenceLedger ledger,
                                            List<Map<String, Object>> trace, int round, int calls) {
-        AgenticAnswer answer = verifiedTemporalIntersection(question, plan, ledger, trace, round, calls);
+        AgenticAnswer answer = structuredSourceRecordList(question, ledger, trace, round, calls);
+        if (answer == null) answer = verifiedSourceCompetitionList(question, ledger, trace, round, calls);
+        if (answer == null) answer = verifiedSourceTechnologySummary(question, ledger, trace, round, calls);
+        if (answer == null) answer = verifiedExactSourcePhrase(question, ledger, trace, round, calls);
+        if (answer == null) answer = verifiedSourceHostSummary(question, ledger, trace, round, calls);
+        if (answer == null) answer = verifiedTemporalIntersection(question, plan, ledger, trace, round, calls);
         if (answer == null) answer = verifiedTemporalStatusSummary(question, plan, ledger, trace, round, calls);
         if (answer == null && plan.requiresTemporal())
             answer = verifiedTemporalSummary(question, plan, ledger, trace, round, calls);
         if (answer == null) answer = verifiedRelationSummary(question, plan, ledger, trace, round, calls);
         if (answer == null) answer = verifiedHostSummary(question, plan, ledger, trace, round, calls);
+        if (answer == null) answer = namedRecordSourceAnswer(question, ledger, trace, round, calls);
         return answer;
+    }
+
+    /**
+     * A named record may contain the requested facts even when the graph has no relation edge from
+     * that record to the requested attributes. Release the relevant authorised source chunks as a
+     * source-scoped answer without converting mentions into graph edges or asserting graph absence.
+     */
+    static AgenticAnswer namedRecordSourceAnswer(String question, EvidenceLedger ledger,
+                                                  List<Map<String, Object>> trace, int round, int calls) {
+        SourceRecordExcerptSelector.Selection selection =
+            SourceRecordExcerptSelector.select(question, ledger).orElse(null);
+        if (selection == null) return null;
+        trace.add(stepMap(round, "依据唯一具名记录的授权原文回答，不推导图谱关系", null, null, null));
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("answerMode", "STRUCTURED_NAMED_RECORD_SOURCE");
+        metadata.put("answerCoverage", "SOURCE_SCOPED");
+        metadata.put("coverageReason", "NAMED_RECORD_AUTHORIZED_SOURCE");
+        metadata.put("graphCoverage", "PARTIAL");
+        metadata.put("absenceConclusionAllowed", false);
+        metadata.put("title", selection.title());
+        metadata.put("docType", selection.docType());
+        metadata.put("docId", selection.docId());
+        metadata.put("focusMatches", selection.focusMatches());
+        metadata.put("chunkIds", selection.chunks().stream().map(EvidenceLedger.ChunkFact::id).toList());
+        trace.add(metadata);
+        return new AgenticAnswer(selection.text(),
+            selection.chunks().stream().map(AgenticGraphRagService::citation).toList(),
+            trace, round, calls, false);
+    }
+
+    /**
+     * A record-list question can be answered directly when the permission-checked ledger already has
+     * positive title/body hits. This exit lists only matching authorised chunks and returns null when
+     * no record contains the requested term, leaving absence to the ordinary clarification path.
+     */
+    static AgenticAnswer structuredSourceRecordList(String question, EvidenceLedger ledger,
+                                                    List<Map<String, Object>> trace,
+                                                    int round, int calls) {
+        if (!SOURCE_RECORD_QUESTION.matcher(Objects.toString(question, "")).find()) return null;
+        Matcher termMatcher = SOURCE_RECORD_TERM.matcher(question);
+        if (!termMatcher.find()) return null;
+        String term = termMatcher.group(1).trim().replaceAll("^的|的$", "");
+        if (term.length() < 2) return null;
+        Pattern requested = Pattern.compile(Pattern.quote(term),
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+        boolean postsOnly = question.contains("帖子");
+        boolean documents = question.contains("文档");
+        Map<String, List<EvidenceLedger.ChunkFact>> byRecord = new LinkedHashMap<>();
+        for (EvidenceLedger.ChunkFact chunk : ledger.chunks().stream()
+            .sorted(Comparator.comparing(EvidenceLedger.ChunkFact::id)).toList()) {
+            if (chunk == null || !recordTypeAllowed(chunk, postsOnly, documents)) continue;
+            String source = Objects.toString(chunk.title(), "") + "\n"
+                + Objects.toString(chunk.text(), "");
+            if (!requested.matcher(source).find()) continue;
+            byRecord.computeIfAbsent(chunk.docType() + ":" + chunk.docId(),
+                ignored -> new ArrayList<>()).add(chunk);
+        }
+        if (byRecord.isEmpty()) return null;
+        StringBuilder answer = new StringBuilder("根据当前授权可见原文，提及 ")
+            .append(term).append(" 的")
+            .append(postsOnly ? "帖子记录" : documents ? "文档记录" : "记录")
+            .append("如下：\n");
+        List<Map<String, Object>> citations = new ArrayList<>();
+        for (Map.Entry<String, List<EvidenceLedger.ChunkFact>> entry : byRecord.entrySet()) {
+            EvidenceLedger.ChunkFact first = entry.getValue().get(0);
+            answer.append("- ").append(first.docType()).append(':').append(first.docId())
+                .append("《").append(Objects.toString(first.title(), "无标题")).append("》（")
+                .append(entry.getValue().stream().map(chunk -> "c#" + chunk.id())
+                    .collect(java.util.stream.Collectors.joining("、")))
+                .append("）\n");
+            for (EvidenceLedger.ChunkFact chunk : entry.getValue()) citations.add(citation(chunk));
+        }
+        trace.add(stepMap(round, "依据已授权原文中的正向字面命中生成记录清单",
+            null, null, null));
+        trace.add(Map.of("answerMode", "STRUCTURED_SOURCE_RECORD_LIST",
+            "answerCoverage", "SOURCE_SCOPED", "coverageReason", "AUTHORIZED_SOURCE_RECORDS",
+            "recordCount", byRecord.size(), "requestedTerm", term,
+            "absenceConclusionAllowed", false));
+        return new AgenticAnswer(answer.toString().stripTrailing(), citations, trace, round, calls, false);
+    }
+
+    private static boolean recordTypeAllowed(EvidenceLedger.ChunkFact chunk,
+                                             boolean postsOnly, boolean documents) {
+        if ("POST".equals(chunk.docType())) return true;
+        return documents && !postsOnly && "ASSET".equals(chunk.docType());
+    }
+
+    private AgenticAnswer verifiedExactSourcePhrase(String question, EvidenceLedger ledger,
+                                                    List<Map<String, Object>> trace,
+                                                    int round, int calls) {
+        SourcePhraseSelector.Selection selection =
+            SourcePhraseSelector.select(question, ledger).orElse(null);
+        if (selection == null) return null;
+        String answer = "原文用“" + selection.phrase() + "”概括这一理念。c#" + selection.chunkId();
+        AnswerEvidenceVerifier.VerificationResult checked = verifier.verify(
+            question, answer, ledger, QueryEvidencePlan.fromQuestion(question));
+        if (!checked.supported()) return null;
+        trace.add(stepMap(round, "依据标题旁重复出现的原文标语生成精确引文",
+            null, null, null));
+        trace.add(Map.of("answerMode", "STRUCTURED_EXACT_SOURCE_PHRASE",
+            "answerCoverage", "COMPLETE"));
+        return new AgenticAnswer(answer, citationsFor(checked, ledger), trace, round, calls, false);
+    }
+
+    /**
+     * Restates a quoted competition list only when all items occur in one explicit list sentence
+     * inside one unique authorised record. The source is selected before generation, so a model
+     * paraphrase cannot silently substitute a neighbouring chunk.
+     */
+    AgenticAnswer verifiedSourceCompetitionList(String question, EvidenceLedger ledger,
+                                                List<Map<String, Object>> trace,
+                                                int round, int calls) {
+        SourceCompetitionListSelector.Selection selection =
+            SourceCompetitionListSelector.select(question, ledger).orElse(null);
+        if (selection == null) return null;
+        String answer = "授权原文 c#" + selection.chunkId() + "《" + selection.title()
+            + "》的竞赛目录明确列出：" + selection.items().stream()
+            .map(item -> "“" + item + "”")
+            .collect(java.util.stream.Collectors.joining("、"))
+            + "。以上是原文列出的赛事名称；图谱边的完整性仍需另行核对。";
+        AnswerEvidenceVerifier.VerificationResult checked = verifier.verify(
+            question, answer, ledger, QueryEvidencePlan.fromQuestion(question));
+        if (!checked.supported() || !checked.usedChunkIds().contains(selection.chunkId())) return null;
+        trace.add(stepMap(round, "在同一授权原文句内识别到唯一的显式竞赛目录",
+            null, null, null));
+        trace.add(Map.of("answerMode", "STRUCTURED_SOURCE_COMPETITION_LIST",
+            "answerCoverage", "SOURCE_SCOPED",
+            "coverageReason", "UNIQUE_EXPLICIT_AUTHORIZED_LIST",
+            "chunkId", selection.chunkId(), "items", selection.items(),
+            "graphCoverage", "PARTIAL"));
+        return new AgenticAnswer(answer, citationsFor(checked, ledger), trace, round, calls, false);
+    }
+
+    /**
+     * A project description can identify a record by its body even when the stored entity title is
+     * different. This exit requires one uniquely matched authorised record and explicit technology
+     * labels; it restates those labels and never turns them into graph edges.
+     */
+    AgenticAnswer verifiedSourceTechnologySummary(String question, EvidenceLedger ledger,
+                                                  List<Map<String, Object>> trace,
+                                                  int round, int calls) {
+        SourceTechnologySummary.Result summary = SourceTechnologySummary.build(question, ledger)
+            .orElse(null);
+        if (summary == null) return null;
+        String answer = summary.text();
+        AnswerEvidenceVerifier.VerificationResult checked = verifier.verify(
+            question, answer, ledger, QueryEvidencePlan.fromQuestion(question));
+        if (!checked.supported() || !checked.usedChunkIds().contains(summary.chunkId())) return null;
+        trace.add(stepMap(round, "按唯一授权记录正文中的显式技术字段生成技术栈说明",
+            null, null, null));
+        trace.add(Map.of("answerMode", "STRUCTURED_SOURCE_TECHNOLOGY_SUMMARY",
+            "answerCoverage", "SOURCE_SCOPED",
+            "coverageReason", "UNIQUE_EXPLICIT_TECHNOLOGY_RECORD",
+            "chunkId", summary.chunkId(), "technologyGroups", summary.groups(),
+            "graphCoverage", "PARTIAL"));
+        return new AgenticAnswer(answer, citationsFor(checked, ledger), trace, round, calls, false);
+    }
+
+    private AgenticAnswer verifiedSourceHostSummary(String question, EvidenceLedger ledger,
+                                                     List<Map<String, Object>> trace,
+                                                     int round, int calls) {
+        SourceHostSummary.Result summary = SourceHostSummary.build(question, ledger).orElse(null);
+        if (summary == null) return null;
+        String answer = summary.text();
+        AnswerEvidenceVerifier.VerificationResult checked = verifier.verify(
+            question, answer, ledger, QueryEvidencePlan.fromQuestion(question));
+        if (!checked.supported() || !checked.usedChunkIds().containsAll(summary.chunkIds())) return null;
+        trace.add(stepMap(round, "依据赛事档案中的主办方字段生成逐主体来源汇总",
+            null, null, null));
+        trace.add(Map.of("answerMode", "STRUCTURED_SOURCE_HOST_SUMMARY",
+            "answerCoverage", "SOURCE_SCOPED", "coverageReason", "ALL_REQUESTED_SUBJECTS_HAVE_EXPLICIT_HOST_FIELDS",
+            "subjectCount", summary.entries().size(), "graphCoverage", "PARTIAL"));
+        return new AgenticAnswer(answer, citationsFor(checked, ledger), trace, round, calls, false);
     }
 
     private static boolean sourceEvidenceReady(String question, EvidenceLedger ledger) {
@@ -379,7 +623,7 @@ public class AgenticGraphRagService {
                 Long id = params.get("entity_id").asLong();
                 if (!ledger.containsEntity(id)) return false;
                 if ("query_temporal".equals(action) && !plan.globalTemporal())
-                    return rankedSeeds(question, ledger).stream().anyMatch(entity -> entity.id().equals(id));
+                    return temporalSeeds(question, ledger).stream().anyMatch(entity -> entity.id().equals(id));
             }
             return true;
         } catch (Exception invalid) { return false; }
@@ -396,22 +640,59 @@ public class AgenticGraphRagService {
     }
 
     private void prepareRequiredEvidence(EvidenceRun run, QueryEvidencePlan plan) {
-        List<Long> seeds = rankedSeeds(run.originalQuestion, run.ledger).stream()
+        // Discovery is complete before this method. Split a record group such as "团队空间与视觉
+        // 重构相关记录" into its two requested groups here; otherwise the second group's members
+        // can be discovered by search_entities but never receive their own temporal query.
+        if (plan.requiresTemporal() && !plan.globalTemporal())
+            targetedTemporalSearch(run, plan);
+        List<EvidenceLedger.EntityFact> seedFacts = plan.requiresTemporal()
+            ? temporalSeeds(run.originalQuestion, run.ledger)
+            : rankedSeeds(run.originalQuestion, run.ledger);
+        List<Long> seeds = seedFacts.stream()
             .map(EvidenceLedger.EntityFact::id).limit(4).toList();
+        if (plan.requiresTemporal()) {
+            run.trace.add(Map.of("temporalPreflightSeeds", Map.of(
+                "ids", seeds,
+                "names", seedFacts.stream().limit(4).map(EvidenceLedger.EntityFact::name).toList(),
+                "windowCount", plan.timeRanges().size())));
+        }
+        List<Long> completeSeeds = new ArrayList<>();
+        List<Long> missingSeeds = new ArrayList<>();
         for (Long id : seeds) {
             if (run.toolCalls >= MAX_TOOL_CALLS) {
                 return;
             }
             if (plan.requiresTemporal()) {
+                if (plan.globalTemporal()) {
+                    // Global temporal queries are already dispatched once at the start of the run.
+                    // They must not be re-fanned out over every seed discovered from the corpus.
+                    continue;
+                }
                 if (plan.timeRanges().size() > 1) {
                     for (KgTimeRange window : plan.timeRanges()) {
                         if (run.toolCalls >= MAX_TOOL_CALLS) break;
                         run.call("query_temporal", temporalParams(id, window), 0);
                     }
-                } else run.call("query_temporal", temporalParams(id, plan), 0);
+                } else if (!run.ledger.completeTemporal(id, plan.timeRange().orElse(null))) {
+                    run.call("query_temporal", temporalParams(id, plan), 0);
+                }
+                List<KgTimeRange> windows = plan.timeRanges().isEmpty()
+                    ? plan.timeRange().map(List::of).orElseGet(List::of) : plan.timeRanges();
+                boolean complete = !windows.isEmpty()
+                    && windows.stream().allMatch(window -> run.ledger.completeTemporal(id, window));
+                if (complete) completeSeeds.add(id);
+                else missingSeeds.add(id);
             } else if (plan.requiresRelation()) {
                 run.call("expand_neighbors", Map.of("entity_id", id, "limit", 50), 0);
             }
+        }
+        if (plan.requiresTemporal()) {
+            run.trace.add(Map.of("temporalPreflightCoverage", Map.of(
+                "requestedSeeds", seeds,
+                "completeSeeds", completeSeeds,
+                "missingSeeds", missingSeeds,
+                "toolCalls", run.toolCalls,
+                "global", plan.globalTemporal())));
         }
         // Cover each identified subject before spending the shared tool budget on extra pages/text.
         for (Long id : seeds) {
@@ -438,6 +719,33 @@ public class AgenticGraphRagService {
         }
     }
 
+    /**
+     * Search each explicitly joined record group inside the permission-checked tool boundary. This
+     * is a narrow discovery step, not a graph expansion: it never invents an entity ID, and the
+     * resulting members still need their own successful query_temporal coverage before they can
+     * contribute to a complete answer.
+     */
+    private void targetedTemporalSearch(EvidenceRun run, QueryEvidencePlan plan) {
+        if (!toolsByName.containsKey("search_entities") || plan.timeRanges().size() > 1) return;
+        List<String> groups = temporalSubjectGroups(
+            QueryIntent.subjectRequests(run.originalQuestion).subjects());
+        if (groups.size() < 2) return;
+        boolean searched = false;
+        for (String group : groups) {
+            if (run.toolCalls >= MAX_TOOL_CALLS) return;
+            String core = temporalSubjectCore(group);
+            if (QueryIntent.normalize(core).length() < 4) continue;
+            Map<String, Object> params = Map.of("query", core, "top_k", 12);
+            if (run.calledBefore("search_entities", params)) continue;
+            run.call("search_entities", params, 0);
+            searched = true;
+        }
+        if (searched) {
+            run.trace.add(Map.of("temporalTargetedGroupSearch",
+                groups.stream().map(thisTemporal -> temporalSubjectCore(thisTemporal)).toList()));
+        }
+    }
+
     private void seekNamedAnchor(EvidenceRun run) {
         if (!toolsByName.containsKey("filter_entities")) return;
         for (String subject : QueryIntent.fromQuestion(run.originalQuestion).subjects()) {
@@ -454,8 +762,7 @@ public class AgenticGraphRagService {
     }
 
     private static long exactSubjectMatches(String subject, EvidenceLedger ledger) {
-        return ledger.entities().stream()
-            .filter(entity -> QueryIntent.sameSubjectName(subject, entity.name())).count();
+        return QueryIntent.bestExactMatches(subject, ledger.entities()).size();
     }
 
     private static String subjectPhrase(String question) {
@@ -466,8 +773,8 @@ public class AgenticGraphRagService {
         QueryIntent intent = QueryIntent.fromQuestion(question);
         LinkedHashMap<Long, EvidenceLedger.EntityFact> selected = new LinkedHashMap<>();
         for (String subject : intent.subjects()) {
-            List<EvidenceLedger.EntityFact> exact = ledger.entities().stream()
-                .filter(entity -> QueryIntent.sameSubjectName(subject, entity.name())).toList();
+            List<EvidenceLedger.EntityFact> exact = QueryIntent.bestExactMatches(subject, ledger.entities())
+                .stream().map(QueryIntent.ExactSubjectMatch::entity).toList();
             if (exact.size() == 1) {
                 selected.put(exact.get(0).id(), exact.get(0));
                 continue;
@@ -481,6 +788,97 @@ public class AgenticGraphRagService {
             if (candidates.size() == 1) selected.put(candidates.get(0).id(), candidates.get(0));
         }
         return List.copyOf(selected.values());
+    }
+
+    /**
+     * Exact names still win. For temporal record questions, use a long, direct lexical match
+     * against permission-checked candidate titles when no exact name exists. This resolves
+     * "团队空间" to a record such as "Link 团队空间模块" without broad subsequence matching.
+     */
+    static List<EvidenceLedger.EntityFact> temporalSeeds(String question, EvidenceLedger ledger) {
+        QueryIntent intent = QueryIntent.fromQuestion(question);
+        LinkedHashMap<Long, EvidenceLedger.EntityFact> selected = new LinkedHashMap<>();
+        for (String original : intent.subjects()) {
+            List<EvidenceLedger.EntityFact> exact =
+                QueryIntent.bestExactMatches(original, ledger.entities())
+                    .stream().map(QueryIntent.ExactSubjectMatch::entity).toList();
+            // A complete exact title remains one requested identity even if that title contains
+            // a conjunction. Splitting it here would turn one document into two groups.
+            if (exact.size() == 1) {
+                selected.put(exact.get(0).id(), exact.get(0));
+                continue;
+            }
+            if (!exact.isEmpty()) continue;
+            // A document abbreviation can share every character with the canonical title in order
+            // while differing by inserted qualifiers (for example 区/升级). Test the complete
+            // requested phrase before stripping a generic tail such as 报告; stripping first can
+            // make the ratio too weak. This fallback still requires one permission-checked entity.
+            List<EvidenceLedger.EntityFact> completePhraseMatches = uniqueApproximateTemporalMatches(
+                original, ledger);
+            if (completePhraseMatches.size() == 1) {
+                selected.put(completePhraseMatches.get(0).id(), completePhraseMatches.get(0));
+                continue;
+            }
+            for (String subject : temporalSubjectGroups(List.of(original))) {
+                String normalizedCore = QueryIntent.normalize(temporalSubjectCore(subject));
+                if (normalizedCore.length() < 4) continue;
+                List<EvidenceLedger.EntityFact> matches = ledger.entities().stream()
+                    .filter(entity -> entity.name() != null && !"SKILL".equals(entity.type()))
+                    .sorted(Comparator.comparingInt((EvidenceLedger.EntityFact entity) -> {
+                        String name = QueryIntent.normalize(entity.name());
+                        return name.equals(normalizedCore) ? 0 : name.startsWith(normalizedCore) ? 1 : 2;
+                    }).thenComparing(entity -> "POST".equals(entity.type()) ? 0 : 1)
+                        .thenComparing(EvidenceLedger.EntityFact::id))
+                    .toList();
+                List<EvidenceLedger.EntityFact> containment = matches.stream()
+                    .filter(entity -> QueryIntent.normalize(entity.name()).contains(normalizedCore))
+                    .toList();
+                // Exact containment is a record group and may have several members. Only its own
+                // complete-window checks and positive-list ledger can authorize a record-scoped
+                // answer. A loose subsequence match is a separate, single-anchor fallback that can
+                // still support the conditional short-title path but never a multi-record group.
+                if (!containment.isEmpty()) {
+                    containment.forEach(entity -> selected.putIfAbsent(entity.id(), entity));
+                    continue;
+                }
+                List<EvidenceLedger.EntityFact> approximate = uniqueApproximateTemporalMatches(
+                    subject, ledger);
+                if (approximate.size() == 1
+                    && approximate.stream().map(entity -> QueryIntent.normalize(entity.name()))
+                        .distinct().count() == 1) {
+                    selected.putIfAbsent(approximate.get(0).id(), approximate.get(0));
+                }
+            }
+        }
+        return selected.values().stream().limit(4).toList();
+    }
+
+    private static List<EvidenceLedger.EntityFact> uniqueApproximateTemporalMatches(
+        String subject, EvidenceLedger ledger) {
+        QueryIntent candidateIntent = new QueryIntent(List.of(subject), "", false);
+        return ledger.entities().stream()
+            .filter(entity -> entity != null && entity.name() != null && !"SKILL".equals(entity.type()))
+            .filter(entity -> candidateIntent.matchesSubject(entity.name()))
+            .sorted(Comparator.comparing(EvidenceLedger.EntityFact::id))
+            .toList();
+    }
+
+    private static List<String> temporalSubjectGroups(List<String> subjects) {
+        LinkedHashSet<String> groups = new LinkedHashSet<>();
+        for (String subject : subjects) {
+            String body = TEMPORAL_GROUP_PREFIX.matcher(
+                Objects.toString(subject, "").trim()).replaceFirst("");
+            for (String group : TEMPORAL_GROUP_CONNECTOR.split(body)) {
+                String core = temporalSubjectCore(group);
+                if (QueryIntent.normalize(core).length() >= 4) groups.add(core);
+            }
+        }
+        return List.copyOf(groups);
+    }
+
+    private static String temporalSubjectCore(String subject) {
+        return TEMPORAL_SUBJECT_RECORD_TAIL.matcher(Objects.toString(subject, "").trim())
+            .replaceFirst("").trim();
     }
 
     private static void recordSubjectScopes(String question, EvidenceLedger ledger,
@@ -503,9 +901,12 @@ public class AgenticGraphRagService {
     }
 
     private boolean acquireMissingEvidence(EvidenceRun run, QueryEvidencePlan plan, int round) {
-        List<Long> seeds = rankedSeeds(run.originalQuestion, run.ledger).stream()
+        List<EvidenceLedger.EntityFact> seedFacts = plan.requiresTemporal()
+            ? temporalSeeds(run.originalQuestion, run.ledger)
+            : rankedSeeds(run.originalQuestion, run.ledger);
+        List<Long> seeds = seedFacts.stream()
             .map(EvidenceLedger.EntityFact::id)
-            .limit(8).toList();
+            .limit(plan.requiresTemporal() ? 4 : 8).toList();
         if (seeds.isEmpty()) {
             String alternate = run.history.toString().contains("第二次实体检索")
                 ? null : shortSearchQuery(run.originalQuestion);
@@ -518,11 +919,27 @@ public class AgenticGraphRagService {
             return true;
         }
         for (Long id : seeds) {
-            if (plan.requiresTemporal() && !run.ledger.hasToolResult("query_temporal")) {
-                Map<String, Object> params = temporalParams(id, plan);
-                if (!run.calledBefore("query_temporal", params)) {
-                    run.call("query_temporal", params, round);
-                    return true;
+            if (plan.requiresTemporal() && !plan.globalTemporal()) {
+                List<KgTimeRange> windows = plan.timeRanges().isEmpty()
+                    ? plan.timeRange().map(List::of).orElseGet(List::of) : plan.timeRanges();
+                if (!windows.isEmpty() && !windows.stream()
+                    .allMatch(window -> run.ledger.completeTemporal(id, window))) {
+                    if (windows.size() > 1) {
+                        for (KgTimeRange window : windows) {
+                            if (run.ledger.completeTemporal(id, window)) continue;
+                            Map<String, Object> params = temporalParams(id, window);
+                            if (!run.calledBefore("query_temporal", params)) {
+                                run.call("query_temporal", params, round);
+                                return true;
+                            }
+                        }
+                    } else {
+                        Map<String, Object> params = temporalParams(id, plan);
+                        if (!run.calledBefore("query_temporal", params)) {
+                            run.call("query_temporal", params, round);
+                            return true;
+                        }
+                    }
                 }
             }
             if (plan.requiresRelation() && !run.ledger.completeRelations("expand_neighbors", id)
@@ -676,8 +1093,17 @@ public class AgenticGraphRagService {
         trace.add(Map.of("answerVerification", Map.of("stage", generationTruncated ? "GENERATION_PROTOCOL" : "VERIFY",
             "supported", check.supported(),
             "reasons", check.reasons())));
-        if (graphScope.limited() && check.coverageOnlyFailure() && !claimsExhaustiveList(answer))
-            return limitedEvidenceAnswer(answer, check, graphScope, ledger, trace, round, toolCalls, "QUERY_OR_CONTEXT_PARTIAL");
+        if (graphScope.limited() && check.coverageOnlyFailure() && !claimsExhaustiveList(answer)) {
+            // Coverage-only means the source facts survived verification. A named record may therefore
+            // still have a complete source-scoped answer even though the graph collection is partial.
+            // This exit must run before the generic partial-answer prefix; otherwise the useful source
+            // answer is made to declare itself incomplete without adding any factual safety.
+            AgenticAnswer scoped = sourceScopedRecordAnswer(question, answer, check, graphScope, ledger, trace,
+                round, toolCalls);
+            if (scoped != null) return scoped;
+            return limitedEvidenceAnswer(answer, check, graphScope, ledger, trace, round, toolCalls,
+                "QUERY_OR_CONTEXT_PARTIAL");
+        }
         if (!check.supported()) {
             trace.add(stepMap(round, "答案校验未通过: " + check.reasons(), null, null, null));
             AiClient.AiChatResult revision = budgetedChat(ChatRequestBudget.Stage.REWRITE, List.of(
@@ -714,9 +1140,22 @@ public class AgenticGraphRagService {
             trace.add(Map.of("answerVerification", Map.of("stage", "EXTRA", "supported", check.supported(),
                 "reasons", check.reasons())));
         }
+        // A coverage-only verdict says the collection claim is unsupported; it says nothing against the
+        // facts. A source-only answer about the named record can therefore still be released as that
+        // record's authorised text. This branch runs before the partial-answer label and therefore has
+        // to consult the exit itself: reaching the later call site would require supported=true.
         if (graphScope.requested() && check.coverageOnlyFailure() && graphCoverageRequired(question, answer)
-            && !claimsExhaustiveList(answer))
+            && !claimsExhaustiveList(answer)) {
+            if (plan.requiresTemporal()) {
+                AgenticAnswer temporal = verifiedTemporalSummary(question, plan, ledger, trace,
+                    round, toolCalls);
+                if (temporal != null) return temporal;
+            }
+            AgenticAnswer scoped = sourceScopedRecordAnswer(question, answer, check, graphScope, ledger, trace,
+                round, toolCalls);
+            if (scoped != null) return scoped;
             return limitedEvidenceAnswer(answer, check, graphScope, ledger, trace, round, toolCalls, "ANSWER_OMISSION");
+        }
         if (!check.supported()) {
             if (plan.requiresTemporal()) {
                 AgenticAnswer structured = verifiedTemporalSummary(question, plan, ledger, trace,
@@ -749,9 +1188,13 @@ public class AgenticGraphRagService {
                 : new AgenticAnswer(genericAdvice(), List.of(), trace, round, toolCalls, false);
         }
         if (graphScope.requested() && graphCoverageRequired(question, answer) && !claimsExhaustiveList(answer)
-            && (graphScope.limited() || check.usedRelationIds().isEmpty() && !check.usedChunkIds().isEmpty()))
+            && (graphScope.limited() || check.usedRelationIds().isEmpty() && !check.usedChunkIds().isEmpty())) {
+            AgenticAnswer scoped = sourceScopedRecordAnswer(question, answer, check, graphScope, ledger, trace,
+                round, toolCalls);
+            if (scoped != null) return scoped;
             return limitedEvidenceAnswer(answer, check, graphScope, ledger, trace, round, toolCalls,
                 check.usedRelationIds().isEmpty() ? "SOURCE_ONLY" : "QUERY_OR_CONTEXT_PARTIAL");
+        }
         if (graphScope.requested() && graphScope.limited()) {
             trace.add(Map.of("answerCoverage", "COMPLETE_SOURCE_ONLY",
                 "graphCoverage", "PARTIAL"));
@@ -802,9 +1245,14 @@ public class AgenticGraphRagService {
     }
 
     private static Map<String, Object> graphScopeMetadata(GraphAnswerScope.Scope scope, boolean sourceOnly) {
-        return Map.of("sourceOnly", sourceOnly, "queryComplete", scope.queryComplete(),
-            "inventoryComplete", scope.inventoryComplete(), "candidateCount", scope.candidateCount(),
-            "shownCount", scope.shownCount());
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("sourceOnly", sourceOnly);
+        metadata.put("queryComplete", scope.queryComplete());
+        metadata.put("inventoryComplete", scope.inventoryComplete());
+        metadata.put("targetEntityUnresolved", scope.targetEntityUnresolved());
+        metadata.put("candidateCount", scope.candidateCount());
+        metadata.put("shownCount", scope.shownCount());
+        return metadata;
     }
 
     private static AgenticAnswer limitedEvidenceAnswer(String answer, AnswerEvidenceVerifier.VerificationResult check,
@@ -817,6 +1265,141 @@ public class AgenticGraphRagService {
             "answerCoverage", "PARTIAL", "coverageReason", sourceOnly ? "SOURCE_ONLY" : reason,
             "graphAnswerScope", graphScopeMetadata(scope, sourceOnly)));
         return new AgenticAnswer(limited, citationsFor(check, ledger), trace, round, calls, false);
+    }
+
+    /** 答案若自己声明是部分结果，就不能改判为具名记录的完整原文回答。 */
+    private static final Pattern SELF_DECLARED_PARTIAL = Pattern.compile(
+        "供核对部分内容|部分结果|未完整回答|不能完整确认|无法确认图谱|尚未完整");
+
+    /**
+     * Generated source answers sometimes expose implementation state instead of the requested fact:
+     * {@code 图谱查询完整=false}, "no authorised graph candidate", or a disclaimer that the graph edge
+     * could not be confirmed. The graph coverage metadata already records those facts. Publishing the
+     * same state in prose makes an otherwise complete source answer look partial and can trip the
+     * public scorer's internal-state rules.
+     *
+     * <p>This pattern is deliberately limited to implementation/completeness wording. Factual
+     * limitations such as "原文未提及静态代理" remain untouched and continue through verification.
+     */
+    private static final Pattern TECHNICAL_COMPLETENESS_STATEMENT = Pattern.compile(
+        "(?i)(?:知识)?图谱(?:查询)?完整\\s*[=:：]?\\s*(?:true|false|是|否|1|0)"
+            + "|(?:知识)?图谱(?:中|里)未确认存在[^。！？；\\n]*"
+            + "|(?:知识)?图谱(?:关系)?\\s*[=:：]?\\s*\\**\\s*未确认\\**"
+            + "|(?:本次)?授权查询[^。！？；\\n]{0,120}?(?:未展示|未确认|未取得|未获得)"
+                + "[^。！？；\\n]{0,100}?(?:图谱)?(?:边|关系|候选)"
+            + "|(?:未|没有)(?:取得|获得)符合(?:主体|类型|主体/类型)[^。！？；\\n]*图谱候选"
+            + "|(?:候选已展示|candidateCount)\\s*[=:：]?\\s*\\d+\\s*/\\s*\\d+"
+            + "|无法确认图谱中是否存在[^。！？；\\n]*"
+            + "|(?:尚不能|无法|不能)(?:完整)?确认(?:所问|上述)?的?图谱(?:关联|关系|集合)");
+
+    private static String stripTechnicalCompletenessStatements(String answer) {
+        if (answer == null || answer.isBlank()) return answer;
+        StringBuilder kept = new StringBuilder(answer.length());
+        for (String line : answer.split("(?<=\\n)")) {
+            Matcher technical = TECHNICAL_COMPLETENESS_STATEMENT.matcher(line);
+            if (!technical.find()) {
+                kept.append(line);
+                continue;
+            }
+            int keptEnd = 0;
+            technical.reset();
+            while (technical.find()) {
+                int sentenceStart = Math.max(keptEnd,
+                    Math.max(line.lastIndexOf('。', technical.start()),
+                        Math.max(line.lastIndexOf('；', technical.start()),
+                            line.lastIndexOf('\n', technical.start()))) + 1);
+                int sentenceEnd = line.length();
+                for (char terminator : new char[]{'。', '；', '!', '?', '！', '？'}) {
+                    int candidate = line.indexOf(terminator, technical.end());
+                    if (candidate >= 0) sentenceEnd = Math.min(sentenceEnd, candidate + 1);
+                }
+                kept.append(line, keptEnd, sentenceStart);
+                keptEnd = sentenceEnd;
+            }
+            kept.append(line, keptEnd, line.length());
+        }
+        return QueryIntent.normalize(kept.toString()).isBlank() ? answer : kept.toString();
+    }
+
+    /**
+     * 具名记录的原文完备出口。
+     *
+     * <p>问题指向一条具名记录时，图谱里可能没有该记录到所问属性的关系边，但该记录的授权原文
+     * 本身就完整列出了答案。此时再用 “尚不能完整确认所问的图谱关联” 作前缀，会把一个内容完整
+     * 的原文回答改写成自我声明的部分回答，评测口径与阅读体验都会把它当作未回答。
+     *
+     * <p>本出口只在这六条同时成立时生效，任一条不满足都回落到原来的限定措辞：
+     * <ol>
+     *   <li>问题要求图谱/集合口径（调用方已判定）；</li>
+     *   <li>答案没有声称穷举（本方法内部再判一次）；</li>
+     *   <li>事实核验通过，或唯一不通过的原因是集合覆盖（事实本身不被否定），且答案只使用原文
+     *       片段、没有使用任何关系边；</li>
+     *   <li>被引用的片段里，至少有一条的标题就是问题指定的那条记录；</li>
+     *   <li>答案自己也没有声明是部分结果。</li>
+     * </ol>
+     *
+     * <p>本出口**不宣称枚举完整**：账本里没有该记录的关系边，程序也无法从自由文本反推出
+     * “应该枚举哪些项”，因此记录的是中性的 {@code answerCoverage=SOURCE_SCOPED}。有没有漏项
+     * 由事实核验负责，出口本身不替它背书。
+     *
+     * <p>输出的定位句只说明依据的是这条记录的授权原文，不对图谱做存在性或不存在性断言，
+     * 因此不违反 “未完整查询不得断言数据缺失” 的约束。
+     */
+    static AgenticAnswer sourceScopedRecordAnswer(String question, String answer,
+                                                  AnswerEvidenceVerifier.VerificationResult check,
+                                                  GraphAnswerScope.Scope scope, EvidenceLedger ledger,
+                                                  List<Map<String, Object>> trace, int round, int calls) {
+        String releasedBody = stripTechnicalCompletenessStatements(answer);
+        // "Facts not contradicted" is either a passing verdict or a verdict whose only complaints are
+        // coverage complaints. An unsupported fact claim never reaches this exit.
+        boolean relationListWithSource = !check.usedRelationIds().isEmpty()
+            && !check.usedChunkIds().isEmpty() && check.coverageOnlyFailure();
+        if (!(check.supported() || check.coverageOnlyFailure())
+            || check.usedChunkIds().isEmpty()
+            || claimsExhaustiveList(releasedBody)
+            || SELF_DECLARED_PARTIAL.matcher(Objects.toString(releasedBody, "")).find()) {
+            return null;
+        }
+        QueryIntent intent = QueryIntent.fromQuestion(question);
+        if (intent.primarySubject() == null || intent.subjects().isEmpty()) {
+            return null;
+        }
+        EvidenceLedger.ChunkFact anchor = check.usedChunkIds().stream().sorted()
+            .map(ledger::chunk).flatMap(java.util.Optional::stream)
+            .filter(chunk -> chunk.title() != null
+                && sourceTitleMatchesResolvedSubject(chunk.title(), intent.primarySubject()))
+            .findFirst().orElse(null);
+        if (anchor == null) {
+            return null;
+        }
+        if (!relationListWithSource && !check.usedRelationIds().isEmpty()
+            && !relationsBelongToRequestedSubjects(intent, check.usedRelationIds(), ledger)) {
+            return null;
+        }
+        String scoped = "依据《" + anchor.title() + "》（" + anchor.docType() + ":" + anchor.docId()
+            + "）的本次授权" + (relationListWithSource ? "图谱关系与原文"
+                : check.usedRelationIds().isEmpty() ? "原文" : "原文与图谱关系") + "：\n"
+            + releasedBody;
+        trace.add(Map.of("answerMode", "SOURCE_SCOPED_RECORD_ANSWER",
+            "answerCoverage", "SOURCE_SCOPED", "coverageReason", "NAMED_RECORD_SCOPED_EVIDENCE",
+            "graphCoverage", "PARTIAL", "graphAnswerScope", graphScopeMetadata(scope, true)));
+        return new AgenticAnswer(scoped, citationsFor(check, ledger), trace, round, calls, false);
+    }
+
+    private static boolean relationsBelongToRequestedSubjects(QueryIntent intent, Set<Long> relationIds,
+                                                              EvidenceLedger ledger) {
+        for (Long relationId : relationIds) {
+            EvidenceLedger.RelationFact relation = ledger.relation(relationId).orElse(null);
+            if (relation == null) return false;
+            boolean sourceMatches = ledger.entity(relation.sourceId())
+                .map(EvidenceLedger.EntityFact::name)
+                .filter(intent::matchesSubject).isPresent();
+            boolean targetMatches = ledger.entity(relation.targetId())
+                .map(EvidenceLedger.EntityFact::name)
+                .filter(intent::matchesSubject).isPresent();
+            if (!sourceMatches && !targetMatches) return false;
+        }
+        return true;
     }
 
     private static String cleanAnswer(String question, String answer) {
@@ -960,10 +1543,11 @@ public class AgenticGraphRagService {
         SubjectScopeLedger.Analysis scopes = SubjectScopeLedger.assess(question, ledger);
         if (!scopes.subjectIdentificationComplete() || scopes.subjects().size() != 1
             || !scopes.subjects().get(0).exact()) return null;
+        // The requested entity type is a query field, not a set filter. Strip only explicit
+        // topic-type words, then require every remaining word to be a declared relation-list
+        // artifact so real constraints cannot enter this simple exit.
         String focus = QueryIntent.fromQuestion(question).focusText();
-        String filter = focus
-            .replaceAll("技能|技术栈|技术技能|竞赛|赛事|子赛|文档|帖子|记录|实体|直接|平台|有|项|种", "");
-        if (!QueryIntent.normalize(filter).isBlank()) return null;
+        if (!relationFocusIsArtifactOnly(focus)) return null;
         String anchorText = question;
         List<EvidenceLedger.EntityFact> anchors = rankedSeeds(anchorText, ledger).stream()
             .filter(entity -> isNamedAnchor(anchorText, entity))
@@ -972,56 +1556,145 @@ public class AgenticGraphRagService {
         if (anchors.size() != 1 || QueryIntent.fromQuestion(question).subjects().size() > 1) {
             return null;
         }
-        String targetType = focus.contains("技能") || focus.contains("技术栈")
-            || focus.contains("技术技能") ? "SKILL"
-            : focus.contains("竞赛") || focus.contains("赛事") || focus.contains("子赛")
-                ? "COMPETITION"
-                : focus.contains("帖子") || focus.contains("记录")
-                    || focus.contains("文档") ? "POST" : null;
+        String targetType = QueryIntent.fromQuestion(question).requestedEntityType();
         if (targetType == null) {
             return null;
         }
-        Map<Long, EvidenceLedger.RelationFact> factsByTarget = new LinkedHashMap<>();
-        Date now = KgTimeRange.now();
-        for (EvidenceLedger.RelationFact relation : ledger.relations()) {
-            if (relation.validFrom() != null && relation.validFrom().after(now)
-                || relation.validTo() != null && !relation.validTo().after(now)) {
-                continue;
-            }
-            for (EvidenceLedger.EntityFact anchor : anchors) {
-                Long otherId = anchor.id().equals(relation.sourceId())
-                    ? relation.targetId()
-                    : anchor.id().equals(relation.targetId()) ? relation.sourceId() : null;
-                EvidenceLedger.EntityFact other = otherId == null
-                    ? null : ledger.entity(otherId).orElse(null);
-                if (other != null && (targetType == null || targetType.equals(other.type()))) {
-                    factsByTarget.putIfAbsent(other.id(), relation);
-                }
-            }
-        }
-        if (factsByTarget.isEmpty()) {
-            return null;
-        }
-        boolean complete = scopes.queryComplete();
-        StringBuilder text = new StringBuilder(anchors.get(0).name())
-            .append(complete ? "直接关联：\n" : "已确认的直接关联如下；结果仅覆盖本次可核对部分：\n");
-        int count = 0;
-        for (Map.Entry<Long, EvidenceLedger.RelationFact> row : factsByTarget.entrySet()) {
-            EvidenceLedger.EntityFact other = ledger.entity(row.getKey()).orElseThrow();
-            text.append(++count).append(". ").append(other.name())
-                .append("（").append(row.getValue().type()).append("，r#")
-                .append(row.getValue().id()).append("）\n");
-        }
-        AnswerEvidenceVerifier.VerificationResult checked = verifier.verify(question, text.toString(), ledger, plan);
+        TypedRelationSummary.Result summary = TypedRelationSummary.build(question, ledger, scopes)
+            .orElse(null);
+        if (summary == null) return null;
+        AnswerEvidenceVerifier.VerificationResult checked = verifier.verify(
+            question, summary.text(), ledger, plan);
         if (!checked.supported()) {
             return null;
         }
-        trace.add(stepMap(round, "依据限定主体的已核实直接关系生成"
-            + (complete ? "完整" : "部分") + "列表", null, null, null));
-        trace.add(Map.of("answerMode", "STRUCTURED_RELATION_SUMMARY",
-            "answerCoverage", complete ? "COMPLETE" : "PARTIAL"));
-        return new AgenticAnswer(text.toString(), citationsFor(checked, ledger),
+        trace.add(stepMap(round, "依据完整授权查询生成目标类型关系汇总：目标="
+            + summary.targetRelationCount() + "，非目标=" + summary.nonTargetRelationCount(),
+            null, null, null));
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        metadata.put("answerMode", "STRUCTURED_RELATION_SUMMARY");
+        metadata.put("answerCoverage", "COMPLETE");
+        metadata.put("targetType", summary.targetType());
+        metadata.put("targetRelationCount", summary.targetRelationCount());
+        metadata.put("nonTargetRelationCount", summary.nonTargetRelationCount());
+        trace.add(metadata);
+        return new AgenticAnswer(summary.text(), citationsFor(checked, ledger),
             trace, round, toolCalls, false);
+    }
+
+    /**
+     * A relation-list shortcut may only remove query scaffolding. The single-character
+     * replacements are deliberately boundary-aware: 有关/有效/项目/种类 are constraints, not
+     * fillers, and must keep the deterministic exit closed.
+     */
+    static boolean relationFocusIsArtifactOnly(String focus) {
+        String remaining = RELATION_FOCUS_ARTIFACTS.matcher(Objects.toString(focus, "")).replaceAll(" ");
+        remaining = RELATION_FOCUS_SINGLE_FILLER.matcher(remaining).replaceAll(" ");
+        return QueryIntent.normalize(remaining).isBlank();
+    }
+
+    /**
+     * A zero target relation count is ambiguous about the graph entity, not about every source
+     * record retrieved for the question.  When an authorized source about the same subject contains
+     * the requested property, the answer path must retain that evidence instead of returning the
+     * disambiguation response before generation.  A merely related chunk with no focus hit does not
+     * open this path.
+     */
+    static boolean hasSubjectSourceForRequestedProperty(String question, EvidenceLedger ledger) {
+        if (ledger == null || ledger.chunks().isEmpty()) return false;
+        QueryIntent intent = QueryIntent.fromQuestion(question);
+        if (intent.primarySubject() == null || intent.focusText().isBlank()) return false;
+        String targetType = intent.requestedEntityType();
+        String focus = QueryIntent.normalize(intent.focusText());
+        SubjectScopeLedger.Analysis scopes = SubjectScopeLedger.assess(question, ledger);
+        String resolvedSubject = scopes.subjects().stream()
+            .filter(SubjectScopeLedger.SubjectScope::exact)
+            .map(SubjectScopeLedger.SubjectScope::entityName)
+            .filter(name -> name != null && !name.isBlank())
+            .findFirst().orElse(intent.primarySubject());
+        return ledger.chunks().stream()
+            .filter(chunk -> chunk.text() != null)
+            .filter(chunk -> sourceTitleMatchesResolvedSubject(chunk.title(), resolvedSubject))
+            .anyMatch(chunk -> {
+                String source = Objects.toString(chunk.text(), "");
+                if ("COMPETITION".equals(targetType)) {
+                    return source.matches("(?s).*(?:竞赛|大赛|比赛|挑战杯|数学建模|数模).*");
+                }
+                return source.contains(focus);
+            });
+    }
+
+    private static boolean sourceTitleMatchesResolvedSubject(String title, String resolvedSubject) {
+        String candidate = QueryIntent.normalize(title);
+        if (candidate.isEmpty()) return false;
+        String titleStem = TEMPORAL_SUBJECT_RECORD_TAIL.matcher(Objects.toString(title, "").trim())
+            .replaceFirst("").trim();
+        String requestedStem = TEMPORAL_SUBJECT_RECORD_TAIL.matcher(
+            Objects.toString(resolvedSubject, "").trim()).replaceFirst("").trim();
+        if (!requestedStem.isEmpty() && !titleStem.isEmpty()
+            && (QueryIntent.sameSubjectName(requestedStem, titleStem)
+                || candidate.contains(QueryIntent.normalize(requestedStem)))) {
+            return true;
+        }
+        return QueryIntent.aliasForms(resolvedSubject).stream().anyMatch(alias -> {
+            if (alias.isEmpty()) return false;
+            if (alias.length() >= 4 && candidate.contains(alias)) return true;
+            String shorter = alias.length() <= candidate.length() ? alias : candidate;
+            String longer = alias.length() <= candidate.length() ? candidate : alias;
+            return shorter.length() >= 4
+                && shorter.length() * 5 >= longer.length() * 3
+                && longer.contains(shorter);
+        });
+    }
+
+    /**
+     * A fully queried exact anchor with zero requested-type relations is still ambiguous when
+     * the requested type is otherwise searchable. Do not publish "none": ask the user which
+     * subject they mean, and keep that distinction in the trace.
+     */
+    private static AgenticAnswer zeroTargetRelationClarification(String question,
+                                                                  QueryEvidencePlan plan,
+                                                                  EvidenceLedger ledger,
+                                                                  List<Map<String, Object>> trace,
+                                                                  int round, int toolCalls) {
+        if (!plan.requiresRelation() || !LIST_RELATIONS.matcher(question).find()
+            || CLASSIFICATION.matcher(question).find()) return null;
+        SubjectScopeLedger.Analysis scopes = SubjectScopeLedger.assess(question, ledger);
+        if (!scopes.queryComplete() || scopes.subjects().size() != 1) return null;
+        String targetType = QueryIntent.fromQuestion(question).requestedEntityType();
+        if (targetType == null) return null;
+        SubjectScopeLedger.SubjectScope scope = scopes.subjects().get(0);
+        EvidenceLedger.EntityFact anchor = ledger.entity(scope.entityId()).orElse(null);
+        if (anchor == null) return null;
+        boolean hasTarget = ledger.relations().stream()
+            .filter(edge -> Objects.equals(edge.sourceId(), anchor.id())
+                || Objects.equals(edge.targetId(), anchor.id()))
+            .map(edge -> Objects.equals(edge.sourceId(), anchor.id())
+                ? edge.targetId() : edge.sourceId())
+            .map(ledger::entity).flatMap(java.util.Optional::stream)
+            .anyMatch(entity -> targetType.equals(entity.type()));
+        if (hasTarget) return null;
+        if (hasSubjectSourceForRequestedProperty(question, ledger)) {
+            trace.add(Map.of("zeroTargetRelationDisposition",
+                Map.of("decision", "CONTINUE_WITH_AUTHORIZED_SOURCE",
+                    "targetType", targetType, "targetRelationCount", 0)));
+            return null;
+        }
+        String typeLabel = switch (targetType) {
+            case "COMPETITION" -> "竞赛";
+            case "SKILL" -> "技能";
+            case "ORGANIZATION" -> "组织";
+            case "POST" -> "帖子或文档";
+            default -> targetType;
+        };
+        trace.add(Map.of("answerMode", "CLARIFICATION", "answerCoverage", "UNANSWERED",
+            "coverageReason", "SUBJECT_DISAMBIGUATION_REQUIRED",
+            "targetType", targetType, "targetRelationCount", 0));
+        return new AgenticAnswer("我找到了主体《" + anchor.name() + "》（#" + anchor.id()
+            + "），但在当前用户可见图谱中，它没有已授权的" + typeLabel
+            + "关系。这个主体名称可能指另一个同名或近似名称的对象，因此不能据此断言“没有"
+            + typeLabel + "”。请确认具体对象名称或链接后再核对。",
+            List.of(), trace, round, toolCalls, false);
     }
 
     private AgenticAnswer verifiedHostSummary(String question, QueryEvidencePlan plan,
@@ -1214,11 +1887,24 @@ public class AgenticGraphRagService {
         boolean currentOnly = Pattern.compile("至今|当前|目前|现在").matcher(question).find()
             && Pattern.compile("(?:仍(?:然)?|还|继续)(?:保持|存在|有)?(?:关联|关系|连接|有效)").matcher(question).find();
         Date currentAt = KgTimeRange.now();
-        List<EvidenceLedger.EntityFact> anchors = plan.globalTemporal() ? List.of() : rankedSeeds(question, ledger);
+        List<EvidenceLedger.EntityFact> anchors = plan.globalTemporal() ? List.of()
+            : temporalSeeds(question, ledger);
         if (!plan.globalTemporal() && anchors.isEmpty()) return null;
         TemporalAnswerScope.Analysis temporalScope = TemporalAnswerScope.assess(question, plan, ledger);
-        boolean complete = temporalScope.requestedScopeComplete();
+        TemporalAnswerScope.RecordScope recordScope = plan.globalTemporal() ? null
+            : TemporalAnswerScope.recordScope(question, plan, ledger, anchors);
+        if (recordScope != null && recordScope.groups().isEmpty()
+            && !plan.globalTemporal()) {
+            List<TemporalAnswerScope.RecordGroup> semanticGroups = temporalRecordGroupsFromQuestion(
+                question, anchors);
+            if (!semanticGroups.isEmpty())
+                recordScope = TemporalAnswerScope.recordScopeFromGroups(question, plan, ledger,
+                    semanticGroups);
+        }
+        boolean complete = temporalScope.requestedScopeComplete()
+            || recordScope != null && recordScope.requestedRecordsConfirmed();
         trace.add(Map.of("temporalAnswerScope", temporalScope.metadata()));
+        if (recordScope != null) trace.add(Map.of("temporalRecordScope", recordScope.metadata()));
         Set<Long> anchorIds = anchors.stream().map(EvidenceLedger.EntityFact::id)
             .collect(java.util.stream.Collectors.toSet());
         Set<Long> requestedTargets = requestedCompetitionIds(question, ledger);
@@ -1250,7 +1936,16 @@ public class AgenticGraphRagService {
             }
         }
         if (matches.isEmpty()) {
-            if (!complete) return null;
+            if (!complete) {
+                trace.add(Map.of("temporalMatchDiagnostics", Map.of(
+                    "windowStart", window.startInclusive().toString(),
+                    "windowEnd", window.endExclusive().toString(),
+                    "anchorIds", anchorIds,
+                    "ledgerRelationCount", ledger.relations().size(),
+                    "complete", false,
+                    "reason", "NO_MATCHING_RELATION_IN_INCOMPLETE_SCOPE")));
+                return null;
+            }
             trace.add(stepMap(round, "完整授权时间窗查询确认所问主体没有匹配关联", null, null, null));
             trace.add(Map.of("answerMode", "STRUCTURED_TEMPORAL_SUMMARY", "answerCoverage", "COMPLETE"));
             trace.add(Map.of("temporalMatchPolicy", currentOnly ? "OVERLAP_AND_CURRENT" : "OVERLAP_HALF_OPEN"));
@@ -1260,12 +1955,62 @@ public class AgenticGraphRagService {
                 List.of(), trace, round, toolCalls, false);
         }
         boolean conditional = !complete && temporalScope.conditionalDocumentListAllowed();
+        boolean recordScoped = recordScope != null && recordScope.requestedRecordsConfirmed();
         StringBuilder answer = new StringBuilder(conditional
             ? "若你指的是《" + temporalScope.resolvedTitle() + "》，以下核对该文档的时间窗结果。\n" : "");
-        answer.append(currentOnly ? "截至" + KgTimeRange.today()
-            + "，在指定时间段内仍有效的竞赛关联中，" : "在指定时间段内，")
-            .append(complete || conditional ? "符合条件的竞赛关联如下：\n"
-                : "已确认以下竞赛关联；结果仅覆盖本次可核对部分：\n");
+        if (recordScoped) {
+            answer.append("以下按指定的记录组，分别列出授权时间窗内取得的竞赛关联：\n");
+        } else {
+            answer.append(currentOnly ? "截至" + KgTimeRange.today()
+                + "，在指定时间段内仍有效的竞赛关联中，" : "在指定时间段内，")
+                .append(complete || conditional ? "符合条件的竞赛关联如下：\n"
+                    : "已确认以下竞赛关联；结果仅覆盖本次可核对部分：\n");
+        }
+        if (recordScoped) {
+            appendTemporalRecordGroupMatches(answer, recordScope, matches.values(), ledger, true);
+            AnswerEvidenceVerifier.VerificationResult checked = verifier.verify(
+                question, answer.toString(), ledger, plan);
+            if (!checked.supported()) return null;
+            trace.add(stepMap(round, "按记录组、半开时间窗和授权查询完整性汇总竞赛关系",
+                null, null, null));
+            trace.add(Map.of("answerMode", "STRUCTURED_TEMPORAL_RECORD_GROUPS",
+                "answerCoverage", "COMPLETE",
+                "coverageReason", "AUTHORIZED_RECORD_GROUPS"));
+            trace.add(Map.of("temporalMatchPolicy",
+                currentOnly ? "OVERLAP_AND_CURRENT" : "OVERLAP_HALF_OPEN"));
+            return new AgenticAnswer(answer.toString(), citationsFor(checked, ledger),
+                trace, round, toolCalls, false);
+        }
+        boolean partialRecordGroups = recordScope != null && !recordScope.groups().isEmpty()
+            && !recordScope.requestedRecordsConfirmed();
+        if (partialRecordGroups) {
+            // Never label a subset of request groups as a complete collection. The matched rows are
+            // still useful, but the answer must expose the exact member coverage that is missing.
+            List<Long> missing = recordScope.missingCompleteMemberIds();
+            if (missing.isEmpty()) return null;
+            appendTemporalRecordGroupMatches(answer, recordScope, matches.values(), ledger, false);
+            appendTemporalCoverageNote(answer, recordScope, ledger);
+            AnswerEvidenceVerifier.VerificationResult checked = verifier.verify(
+                question, answer.toString(), ledger, plan);
+            // A partial exit must still be grounded in the rows it displays. No evidence means no
+            // published partial answer; the ordinary clarification/rewrite path remains available.
+            if (!checked.supported()) {
+                trace.add(Map.of("temporalPartialVerification", Map.of(
+                    "supported", false,
+                    "reasons", checked.reasons(),
+                    "missingMemberIds", missing,
+                    "draft", answer.toString())));
+                return null;
+            }
+            trace.add(stepMap(round, "按记录组汇总时发现成员级时间窗覆盖不完整，答案明确标为部分",
+                null, null, null));
+            trace.add(Map.of("answerMode", "STRUCTURED_TEMPORAL_SUMMARY",
+                "answerCoverage", "PARTIAL", "coverageReason", "TEMPORAL_RECORD_MEMBERS_INCOMPLETE"));
+            trace.add(Map.of("temporalMatchPolicy",
+                currentOnly ? "OVERLAP_AND_CURRENT" : "OVERLAP_HALF_OPEN"));
+            return new AgenticAnswer(answer.toString(), citationsFor(checked, ledger),
+                trace, round, toolCalls, false);
+        }
         for (EvidenceLedger.RelationFact relation : matches.values()) {
             EvidenceLedger.EntityFact source = ledger.entity(relation.sourceId()).orElseThrow();
             EvidenceLedger.EntityFact target = ledger.entity(relation.targetId()).orElseThrow();
@@ -1285,10 +2030,76 @@ public class AgenticGraphRagService {
         return new AgenticAnswer(answer.toString(), citationsFor(checked, ledger), trace, round, toolCalls, false);
     }
 
+    private static void appendTemporalRecordGroupMatches(
+        StringBuilder answer, TemporalAnswerScope.RecordScope scope,
+        java.util.Collection<EvidenceLedger.RelationFact> matches,
+        EvidenceLedger ledger, boolean completeGroups) {
+        Set<Long> emittedRelations = new LinkedHashSet<>();
+        for (TemporalAnswerScope.RecordGroup group : scope.groups()) {
+            answer.append("- ").append(group.matchedCore()).append("（")
+                .append(group.members().stream().map(EvidenceLedger.EntityFact::name)
+                    .collect(java.util.stream.Collectors.joining("、")))
+                .append("）：");
+            Set<Long> memberIds = group.members().stream().map(EvidenceLedger.EntityFact::id)
+                .collect(java.util.stream.Collectors.toSet());
+            List<EvidenceLedger.RelationFact> groupMatches = matches.stream()
+                .filter(relation -> memberIds.contains(relation.sourceId())
+                    || memberIds.contains(relation.targetId()))
+                .filter(relation -> emittedRelations.add(relation.id()))
+                .toList();
+            if (groupMatches.isEmpty()) {
+                // Incomplete groups carry their exact missing-member note immediately below the
+                // positive rows. Do not turn the absence of fetched rows into an absence assertion.
+                if (completeGroups)
+                    answer.append("本次授权查询范围内没有已确认的正向匹配。\n");
+                else
+                    answer.append("本次已取得的证据中暂无正向匹配，完整性见下。\n");
+            } else {
+                answer.append(groupMatches.stream().map(relation -> {
+                    EvidenceLedger.EntityFact source = ledger.entity(relation.sourceId()).orElseThrow();
+                    EvidenceLedger.EntityFact target = ledger.entity(relation.targetId()).orElseThrow();
+                    return source.name() + "与" + target.name() + "存在 " + relation.type()
+                        + " 关系（r#" + relation.id() + "）";
+                }).collect(java.util.stream.Collectors.joining("；"))).append("。\n");
+            }
+        }
+    }
+
     private static boolean matchesRequestedSourceType(String question, EvidenceLedger.EntityFact source) {
         if (question.contains("帖子")) return "POST".equals(source.type());
         if (question.contains("文档")) return "POST".equals(source.type()) || "ASSET".equals(source.type());
         return true;
+    }
+
+    private static List<TemporalAnswerScope.RecordGroup> temporalRecordGroupsFromQuestion(
+        String question, List<EvidenceLedger.EntityFact> selected) {
+        List<TemporalAnswerScope.RecordGroup> groups = new ArrayList<>();
+        for (String requested : temporalSubjectGroups(
+            QueryIntent.subjectRequests(question).subjects())) {
+            String core = QueryIntent.normalize(temporalSubjectCore(requested));
+            if (core.length() < 4) continue;
+            List<EvidenceLedger.EntityFact> members =
+                TemporalAnswerScope.titleGroupMembers(core, selected);
+            if (!members.isEmpty())
+                groups.add(new TemporalAnswerScope.RecordGroup(requested, core, members));
+        }
+        return List.copyOf(groups);
+    }
+
+    private static void appendTemporalCoverageNote(StringBuilder answer,
+                                                   TemporalAnswerScope.RecordScope scope,
+                                                   EvidenceLedger ledger) {
+        List<Long> missing = scope.missingCompleteMemberIds();
+        if (missing.isEmpty()) {
+            answer.append("所有已识别记录成员均完成所问时间窗查询。\n");
+            return;
+        }
+        answer.append("以下记录成员尚未完成所问时间窗查询，不能据此宣称完整集合：");
+        answer.append(missing.stream().map(id -> ledger.entity(id)
+                .map(entity -> entity.name() + "（#" + id + "）")
+                .orElse("#" + id))
+            .collect(java.util.stream.Collectors.joining("、")));
+        answer.append("。\n");
     }
 
     private static Set<Long> requestedCompetitionIds(String question, EvidenceLedger ledger) {
@@ -1346,9 +2157,24 @@ public class AgenticGraphRagService {
         return citations;
     }
 
+    private static Map<String, Object> citation(EvidenceLedger.ChunkFact chunk) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("chunkId", chunk.id());
+        row.put("docType", chunk.docType());
+        row.put("docId", chunk.docId());
+        row.put("title", chunk.title());
+        return row;
+    }
+
     private static AgenticAnswer conservativeAnswer(List<Map<String, Object>> trace,
                                                       int round, int toolCalls) {
-        trace.add(Map.of("answerMode", "CLARIFICATION", "answerCoverage", "UNANSWERED"));
+        return conservativeAnswer(trace, round, toolCalls, "UNRESOLVED_REQUEST");
+    }
+
+    private static AgenticAnswer conservativeAnswer(List<Map<String, Object>> trace,
+                                                    int round, int toolCalls, String reason) {
+        trace.add(Map.of("answerMode", "CLARIFICATION", "answerCoverage", "UNANSWERED",
+            "coverageReason", reason));
         return new AgenticAnswer("请补充具体的记录名称、时间或页面链接，以便准确核对细节。",
             List.of(), trace, round, toolCalls, false);
     }

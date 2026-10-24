@@ -13,6 +13,7 @@ import cn.ilink.mapper.ProjectMilestoneMapper;
 import cn.ilink.mapper.RecommendationLogMapper;
 import cn.ilink.mapper.TaskCommentMapper;
 import cn.ilink.mapper.TaskParticipantMapper;
+import cn.ilink.mapper.TaskReviewMapper;
 import cn.ilink.mapper.TaskSubmissionMapper;
 import cn.ilink.mapper.TeamLibraryFileMapper;
 import cn.ilink.mapper.TeamTaskMapper;
@@ -23,6 +24,9 @@ import cn.ilink.service.impl.ProjectApplicationServiceImpl;
 import cn.ilink.service.impl.TeacherApplicationServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
+import cn.ilink.service.kg.KgIndexService;
+import cn.ilink.teamagent.TeamAgentLifecycleService;
+import cn.ilink.teamagent.TeamTaskCommandService;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +57,7 @@ class AdminDataServiceTest {
     private CommunityPostFavoriteMapper communityPostFavoriteMapper;
     private TeamTaskMapper teamTaskMapper;
     private TaskParticipantMapper taskParticipantMapper;
+    private TaskReviewMapper taskReviewMapper;
     private TaskCommentMapper taskCommentMapper;
     private TaskSubmissionMapper taskSubmissionMapper;
     private ProjectMilestoneMapper projectMilestoneMapper;
@@ -61,6 +66,10 @@ class AdminDataServiceTest {
     private RecommendationLogMapper recommendationLogMapper;
     private NotificationMapper notificationMapper;
     private UserSkillMapper userSkillMapper;
+    private KgIndexService kgIndexService;
+    private TeamTaskCommandService teamTaskCommandService;
+    private TeamAgentLifecycleService teamAgentLifecycleService;
+    private cn.ilink.collab.TeamCollaborationCleanupService collaborationCleanupService;
     private AdminDataService service;
 
     @BeforeEach
@@ -78,6 +87,7 @@ class AdminDataServiceTest {
         communityPostFavoriteMapper = mock(CommunityPostFavoriteMapper.class);
         teamTaskMapper = mock(TeamTaskMapper.class);
         taskParticipantMapper = mock(TaskParticipantMapper.class);
+        taskReviewMapper = mock(TaskReviewMapper.class);
         taskCommentMapper = mock(TaskCommentMapper.class);
         taskSubmissionMapper = mock(TaskSubmissionMapper.class);
         projectMilestoneMapper = mock(ProjectMilestoneMapper.class);
@@ -86,14 +96,22 @@ class AdminDataServiceTest {
         recommendationLogMapper = mock(RecommendationLogMapper.class);
         notificationMapper = mock(NotificationMapper.class);
         userSkillMapper = mock(UserSkillMapper.class);
+        kgIndexService = mock(KgIndexService.class);
+        teamTaskCommandService = mock(TeamTaskCommandService.class);
+        teamAgentLifecycleService = mock(TeamAgentLifecycleService.class);
+        collaborationCleanupService = mock(cn.ilink.collab.TeamCollaborationCleanupService.class);
         service = new AdminDataService(userService, teamDemandService, teamApplicationService,
             teacherApplicationService, projectApplicationService, assetService, assetLifecycleService,
             communityPostService, communityCommentMapper, communityPostLikeMapper,
-            communityPostFavoriteMapper, teamTaskMapper, taskParticipantMapper, taskCommentMapper,
+            communityPostFavoriteMapper, teamTaskMapper, taskParticipantMapper, taskReviewMapper,
+            taskCommentMapper,
             taskSubmissionMapper, projectMilestoneMapper, chatMessageMapper, teamLibraryFileMapper,
             recommendationLogMapper,
-            notificationMapper, userSkillMapper,
+            notificationMapper, userSkillMapper, kgIndexService, teamTaskCommandService,
+            teamAgentLifecycleService,
             mock(RememberMeService.class), mock(UserSessionRegistry.class));
+        org.springframework.test.util.ReflectionTestUtils.setField(
+            service, "teamCollaborationCleanupService", collaborationCleanupService);
     }
 
     @Test
@@ -106,6 +124,7 @@ class AdminDataServiceTest {
         second.setId(12L);
         when(teamDemandService.getById(7L)).thenReturn(team);
         when(teamTaskMapper.selectList(any())).thenReturn(List.of(first, second));
+        when(teamTaskMapper.selectBatchIds(any())).thenReturn(List.of(first, second));
         when(teamDemandService.removeById(7L)).thenReturn(true);
 
         service.deleteTeam(7L, "测试删除原因");
@@ -113,6 +132,7 @@ class AdminDataServiceTest {
         verify(taskSubmissionMapper).delete(any());
         verify(taskCommentMapper).delete(any());
         verify(taskParticipantMapper).delete(any());
+        verify(taskReviewMapper).delete(any());
         verify(teamTaskMapper).deleteBatchIds(argThat(ids -> ids.size() == 2 && ids.containsAll(List.of(11L, 12L))));
         verify(projectMilestoneMapper).delete(any());
         verify(chatMessageMapper).delete(any());
@@ -121,6 +141,8 @@ class AdminDataServiceTest {
         verify(teamApplicationService).remove(any(Wrapper.class));
         verify(recommendationLogMapper).delete(any());
         verify(notificationMapper).delete(any());
+        verify(teamAgentLifecycleService).onTeamDissolved(7L);
+        verify(collaborationCleanupService).deleteTeamData(7L);
         verify(teamDemandService).removeById(7L);
     }
 

@@ -39,6 +39,23 @@ final class ClassificationProofCatalog {
         }
     }
 
+    record ClosureSelection(String text, int tokenCount, int budget, List<String> proofIds,
+                            List<String> omittedProofIds, boolean withinBudget,
+                            List<Integer> coveredCandidateIds) {
+        ClosureSelection {
+            proofIds = List.copyOf(proofIds);
+            omittedProofIds = List.copyOf(omittedProofIds);
+            coveredCandidateIds = List.copyOf(coveredCandidateIds);
+        }
+
+        Map<String, Object> metadata() {
+            return Map.of("closureProofIds", proofIds, "closureProofTokens", tokenCount,
+                "closureOmittedProofIds", omittedProofIds, "closureProofBudget", budget,
+                "closureProofWithinBudget", withinBudget,
+                "closureCoveredCandidateIds", coveredCandidateIds);
+        }
+    }
+
     static final class ProofCatalog {
         private final List<ProofSpan> spans;
         private final Map<String, ProofSpan> byId;
@@ -105,6 +122,63 @@ final class ClassificationProofCatalog {
             StringBuilder result = new StringBuilder();
             for (ProofSpan proof : usedSpans(proofIds)) appendProof(result, proof);
             return result.toString();
+        }
+
+        /**
+         * Build a member-aware closure proof pack without changing any decision. Proofs are limited
+         * to the caller's already-sent member-relevant set. The selector greedily covers the most
+         * missing members, uses complete source spans only, and merges overlapping spans from the
+         * same authorized chunk before checking the explicit token budget.
+         */
+        ClosureSelection packClosure(Map<Integer, List<String>> memberProofs, int requestedBudget,
+                                     EvidenceLedger ledger) {
+            int budget = Math.max(0, Math.min(requestedBudget, EvidenceContext.MAX_BUDGET));
+            LinkedHashMap<Integer, Set<String>> remaining = new LinkedHashMap<>();
+            if (memberProofs != null) for (var entry : memberProofs.entrySet())
+                remaining.put(entry.getKey(), new LinkedHashSet<>(safeIds(entry.getValue())));
+            Set<String> allowed = remaining.values().stream().flatMap(Set::stream)
+                .filter(byId::containsKey).collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+            List<ProofSpan> chosen = new ArrayList<>();
+            Set<Integer> covered = new LinkedHashSet<>();
+            while (covered.size() < remaining.size()) {
+                ProofSpan best = null;
+                int bestTokens = Integer.MAX_VALUE;
+                int bestGain = -1;
+                for (String id : allowed) {
+                    ProofSpan proof = byId.get(id);
+                    if (proof == null || chosen.contains(proof)) continue;
+                    List<ProofSpan> trial = new ArrayList<>(chosen);
+                    trial.add(proof);
+                    String trialText = renderClosure(trial, ledger);
+                    int trialTokens = EvidenceContext.tokens(trialText);
+                    if (trialTokens > budget) continue;
+                    int gain = closureCoverage(remaining, trial, byId).size() - covered.size();
+                    if (gain <= 0) continue;
+                    if (gain > bestGain || gain == bestGain && trialTokens < bestTokens
+                        || gain == bestGain && trialTokens == bestTokens
+                        && proof.text().length() < (best == null ? Integer.MAX_VALUE : best.text().length())
+                        || gain == bestGain && trialTokens == bestTokens && best != null
+                        && proof.text().length() == best.text().length()
+                        && numericId(proof.id()) < numericId(best.id())) {
+                        best = proof;
+                        bestTokens = trialTokens;
+                        bestGain = gain;
+                    }
+                }
+                if (best == null) break;
+                chosen.add(best);
+                chosen.sort(Comparator.comparingInt(proof -> numericId(proof.id())));
+                covered.clear();
+                covered.addAll(closureCoverage(remaining, chosen, byId));
+            }
+            List<String> chosenIds = chosen.stream().map(ProofSpan::id).toList();
+            List<String> omitted = allowed.stream().filter(id -> !chosenIds.contains(id)).toList();
+            String text = chosen.isEmpty()
+                ? "【闭包成员证明】没有能完整装入预算的已发送成员证明；I/E必须改判U。\n"
+                : renderClosure(chosen, ledger);
+            int tokens = EvidenceContext.tokens(text);
+            return new ClosureSelection(text, tokens, budget, chosenIds, omitted, tokens <= budget,
+                covered.stream().sorted().toList());
         }
 
         List<Map<String, Object>> usedMetadata(Collection<String> proofIds) {
@@ -224,6 +298,64 @@ final class ClassificationProofCatalog {
             .forEach(proof -> appendProof(text, proof));
         return text.append("【原文选择范围】").append(selected.size()).append('/').append(available)
             .append("；未展示原文不证明候选应排除或属性不存在。\n").toString();
+    }
+
+    private static Set<Integer> closureCoverage(Map<Integer, Set<String>> members, List<ProofSpan> selected,
+                                                 Map<String, ProofSpan> proofById) {
+        Map<Long, List<Range>> coveredRanges = new LinkedHashMap<>();
+        for (ProofSpan proof : selected)
+            coveredRanges.computeIfAbsent(proof.chunkId(), key -> new ArrayList<>())
+                .add(new Range(proof.start(), proof.end()));
+        coveredRanges.replaceAll((chunk, ranges) -> mergeRanges(ranges));
+        Set<Integer> covered = new LinkedHashSet<>();
+        for (var entry : members.entrySet()) {
+            for (String proofId : entry.getValue()) {
+                ProofSpan relevant = proofById.get(proofId);
+                if (relevant == null) continue;
+                boolean represented = coveredRanges.getOrDefault(relevant.chunkId(), List.of()).stream()
+                    .anyMatch(range -> range.start() <= relevant.start() && range.end() >= relevant.end());
+                if (represented) {
+                    covered.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return covered;
+    }
+
+    private static List<Range> mergeRanges(List<Range> input) {
+        List<Range> merged = new ArrayList<>();
+        for (Range range : input.stream().sorted(Comparator.comparingInt(Range::start)
+            .thenComparingInt(Range::end)).toList()) {
+            if (merged.isEmpty() || merged.get(merged.size() - 1).end() < range.start()) merged.add(range);
+            else {
+                Range previous = merged.remove(merged.size() - 1);
+                merged.add(new Range(previous.start(), Math.max(previous.end(), range.end())));
+            }
+        }
+        return merged;
+    }
+
+    private static String renderClosure(List<ProofSpan> selected, EvidenceLedger ledger) {
+        StringBuilder text = new StringBuilder("【闭包成员证明；完整原文跨度；p编号本身不证明分类】\n");
+        Map<Long, List<ProofSpan>> byChunk = selected.stream().collect(java.util.stream.Collectors.groupingBy(
+            ProofSpan::chunkId, LinkedHashMap::new, java.util.stream.Collectors.toList()));
+        for (var entry : byChunk.entrySet().stream().sorted(Map.Entry.comparingByKey()).toList()) {
+            EvidenceLedger.ChunkFact chunk = ledger == null ? null : ledger.chunk(entry.getKey()).orElse(null);
+            if (chunk == null || chunk.text() == null) continue;
+            for (Range range : mergeRanges(entry.getValue().stream()
+                .map(proof -> new Range(proof.start(), proof.end())).toList())) {
+                String ids = entry.getValue().stream()
+                    .filter(proof -> proof.start() >= range.start() && proof.end() <= range.end())
+                    .map(ProofSpan::id).distinct().sorted(Comparator.comparingInt(ClassificationProofCatalog::numericId))
+                    .collect(java.util.stream.Collectors.joining(","));
+                text.append(ids).append("=c#").append(chunk.id()).append('@').append(range.start()).append(':')
+                    .append(range.end()).append(" [").append(chunk.docType()).append(':').append(chunk.docId())
+                    .append("] ").append(chunk.title()).append('：')
+                    .append(chunk.text(), range.start(), range.end()).append('\n');
+            }
+        }
+        return text.toString();
     }
 
     private static void appendProof(StringBuilder text, ProofSpan proof) {

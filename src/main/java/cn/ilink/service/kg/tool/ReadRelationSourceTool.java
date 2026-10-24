@@ -92,7 +92,7 @@ public class ReadRelationSourceTool extends AbstractGraphTool {
         if (raw != null) for (KgDocumentChunk chunk : raw) {
             if (chunk == null || chunk.getId() == null || chunk.getId() <= 0
                 || !document.type().equals(chunk.getDocType()) || !document.id().equals(chunk.getDocId())
-                || !scopeService.canSee(chunk.getScope(), chunk.getTeamId(), chunk.getUserId(), userId)) continue;
+                || !scopeService.canSeeChunk(chunk, userId)) continue;
             visible.putIfAbsent(chunk.getId(), chunk);
         }
         List<KgDocumentChunk> ordered = new ArrayList<>(visible.values());

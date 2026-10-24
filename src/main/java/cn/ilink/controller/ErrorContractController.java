@@ -7,9 +7,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 容器级错误兜底：把 <b>非 API 路径</b>的 JSON 请求也收敛成项目 {@code Result<T>} 契约。
@@ -30,17 +32,16 @@ import javax.servlet.http.HttpServletRequest;
 public class ErrorContractController implements ErrorController {
 
     @RequestMapping("/error")
-    public ResponseEntity<Result<?>> handleError(HttpServletRequest request) {
+    public Object handleError(HttpServletRequest request, HttpServletResponse response) {
         Object statusAttr = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
         int status = statusAttr instanceof Integer ? (Integer) statusAttr : 500;
 
         if (!expectsJson(request)) {
-            // 浏览器导航（Accept: text/html）保持原状态码与空体，由容器/静态错误页接管；
-            // 但没有 Accept 头时不能再回空体——那正是 R-01「500 且 body=0」的成因，
-            // 所以这里对无 Accept 头的请求补一个 Result JSON 体（状态码不变）。
-            if (request.getHeader("Accept") != null) {
-                return ResponseEntity.status(status).build();
-            }
+            response.setStatus(status);
+            ModelAndView mav = new ModelAndView(status == 404 ? "404" : "error");
+            mav.addObject("status", status);
+            mav.addObject("error", HttpStatus.resolve(status) != null ? HttpStatus.resolve(status).getReasonPhrase() : "");
+            return mav;
         }
 
         if (status >= 500) {
@@ -69,6 +70,9 @@ public class ErrorContractController implements ErrorController {
             return false;
         }
         String lower = accept.toLowerCase();
+        if (lower.contains("text/html")) {
+            return false;
+        }
         return lower.contains("application/json") || lower.contains("*/*");
     }
 }

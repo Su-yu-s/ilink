@@ -8,7 +8,9 @@ import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.User;
 import cn.ilink.entity.UserSkill;
 import cn.ilink.mapper.UserSkillMapper;
+import cn.ilink.mapper.TeamDemandMapper;
 import cn.ilink.service.NotificationService;
+import cn.ilink.service.TeamAgentDataCleanupService;
 import cn.ilink.service.TeamApplicationWorkflowService;
 import cn.ilink.service.TeamInviteService;
 import cn.ilink.service.TeamLibraryService;
@@ -18,6 +20,7 @@ import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.UserService;
 import cn.ilink.util.UserPreviewHelper;
+import cn.ilink.teamagent.TeamAgentLifecycleService;
 import cn.ilink.vo.MyTeamApplicationVO;
 import cn.ilink.vo.MyTeamVO;
 import cn.ilink.vo.PendingApplicationVO;
@@ -75,6 +78,7 @@ public class TeamController {
         Pattern.compile("[（(]\\s*截止日期\\s*[：:]\\s*([0-9]{4}-[0-9]{2}-[0-9]{2}|[^）)]+)\\s*[）)]");
 
     private final TeamDemandServiceImpl teamDemandService;
+    private final TeamDemandMapper teamDemandMapper;
     private final TeamApplicationServiceImpl teamApplicationService;
     private final UserService userService;
     private final NotificationService notificationService;
@@ -84,8 +88,12 @@ public class TeamController {
     private final TeamInviteService teamInviteService;
     private final CompetitionServiceImpl competitionService;
     private final TeamLibraryService teamLibraryService;
+    private final TeamAgentLifecycleService teamAgentLifecycleService;
+    private final TeamAgentDataCleanupService teamAgentDataCleanupService;
+    private final cn.ilink.collab.TeamCollaborationCleanupService teamCollaborationCleanupService;
 
     public TeamController(TeamDemandServiceImpl teamDemandService,
+                          TeamDemandMapper teamDemandMapper,
                           TeamApplicationServiceImpl teamApplicationService,
                           UserService userService,
                           NotificationService notificationService,
@@ -94,8 +102,13 @@ public class TeamController {
                           TeamMembershipService teamMembershipService,
                           TeamInviteService teamInviteService,
                           CompetitionServiceImpl competitionService,
-                          TeamLibraryService teamLibraryService) {
+                          TeamLibraryService teamLibraryService,
+                          TeamAgentLifecycleService teamAgentLifecycleService,
+                          TeamAgentDataCleanupService teamAgentDataCleanupService,
+                          cn.ilink.collab.TeamCollaborationCleanupService
+                              teamCollaborationCleanupService) {
         this.teamDemandService = teamDemandService;
+        this.teamDemandMapper = teamDemandMapper;
         this.teamApplicationService = teamApplicationService;
         this.userService = userService;
         this.notificationService = notificationService;
@@ -105,6 +118,9 @@ public class TeamController {
         this.teamInviteService = teamInviteService;
         this.competitionService = competitionService;
         this.teamLibraryService = teamLibraryService;
+        this.teamAgentLifecycleService = teamAgentLifecycleService;
+        this.teamAgentDataCleanupService = teamAgentDataCleanupService;
+        this.teamCollaborationCleanupService = teamCollaborationCleanupService;
     }
 
     @GetMapping("/list")
@@ -444,6 +460,7 @@ public class TeamController {
 
     @PutMapping("/{id}/status")
     @ResponseBody
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "teamDetail", key = "#id")
     public ResponseEntity<Result<?>> updateTeamStatus(@PathVariable Long id,
                                                        @RequestBody Map<String, String> request,
@@ -460,16 +477,27 @@ public class TeamController {
             return Result.forbidden().toResponseEntity();
         }
         String targetStatus = normalizeTeamStatus(request == null ? null : request.get("status"));
-        if (!isValidStatusTransition(team.getStatus(), targetStatus)) {
+        TeamDemand locked = teamDemandMapper.selectByIdForUpdate(id);
+        if (locked == null) {
+            return Result.notFound("组队需求不存在").toResponseEntity();
+        }
+        if (locked.getCreatorId() == null || !locked.getCreatorId().equals(user.getId())) {
+            return Result.forbidden().toResponseEntity();
+        }
+        if (!isValidStatusTransition(locked.getStatus(), targetStatus)) {
             return Result.badRequest("当前状态不允许执行该操作").toResponseEntity();
         }
-        team.setStatus(targetStatus);
-        team.setUpdatedAt(new Date());
-        boolean success = teamDemandService.updateById(team);
+        if (STATUS_CLOSED.equals(targetStatus)) {
+            teamCollaborationCleanupService.invalidateTeamLeases(id);
+            teamAgentLifecycleService.onTeamClosed(id);
+        }
+        locked.setStatus(targetStatus);
+        locked.setUpdatedAt(new Date());
+        boolean success = teamDemandService.updateById(locked);
         if (!success) {
             return Result.fail("状态更新失败").toResponseEntity();
         }
-        return Result.ok("状态更新成功", teamDemandToMap(team, loadCreator(team.getCreatorId()))).toResponseEntity();
+        return Result.ok("状态更新成功", teamDemandToMap(locked, loadCreator(locked.getCreatorId()))).toResponseEntity();
     }
 
     @DeleteMapping("/{id}")
@@ -489,6 +517,8 @@ public class TeamController {
             }
             // 资料库记录随队伍一起清理，避免 team_id 指向已删队伍的孤儿（核实报告 P2-4）
             teamLibraryService.deleteAllForTeam(id);
+            teamCollaborationCleanupService.deleteTeamData(id);
+            teamAgentDataCleanupService.deleteTeamData(id);
             boolean success = teamDemandService.removeById(id);
             if (success) {
                 return Result.ok("删除成功").toResponseEntity();

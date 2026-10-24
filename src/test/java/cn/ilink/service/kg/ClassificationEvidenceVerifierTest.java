@@ -266,6 +266,8 @@ class ClassificationEvidenceVerifierTest {
         assertEquals("1-based-recognized-parsed-groups", missingCitation.get("groupIndexBasis"));
         assertEquals(List.of("p1"), missingCitation.get("proposedProofIds"));
         assertEquals(List.of("p2"), missingCitation.get("sentRelevantProofIds"));
+        assertEquals(List.of("p2"), missingCitation.get("requiredProofIds"));
+        assertEquals("CITE_AT_LEAST_ONE_REQUIRED_PROOF", missingCitation.get("citationRequirement"));
         assertEquals(List.of(), missingCitation.get("citedRelevantProofIds"));
         assertEquals(List.of("p2"), missingCitation.get("availableRelevantProofIds"));
         assertEquals(true, missingCitation.get("retrievalOnly"));
@@ -284,6 +286,8 @@ class ClassificationEvidenceVerifierTest {
         assertEquals(List.of("p2"), row.get("proposedProofIds"));
         assertEquals(List.of("p2"), row.get("availableRelevantProofIds"));
         assertEquals(List.of(), row.get("sentRelevantProofIds"));
+        assertEquals(List.of(), row.get("requiredProofIds"));
+        assertEquals("NONE", row.get("citationRequirement"));
         assertEquals(List.of(), row.get("citedRelevantProofIds"));
         assertEquals(List.of("p2"), parsed.groups().get(1).proofs());
         assertEquals(GraphClassificationContract.State.E, parsed.groups().get(1).state());
@@ -319,8 +323,85 @@ class ClassificationEvidenceVerifierTest {
         var row = rows.get(1);
         assertEquals("SENT_NOT_CITED", row.get("status")); assertEquals(2, row.get("groupIndex"));
         assertEquals(List.of("p2"), row.get("sentRelevantProofIds"));
+        assertEquals(List.of("p2"), row.get("requiredProofIds"));
+        assertEquals("CITE_AT_LEAST_ONE_REQUIRED_PROOF", row.get("citationRequirement"));
         assertEquals(List.of(), row.get("citedRelevantProofIds"));
         assertEquals(List.of("p1"), row.get("proposedProofIds"));
+    }
+
+    @Test
+    void sentProofThatIsNotRelevantToTheMemberIsLabelledSourceOnlyWithoutChangingTheVerdict() {
+        var fixture = GraphClassificationFlowTest.fixture();
+        var foreignProof = new ClassificationProofCatalog.ProofSpan(
+            "p93", 20L, "POST", 1L, "应用设计",
+            0, 12, "与成员2无关的原文内容。", Set.of(11L));
+        var proofs = ClassificationProofCatalog.fromAuthorizedSpans(
+            List.of(fixture.proofs().span("p1").orElseThrow(), foreignProof), Map.of());
+        var parsed = new GraphClassificationContract.DecisionParsed(List.of(
+            new GraphClassificationContract.DecisionGroup(
+                GraphClassificationContract.State.E,
+                GraphClassificationContract.Reason.OUTSIDE_ATTRIBUTE,
+                List.of(1, 2), List.of("p93"))), List.of(), true, 0);
+
+        var rows = ClassificationEvidenceVerifier.memberEvidenceDiagnostics(
+            fixture.catalog(), parsed, proofs, Set.of("p1", "p93"), fixture.ledger());
+        var sourceOnly = rows.stream().filter(row -> Integer.valueOf(2).equals(row.get("candidateId")))
+            .findFirst().orElseThrow();
+
+        assertEquals("SOURCE_ONLY_MEMBER", sourceOnly.get("status"));
+        assertEquals(Boolean.TRUE, sourceOnly.get("sourceOnlyMember"));
+        assertEquals(List.of("p93"), sourceOnly.get("sourceOnlyProofIds"));
+        assertEquals(List.of(), sourceOnly.get("requiredProofIds"));
+        assertEquals("NONE", sourceOnly.get("citationRequirement"));
+        assertEquals(List.of(), sourceOnly.get("citedRelevantProofIds"));
+        assertEquals(Boolean.TRUE, sourceOnly.get("retrievalOnly"));
+        assertEquals(Boolean.TRUE, sourceOnly.get("semanticSupportNotEstablished"));
+        assertFalse(sourceOnly.containsKey("supported"));
+    }
+
+    @Test
+    void sentRelevantProofOutranksANearbySourceOnlyProofForTheSameMember() {
+        var fixture = GraphClassificationFlowTest.fixture();
+        var sourceOnly = new ClassificationProofCatalog.ProofSpan(
+            "p93", 20L, "POST", 1L, "应用设计",
+            0, 12, "与成员2无关的原文内容。", Set.of(11L));
+        var proofs = ClassificationProofCatalog.fromAuthorizedSpans(
+            List.of(fixture.proofs().span("p1").orElseThrow(),
+                fixture.proofs().span("p2").orElseThrow(), sourceOnly), Map.of());
+        var parsed = new GraphClassificationContract.DecisionParsed(List.of(
+            new GraphClassificationContract.DecisionGroup(
+                GraphClassificationContract.State.E,
+                GraphClassificationContract.Reason.OUTSIDE_ATTRIBUTE,
+                List.of(2), List.of("p93"))), List.of(), true, 0);
+
+        var rows = ClassificationEvidenceVerifier.memberEvidenceDiagnostics(
+            fixture.catalog(), parsed, proofs, Set.of("p1", "p2", "p93"), fixture.ledger());
+        var member = rows.stream().filter(row -> Integer.valueOf(2).equals(row.get("candidateId")))
+            .findFirst().orElseThrow();
+
+        assertEquals("SENT_NOT_CITED", member.get("status"));
+        assertEquals(List.of("p2"), member.get("sentRelevantProofIds"));
+        assertEquals(List.of("p2"), member.get("requiredProofIds"));
+        assertEquals("CITE_AT_LEAST_ONE_REQUIRED_PROOF", member.get("citationRequirement"));
+        assertEquals(List.of("p93"), member.get("sourceOnlyProofIds"));
+        assertEquals(Boolean.TRUE, member.get("sourceOnlyMember"));
+        assertEquals(List.of(), member.get("citedRelevantProofIds"));
+    }
+
+    @Test
+    void sentRelevantProofOmittedFromItsOwnGroupIsReportedWithTheExactRequiredIds() {
+        var fixture = GraphClassificationFlowTest.fixture();
+        var ai = mock(AiClient.class);
+        String raw = "{\"groups\":["
+            + "{\"s\":\"I\",\"reason\":\"MATCH\",\"ids\":\"1\",\"proofs\":[\"p1\"]},"
+            + "{\"s\":\"E\",\"reason\":\"OUTSIDE_ATTRIBUTE\",\"ids\":\"2\",\"proofs\":[\"p1\"]}]}";
+
+        var result = verifyPartition(fixture, raw, Set.of("p1", "p2"), ai, new ArrayList<>());
+
+        assertFalse(result.supported());
+        assertTrue(result.reasons().contains("CLASSIFICATION_MEMBER_EVIDENCE_MISSING:2"));
+        assertTrue(result.reasons().contains("CLASSIFICATION_MEMBER_PROOF_NOT_CITED:2:p2"));
+        verifyNoInteractions(ai);
     }
 
     @Test
@@ -367,10 +448,38 @@ class ClassificationEvidenceVerifierTest {
             }
             assertEquals(List.of("p1"), rows.get(0).get("sentRelevantProofIds"));
             assertEquals(List.of("p2"), rows.get(1).get("sentRelevantProofIds"));
+            assertEquals(List.of("p1"), rows.get(0).get("requiredProofIds"));
+            assertEquals(List.of("p2"), rows.get(1).get("requiredProofIds"));
+            assertEquals("ASSIGN_GROUP_THEN_CITE_IF_I_OR_E", rows.get(0).get("citationRequirement"));
             assertFalse(rows.toString().contains("CLASSIFICATION_MEMBER_EVIDENCE_MISSING"));
         }
         assertFalse(unavailable.complete()); assertEquals(List.of(), unavailable.groups());
         assertEquals(List.of("CLASSIFICATION_INVALID_JSON"), unavailable.failures());
+    }
+
+    @Test
+    void verdictArraysAcceptTwoEntriesAndRejectTheThird() {
+        var fixture = GraphClassificationFlowTest.fixture();
+        var ai = mock(AiClient.class);
+        when(ai.chat(anyList(), anyInt())).thenReturn(GraphClassificationFlowTest.response(
+            "{\"facts\":\"SUPPORTED\",\"coverage\":\"COMPLETE\","
+                + "\"unsupported\":[\"甲\",\"乙\"],\"missing\":[]}", "stop"));
+        var checked = verifyPartition(fixture, GraphClassificationFlowTest.PARTITION,
+            Set.of("p1", "p2"), ai, new ArrayList<>());
+        assertFalse(checked.supported());
+        assertFalse(checked.reasons().contains("SEMANTIC_UNCERTAIN:VERIFIER_PROTOCOL"));
+        assertTrue(checked.reasons().stream().anyMatch(reason -> reason.startsWith("SEMANTIC_UNSUPPORTED:FACTS:")));
+
+        for (String verdict : List.of(
+            "{\"facts\":\"SUPPORTED\",\"coverage\":\"COMPLETE\",\"unsupported\":[\"甲\",\"乙\",\"丙\"],\"missing\":[]}",
+            "{\"facts\":\"SUPPORTED\",\"coverage\":\"COMPLETE\",\"unsupported\":[],\"missing\":[\"甲\",\"乙\",\"丙\"]}")) {
+            var verbose = mock(AiClient.class);
+            when(verbose.chat(anyList(), anyInt())).thenReturn(GraphClassificationFlowTest.response(verdict, "stop"));
+            var result = verifyPartition(fixture, GraphClassificationFlowTest.PARTITION,
+                Set.of("p1", "p2"), verbose, new ArrayList<>());
+            assertFalse(result.supported(), verdict);
+            assertTrue(result.reasons().contains("SEMANTIC_UNCERTAIN:VERIFIER_PROTOCOL"), verdict);
+        }
     }
 
     private static AnswerEvidenceVerifier.VerificationResult verifyObserved(GraphClassificationFlowTest.Fixture fixture,

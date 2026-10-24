@@ -27,6 +27,7 @@ final class EvidenceContext {
         Set<String> focus = grams(intent.focusText());
         for (String subject : intent.subjects()) terms.removeAll(grams(subject));
         Set<String> slots = slots(question);
+        boolean competitionList = expectsCompetitionList(question, intent);
         List<Unit> units = new ArrayList<>();
         int order = 0;
         for (var chunk : ledger.chunks()) {
@@ -36,7 +37,8 @@ final class EvidenceContext {
             if (tokens(heading + body) <= defaultLimit) {
                 units.add(new Unit("c" + chunk.id(), heading + body + "\n",
                     relevance(focus, body) * 12 + relevance(terms, body) * 3
-                        + (intent.matchesSubject(chunk.title()) ? 60 : 0) + slotScore(slots, body), order++));
+                        + (intent.matchesSubject(chunk.title()) ? 60 : 0) + slotScore(slots, body)
+                        + (competitionList ? competitionListScore(body) : 0), order++));
             } else {
                 Matcher matcher = SENTENCE.matcher(body);
                 while (matcher.find()) {
@@ -45,7 +47,8 @@ final class EvidenceContext {
                         + " 段内偏移=" + matcher.start() + ":" + matcher.end() + "] " + chunk.title() + "：";
                     units.add(new Unit("c" + chunk.id() + ":" + matcher.start(), label + sentence + "\n",
                         relevance(focus, sentence) * 12 + relevance(terms, sentence) * 3
-                            + (intent.matchesSubject(chunk.title()) ? 60 : 0) + slotScore(slots, sentence), order++));
+                            + (intent.matchesSubject(chunk.title()) ? 60 : 0) + slotScore(slots, sentence)
+                            + (competitionList ? competitionListScore(sentence) : 0), order++));
                 }
             }
         }
@@ -158,6 +161,33 @@ final class EvidenceContext {
             if (body.toLowerCase(Locale.ROOT).replaceAll("\\s+", "").contains(slot)) score += 60;
         }
         return score;
+    }
+
+    /**
+     * A positive list request should prefer the source span that actually lists several named
+     * competitions over a neighbouring chunk from the same document. This is a generic shape cue:
+     * quoted list items and competition suffixes receive weight; no evaluation entity name is
+     * embedded. It only changes ordering inside the permission-checked ledger.
+     */
+    private static boolean expectsCompetitionList(String question, QueryIntent intent) {
+        String text = Objects.toString(question, "");
+        return "COMPETITION".equals(intent.requestedEntityType())
+            && Pattern.compile("(?:哪些|哪个|列出|列举|参与|关联)").matcher(text).find();
+    }
+
+    private static final Pattern COMPETITION_ITEM = Pattern.compile(
+        "[「《“][^」》”]{2,40}[」》”]|[\\p{IsHan}A-Za-z0-9+·]{2,30}"
+            + "(?:创新创业大赛|数学建模竞赛|专业技能竞赛|智能汽车竞赛|电子设计竞赛|挑战杯|"
+            + "蓝桥杯|大赛|竞赛|赛事|比赛)");
+
+    static int competitionListScore(String text) {
+        Matcher matcher = COMPETITION_ITEM.matcher(Objects.toString(text, ""));
+        Set<String> items = new LinkedHashSet<>();
+        while (matcher.find()) {
+            String item = QueryIntent.normalize(matcher.group());
+            if (item.length() >= 4) items.add(item);
+        }
+        return items.size() * 30;
     }
 
     private static Set<String> grams(String value) {

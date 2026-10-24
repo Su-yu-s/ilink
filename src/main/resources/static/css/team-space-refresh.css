@@ -622,6 +622,25 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
   .library-row__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .library-row__badge { font-size: 10px; color: #b0b6bf; flex-shrink: 0; }
   .library-row__size { font-size: 10px; color: #b0b6bf; flex-shrink: 0; }
+  .library-row__index {
+    flex-shrink: 0;
+    max-width: 86px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    line-height: 18px;
+    color: #6b7280;
+    background: #f3f4f6;
+  }
+  .library-row__index--ready { color: #3f6f57; background: #edf5f0; }
+  .library-row__index--failed { color: #9b4742; background: #fbefee; }
+  .library-row__index--indexing,
+  .library-row__index--pending { color: #6b6256; background: #f5f2ed; }
+  .library-row__index--skipped,
+  .library-row__index--stale { color: #7b7f86; background: #f2f3f5; }
   .library-row__mentor {
     font-size: 9px; font-weight: 700; color: #2563eb; background: #dbeafe;
     padding: 1px 4px; border-radius: 3px; flex-shrink: 0;

@@ -2,10 +2,12 @@ package cn.ilink.service;
 
 import cn.ilink.entity.TeamApplication;
 import cn.ilink.entity.TeamDemand;
-import cn.ilink.entity.TeamTask;
 import cn.ilink.entity.User;
 import cn.ilink.mapper.TeamApplicationMapper;
 import cn.ilink.mapper.TeamDemandMapper;
+import cn.ilink.teamagent.TeamAgentLifecycleService;
+import cn.ilink.teamagent.TeamTaskCommandService;
+import cn.ilink.teamagent.TeamTaskCommands;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -40,22 +42,29 @@ public class TeamOwnershipService {
     private final TeamDemandMapper teamDemandMapper;
     private final TeamApplicationMapper teamApplicationMapper;
     private final TeamMembershipService membershipService;
-    private final TeamTaskService teamTaskService;
+    private final TeamTaskCommandService teamTaskCommandService;
+    private final TeamAgentLifecycleService teamAgentLifecycleService;
     private final NotificationService notificationService;
     private final UserService userService;
+    private final cn.ilink.collab.TeamCollaborationCleanupService collaborationCleanupService;
 
     public TeamOwnershipService(TeamDemandMapper teamDemandMapper,
                                 TeamApplicationMapper teamApplicationMapper,
                                 TeamMembershipService membershipService,
-                                TeamTaskService teamTaskService,
+                                TeamTaskCommandService teamTaskCommandService,
+                                TeamAgentLifecycleService teamAgentLifecycleService,
                                 NotificationService notificationService,
-                                UserService userService) {
+                                UserService userService,
+                                cn.ilink.collab.TeamCollaborationCleanupService
+                                    collaborationCleanupService) {
         this.teamDemandMapper = teamDemandMapper;
         this.teamApplicationMapper = teamApplicationMapper;
         this.membershipService = membershipService;
-        this.teamTaskService = teamTaskService;
+        this.teamTaskCommandService = teamTaskCommandService;
+        this.teamAgentLifecycleService = teamAgentLifecycleService;
         this.notificationService = notificationService;
         this.userService = userService;
+        this.collaborationCleanupService = collaborationCleanupService;
     }
 
     /** 转让创建者。原创建者随即变成普通成员，新任创建者不再占用成员行。 */
@@ -122,6 +131,11 @@ public class TeamOwnershipService {
         }
 
         Date now = new Date();
+        // Task cancellation, index revisions and notifications join this
+        // ownership transaction before the team leaves an active state.
+        teamTaskCommandService.cancelOpenTasksForDissolution(
+            new TeamTaskCommands.CancelOpenTasksForDissolution(teamId, ownerId, null));
+
         int changed = teamDemandMapper.update(null, new UpdateWrapper<TeamDemand>()
             .eq("id", teamId)
             .eq("creator_id", ownerId)
@@ -141,14 +155,11 @@ public class TeamOwnershipService {
             .set("status", TeamMembershipService.STATUS_VOID)
             .set("reviewed_at", now));
 
-        // 未完结的任务就地取消，别留一堆永远做不完的待办。
-        // 用字符串列名而非方法级 lambda：lambda 需要 MyBatis 的 TableInfo 缓存，
-        // 单测里没有完整上下文会抛异常，这样写才能被单测覆盖。
-        teamTaskService.update(new UpdateWrapper<TeamTask>()
-            .eq("team_id", teamId)
-            .notIn("status", "COMPLETED", "CANCELLED")
-            .set("status", "CANCELLED")
-            .set("updated_at", now));
+        // Pending decisions and undo windows stop before task history is
+        // terminalised. Running knowledge work is also cancelled because a
+        // dissolved team is no longer readable.
+        collaborationCleanupService.invalidateTeamLeases(teamId);
+        teamAgentLifecycleService.onTeamDissolved(teamId);
 
         String teamTitle = TeamInviteService.displayName(team.getTitle());
         int notified = 0;

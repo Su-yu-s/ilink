@@ -83,6 +83,7 @@ class VerificationEvidenceContextTest {
         KgScopeService scopes = mock(KgScopeService.class);
         when(scopes.canSee(any(KgEntity.class), any())).thenReturn(true);
         when(scopes.canSee(any(), any(), any(), any())).thenReturn(true);
+        when(scopes.canSeeChunk(any(KgDocumentChunk.class), any())).thenReturn(true);
         when(entities.selectById(42L)).thenReturn(entity(42L, "演示项目", "POST"));
         List<Map<String, Object>> rows = new ArrayList<>();
         for (long i = 1; i <= 11; i++) {

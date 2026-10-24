@@ -301,6 +301,11 @@ class ReadRelationSourceToolTest {
         when(entities.selectById(10L)).thenReturn(source); when(entities.selectById(MEMBER)).thenReturn(target);
         when(scope.canSee(any(KgEntity.class), eq(USER))).thenReturn(true);
         when(scope.canSee(eq(KgEntity.SCOPE_GLOBAL), any(), any(), eq(USER))).thenReturn(true);
+        when(scope.canSeeChunk(any(KgDocumentChunk.class), eq(USER))).thenAnswer(inv -> {
+            KgDocumentChunk chunk = inv.getArgument(0);
+            return scope.canSee(chunk.getScope(), chunk.getTeamId(),
+                chunk.getUserId(), USER);
+        });
         when(chunks.listByDocument("POST", 7L, USER)).thenReturn(List.of());
         return new Fixture(new ReadRelationSourceTool(scope, relations, entities, chunks), scope, relations, entities,
             chunks, relation, source, target);
