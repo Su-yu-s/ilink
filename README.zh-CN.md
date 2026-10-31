@@ -6,7 +6,7 @@
 [![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.18-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-4B5563?style=flat-square)](LICENSE)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)
 
 **简体中文** · [English](README.md)
@@ -679,7 +679,16 @@ mvn test
 
 ## 许可证
 
-[Apache License 2.0](LICENSE)
+iLink 采用 [PolyForm Noncommercial License 1.0.0](LICENSE) 发布。
+
+| 范围 | 条款 |
+| --- | --- |
+| **允许** | 学术研究、教学、个人学习及其他非商业用途；可修改并再分发，但须让接收方获得本条款 |
+| **不允许** | 商业用途：出售本软件或基于它提供的服务，或在营利组织中用于获取商业利益 |
+| **商业授权** | 需另行签署书面许可；可提交 Issue 联系 |
+| **第三方代码** | 依赖项保留各自许可证（Spring Boot、MyBatis-Plus、Flyway 等） |
+
+这是源码可见许可，不是 OSI 认可的开源许可。参与贡献即表示你同意贡献内容按相同条款授权。2026-10-31 之前发布的版本，仍按其发布时的 Apache License 2.0 继续可用。
 
 ## 致谢
 

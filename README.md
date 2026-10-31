@@ -6,7 +6,7 @@
 [![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.18-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-4B5563?style=flat-square)](LICENSE)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)
 
 **English** · [简体中文](README.zh-CN.md)
@@ -679,7 +679,16 @@ Design documents live in [`docs/superpowers/specs/`](docs/superpowers/specs/); t
 
 ## License
 
-[Apache License 2.0](LICENSE)
+iLink is released under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+
+| Scope | Terms |
+| --- | --- |
+| **Permitted** | Academic research, teaching, personal study, and other noncommercial use; modification and redistribution are allowed, provided recipients receive these terms |
+| **Not permitted** | Commercial use: selling the software or a service built on it, or using it inside a for-profit organization for commercial advantage |
+| **Commercial licensing** | A separate written license is required. Open an issue to discuss |
+| **Third-party code** | Dependencies keep their own licenses (Spring Boot, MyBatis-Plus, Flyway and others) |
+
+This is a source-available license, not an OSI-approved open-source license. If you contribute, you agree that your contribution is licensed under the same terms. Releases published before 2026-10-31 remain available under the Apache License 2.0 they were distributed with.
 
 ## Acknowledgements
 
