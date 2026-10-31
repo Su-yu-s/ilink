@@ -1,7 +1,7 @@
 # iLink
 
-> **同声相应，同气相求。**
-> 面向高校师生的竞赛组队与团队协作平台。
+> **Kindred minds find each other.**
+> A competition teaming and collaboration platform for university students and teachers.
 
 [![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7.18-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -9,151 +9,464 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square)](LICENSE)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)
 
-**简体中文** · [English](README_EN.md)
+**English** · [简体中文](README.zh-CN.md)
 
-![iLink 产品演示](assets/readme/trailer.webp)
+![iLink product tour](assets/readme/trailer.webp)
 
 <p align="center">
-  <a href="http://121.40.34.68:8090"><strong>在线体验 »</strong></a>
+  <a href="http://121.40.34.68:8090"><strong>Live Demo »</strong></a>
   &nbsp;·&nbsp;
-  <a href="#快速开始">本地运行</a>
+  <a href="#quick-start">Run Locally</a>
   &nbsp;·&nbsp;
-  <a href="docs/superpowers/specs/">设计文档</a>
+  <a href="#integration-standards">Integration Standards</a>
+  &nbsp;·&nbsp;
+  <a href="docs/superpowers/specs/">Design Docs</a>
 </p>
 
 ---
 
-## 为什么是 iLink
+## Contents
 
-高校竞赛的难点往往不在比赛本身：赛事信息散落在各个官网，队友靠群聊和问卷拼凑，组队后任务、文档、聊天记录又散落在不同工具里。iLink 把「发现赛事 → 找到队友 → 团队协作 → 沉淀成果」串成一条完整链路，让一个团队从第一次打招呼到最终答辩，都留在同一个空间里。
+- [Project Overview](#project-overview) — background, core capabilities, innovation highlights
+- [Architecture](#architecture) — technical architecture, modules, runtime flows
+- [Integration Standards](#integration-standards) — API contracts, error codes, streaming, concurrency rules
+- [Quick Start](#quick-start) · [Configuration](#configuration) · [API Surface](#api-surface)
+- [Security](#security-and-data-handling) · [Database Migrations](#database-migrations) · [Deployment](#deployment)
 
-平台不是赛事信息的搬运工：赛事目录、日期和链接由管理员维护，不自动抓取官网；AI 只使用你授权范围内的团队资料与公开赛事信息。
+## Project Overview
 
-## 功能一览
+### Background
 
-### 发现与组队
+A university competition is rarely won or lost on the competition day. The friction is earlier and more mundane:
 
-- **组队大厅**：按关键词、类别和状态浏览队伍，学生申请加入，队长审核后完成组队。
-- **导师招贤**：浏览已审核的教师档案，按专业方向建立联系并提交合作申请。
-- **竞赛目录**：分页检索赛事信息，管理员在后台维护目录与关键时间节点。
-- **交流社区**：综合、技术、竞赛、资源四个频道，支持文章发布、评论、点赞、收藏与个人文章管理。
-- **成果展示**：公开浏览项目成果，登录用户可发布、维护、下载自己的作品。
-- **公开个人主页**：展示可公开的简介、技能、荣誉、文章与成果。
+- **Event information is scattered.** Announcements live on official sites, in group chats and in forwarded documents; deadlines and eligibility rules are easy to miss.
+- **Teams are assembled ad hoc.** Students post “looking for teammates” messages, then negotiate skills, schedules and roles in private chats. There is no structured place to describe a project need or to evaluate a candidate.
+- **Collaboration fragments after the team forms.** Tasks move to one tool, documents to another, files to a chat group, and the final submission is reassembled by hand.
+- **AI help is either absent or untrustworthy.** A generic chatbot does not know the team’s tasks, files or competition requirements, so its answers cannot be acted on.
 
-### 团队全流程协作
+iLink closes this loop in one workspace: **discover an event → find teammates → collaborate as a team → publish the outcome**.
 
-- **队伍生命周期**：`OPEN`（招募中）→ `TEAMING`（已组队）→ `CLOSED`（已结束），人数达标后自动进入协作状态。
-- **成员治理**：邀请、审批、移除、转让创建者、解散团队（软删除并保留协作历史）。
-- **团队空间**：只有创建者与已批准成员可以访问团队资料、成员、任务与统计。
-- **任务看板**：`PENDING` / `IN_PROGRESS` / `REVIEW` / `COMPLETED` / `CANCELLED` 五态流转，覆盖创建、指派、评论、提交与审核闭环。
-- **里程碑**：记录截止时间、交付物与完成率，自动呈现待开始、进行中、已完成或已延期。
-- **实时沟通**：团队群聊走 STOMP/WebSocket，历史消息与通知持久化，支持未读计数与用户级推送。
+### What iLink does
 
-### 协作资产
+iLink is a server-rendered web application with two layers:
 
-- **团队文档**：Markdown 文档支持自动保存、编辑租约、版本快照、恢复、导出与回收站，可见范围支持全团队或按 ACL 授权。
-- **团队表格**：结构化表格支持列类型、行列编辑、版本恢复、CSV/XLSX 导出与回收站。
-- **材料矩阵**：把竞赛材料要求与文件、文档、表格、任务证据关联；系统建议只到「待复核」，最终状态由真人确认。
-- **资料正文索引**：PDF、Office、Markdown、文本与表格正文异步抽取，进入团队作用域的检索索引；删除或失去权限后立即停止检索。
+1. **A public portal** for the competition catalog, team marketplace, mentor wall, community and project showcase.
+2. **A private team space** for member governance, tasks and milestones, real-time chat, collaboration assets (documents, spreadsheets, material matrix) and an AI Agent workbench.
 
-### Agent 工作台与 GraphRAG
+Every team starts from a published team demand, becomes a collaboration unit when enough members are approved, and keeps its tasks, documents, files and decisions in one place until the outcome is published.
 
-- **团队 Agent**：按会话持久化团队知识问答、态势与风险分析、周报草稿和任务/协作动作提案。
-- **人工确认**：Agent 的动作必须由用户确认后才写入，整组事务执行，可审计、可有限撤销。
-- **两种问答模式**：固定 2 跳的快速答疑，以及 ReAct 多轮探索的深度搜索（最多 5 轮、8 次工具调用、45 秒），支持 SSE 流式返回。
-- **证据门控**：先规划所需证据，工具结果写入证据账本，答案经校验后才输出；证据不足时保守降级，不把无原文依据的内容写成平台事实。
-- **可降级设计**：Embedding 未配置时回落关键词检索；ReAct 失败时回落固定 2 跳；图谱无召回时由模型知识兜底。
+### Core capabilities
 
-### 账号与治理
-
-| 角色 | 主要权限 |
+| Area | Capabilities |
 | --- | --- |
-| `STUDENT` | 注册、完善资料、找队伍/导师、参与团队协作、发布社区内容与成果 |
-| `TEACHER` | 维护导师档案、处理学生合作申请、参与团队协作 |
-| `ADMIN` | 管理用户、角色、队伍、导师、成果、社区与竞赛目录，并写入审计日志 |
+| **Discover and team up** | Team marketplace with keyword/category/status filters; structured applications; team invitations; mentor wall with research directions and collaboration requests; administrator-maintained competition catalog; community channels; public profiles and project showcase |
+| **Team lifecycle** | `OPEN` → `TEAMING` → `CLOSED`; approve, invite, remove, transfer ownership and dissolve; soft deletion preserves collaboration history |
+| **Team space** | Access limited to the creator and approved members; task board with five states (`PENDING`, `IN_PROGRESS`, `REVIEW`, `COMPLETED`, `CANCELLED`); participants, comments and submissions; milestones with deadlines and overdue detection; statistics |
+| **Real-time collaboration** | STOMP over WebSocket; persisted team chat history; per-user notifications and unread counts; redacted change broadcasts for collaboration assets |
+| **Collaboration assets** | Markdown documents with autosave, 90-second edit leases, version snapshots/restore, ACL and trash; typed spreadsheets with CSV/XLSX export; material matrix linking requirements to evidence, with human review; asynchronous text extraction and team-scoped retrieval index |
+| **Team Agent** | Persistent conversations; situation/risk analysis, weekly report drafts and task action proposals; human confirmation before any write; transactional action groups; audit trail; limited undo; SSE streaming with resumable cursors |
+| **GraphRAG** | Evidence-gated retrieval with a fixed 2-hop quick mode and a ReAct deep-search mode; SSE streaming; conservative degradation when evidence is insufficient |
+| **Accounts and governance** | `STUDENT` / `TEACHER` / `ADMIN`; registration limited to students and teachers; sign-in by phone, student/staff ID, username or email; BCrypt + session; audit log for administrative actions |
 
-公开注册只允许学生与教师身份，管理员由平台授予。登录支持手机号、学号/工号、用户名或邮箱；密码为 8–32 位，需同时包含大写字母、小写字母和数字。
+### Innovation highlights
 
-## 界面预览
+1. **Human-in-the-loop Agent with transactional writes.** The Agent never mutates team data directly. It produces an `action.proposed` event and a reviewable action group; a user selects and confirms actions, the server re-validates permissions and versions, applies the whole group in one transaction, records an audit trail, and exposes a bounded undo path. A failed action fails the group instead of leaving half-applied state.
+2. **Evidence-gated GraphRAG.** Required evidence is planned before answering, tool results are written to an evidence ledger, and the answer is checked against that ledger before it is emitted. When evidence is missing, the system says so and degrades to a conservative answer instead of presenting model guesses as platform facts. Retrieval degrades in defined steps: vector search → keyword search → fixed 2-hop graph walk.
+3. **Collaboration primitives that survive concurrency.** Documents and spreadsheets use optimistic versions, hashed 90-second edit leases and atomic takeover, with conflict responses that tell the client who holds the lease and whether it should switch to read-only.
+4. **One consistent contract across every surface.** Pages, JSON APIs, SSE and WebSocket messages all follow the same ownership, error and audit rules; container-level 404/500 errors are normalized into the same `Result<T>` envelope for JSON clients.
+5. **Operationally boring by design.** A single Spring Boot process, Flyway as the only schema authority, content-hashed static assets, and explicit startup validation for production.
 
-### 公开门户
+### Screenshots
 
-| 首页 | 组队大厅 |
+**Public portal**
+
+| Home | Team marketplace |
 | --- | --- |
-| ![首页](assets/readme/01-home.png) | ![组队大厅](assets/readme/02-team-market.png) |
-| **导师招贤** | **交流社区** |
-| ![导师招贤](assets/readme/03-teacher-wall.png) | ![交流社区](assets/readme/04-community.png) |
-| **竞赛目录** | **成果展示** |
-| ![竞赛目录](assets/readme/05-competitions.png) | ![成果展示](assets/readme/06-gallery.png) |
+| ![Home](assets/readme/01-home.png) | ![Team marketplace](assets/readme/02-team-market.png) |
+| **Mentor wall** | **Community** |
+| ![Mentor wall](assets/readme/03-teacher-wall.png) | ![Community](assets/readme/04-community.png) |
+| **Competition catalog** | **Showcase** |
+| ![Competition catalog](assets/readme/05-competitions.png) | ![Showcase](assets/readme/06-gallery.png) |
 
-### 团队空间
+**Team workspace**
 
-| 任务看板 | Agent 工作台 |
+| Task board and team space | Agent workbench |
 | --- | --- |
-| ![任务看板](assets/readme/07-team-space.png) | ![Agent 工作台](assets/readme/08-agent-workbench.png) |
-| **成员与智能匹配** | **管理后台** |
-| ![成员](assets/readme/09-members.png) | ![管理后台](assets/readme/10-admin.png) |
+| ![Task board](assets/readme/07-team-space.png) | ![Agent workbench](assets/readme/08-agent-workbench.png) |
+| **Members and smart matching** | **Admin console** |
+| ![Members](assets/readme/09-members.png) | ![Admin console](assets/readme/10-admin.png) |
 
-## 系统架构
+## Architecture
+
+### System context
 
 ```mermaid
-flowchart LR
-  subgraph Browser["浏览器"]
-    T["Thymeleaf 页面"]
-    J["原生 JavaScript / GSAP"]
+flowchart TB
+  subgraph Browser["Browser"]
+    P["Thymeleaf server-rendered pages"]
+    J["Vanilla JS · Bootstrap 5 · GSAP"]
   end
 
-  T -->|HTTP| C["Controller 层<br/>页面路由 + REST API"]
+  P -->|HTTP| C["Controller layer<br/>page routes + REST APIs"]
   J -->|JSON / SSE| C
-  J <-->|STOMP / WebSocket| W["实时通信<br/>群聊 + 通知"]
+  J <-->|STOMP over WebSocket| W["WebSocket broker<br/>/ws · /ws-native"]
 
-  C --> S["Service 业务层"]
-  S --> M["MyBatis-Plus Mapper"]
-  S --> AI["AI 服务<br/>DashScope / Qwen"]
-  S --> KG["GraphRAG<br/>索引 · 检索 · 证据门控"]
-  S --> FS["文件与文档处理<br/>PDFBox / POI"]
+  C --> S["Service layer<br/>business rules · authorization · audit"]
+  W --> S
+
+  S --> M["MyBatis-Plus mappers"]
+  S --> AI["AI client<br/>DashScope / Qwen"]
+  S --> KG["GraphRAG<br/>index · retrieve · evidence gate"]
+  S --> DOC["Document processing<br/>PDFBox · POI"]
 
   M --> DB[(MySQL)]
   KG --> DB
-  F["Flyway 迁移"] --> DB
+  F["Flyway migrations"] --> DB
 ```
 
-应用是经典的单体分层结构：Controller 处理页面与 HTTP 接口，Service 承担业务规则，Mapper 通过 MyBatis-Plus 访问 MySQL；Thymeleaf 在服务端渲染页面，静态资源由浏览器加载。数据库结构只通过 Flyway 迁移演进，`src/main/resources/db/migration/` 是唯一事实来源。
+iLink is a layered monolith with a deliberate split: **Thymeleaf renders the first paint on the server**, while a vanilla JavaScript layer handles interactivity, SSE streams and WebSocket subscriptions. Controllers own HTTP concerns, services own business rules and authorization, and MyBatis-Plus mappers own persistence. MySQL is the only stateful dependency; the schema is owned exclusively by Flyway.
 
-| 模块 | 说明 |
+### Module map
+
+| Module | Responsibility | Implementation notes |
+| --- | --- | --- |
+| `controller` | Page routes, REST APIs, SSE endpoints | `PageController` serves only whitelisted page names; `GlobalExceptionHandler` normalizes errors; `ErrorContractController` normalizes container-level errors |
+| `service` | Team, user, task, notification, upload and AI orchestration | Business authorization is checked here, not only in the HTTP layer |
+| `service.ai` | Model calls, token accounting, web search | OpenAI-compatible DashScope client; separate chat and embedding models; keys are optional |
+| `service.kg` | GraphRAG indexing, retrieval, evidence gating, tools | Chunking, embeddings, 2-hop walk, ReAct loop with hard budgets |
+| `collab` | Documents, spreadsheets, material matrix, leases, ACL, trash | Versioned assets, hashed lease tokens, CSV/XLSX export, async index bridge |
+| `teamagent` | Conversations, run queue, SSE events, action groups, undo | Durable event log per run; lease-based workers; strict request records |
+| `security` | Sign-in, remember-me, WebSocket authorization | Session-fixed authentication, BCrypt, CSRF cookie token, per-subscription checks |
+| `mapper` / `entity` | Persistence and data models | MyBatis-Plus, explicit table/column mapping |
+| `config` | Security, MVC, WebSocket, cache, production checks | Startup validation refuses insecure production configuration |
+
+### Runtime flows
+
+**HTTP request lifecycle**
+
+```text
+Browser → Spring Security filter chain
+        → CSRF / session / role checks
+        → Controller (Result<T>)
+        → Service (business authorization, transactions)
+        → MyBatis-Plus mapper → MySQL
+        → Result<T> JSON, or a Thymeleaf view for page routes
+```
+
+Page routes are resolved by `PageController` against a fixed `ALLOWED_PAGES` set; unknown names return the project’s own 404 page. Security rules are declared in `SecurityConfig`, so a new page or API must be added in both places when it needs to be publicly reachable.
+
+**Team Agent run lifecycle**
+
+```mermaid
+stateDiagram-v2
+  [*] --> QUEUED: POST /runs (202)
+  QUEUED --> RUNNING: worker acquires a 120 s lease
+  QUEUED --> CANCELLED: user cancels
+  RUNNING --> COMPLETED: run.completed
+  RUNNING --> FAILED: run.failed
+  RUNNING --> CANCELLED: user cancels
+  COMPLETED --> [*]
+  FAILED --> [*]
+  CANCELLED --> [*]
+```
+
+Runs are queued with a bounded capacity (default 32) and executed by a fixed worker pool (default 4). Every state change is appended to a run-scoped event log with a monotonically increasing sequence number. The browser consumes that log over SSE using a `<runId>:<seq>` cursor, so a dropped connection resumes without replaying or losing events.
+
+**Action proposal and confirmation**
+
+```text
+Agent run
+  → action.proposed event (group version N)
+  → user reviews and selects actions
+  → POST /action-groups/{id}/confirm
+      · re-check membership and permissions
+      · re-check expected group version
+      · apply all selected actions in one transaction
+      · append audit records
+  → EXECUTED (or FAILED with no partial writes)
+  → optional bounded undo
+```
+
+**Evidence-gated answer pipeline**
+
+```text
+question
+  → evidence plan (what must be proven)
+  → retrieval: vector → keyword → fixed 2-hop graph walk
+  → evidence ledger (tool results with provenance)
+  → answer generation
+  → evidence verification
+  → answer + citations, or a conservative "insufficient evidence" response
+```
+
+The ReAct deep mode is bounded to 5 rounds, 8 tool calls and 45 seconds. Every bound is enforced server-side; the model cannot extend its own budget.
+
+### Data model
+
+| Concept | Storage | Notes |
+| --- | --- | --- |
+| Team | `team_demand` | The demand row *is* the team; lifecycle status lives on the same row |
+| Membership | `team_application` with `status = APPROVED` | Applications and invitations share one table; `initiator_id = user_id` means self-application; `uk_team_user` requires upsert |
+| Mentor profile | `teacher_application` | Created for teacher accounts and reviewed by administrators |
+| Tasks / milestones | `task`, `project_milestone` | Five-state task board; milestone progress derives from linked tasks |
+| Collaboration assets | `team_document`, `team_spreadsheet`, `material_*` | Versioned rows, ACL rows, lease rows and soft-delete/trash metadata |
+| Agent state | `team_agent_conversation`, `team_agent_run`, `team_agent_run_event`, `team_agent_action_*` | Durable event log is the source of truth for streaming and recovery |
+| Knowledge graph | `kg_*` tables | Chunks, entities, relations and fact provenance |
+| Platform | `user`, `community_post`, `asset`, `competition`, `notification`, `audit_log` | Public portal data and governance |
+
+### Deployment topology
+
+```text
+Client ──HTTPS──▶ Nginx / 1Panel ──▶ Spring Boot (single node, port 8090) ──▶ MySQL
+                                          │
+                                          ├── local upload directory (/uploads)
+                                          └── DashScope API (optional)
+```
+
+The current target is a single application node. Static assets are content-hashed and cached for a year in production; uploaded files are served with a one-hour cache because they can be replaced. Horizontal scaling would require shared sessions and sticky WebSocket routing, which are not built in.
+
+## Integration Standards
+
+This section defines the contract for any client, module or service that integrates with iLink. The running code and Flyway migrations are authoritative; this section describes the invariants they enforce.
+
+### 1. Transport and conventions
+
+| Item | Standard |
 | --- | --- |
-| `controller` | 页面路由、REST 接口、SSE 流式响应 |
-| `service` | 业务规则、通知、上传、AI 调用与用量审计 |
-| `service/kg` | GraphRAG 索引、检索、Agent 工具与证据门控 |
-| `collab` | 团队文档、表格、材料矩阵、编辑租约与索引桥接 |
-| `teamagent` | Agent 会话、运行队列、SSE 事件、动作提案与命令层 |
-| `security` | 登录、记住我、WebSocket 鉴权与会话防护 |
-| `mapper` / `entity` | 数据访问与持久化模型 |
-| `config` | 安全、缓存、MVC、WebSocket 与生产环境校验 |
+| Protocol | HTTP/1.1 over the same origin; HTTPS in production |
+| Body format | JSON (`application/json`), UTF-8 |
+| Path style | Resource-oriented prefixes under `/api/**`; page routes are `/{page}.html` |
+| Versioning | Path-based; additive changes are preferred, breaking changes require a new path |
+| Time | Epoch milliseconds in `timestamp`; ISO-8601 strings for domain timestamps |
+| Pagination | Page-based (`page`, `size`) or cursor/offset depending on the domain; metadata always in `extra.pagination` |
+| Unknown request fields | Rejected for Agent request records (`@JsonIgnoreProperties(ignoreUnknown = false)`); treated as client bugs rather than silently ignored |
 
-## 技术栈
+### 2. Response envelope
 
-| 层级 | 采用技术 |
+Every JSON endpoint returns the same wrapper:
+
+```json
+{
+  "code": 200,
+  "message": "OK",
+  "data": {},
+  "extra": {},
+  "timestamp": 1760000000000
+}
+```
+
+| Field | Meaning |
 | --- | --- |
-| 后端 | Java 17、Spring Boot 2.7.18、Spring MVC、Spring Security |
-| 数据访问 | MySQL、MyBatis-Plus 3.5.5、Flyway 7.11 |
-| 页面与交互 | Thymeleaf、HTML5、CSS3、原生 JavaScript、Bootstrap 5、GSAP 3 |
-| 实时能力 | Spring WebSocket、STOMP、SockJS |
-| 缓存与内容 | Caffeine、Jsoup |
-| AI 与图谱 | DashScope OpenAI 兼容接口、Qwen 聊天/Embedding、JTokkit |
-| 文档处理 | Apache PDFBox、Apache POI |
-| 接口与运维 | SpringDoc OpenAPI、Spring Boot Actuator |
-| 测试 | JUnit 5、Mockito、Spring Security Test、H2 |
+| `code` | Business/status code. `200` means success; for errors it mirrors the HTTP status |
+| `message` | Human-readable message, safe to display |
+| `data` | Payload; `null` for commands without a response body |
+| `extra` | Machine-readable metadata: `pagination`, `errorCode`, `retryable`, `requestId`, conflict details |
+| `timestamp` | Server time in epoch milliseconds |
 
-## 快速开始
+Pagination metadata:
 
-### 环境要求
+```json
+{
+  "extra": {
+    "pagination": { "page": 1, "size": 20, "total": 137 }
+  }
+}
+```
 
-- JDK 17 或更高版本
-- Maven 3.9 或更高版本
-- MySQL 5.7 或 MySQL 8
+`Result.toHttpStatus()` maps `code` to the HTTP status, so clients may rely on either the status line or the envelope, but should read both.
 
-### 1. 创建数据库
+### 3. Authentication and authorization
+
+| Mechanism | Detail |
+| --- | --- |
+| Authentication | Spring Security form login; the authenticated user is stored in the HTTP session and exposed as `HttpSession` attribute `user` |
+| Password storage | BCrypt |
+| Session protection | Session fixation migration on login; remember-me tokens rotated and revoked on sign-out or password change |
+| Roles | `STUDENT`, `TEACHER`, `ADMIN`; `/admin.html` and `/api/admin/**` require `ROLE_ADMIN` |
+| Default rule | Every request requires authentication unless explicitly permitted |
+| Public reads | `GET /api/community/posts*`, `GET /api/teacher/list`, `GET /api/teacher/{id}`, `GET /api/team/list`, `GET /api/team/{id}`, `GET /api/asset/list`, `GET /api/asset/{id}`, `GET /api/competitions`, `/api/user/public/**`, `/api/user/skills/public/**` |
+| Public pages | Home, competitions, community and article pages, mentor wall, team marketplace, showcase, public profiles, detail pages and the team workspace shell |
+| Unauthenticated API call | `401` with a JSON `Result` body; browser page requests are redirected to `/login.html?redirect=<encoded target>` |
+| Insufficient role | `403` with a JSON `Result` body for API requests |
+
+Business-level authorization is not delegated to URL patterns alone. Team membership, asset ACLs, team status and edit permissions are re-checked inside the service layer for every operation.
+
+### 4. CSRF
+
+| Item | Standard |
+| --- | --- |
+| Token storage | `XSRF-TOKEN` cookie (`HttpOnly = false`, readable by same-origin JavaScript) |
+| Header | `X-XSRF-TOKEN` on every state-changing request (`POST`, `PUT`, `PATCH`, `DELETE`) |
+| Exemptions | Only the WebSocket handshakes `/ws/**` and `/ws-native/**`; upload and file endpoints are **not** exempt |
+| Client rule | All AJAX calls go through the shared `apiFetch` helper, which attaches credentials and the CSRF header automatically |
+
+A missing or stale CSRF token fails before authentication and may surface as `403`; refresh the token from the cookie and retry once.
+
+### 5. Error contract
+
+`GlobalExceptionHandler` maps exceptions to stable HTTP statuses and messages:
+
+| Condition | Status | `extra.errorCode` |
+| --- | --- | --- |
+| Validation failure (`@Valid`, `@Validated`) | 400 | — |
+| Malformed or missing JSON body | 400 | — |
+| Missing request parameter | 400 | — |
+| Parameter type mismatch | 400 | — |
+| Duplicate key / constraint violation | 400 | — |
+| Upload too large | 400 | — |
+| Unsupported media type | 415 | — |
+| Unsupported HTTP method | 405 | — |
+| Access denied | 403 | — |
+| Team Agent domain error | Mapped from code | `TeamAgentErrorCode` name |
+| Collaboration asset domain error | Mapped from code | `TeamCollabException.Code` name |
+| Unhandled server error | 500 | — |
+
+Agent errors add machine-readable details:
+
+```json
+{
+  "code": 409,
+  "message": "运行已在执行中",
+  "extra": {
+    "errorCode": "RUN_ALREADY_ACTIVE",
+    "requestId": "…",
+    "retryable": true
+  }
+}
+```
+
+When `retryable` is `false`, retrying the same request is pointless; when it is `true`, the client should back off and retry, honoring `Retry-After` if present.
+
+**Agent error code families** (`TeamAgentErrorCode`):
+
+- Authentication/authorization: `AUTH_REQUIRED`, `TEAM_ACCESS_DENIED`, `AGENT_ACTIONS_DISABLED`
+- Request validity: `REQUEST_INVALID`, `SENSITIVE_INPUT_REJECTED`, `ACTION_SELECTION_INVALID`
+- Missing state: `CONVERSATION_NOT_FOUND`, `RUN_NOT_FOUND`, `ACTION_GROUP_NOT_FOUND`, `ACTION_NOT_FOUND`
+- Concurrency: `CONVERSATION_BUSY`, `RUN_ALREADY_ACTIVE`, `IDEMPOTENCY_KEY_REUSED`, `ACTION_DUPLICATE`, `ACTION_VERSION_CONFLICT`, `ACTION_PERMISSION_CHANGED`
+- Lifecycle: `RUN_NOT_CANCELLABLE`, `ACTION_GROUP_EXPIRED`, `ACTION_ALREADY_FINALIZED`, `UNDO_NOT_AVAILABLE`, `UNDO_EXPIRED`, `UNDO_CONFLICT`, `UNDO_ALREADY_FINALIZED`
+- Capacity and upstream: `AGENT_CAPACITY_EXCEEDED`, `AGENT_RATE_LIMITED`, `AGENT_BUDGET_EXCEEDED`, `AI_TIMEOUT`, `AI_RATE_LIMITED`, `AI_UPSTREAM_FAILED`, `AI_NOT_CONFIGURED`, `MODEL_OUTPUT_INVALID`
+- Execution: `WORKER_LOST`, `ACTION_TRANSACTION_FAILED`, `ACTION_SCHEMA_UNSUPPORTED`
+
+**Collaboration error codes** (`TeamCollabException.Code`): `TEAM_NOT_FOUND`, `TEAM_READ_ONLY`, `ASSET_NOT_FOUND`, `ASSET_FORBIDDEN`, `EDIT_LEASE_HELD`, `EDIT_LEASE_INVALID`, `EDIT_LEASE_EXPIRED`, `EDIT_VERSION_CONFLICT`, `REQUEST_ID_REUSED`, `CONTENT_TOO_LARGE`, `SPREADSHEET_SCHEMA_INVALID`, `EXPORT_FAILED`, `FILE_INDEX_FAILED`, `MATERIAL_EVIDENCE_INVALID`, `AGENT_ACTION_CONFLICT`, `REQUEST_INVALID`.
+
+Collaboration errors are returned with `Cache-Control: no-store, must-revalidate` so a client or proxy never reuses a stale permission decision.
+
+### 6. Concurrency, leasing and idempotency
+
+| Mechanism | Contract |
+| --- | --- |
+| Optimistic version | Read an asset, send `baseVersion` with the write; a mismatch returns `409` with `EDIT_VERSION_CONFLICT` |
+| Edit lease | `POST /collaboration/{assetType}/{assetId}/lease` acquires a **90-second** lease and returns a `leaseToken`; renew with `PUT`, release with `DELETE` |
+| Lease conflict | `409 EDIT_LEASE_HELD` includes `extra.activeLease` and `extra.readOnly: true`; the client should switch to read-only instead of forcing a write |
+| Lease security | Lease tokens are stored hashed and are never written to audit logs |
+| Idempotency | State-changing commands accept a `clientRequestId`; replaying the same identifier returns a conflict (`REQUEST_ID_REUSED` / `IDEMPOTENCY_KEY_REUSED`) instead of applying the change twice |
+| Action groups | Confirm with `expectedGroupVersion`; undo with `expectedActionVersion`; stale versions return `409` |
+| Agent run lease | Worker lease defaults to 120 seconds; a lost worker is recovered and its run is failed or cancelled, never silently resumed twice |
+
+Recommended client loop:
+
+```text
+acquire lease → edit with leaseToken + baseVersion
+  → save → new version + renewed lease
+  → on 409: refresh the asset, discard or merge local edits, re-acquire
+  → release lease on blur/close
+```
+
+### 7. Server-Sent Events (SSE)
+
+**Agent run stream**
+
+```http
+GET /api/team/{teamId}/agent/runs/{runId}/events
+Accept: text/event-stream
+Last-Event-ID: <runId>:<seq>
+```
+
+| Item | Standard |
+| --- | --- |
+| Cursor | `Last-Event-ID` in `<runId>:<seq>` form, or `?afterSeq=<seq>` |
+| Event `id` | Same `<runId>:<seq>` cursor |
+| Heartbeat | SSE comment every 15 seconds; comments carry no event id and are not persisted |
+| Polling | Server polls the durable event log every 300 ms; clients do not need to poll |
+| Ordering | Strictly increasing `seq` per run |
+| Resume | Reconnect with the last received id; the server replays only later events |
+| Terminal events | `run.completed`, `run.failed`, `run.cancelled` close the stream |
+| Pre-stream failure | HTTP status plus `X-Team-Agent-Error-Code` (and `Retry-After` if applicable); the body is intentionally empty because `EventSource` expects a stream |
+| Proxies | `Cache-Control: no-store`, `X-Accel-Buffering: no` |
+
+Event types:
+
+| Event | Meaning |
+| --- | --- |
+| `context.ready` | Team context and focused tasks have been assembled |
+| `run.started` | Worker acquired the run |
+| `tool.started` | A retrieval/tool call has begun |
+| `message.delta` | Incremental answer text |
+| `action.proposed` | An action group is ready for human review |
+| `run.completed` | Run finished successfully (terminal) |
+| `run.failed` | Run failed with a stable reason (terminal) |
+| `run.cancelled` | Run was cancelled (terminal) |
+
+**GraphRAG stream**: `POST /api/ai/graph-rag/agentic-query/stream` also returns `text/event-stream`, with the same no-buffering and no-store rules.
+
+### 8. WebSocket / STOMP
+
+| Item | Standard |
+| --- | --- |
+| Endpoints | `/ws` (SockJS) and `/ws-native` (native WebSocket) |
+| Broker | Simple broker on `/topic` and `/queue`; application prefix `/app` |
+| Team chat send | `/app/chat/{teamId}` |
+| Team chat subscribe | `/topic/team/{teamId}` |
+| Collaboration broadcast | Redacted `COLLABORATION_CHANGED` event only; no document content or lease tokens |
+| Authorization | Authentication and team membership are verified on connect and on every subscription |
+| CSRF | WebSocket handshakes are the only CSRF-exempt paths |
+
+### 9. File upload
+
+```http
+POST /api/upload/attachment
+Content-Type: multipart/form-data
+
+file=<binary>&kind=proof
+```
+
+| Item | Standard |
+| --- | --- |
+| Part name | `file` |
+| Optional parameter | `kind` (default `proof`) |
+| Size limits | 50 MB per file, 100 MB per request; avatars, images, certificates, proofs and covers have smaller limits |
+| Validation | Extension, declared size, file signature and normalized path |
+| Serving | `/uploads/**` is public, but only files referenced by business records should be exposed |
+| Cache | Uploaded files are served with `Cache-Control: public, max-age=3600` because they can be replaced |
+
+### 10. Extending the system
+
+| Change | Required steps |
+| --- | --- |
+| New page | Add the template, add the name to `PageController.ALLOWED_PAGES`, and add the route to `SecurityConfig` if it must be public |
+| New REST API | Controller returning `Result<T>`, service-level authorization, mapper/entity if needed, and a Flyway migration for new tables/columns |
+| New schema change | A new versioned migration in `src/main/resources/db/migration/`; never edit an applied migration |
+| New error code | Add it to the relevant enum with an HTTP status and `retryable` flag; clients rely on the enum name |
+| New Agent command | Add a strict request record, validate membership/version, write an audit record, and keep writes transactional |
+| New front-end asset | Reference it with `th:href="@{/css/x.css}"`; the content-hash resolver adds the fingerprint automatically |
+| New copy | Add keys to `messages.properties` and `messages_en.properties` |
+
+### 11. Versioning and compatibility
+
+- **Schema**: Flyway version numbers are append-only. `src/main/resources/db/migration/` is the single source of truth (currently 51 SQL migrations, V0_5–V51, plus Java migration V3).
+- **API**: add fields and endpoints freely; do not change the meaning of an existing field or error code. Breaking changes require a new path.
+- **Events**: SSE event names and `errorCode` values are machine contracts. Add new names rather than renaming existing ones.
+- **Static assets**: content-hashed URLs are immutable; a new build produces new hashes, so no cache busting is needed.
+
+## Quick Start
+
+### Requirements
+
+- JDK 17 or newer
+- Maven 3.9 or newer
+- MySQL 5.7 or MySQL 8
+
+### 1. Create the database
 
 ```sql
 CREATE DATABASE ilink
@@ -161,11 +474,11 @@ CREATE DATABASE ilink
   COLLATE utf8mb4_unicode_ci;
 ```
 
-不要先执行 `sql/schema.sql`。应用启动后会由 Flyway 自动执行 `src/main/resources/db/migration/` 中的迁移。
+Do not run `sql/schema.sql` first. Flyway applies `src/main/resources/db/migration/` on startup.
 
-### 2. 配置环境变量
+### 2. Configure the environment
 
-开发环境默认启用 `dev` profile，端口为 `8090`。至少需要提供数据库密码：
+The `dev` profile is active by default and listens on port `8090`. At minimum, provide the database password:
 
 ```powershell
 $env:DB_HOST = "localhost"
@@ -175,33 +488,33 @@ $env:DB_PASSWORD = "your_database_password"
 $env:FILE_UPLOAD_DIR = "E:\data\ilink\uploads"
 ```
 
-也可以复制本地私有配置模板，把 AI 与反馈推送的密钥只放在本机：
+Keep AI and push credentials on your machine only:
 
 ```powershell
 Copy-Item src/main/resources/application-local.yml.example src/main/resources/application-local.yml
 ```
 
-`application-local.yml` 已被 Git 忽略，请勿提交真实密钥。AI 配置使用 `DASHSCOPE_API_KEY` / `EMBEDDING_API_KEY`。
+`application-local.yml` is git-ignored. Never commit real credentials. AI features read `DASHSCOPE_API_KEY` / `EMBEDDING_API_KEY`.
 
-### 3. 启动
+### 3. Run
 
 ```bash
 mvn spring-boot:run
 ```
 
-启动完成后访问 [http://localhost:8090](http://localhost:8090)。
+Open [http://localhost:8090](http://localhost:8090).
 
-### 4. 导入演示数据（可选）
+### 4. Load demo data (optional)
 
-`sql/demo_showcase_seed.sql` 提供可重复执行的组队、导师、社区与成果演示数据，方便在本地看到完整页面效果：
+`sql/demo_showcase_seed.sql` provides idempotent demo teams, mentors, posts and outcomes:
 
 ```bash
 mysql -uroot -p --default-character-set=utf8mb4 ilink < sql/demo_showcase_seed.sql
 ```
 
-演示账号统一密码见脚本头部注释。正式环境请勿导入演示数据。
+The demo password is documented at the top of the script. Do not import demo data into production.
 
-### 5. 测试与打包
+### 5. Test and package
 
 ```bash
 mvn test
@@ -209,181 +522,171 @@ mvn clean package
 java -jar target/iLink-1.0.jar
 ```
 
-测试自动使用 `test` profile 与 H2 内存数据库，不依赖本地 MySQL。`TeamCollaborationMysqlIT` 是可选的 MySQL 集成测试，默认不执行。
+Tests use the `test` profile and an in-memory H2 database, so local MySQL is not required. `TeamCollaborationMysqlIT` is an optional real-MySQL integration test and is skipped by default.
 
-## 配置说明
+## Configuration
 
-常用配置均可通过环境变量注入：
+Most settings can be supplied through environment variables:
 
-| 变量 | 用途 | 默认 / 说明 |
+| Variable | Purpose | Default / notes |
 | --- | --- | --- |
-| `SERVER_PORT` | HTTP 端口 | `8090` |
-| `SPRING_PROFILES_ACTIVE` | Spring Profile | `dev` |
-| `DB_HOST`、`DB_PORT`、`DB_USERNAME`、`DB_PASSWORD` | MySQL 连接 | 开发时 `DB_PASSWORD` 也可由 `SPRING_DATASOURCE_PASSWORD` 覆盖 |
-| `FILE_UPLOAD_DIR` | 上传文件根目录 | 默认 `./uploads` |
-| `FILE_ACCESS_URL_PREFIX` | 上传文件 URL 前缀 | 默认 `/uploads/` |
-| `APP_PUBLIC_BASE_URL` | 应用对外地址 | 密码重置与反馈详情链接使用；生产必须是 HTTPS |
-| `DASHSCOPE_API_KEY`、`DASHSCOPE_BASE_URL`、`DASHSCOPE_MODEL` | 聊天 / 抽取模型 | OpenAI 兼容接口；未配置密钥时 AI 不可用 |
-| `EMBEDDING_API_KEY`、`EMBEDDING_BASE_URL`、`EMBEDDING_MODEL` | 图谱向量检索 | 未配置时自动回落关键词检索 |
-| `AI_ENABLED`、`AI_SEARCH_ENABLED`、`AI_SEARCH_MAX_RESULTS` | AI 与联网搜索开关 | 默认开启，搜索结果默认 5 条 |
-| `TEAM_AGENT_ENABLED`、`TEAM_AGENT_ACTIONS_ENABLED`、`TEAM_AGENT_DEEP_GRAPH_RAG_ENABLED` | Team Agent 能力开关 | 默认开启 |
-| `TEAM_AGENT_WORKER_CONCURRENCY`、`TEAM_AGENT_QUEUE_CAPACITY`、`TEAM_AGENT_LEASE_SECONDS` | Agent 运行队列 | 默认 4 / 32 / 120 秒 |
-| `RESEND_API_KEY`、`APP_MAIL_FROM`、`SPRING_MAIL_HOST` | 邮件通道 | Resend 优先；生产校验仍要求 SMTP host |
-| `SERVERCHAN_SENDKEY`、`FEEDBACK_PUSH_ENABLED` | 反馈推送 | 不配置时反馈仍会保存，只是不推送 |
-| `SESSION_COOKIE_SECURE` | 会话 Cookie 的 Secure 属性 | 生产应为 `true` |
+| `SERVER_PORT` | HTTP port | `8090` |
+| `SPRING_PROFILES_ACTIVE` | Spring profile | `dev` |
+| `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD` | MySQL connection | `DB_PASSWORD` may also come from `SPRING_DATASOURCE_PASSWORD` |
+| `FILE_UPLOAD_DIR` | Upload root | `./uploads` |
+| `FILE_ACCESS_URL_PREFIX` | Upload URL prefix | `/uploads/` |
+| `APP_PUBLIC_BASE_URL` | Public application URL | Used in password-reset and feedback links; must be HTTPS in production |
+| `DASHSCOPE_API_KEY`, `DASHSCOPE_BASE_URL`, `DASHSCOPE_MODEL` | Chat / extraction model | OpenAI-compatible endpoint; AI is unavailable without a key |
+| `EMBEDDING_API_KEY`, `EMBEDDING_BASE_URL`, `EMBEDDING_MODEL` | Graph vector retrieval | Falls back to keyword retrieval when unset |
+| `AI_ENABLED`, `AI_SEARCH_ENABLED`, `AI_SEARCH_MAX_RESULTS` | AI and web search switches | Enabled by default; 5 search results |
+| `TEAM_AGENT_ENABLED`, `TEAM_AGENT_ACTIONS_ENABLED`, `TEAM_AGENT_DEEP_GRAPH_RAG_ENABLED` | Team Agent capabilities | Enabled by default |
+| `TEAM_AGENT_WORKER_CONCURRENCY`, `TEAM_AGENT_QUEUE_CAPACITY`, `TEAM_AGENT_LEASE_SECONDS` | Agent run queue | 4 / 32 / 120 seconds |
+| `RESEND_API_KEY`, `APP_MAIL_FROM`, `SPRING_MAIL_HOST` | Email channel | Resend preferred; production still requires an SMTP host |
+| `SERVERCHAN_SENDKEY`, `FEEDBACK_PUSH_ENABLED` | Feedback push | Feedback is still stored without push |
+| `SESSION_COOKIE_SECURE` | Secure session cookie | Should be `true` in production |
 
-生产环境请显式使用 `prod` profile。应用启动时会校验：非 root 数据库账号、非默认数据库密码、HTTPS 公开地址、SMTP、合法发件地址、绝对上传目录与 Secure 会话 Cookie；任一项缺失会拒绝启动。
+Use the `prod` profile explicitly in production. On startup the application validates a non-root database account, a non-default database password, an HTTPS public URL, SMTP, a valid sender address, an absolute upload directory and a secure session cookie; it refuses to start if any check fails.
 
-## 接口与页面
+## API Surface
 
-所有 JSON 接口使用 `Result<T>` 统一包装，分页元数据位于 `extra.pagination`：
-
-```json
-{
-  "code": 200,
-  "message": "获取成功",
-  "data": {},
-  "extra": {},
-  "timestamp": 0
-}
-```
-
-| 接口域 | 路径前缀 | 说明 |
+| Domain | Prefix | Notes |
 | --- | --- | --- |
-| 认证 | `/api/login`、`/api/register`、`/api/logout`、`/api/password-reset/**` | 登录、注册、退出与密码找回 |
-| 用户与技能 | `/api/user/**`、`/api/user/skills/**` | 资料、密码、公开主页、内置头像与技能 |
-| 组队与成员 | `/api/team/**` | 发布、申请、审批、邀请、成员管理、转让与解散 |
-| 团队协作 | `/api/team-space/**`、`/api/tasks/**`、`/api/milestones/**` | 概览、任务、提交、评论与里程碑 |
-| 协作资产 | `/api/team/{teamId}/collaboration/**`、`/documents/**`、`/spreadsheets/**`、`/materials/**` | 文档、表格、材料矩阵、编辑租约、ACL 与回收站 |
-| 团队资料库 | `/api/team/{teamId}/library/**` | 文件夹、文件、预览引用、索引状态与回收站 |
-| Team Agent | `/api/team/{teamId}/agent/**` | 会话、运行、SSE 事件、动作组确认/忽略/撤销 |
-| 聊天与通知 | `/api/team/{teamId}/messages`、`/api/notifications/**` | 聊天历史/发送与通知中心 |
-| 社区与成果 | `/api/community/**`、`/api/asset/**` | 文章、互动、评论、成果与下载 |
-| 导师、竞赛、推荐 | `/api/teacher/**`、`/api/competitions`、`/api/recommendations/**` | 导师、赛事目录与匹配推荐 |
-| AI | `/api/team/{teamId}/ai/task-breakdown`、`/api/ai/competition-qa`、`/api/ai/graph-rag/**` | 任务建议、竞赛答疑、SSE 流式答疑与 GraphRAG |
-| 反馈与管理 | `/api/feedback`、`/api/admin/**` | 全站反馈、后台治理与审计 |
+| Authentication | `/api/login`, `/api/register`, `/api/logout`, `/api/password-reset/**` | Sign-in, registration, sign-out, password recovery |
+| Users and skills | `/api/user/**`, `/api/user/skills/**` | Profile, password, public profile, avatars, skills |
+| Teams and members | `/api/team/**` | Publish, apply, approve, invite, manage, transfer, dissolve |
+| Team collaboration | `/api/team-space/**`, `/api/tasks/**`, `/api/milestones/**` | Overview, tasks, submissions, comments, milestones |
+| Collaboration assets | `/api/team/{teamId}/collaboration/**`, `/documents/**`, `/spreadsheets/**`, `/materials/**` | Documents, spreadsheets, material matrix, leases, ACL, trash |
+| Team library | `/api/team/{teamId}/library/**` | Folders, files, previews, index status, trash |
+| Team Agent | `/api/team/{teamId}/agent/**` | Conversations, runs, SSE events, action-group confirm/dismiss/undo |
+| Chat and notifications | `/api/team/{teamId}/messages`, `/api/notifications/**` | History/send and notification center |
+| Community and showcase | `/api/community/**`, `/api/asset/**` | Posts, interactions, comments, outcomes, downloads |
+| Mentors, competitions, recommendations | `/api/teacher/**`, `/api/competitions`, `/api/recommendations/**` | Mentor profiles, catalog, matching |
+| AI | `/api/team/{teamId}/ai/task-breakdown`, `/api/ai/competition-qa`, `/api/ai/graph-rag/**` | Task suggestions, competition Q&A, SSE Q&A, GraphRAG |
+| Feedback and admin | `/api/feedback`, `/api/admin/**` | Site-wide feedback, administration and audit |
 
-典型页面入口：
+Common page routes:
 
 ```text
-/index.html             首页
-/team-market.html       组队大厅
-/teacher-wall.html      导师招贤
-/community.html         交流社区
-/competitions.html      竞赛目录
-/gallery.html           成果展示
-/team-space.html        团队空间（看板、群聊、成员、资料、Agent）
-/team-review.html       任务批阅工作台
-/roster.html            成员名册
-/user-profile.html      公开个人主页
-/profile.html           个人中心
-/admin.html             管理后台
+/index.html             Home
+/team-market.html       Team marketplace
+/teacher-wall.html      Mentor wall
+/community.html         Community
+/competitions.html      Competition catalog
+/gallery.html           Showcase
+/team-space.html        Team space (board, chat, members, assets, Agent)
+/team-review.html       Task review workbench
+/roster.html            Member roster
+/user-profile.html      Public profile
+/profile.html           Personal center
+/admin.html             Admin console
 ```
 
-WebSocket 端点为 `/ws`（SockJS）与 `/ws-native`；团队聊天发送到 `/app/chat/{teamId}`，订阅 `/topic/team/{teamId}`。协作资产变更只广播脱敏的 `COLLABORATION_CHANGED` 事件。入站连接与订阅会检查登录状态与团队成员资格。
+Operational endpoints: `/actuator/health` is public; other Actuator endpoints are not exposed by default. SpringDoc OpenAPI 1.7.0 is on the classpath and produces `/v3/api-docs` and `/swagger-ui.html`; because those paths are not whitelisted, they inherit the default “authenticated” rule.
 
-## 项目结构
+## Project Structure
 
 ```text
 .
 ├── src/
 │   ├── main/
 │   │   ├── java/cn/ilink/
-│   │   │   ├── config/       # 安全、缓存、MVC、WebSocket、生产校验
-│   │   │   ├── controller/   # 页面路由与 REST 接口
-│   │   │   ├── service/      # 业务规则、通知、上传
-│   │   │   │   ├── ai/       # 模型调用、用量、预算与联网搜索
-│   │   │   │   └── kg/       # GraphRAG 索引、检索、证据门控与工具
-│   │   │   ├── collab/       # 团队文档、表格、材料矩阵与索引桥接
-│   │   │   ├── teamagent/    # Agent 会话、运行、SSE 与动作命令层
-│   │   │   ├── mapper/       # MyBatis-Plus 数据访问
-│   │   │   ├── entity/       # 持久化实体
-│   │   │   ├── dto/、vo/     # 请求与响应模型
-│   │   │   ├── security/     # 登录、记住我与 WebSocket 鉴权
-│   │   │   └── util/         # 密码、HTML、IP、缓存等工具
+│   │   │   ├── config/       # Security, cache, MVC, WebSocket, production checks
+│   │   │   ├── controller/   # Page routes and REST APIs
+│   │   │   ├── service/      # Business rules, notifications, uploads
+│   │   │   │   ├── ai/       # Model calls, usage, budgets, web search
+│   │   │   │   └── kg/       # GraphRAG indexing, retrieval, evidence gating, tools
+│   │   │   ├── collab/       # Team docs, sheets, material matrix, index bridge
+│   │   │   ├── teamagent/    # Agent conversations, runs, SSE, action commands
+│   │   │   ├── mapper/       # MyBatis-Plus data access
+│   │   │   ├── entity/       # Persistence entities
+│   │   │   ├── dto/, vo/     # Request and response models
+│   │   │   ├── security/     # Sign-in, remember-me, WebSocket authorization
+│   │   │   └── util/         # Password, HTML, IP and cache helpers
 │   │   └── resources/
-│   │       ├── db/migration/ # Flyway 版本化迁移（V0_5–V51 + Java V3）
-│   │       ├── static/       # CSS、JavaScript、图片与前端库
-│   │       ├── templates/    # Thymeleaf 页面与 fragments
+│   │       ├── db/migration/ # Flyway migrations (V0_5–V51 + Java V3)
+│   │       ├── static/       # CSS, JavaScript, images and vendor assets
+│   │       ├── templates/    # Thymeleaf pages and fragments
 │   │       └── application*.yml
-│   └── test/java/            # 单元、控制器、安全与路径契约测试
-├── sql/                      # 历史/人工 SQL 与演示数据，非自动迁移来源
-├── docs/                     # 设计文档、评测报告与部署手册
-└── assets/readme/            # README 截图与演示素材
+│   └── test/java/            # Unit, controller, security and route-contract tests
+├── sql/                      # Historical/manual SQL and demo data
+├── docs/                     # Design documents, evaluation reports, deployment notes
+└── assets/readme/            # README screenshots and trailer
 ```
 
-## 测试
+## Testing
 
 ```bash
 mvn test
 ```
 
-- 单元、控制器、安全与路径契约测试使用 H2 内存数据库，开箱即跑。
-- 真实 MySQL 集成测试 `TeamCollaborationMysqlIT` 默认跳过，需要时通过 Maven Profile 或环境变量显式启用。
-- 新增功能请至少补充对应的单元或 Web 层测试；不要为了通过测试而删除或跳过用例。
+- Unit, controller, security and route-contract tests run on H2 and work out of the box.
+- The real-MySQL integration test `TeamCollaborationMysqlIT` is skipped by default; enable it explicitly when needed.
+- Add unit or web-layer tests for new behavior. Do not delete or skip tests just to make the build pass.
 
-## 安全与数据处理
+## Security and data handling
 
-- Spring Security + BCrypt + Session 认证，登录时会话固定攻击防护。
-- 变更类 AJAX 请求使用 Cookie CSRF Token（`X-XSRF-TOKEN`），前端公共脚本自动携带同源凭证与请求头。
-- 「记住我」令牌持久化并在使用后轮换，退出或改密后撤销。
-- 连续登录失败达到阈值后临时锁定；密码找回不泄露账号是否存在，令牌只保存哈希且一次性有效。
-- 社区富文本经 Jsoup 白名单净化；上传使用扩展名、大小、文件签名与路径规范化校验。
-- 常规上传单文件最大 50 MB、单请求最大 100 MB；头像、图片、证书、证明与封面另有更小限制。
-- 管理员的用户、角色、队伍、导师、成果、社区与竞赛维护操作写入审计日志。
-- 团队文档、表格、材料与资料库文件按团队状态、资产范围与 ACL 校验；编辑使用 90 秒租约与乐观锁。
-- Agent 动作必须由用户确认后写入，整组事务执行，审计不保存正文与租约令牌。
-- 团队资料正文异步抽取，PDF/Office 有页数、单元格与大小上限；加密、损坏、压缩包等无法安全解析的文件标记为不索引。
-- 响应头包含 CSP、`nosniff`、`Referrer-Policy` 与 `Permissions-Policy` 等基础防护。
+- Spring Security with BCrypt and session authentication, including session-fixation protection.
+- State-changing requests use a cookie CSRF token (`X-XSRF-TOKEN`); only WebSocket handshakes are exempt.
+- Remember-me tokens are persisted, rotated after use and revoked on sign-out or password change.
+- Repeated failed sign-ins trigger a temporary lock. Password recovery does not reveal whether an account exists; tokens are stored hashed and are single-use.
+- Community rich text is sanitized with a Jsoup whitelist. Uploads are validated by extension, size, file signature and normalized paths.
+- General uploads are limited to 50 MB per file and 100 MB per request; avatars, images, certificates, proofs and covers have smaller limits.
+- Administrative actions on users, roles, teams, mentors, outcomes, community and competitions are audited.
+- Team documents, spreadsheets, materials and library files are checked against team status, asset scope and ACLs. Editing uses a 90-second lease and optimistic locking.
+- Agent actions require user confirmation, run transactionally and are audited without storing content or lease tokens.
+- Team material is extracted asynchronously; PDF/Office parsing has page, cell and size limits. Encrypted, corrupted or unsafe archives are marked as not indexed.
+- Responses include CSP, `nosniff`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy` headers. CSP allows only `'self'`, `'unsafe-inline'` and `https://cdn.jsdelivr.net` for scripts.
+- `app.api.expose-error-detail` is `false` by default, so internal messages and SQL details are not returned to clients.
 
-## 数据库迁移
+## Database Migrations
 
-`src/main/resources/db/migration/` 是当前数据库结构的唯一事实来源，当前包含 51 个 SQL 迁移（V0_5–V51）与 Java 迁移 V3，最新结构版本为 V51。
+`src/main/resources/db/migration/` is the single source of truth for the schema. It currently contains 51 SQL migrations (V0_5–V51) plus Java migration V3; the current schema version is V51.
 
-`sql/` 保存历史建表、兼容修复与演示数据脚本，不会被启动过程自动执行。只有在明确了解目标库的 `flyway_schema_history`、完成备份并确认影响范围后，才应人工使用其中脚本；详情见 [sql/README.md](sql/README.md)。
+`sql/` contains historical DDL, compatibility fixes and demo scripts. They are never executed automatically. Use them manually only after inspecting the target database’s `flyway_schema_history`, taking a backup and confirming the impact. See [sql/README.md](sql/README.md).
 
-## 部署
+## Deployment
 
-- 使用 `prod` profile 启动，并按上面的校验项准备环境变量。
-- 通过 Nginx 或 1Panel 等反向代理暴露 HTTPS；`APP_PUBLIC_BASE_URL` 必须指向公网 HTTPS 地址。
-- 上传目录使用绝对路径并确保运行账号可写；数据库账号不要使用 root。
-- 静态资源已按内容指纹自动版本化（`/css/x-<md5>.css`），生产环境可长期缓存。
-- 单机部署即可运行；如需水平扩展，请先处理会话共享与 WebSocket 粘性。
+- Start with the `prod` profile and satisfy every startup validation listed above.
+- Expose HTTPS through Nginx or a panel such as 1Panel; `APP_PUBLIC_BASE_URL` must be the public HTTPS URL.
+- Use an absolute upload directory writable by the runtime account. Do not run the database as root.
+- Static assets are content-hashed (`/css/x-<md5>.css`) and can be cached aggressively in production.
+- A single node is enough to run iLink. Horizontal scaling requires shared sessions and sticky WebSocket routing.
 
-在线演示：[http://121.40.34.68:8090](http://121.40.34.68:8090)
+Live demo: [http://121.40.34.68:8090](http://121.40.34.68:8090)
 
-项目介绍页（应用内「关于作者」入口）：
+Project intro page (the “About the author” entry inside the app):
 <https://su-yu-s.github.io/iLink-cn/>
 
-## 已知限制
+## Known limitations
 
-- 赛事目录由管理员维护，不自动抓取赛事官网。
-- AI 问答与 GraphRAG 需要 DashScope / Qwen 密钥；未配置时相关能力不可用，但其余功能正常运行。
-- 团队资料索引依赖异步任务；大文件或复杂 Office 文档的解析时间会更长。
-- 当前以单机部署为主，尚未内置多租户与集群会话方案。
+- Competition listings are maintained by administrators; official sites are not scraped.
+- AI Q&A and GraphRAG require DashScope / Qwen credentials. Without them those features are unavailable; everything else keeps working.
+- Team content indexing runs asynchronously, so large or complex Office files take longer to become searchable.
+- The current deployment target is a single node; multi-tenancy and clustered sessions are not built in.
+- SpringDoc is present but not curated as a public API reference; the integration contract in this README is the authoritative description.
 
-## 参与贡献
+## Contributing
 
-欢迎提交 Issue 与 Pull Request。
+Issues and pull requests are welcome.
 
-1. Fork 仓库并从 `main` 创建分支。
-2. 保持改动聚焦，遵循项目现有的分层、命名与样式约定。
-3. 新增数据库结构必须通过 Flyway 迁移交付，不依赖手工改表。
-4. 提交前运行 `mvn test`；涉及页面时请附上截图或录屏。
-5. Commit message 使用中文简明描述改动；不要提交密钥、数据库密码、上传文件或本地 `application-local.yml`。
+1. Fork the repository and branch from `main`.
+2. Keep changes focused and follow the existing layering, naming and styling conventions.
+3. Deliver schema changes through Flyway migrations; do not rely on manual table edits.
+4. Run `mvn test` before submitting. Include a screenshot or recording for UI changes.
+5. Write concise Chinese commit messages. Never commit keys, database passwords, uploads or a local `application-local.yml`.
 
-设计文档位于 [`docs/superpowers/specs/`](docs/superpowers/specs/)，实现细节以运行代码与迁移为准。
+Design documents live in [`docs/superpowers/specs/`](docs/superpowers/specs/); the running code and migrations are authoritative.
 
-## 许可证
+## License
 
 [Apache License 2.0](LICENSE)
 
-## 致谢
+## Acknowledgements
 
-iLink 建立在众多优秀开源项目之上：Spring Boot、Spring Security、Thymeleaf、MyBatis-Plus、Flyway、Caffeine、Jsoup、Apache PDFBox、Apache POI、GSAP 与 Bootstrap。AI 能力由阿里云百炼 DashScope 的 Qwen 模型提供。
+iLink stands on excellent open-source projects: Spring Boot, Spring Security, Thymeleaf, MyBatis-Plus, Flyway, Caffeine, Jsoup, Apache PDFBox, Apache POI, GSAP and Bootstrap. AI capabilities are powered by Qwen models through Alibaba Cloud DashScope.
 
 ---
 
 <p align="center">
-  <sub>为每一次组队，找到频率相近的人。</sub>
+  <sub>For every team, find the people on your frequency.</sub>
 </p>
