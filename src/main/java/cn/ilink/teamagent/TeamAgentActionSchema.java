@@ -31,8 +31,6 @@ public class TeamAgentActionSchema {
 
     private static final Set<String> ROOT_FIELDS = Set.of(
         "actionType", "targetId", "after", "reason", "evidence");
-    private static final Set<String> EVIDENCE_FIELDS = Set.of(
-        "kind", "id", "label", "generatedAt");
     private static final Set<String> CREATE_FIELDS = Set.of(
         "taskTitle", "taskDescription", "taskType", "priority", "estimatedHours",
         "deadline", "assignedTo", "requiresReview");
@@ -50,7 +48,13 @@ public class TeamAgentActionSchema {
         cn.ilink.collab.TeamCollaborationAgentCommands.UPDATE_TABLE_ROWS,
         cn.ilink.collab.TeamCollaborationAgentCommands.CREATE_REQUIREMENT,
         cn.ilink.collab.TeamCollaborationAgentCommands.LINK_EVIDENCE,
-        cn.ilink.collab.TeamCollaborationAgentCommands.SET_REVIEW);
+        cn.ilink.collab.TeamCollaborationAgentCommands.SET_REVIEW,
+        "CREATE_LIBRARY_FILE", "UPDATE_LIBRARY_FILE");
+
+    /** agent 生成并暂存到 library 目录的文件；确认后才登记资料库。 */
+    private static final Set<String> LIBRARY_FILE_FIELDS = Set.of(
+        "fileName", "fileUrl", "fileSize", "folderId", "purpose");
+    private static final long MAX_LIBRARY_FILE_BYTES = 20L * 1024 * 1024;
 
     /** Collaboration action shapes; values are re-validated against the DB later. */
     private static final Set<String> COLLAB_CREATE_DOC_FIELDS = Set.of(
@@ -91,6 +95,7 @@ public class TeamAgentActionSchema {
             TeamAgentActionDraft draft = normalize(node);
             if ("CREATE_TASK".equals(draft.actionType())
                 || "CREATE_SUBTASK".equals(draft.actionType())
+                || "CREATE_LIBRARY_FILE".equals(draft.actionType())
                 || COLLAB_CREATE_ACTIONS.contains(draft.actionType())) {
                 creates++;
             }
@@ -213,6 +218,18 @@ public class TeamAgentActionSchema {
                 requireExistingTarget(targetId);
                 after = normalizeCollabReview(afterNode);
             }
+            case "CREATE_LIBRARY_FILE" -> {
+                targetType = "TEAM_FILE";
+                if (targetId != null) throw invalid("新建文件不能携带 targetId");
+                targetId = null;
+                expectedVersion = null;
+                after = normalizeLibraryFile(afterNode);
+            }
+            case "UPDATE_LIBRARY_FILE" -> {
+                targetType = "TEAM_FILE";
+                requireExistingTarget(targetId);
+                after = normalizeLibraryFile(afterNode);
+            }
             default -> throw invalid("动作类型不在白名单内");
         }
         String reason = optionalText(node, "reason", 500);
@@ -314,6 +331,32 @@ public class TeamAgentActionSchema {
         values.put("reportHash", hash);
         values.put("windowStart", start.toString());
         values.put("windowEnd", end.toString());
+        return immutable(values);
+    }
+
+    /**
+     * agent 生成的文件：只接受本服务 library 上传目录下的 URL。
+     * 外部 URL 会把“确认后登记”变成任意链接注入。
+     */
+    private Map<String, Object> normalizeLibraryFile(JsonNode after) {
+        rejectUnknown(after, LIBRARY_FILE_FIELDS, "after");
+        String fileName = TeamAgentMarkdownSanitizer.sanitize(requiredText(after, "fileName", 120), 120);
+        String fileUrl = requiredText(after, "fileUrl", 300);
+        if (!fileUrl.startsWith("/uploads/library/")) {
+            throw invalid("文件必须位于 library 上传目录");
+        }
+        Long sizeValue = optionalLong(after, "fileSize");
+        long size = sizeValue == null ? 0L : sizeValue;
+        if (size < 0 || size > MAX_LIBRARY_FILE_BYTES) throw invalid("文件大小超出限制");
+        Long folderId = optionalLong(after, "folderId");
+        if (folderId != null && folderId <= 0) throw invalid("目标文件夹无效");
+        String purpose = optionalText(after, "purpose", 100);
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("fileName", fileName);
+        values.put("fileUrl", fileUrl);
+        values.put("fileSize", size);
+        values.put("folderId", folderId);
+        values.put("purpose", purpose);
         return immutable(values);
     }
 
@@ -466,7 +509,8 @@ public class TeamAgentActionSchema {
         List<Map<String, Object>> rows = new ArrayList<>();
         for (JsonNode node : evidence) {
             requireObject(node, "evidence");
-            rejectUnknown(node, EVIDENCE_FIELDS, "evidence");
+            // 证据只是给人看的出处标注，执行器不读这些键，渲染层还会再清洗一次；
+            // 因此丢弃多余键即可，不能像 after 那样让一个臆造字段废掉整批动作。
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("kind", requiredText(node, "kind", 32).toUpperCase(Locale.ROOT));
             Long id = optionalLong(node, "id");

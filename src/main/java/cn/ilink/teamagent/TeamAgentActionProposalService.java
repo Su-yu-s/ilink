@@ -38,7 +38,7 @@ public class TeamAgentActionProposalService {
         "SET_TASK_PRIORITY", "SET_TASK_DEADLINE",
         "CREATE_TEAM_DOCUMENT", "APPEND_TEAM_DOCUMENT", "CREATE_TEAM_TABLE",
         "UPDATE_TEAM_TABLE_ROWS", "CREATE_MATERIAL_REQUIREMENT",
-        "LINK_MATERIAL_EVIDENCE", "SET_MATERIAL_REVIEW");
+        "LINK_MATERIAL_EVIDENCE", "SET_MATERIAL_REVIEW", "CREATE_LIBRARY_FILE");
 
     private final TeamDemandMapper teamMapper;
     private final TeamTaskMapper taskMapper;
@@ -49,6 +49,7 @@ public class TeamAgentActionProposalService {
     private final TeamAgentProperties properties;
     private final ObjectMapper objectMapper;
     private final TeamCollaborationAgentCommands collaborationCommands;
+    private final cn.ilink.mapper.TeamLibraryFileMapper libraryFileMapper;
 
     public TeamAgentActionProposalService(TeamDemandMapper teamMapper,
                                           TeamTaskMapper taskMapper,
@@ -58,7 +59,8 @@ public class TeamAgentActionProposalService {
                                           TeamAgentActionMapper actionMapper,
                                           TeamAgentProperties properties,
                                           ObjectMapper objectMapper,
-                                          TeamCollaborationAgentCommands collaborationCommands) {
+                                          TeamCollaborationAgentCommands collaborationCommands,
+                                          cn.ilink.mapper.TeamLibraryFileMapper libraryFileMapper) {
         this.teamMapper = teamMapper;
         this.taskMapper = taskMapper;
         this.userService = userService;
@@ -68,6 +70,7 @@ public class TeamAgentActionProposalService {
         this.properties = properties;
         this.objectMapper = objectMapper;
         this.collaborationCommands = collaborationCommands;
+        this.libraryFileMapper = libraryFileMapper;
     }
 
     public List<EnrichedDraft> prepare(TeamAgentScope scope,
@@ -94,6 +97,38 @@ public class TeamAgentActionProposalService {
                     "TEAM_CHAT", scope.teamId(), null,
                     Map.of("teamId", scope.teamId()), draft.after(), draft.reason(),
                     draft.evidence()));
+                continue;
+            }
+            if ("UPDATE_LIBRARY_FILE".equals(draft.actionType())) {
+                if (!collabActionsAllowed) continue;
+                cn.ilink.entity.TeamLibraryFile target =
+                    draft.targetId() == null ? null : libraryFileMapper.selectById(draft.targetId());
+                if (target == null || Boolean.TRUE.equals(target.getIsPurged())
+                    || Boolean.TRUE.equals(target.getIsDeleted())) {
+                    throw invalid("目标文件不存在或已删除");
+                }
+                if (!Objects.equals(target.getTeamId(), team.getId())) {
+                    throw invalid("目标文件不属于当前团队");
+                }
+                if (Boolean.TRUE.equals(target.getIsFolder())) {
+                    throw invalid("不能覆盖文件夹");
+                }
+                Map<String, Object> before = new LinkedHashMap<>();
+                before.put("fileName", target.getName());
+                before.put("contentRevision", target.getContentRevision());
+                Integer revision = target.getContentRevision() == null
+                    ? null : target.getContentRevision().intValue();
+                rows.add(new EnrichedDraft(draft.schemaVersion(), draft.actionType(),
+                    "TEAM_FILE", target.getId(), revision, before,
+                    draft.after(), draft.reason(), draft.evidence()));
+                continue;
+            }
+            if ("CREATE_LIBRARY_FILE".equals(draft.actionType())) {
+                // 文件属于协作资产：团队处于 TEAMING 时任何成员都可以提出，确认后才落库。
+                if (!collabActionsAllowed) continue;
+                rows.add(new EnrichedDraft(draft.schemaVersion(), draft.actionType(),
+                    "TEAM_FILE", null, null, Map.of(), draft.after(),
+                    draft.reason(), draft.evidence()));
                 continue;
             }
             if (collaborationCommands.supports(draft.actionType())) {

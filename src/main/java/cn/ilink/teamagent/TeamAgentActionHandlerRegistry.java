@@ -28,7 +28,9 @@ public class TeamAgentActionHandlerRegistry {
     public TeamAgentActionHandlerRegistry(TeamTaskCommandService taskCommands,
                                           TeamChatCommandService chatCommands,
                                           ObjectMapper objectMapper,
-                                          TeamCollaborationAgentCommands collaborationCommands) {
+                                          TeamCollaborationAgentCommands collaborationCommands,
+                                          cn.ilink.service.TeamLibraryService libraryService,
+                                          cn.ilink.mapper.TeamLibraryFileMapper libraryFileMapper) {
         this.objectMapper = objectMapper;
         Map<Key, Handler> registered = new LinkedHashMap<>();
         register(registered, "CREATE_TASK", new CreateTaskHandler(taskCommands));
@@ -38,6 +40,9 @@ public class TeamAgentActionHandlerRegistry {
         register(registered, "SET_TASK_DEADLINE", new DeadlineHandler(taskCommands));
         register(registered, "SEND_TASK_REMINDER", new ReminderHandler(taskCommands));
         register(registered, "SEND_WEEKLY_REPORT", new WeeklyHandler(chatCommands));
+        register(registered, "CREATE_LIBRARY_FILE", new LibraryFileHandler(libraryService));
+        register(registered, "UPDATE_LIBRARY_FILE",
+            new UpdateLibraryFileHandler(libraryService, libraryFileMapper));
         CollaborationHandler collaboration = new CollaborationHandler(collaborationCommands);
         for (String type : TeamCollaborationAgentCommands.ACTION_TYPES) {
             register(registered, type, collaboration);
@@ -264,6 +269,113 @@ public class TeamAgentActionHandlerRegistry {
      * map onto the stable Agent error contract so the group rolls back rather
      * than half-applying.
      */
+    /**
+     * 把 agent 暂存的文件登记进团队资料库。文件本身在上传阶段已经落盘，
+     * 这里只做资料库记录与索引入队；撤销走软删除，文件留在回收站。
+     */
+    private static final class LibraryFileHandler implements Handler {
+        private final cn.ilink.service.TeamLibraryService libraryService;
+
+        private LibraryFileHandler(cn.ilink.service.TeamLibraryService libraryService) {
+            this.libraryService = libraryService;
+        }
+
+        @Override
+        public Map<String, Object> execute(Context c) {
+            String fileName = text(c.after(), "fileName");
+            String fileUrl = text(c.after(), "fileUrl");
+            Object sizeValue = c.after().get("fileSize");
+            Long size = sizeValue instanceof Number number ? number.longValue() : null;
+            Object folderValue = c.after().get("folderId");
+            Long folderId = folderValue instanceof Number number ? number.longValue() : null;
+            try {
+                Map<String, Object> result = libraryService.registerFile(
+                    c.action().getTeamId(), c.actorUserId(), folderId, fileName, fileUrl, size, "KEEP_BOTH");
+                Object fileNode = result.get("file");
+                Object fileId = fileNode instanceof Map<?, ?> map ? map.get("id") : null;
+                Map<String, Object> output = new LinkedHashMap<>();
+                output.put("fileId", fileId);
+                output.put("fileName", fileName);
+                output.put("fileUrl", fileUrl);
+                output.put("conflict", result.get("conflict"));
+                return output;
+            } catch (IllegalArgumentException rejected) {
+                throw new TeamAgentException(TeamAgentErrorCode.ACTION_TRANSACTION_FAILED,
+                    rejected.getMessage() == null ? "文件登记失败" : rejected.getMessage());
+            }
+        }
+
+        @Override
+        public Map<String, Object> undo(Context c) {
+            Object fileId = c.result().get("fileId");
+            if (!(fileId instanceof Number number)) {
+                throw new TeamAgentException(TeamAgentErrorCode.UNDO_NOT_AVAILABLE, "文件记录不存在");
+            }
+            libraryService.softDelete(number.longValue(), c.actorUserId(), false);
+            return Map.of("deleted", true, "fileId", number.longValue());
+        }
+
+        @Override
+        public boolean undoSupported() { return true; }
+    }
+
+    /**
+     * 用新文件替换资料库里的同名文件。旧文件走 REPLACE 策略进回收站，
+     * 因此可人工恢复；这个动作本身不提供撤销。
+     */
+    private static final class UpdateLibraryFileHandler implements Handler {
+        private final cn.ilink.service.TeamLibraryService libraryService;
+        private final cn.ilink.mapper.TeamLibraryFileMapper libraryFileMapper;
+
+        private UpdateLibraryFileHandler(cn.ilink.service.TeamLibraryService libraryService,
+                                         cn.ilink.mapper.TeamLibraryFileMapper libraryFileMapper) {
+            this.libraryService = libraryService;
+            this.libraryFileMapper = libraryFileMapper;
+        }
+
+        @Override
+        public Map<String, Object> execute(Context c) {
+            Long fileId = c.action().getTargetId();
+            cn.ilink.entity.TeamLibraryFile target =
+                fileId == null ? null : libraryFileMapper.selectById(fileId);
+            if (target == null || !java.util.Objects.equals(target.getTeamId(), c.action().getTeamId())
+                || Boolean.TRUE.equals(target.getIsPurged()) || Boolean.TRUE.equals(target.getIsDeleted())) {
+                throw new TeamAgentException(TeamAgentErrorCode.ACTION_PERMISSION_CHANGED,
+                    "目标文件不存在或已被删除");
+            }
+            Integer expected = c.action().getExpectedTargetVersion();
+            Integer actual = target.getContentRevision() == null
+                ? null : target.getContentRevision().intValue();
+            if (expected != null && !java.util.Objects.equals(actual, expected)) {
+                throw new TeamAgentException(TeamAgentErrorCode.ACTION_VERSION_CONFLICT,
+                    "文件已被其他人更新，请重新生成提案");
+            }
+            String fileUrl = text(c.after(), "fileUrl");
+            Object sizeValue = c.after().get("fileSize");
+            Long size = sizeValue instanceof Number number ? number.longValue() : null;
+            try {
+                // 强制沿用原文件名，保证 registerFile 走 REPLACE 分支而不是并列新增。
+                Map<String, Object> result = libraryService.registerFile(
+                    c.action().getTeamId(), c.actorUserId(), target.getParentId(),
+                    target.getName(), fileUrl, size, "REPLACE");
+                Object fileNode = result.get("file");
+                Object newFileId = fileNode instanceof Map<?, ?> map ? map.get("id") : null;
+                Map<String, Object> output = new LinkedHashMap<>();
+                output.put("fileId", newFileId);
+                output.put("previousFileId", fileId);
+                output.put("fileName", target.getName());
+                output.put("fileUrl", fileUrl);
+                return output;
+            } catch (IllegalArgumentException rejected) {
+                throw new TeamAgentException(TeamAgentErrorCode.ACTION_TRANSACTION_FAILED,
+                    rejected.getMessage() == null ? "文件更新失败" : rejected.getMessage());
+            }
+        }
+
+        @Override
+        public boolean undoSupported() { return false; }
+    }
+
     private static final class CollaborationHandler implements Handler {
         private final TeamCollaborationAgentCommands commands;
         private CollaborationHandler(TeamCollaborationAgentCommands commands) {

@@ -46,7 +46,7 @@
 
 .lg-h1 {
   font-size: var(--font-size-4xl);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.01em;
   color: var(--ui-text);
@@ -357,21 +357,21 @@
 }
 
 .lg-tag--public {
-  background: var(--dr-green-50, #f0fdf4);
-  color: #15803d;
-  border-color: var(--dr-green-200, #bbf7d0);
+  background: var(--dr-green-50, #e7f4ec);
+  color: #186a35;
+  border-color: var(--dr-green-200, #cbe8d6);
 }
 
 .lg-tag--private {
-  background: var(--color-gray-100, #f1f1f2);
+  background: var(--color-gray-100, #f5f5f7);
   color: var(--ui-text-secondary);
-  border-color: var(--color-gray-200, #e5e5e7);
+  border-color: var(--color-gray-200, #e8e8ed);
 }
 
 .lg-tag--stop {
-  background: var(--ui-danger-soft, #fef2f2);
-  color: #b91c1c;
-  border-color: #fecaca;
+  background: var(--ui-danger-soft, #fdecec);
+  color: #b00012;
+  border-color: #f7cfcd;
 }
 
 /* ------------------------------------------------------------
@@ -420,12 +420,12 @@
 
 .lg-btn--p {
   background: var(--ui-text);
-  color: var(--color-white, #fcfcfd);
+  color: var(--color-white, #fbfbfd);
 }
 
 .lg-btn--p:hover {
   background: var(--primary-dark);
-  color: var(--color-white, #fcfcfd);
+  color: var(--color-white, #fbfbfd);
 }
 
 .lg-btn--s {
@@ -481,7 +481,7 @@
 .lg-top.is-visible {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: none;
 }
 
 .lg-top:hover {
@@ -624,7 +624,7 @@
   }
 
   .lg-head {
-    border-bottom-color: #000;
+    border-bottom-color: #000000;
   }
 
   .lg-h1,
@@ -633,7 +633,7 @@
   .lg-list li,
   .lg-def__k,
   .lg-def__v {
-    color: #000;
+    color: #000000;
   }
 
   .lg-sec {

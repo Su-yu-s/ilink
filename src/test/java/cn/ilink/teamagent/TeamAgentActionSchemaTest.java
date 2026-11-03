@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TeamAgentActionSchemaTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -49,6 +51,82 @@ class TeamAgentActionSchemaTest {
             () -> schema.normalizeProposal(root));
 
         assertEquals(TeamAgentErrorCode.MODEL_OUTPUT_INVALID, error.getErrorCode());
+    }
+
+    @Test
+    void dropsUnknownKeysInsideEvidence() throws Exception {
+        JsonNode root = json("""
+            [{
+              "actionType": "CREATE_TASK",
+              "after": {
+                "taskTitle": "整理作品说明",
+                "assignedTo": 8,
+                "requiresReview": true
+              },
+              "reason": "当前里程碑缺少说明文档",
+              "evidence": [{
+                "kind": "TASK",
+                "id": 12,
+                "type": "task",
+                "confidence": 0.9
+              }]
+            }]
+            """);
+
+        var drafts = schema.normalizeProposal(root);
+
+        assertEquals(1, drafts.get(0).evidence().size());
+        assertEquals("TASK", drafts.get(0).evidence().get(0).get("kind"));
+        assertEquals(12L, drafts.get(0).evidence().get(0).get("id"));
+        assertFalse(drafts.get(0).evidence().get(0).containsKey("type"));
+        assertFalse(drafts.get(0).evidence().get(0).containsKey("confidence"));
+    }
+
+    @Test
+    void stillRejectsEvidenceWithoutKind() throws Exception {
+        JsonNode root = json("""
+            [{
+              "actionType": "CREATE_TASK",
+              "after": {
+                "taskTitle": "整理作品说明",
+                "assignedTo": 8,
+                "requiresReview": true
+              },
+              "reason": "当前里程碑缺少说明文档",
+              "evidence": [{ "id": 12, "label": "缺少来源" }]
+            }]
+            """);
+
+        TeamAgentException error = assertThrows(TeamAgentException.class,
+            () -> schema.normalizeProposal(root));
+
+        assertEquals(TeamAgentErrorCode.MODEL_OUTPUT_INVALID, error.getErrorCode());
+    }
+
+    @Test
+    void keepsEvidenceShapeLimitedToContractFields() throws Exception {
+        JsonNode root = json("""
+            [{
+              "actionType": "CREATE_TASK",
+              "after": {
+                "taskTitle": "整理作品说明",
+                "assignedTo": 8,
+                "requiresReview": true
+              },
+              "reason": "当前里程碑缺少说明文档",
+              "evidence": [{
+                "kind": "TEAM_METRIC",
+                "id": 1,
+                "label": "任务快照",
+                "generatedAt": "2026-10-25T06:00:00Z"
+              }]
+            }]
+            """);
+
+        var evidence = schema.normalizeProposal(root).get(0).evidence().get(0);
+
+        assertTrue(evidence.keySet().equals(
+            java.util.Set.of("kind", "id", "label", "generatedAt")));
     }
 
     @Test

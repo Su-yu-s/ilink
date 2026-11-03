@@ -330,7 +330,7 @@ function renderPreview() {
     if (!mdEditor || !preview) return;
     const raw = mdEditor.value || '';
     if (!raw.trim()) {
-        preview.innerHTML = '<p style="color:#d1d5db;font-style:italic;text-align:center;margin-top:80px;">开始输入，这里会实时预览你的文章...</p>';
+        preview.innerHTML = '<p style="color:#6e6e73;font-style:italic;text-align:center;margin-top:80px;">开始输入，这里会实时预览你的文章...</p>';
         return;
     }
     if (typeof marked !== 'undefined') {

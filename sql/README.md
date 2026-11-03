@@ -6,7 +6,7 @@
 
 `src/main/resources/db/migration/` 是当前数据库结构的唯一事实来源。新环境应创建空的 `ilink` 数据库后启动应用，由 Flyway 按 `flyway_schema_history` 自动执行迁移。
 
-当前仓库包含 23 个版本化 SQL 迁移，版本范围为 `V0_5` 至 `V23`；`V3` 是 Java 迁移，因此完整迁移链共 24 个迁移：
+当前仓库包含 51 个版本化 SQL 迁移，版本范围为 `V0_5` 至 `V51`；`V3` 是 Java 迁移，因此完整迁移链共 52 个迁移。下表只列出 `V0_5`–`V23` 的历史脚本；`V24`–`V51`（AI 用量、反馈、团队邀请、知识图谱、Team Agent、协作资产等）的权威清单以 `src/main/resources/db/migration/` 为准。
 
 | 迁移 | 作用 |
 | --- | --- |

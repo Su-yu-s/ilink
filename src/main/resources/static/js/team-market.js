@@ -154,19 +154,33 @@ function renderPagination(pagination) {
     ul.appendChild(makeItem('下一页', nextPage <= totalPages ? nextPage : null, false, nextPage > totalPages));
 }
 
+// 还差几个人：席位视图、排序、按钮状态都用这一份口径
+function openSlotCount(team) {
+    var total = parseInt(team.requiredMemberCount, 10) || 0;
+    var joined = Array.isArray(team.members)
+        ? team.members.filter(function (m) { return m && m.userId != null; }).length
+        : 0;
+    return Math.max(0, total - joined);
+}
+
+function isRecruitingTeam(team) {
+    var s = String(team.status || '').toUpperCase();
+    return s === 'OPEN' || ['招募中', '招募'].includes(team.status);
+}
+
 // 渲染团队列表
 function renderTeamList(teams) {
     const teamListContainer = document.getElementById('teamList');
     teamListContainer.innerHTML = '';
 
     if (teams && teams.length > 0) {
-        teams.sort((a, b) => {
-            const sA = String(a.status || '').toUpperCase();
-            const sB = String(b.status || '').toUpperCase();
-            const isRecruitingA = sA === 'OPEN' || ['招募中', '招募'].includes(a.status);
-            const isRecruitingB = sB === 'OPEN' || ['招募中', '招募'].includes(b.status);
-            return (isRecruitingA ? 0 : 1) - (isRecruitingB ? 0 : 1);
-        });
+        // 大厅是「找队伍」的地方：能申请的排最前，人满的排后面。
+        // 只按状态排不够——很多 OPEN 的队伍其实已经满员，点进去才发现申请不了。
+        const rank = (t) => {
+            if (!isRecruitingTeam(t)) return 2;
+            return openSlotCount(t) > 0 ? 0 : 1;
+        };
+        teams.sort((a, b) => (rank(a) - rank(b)) || (openSlotCount(b) - openSlotCount(a)));
     }
 
     if (!teams || teams.length === 0) {
@@ -185,10 +199,6 @@ function renderTeamList(teams) {
 
     teams.forEach(team => {
         const detailUrl = '/team-detail.html?id=' + encodeURIComponent(String(team.id));
-        const cardShell = document.createElement('a');
-        cardShell.className = 'il-team-card-shell';
-        cardShell.href = detailUrl;
-        cardShell.setAttribute('aria-label', t('ui.market.viewTeam', { title: team.title || t('ui.market.unnamed') }));
 
         const rawStatus = team.status || '';
         const normalizedStatus = rawStatus.toUpperCase();
@@ -197,101 +207,113 @@ function renderTeamList(teams) {
             : (normalizedStatus === 'TEAMING' || ['已组队', '组队中'].includes(rawStatus) ? '已组队'
             : (normalizedStatus === 'CLOSED' || ['已结束', '已完成'].includes(rawStatus) ? '已完成' : '未知')));
         const isRecruiting = normalizedStatus === 'OPEN' || ['招募中', '招募'].includes(rawStatus);
-        const isTeaming = normalizedStatus === 'TEAMING' || ['已组队', '组队中'].includes(rawStatus);
 
         // 发布者信息
         let authorName = '发布者';
-        let authorAvatar = '发';
-        let authorAvatarUrl = null;
         if (team.creatorPreview && team.creatorPreview.id != null) {
             const pv = team.creatorPreview;
             const name = (pv.displayName && String(pv.displayName).trim()) || (pv.realName && String(pv.realName).trim()) || '';
             authorName = name || '发布者';
-            authorAvatar = authorName.charAt(0).toUpperCase();
-            authorAvatarUrl = pv.avatar || null;
         } else if (team.creatorId != null) {
             authorName = t('ui.market.userId', { id: team.creatorId });
         }
 
-        function buildAvatarHtml(avatarUrl, fallbackChar) {
-            if (avatarUrl) {
-                return '<div class="author-avatar il-author-avatar">' +
-                    '<img src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(authorName) + '"' +
-                    ' onerror="this.style.display=\'none\'; var fallback=this.parentElement.querySelector(\'.il-author-avatar-fallback\'); if(fallback){fallback.classList.remove(\'avatar-fallback--hidden\'); fallback.removeAttribute(\'aria-hidden\'); fallback.style.display=\'flex\';}">' +
-                    '<span class="il-author-avatar-fallback avatar-fallback--hidden" aria-hidden="true">' + escapeHtml(fallbackChar) + '</span>' +
-                    '</div>';
-            }
-            return '<div class="author-avatar il-author-avatar"><span class="il-author-avatar-fallback">' + escapeHtml(fallbackChar) + '</span></div>';
-        }
-
-        // 技能标签
-        let skillsHtml = '';
-        if (team.requiredSkills) {
-            const skills = String(team.requiredSkills).split(/[,，;；\s]+/).filter(s => s.trim());
-            if (skills.length > 0) {
-                skillsHtml = '<div class="skill-tags il-team-skills">' +
-                    skills.slice(0, 5).map(function(skill) {
-                        return '<span class="skill-tag il-skill-tag">' + escapeHtml(skill.trim()) + '</span>';
-                    }).join('') + '</div>';
-            }
-        }
-
         // 分类：team_demand.category 列（competitionId 不再承载分类语义）
         const category = team.category || '其他';
-        const catClassMap = {
-            '技术开发': 'il-team-category--dev',
-            '创意设计': 'il-team-category--design',
-            '市场营销': 'il-team-category--market',
-            '学术研究': 'il-team-category--research'
-        };
-        const catClass = catClassMap[category] || '';
-
-        const memberCount = team.requiredMemberCount
-            ? team.requiredMemberCount + ' ' + t('ui.common.peopleSuffix')
-            : t('ui.common.toBeDetermined');
         const deadline = team.deadline ? formatDateStr(team.deadline) : '长期有效';
-        const postedDate = team.createdAt ? formatTime(team.createdAt) : '';
-        const desc = team.description ? (team.description.length > 120 ? team.description.substring(0, 120) + '...' : team.description) : '暂无描述';
         const competitionLabel = team.competitionName || team.customCompetition || '';
 
-        const statusClass = isRecruiting ? 'il-status-recruiting' : (isTeaming ? 'il-status-teamed' : 'il-status-closed');
-        const statusAlias = isRecruiting ? 'status-recruiting' : (isTeaming ? 'status-teaming' : 'status-closed');
+        // 席位：已加入成员 + 空缺。每个席位 = 头像 + 职责，空缺用虚线圆 + 需求技能。
+        var memberList = Array.isArray(team.members)
+            ? team.members.filter(function (m) { return m && m.userId != null; })
+            : [];
+        var totalNeed = parseInt(team.requiredMemberCount, 10);
+        if (!totalNeed || totalNeed < memberList.length) totalNeed = memberList.length || 1;
+        var missing = Math.max(0, totalNeed - memberList.length);
+        // 只按分隔符切，不切空格：「Spring Boot」是一个技能，不是两个
+        var skillList = String(team.requiredSkills || '').split(/[,，;；、/|]+/).map(function (s) { return s.trim(); }).filter(Boolean);
 
-        cardShell.innerHTML = '<article class="team-card il-team-card">' +
-            '<div class="card-header il-team-card-header">' +
-                '<h3 class="card-title il-team-title">' + escapeHtml(team.title || '未命名需求') + '</h3>' +
-                '<span class="category-tag il-team-category ' + catClass + '">' + escapeHtml(category) + '</span>' +
-            '</div>' +
-            (competitionLabel ? '<div class="il-team-competition">' +
-                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v3a5 5 0 01-10 0V4zM7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-                '<span>' + escapeHtml(competitionLabel) + '</span></div>' : '') +
-            '<div class="card-meta il-team-meta">' +
-                '<span class="meta-item il-team-meta-item">' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>' +
-                    '<span>' + memberCount + '</span>' +
-                '</span>' +
-                '<span class="meta-dot"></span>' +
-                '<span class="meta-item il-team-meta-item">' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-                    '<span>' + deadline + '</span>' +
-                '</span>' +
-                (postedDate ? '<span class="meta-dot"></span><span class="meta-item il-team-meta-item">' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-                    '<span>' + postedDate + '</span>' +
-                '</span>' : '') +
-            '</div>' +
-            (skillsHtml ? skillsHtml : '') +
-            '<p class="card-desc il-team-desc">' + escapeHtml(desc) + '</p>' +
-            '<div class="card-divider"></div>' +
-            '<div class="card-footer il-team-footer">' +
-                '<div class="author-info il-team-author">' +
-                    buildAvatarHtml(authorAvatarUrl, authorAvatar) +
-                    '<span class="il-author-name">' + escapeHtml(authorName) + '</span>' +
-                '</div>' +
-                '<span class="status-badge il-team-status ' + statusClass + ' ' + statusAlias + '">' + escapeHtml(statusLabel) + '</span>' +
-            '</div>' +
-        '</article>';
+        // 席位列宽固定，最多放 4 个。超出时优先保住「空缺位」（那是这条招募真正的信息），
+        // 压缩已加入成员为「+N」，避免把中列标题挤到自己身上。
+        var MAX_CELLS = 4;
+        var memberCells = [];
+        var emptyCells = [];
+        memberList.forEach(function (m, idx) {
+            var nm = String(m.displayName || m.username || '成员').trim();
+            var ini = String(m.avatarInitial || nm.charAt(0) || '?');
+            var isLead = m.isOwner === true || idx === 0;
+            // memberRole 是 MENTOR/STUDENT 这类内部枚举，不能直接当标签显示；
+            // duty 是队长可编辑的职责（尚未落库时回落到身份名）。
+            var duty = isLead ? '队长' : String(m.duty || '').trim() || '队员';
+            var face = m.avatar
+                ? '<img src="' + escapeHtml(m.avatar) + '" alt="' + escapeHtml(nm) + '" loading="lazy">'
+                : escapeHtml(ini);
+            memberCells.push('<span class="tm-seat"' + (isLead ? ' data-lead="1"' : '') + '>' +
+                '<span class="tm-seat__face">' + face + '</span>' +
+                '<span class="tm-seat__duty" title="' + escapeHtml(nm + ' · ' + duty) + '">' + escapeHtml(duty) + '</span>' +
+                '</span>');
+        });
+        for (var i = 0; i < missing; i++) {
+            var needRole = skillList[i] || '待定';
+            emptyCells.push('<span class="tm-seat tm-seat--empty">' +
+                '<span class="tm-seat__face">+</span>' +
+                '<span class="tm-seat__duty" title="' + escapeHtml(needRole) + '">' + escapeHtml(needRole) + '</span>' +
+                '</span>');
+        }
 
-        teamListContainer.appendChild(cardShell);
+        var seatsHtml;
+        if (memberCells.length + emptyCells.length <= MAX_CELLS) {
+            seatsHtml = memberCells.concat(emptyCells).join('');
+        } else {
+            // 先留空缺位，再从队长开始留成员，余下的并成一个 +N
+            var keepEmpty = emptyCells.slice(0, Math.min(emptyCells.length, MAX_CELLS - 2));
+            var keepMember = memberCells.slice(0, Math.max(1, MAX_CELLS - keepEmpty.length - 1));
+            var hiddenCount = memberCells.length - keepMember.length;
+            if (hiddenCount <= 0) {
+                hiddenCount = emptyCells.length - keepEmpty.length;
+            }
+            seatsHtml = keepMember.concat(keepEmpty).join('') +
+                '<span class="tm-seat tm-seat--more">' +
+                '<span class="tm-seat__face">+' + hiddenCount + '</span>' +
+                '<span class="tm-seat__duty">另有 ' + hiddenCount + ' 人</span>' +
+                '</span>';
+        }
+
+        // 句子读的是「这支队伍还想要什么样的人」，列出全部需求技能，不按席位数切片
+        var needText = missing > 0
+            ? '<b>' + memberList.length + ' / ' + totalNeed + '</b> 人 · 还需要 ' +
+                (skillList.length
+                    ? '<b>' + escapeHtml(skillList.slice(0, 4).join('、')) + '</b>'
+                    : missing + ' 人')
+            : '<b>' + memberList.length + ' / ' + totalNeed + '</b> 人 · 已满员';
+
+        // 只有「招募中且没满」才给申请入口；其余状态把状态名放在同一位置，避免按钮失效还像可点。
+        var canApply = isRecruiting && missing > 0;
+        var flatLabel = !isRecruiting ? statusLabel : '已满员';
+        var actionHtml = canApply
+            ? '<a class="tm-btn" href="' + detailUrl + '">申请</a>'
+            : '<span class="tm-btn tm-btn--flat">' + escapeHtml(flatLabel) + '</span>';
+
+        // 右栏只放两行：赛事名 + 「方向 · 发布人 · 截止」，再多会把行高撑得参差
+        var metaRest = [competitionLabel ? category : '', authorName + ' 发布', deadline ? deadline + ' 截止' : '']
+            .filter(Boolean).join(' · ');
+
+        var row = document.createElement('article');
+        row.className = 'tm-row' + (canApply ? '' : ' tm-row--closed');
+        row.innerHTML =
+            '<div class="tm-seats">' + seatsHtml + '</div>' +
+            '<div class="tm-body">' +
+                '<h3 class="tm-title">' +
+                    '<a class="tm-title__link" href="' + detailUrl + '">' + escapeHtml(team.title || '未命名需求') + '</a>' +
+                '</h3>' +
+                '<p class="tm-need">' + needText + '</p>' +
+            '</div>' +
+            '<div class="tm-meta">' +
+                '<span class="tm-meta__name">' + escapeHtml(competitionLabel || category) + '</span>' +
+                '<span class="tm-meta__rest">' + escapeHtml(metaRest) + '</span>' +
+            '</div>' +
+            '<div class="tm-act">' + actionHtml + '</div>';
+
+        teamListContainer.appendChild(row);
     });
 }

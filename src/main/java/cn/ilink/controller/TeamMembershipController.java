@@ -79,6 +79,26 @@ public class TeamMembershipController {
         return respond(id, session, false);
     }
 
+    /** 设置成员职责（队长或导师可操作）；传空串即清除。 */
+    @PutMapping("/{teamId}/members/{userId}/duty")
+    @ResponseBody
+    public ResponseEntity<Result<?>> setMemberDuty(@PathVariable Long teamId,
+                                                   @PathVariable Long userId,
+                                                   @RequestBody(required = false) Map<String, Object> payload,
+                                                   HttpSession session) {
+        User user = ControllerUtils.requireUser(session);
+        if (user == null) {
+            return Result.unauthorized().toResponseEntity();
+        }
+        Object raw = payload == null ? null : payload.get("duty");
+        try {
+            teamInviteService.setDuty(teamId, user.getId(), userId, raw == null ? null : String.valueOf(raw));
+            return Result.ok("已更新职责", null).toResponseEntity();
+        } catch (TeamMembershipException e) {
+            return failure(e);
+        }
+    }
+
     /** 移除成员；对自己调用即为退出团队。 */
     @DeleteMapping("/{teamId}/members/{userId}")
     @ResponseBody

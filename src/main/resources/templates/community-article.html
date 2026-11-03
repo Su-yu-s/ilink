@@ -42,11 +42,13 @@
                     <div class="community-article-card__header-top">
                         <h1 class="community-article__title" id="articleTitle">加载中…</h1>
                         <div class="community-article__header-actions" id="articleHeaderActions">
-                            <button type="button" id="articleLikeBtn" class="il-feed-action community-article__action-btn" data-action="like" aria-label="点赞">
+                            <button type="button" id="articleLikeBtn" class="il-feed-action community-article__action-btn" data-action="like">
+                                <span class="sr-only">点赞</span>
                                 <svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;"><path d="M9 10V6.8c0-1.7 1.2-3.3 2.9-3.7l.7-.2c.7-.2 1.4.3 1.4 1v4.1H18c1.1 0 2 .9 2 2 0 .2 0 .4-.1.6l-1.5 6.2c-.2.9-1 1.6-2 1.6H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="10" width="4" height="9" rx="1" ry="1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
                                 <span id="articleLikeCount" class="il-feed-action__num community-article__action-num">0</span>
                             </button>
-                            <button type="button" id="articleFavBtn" class="il-feed-action community-article__action-btn" data-action="favorite" aria-label="收藏">
+                            <button type="button" id="articleFavBtn" class="il-feed-action community-article__action-btn" data-action="favorite">
+                                <span class="sr-only">收藏</span>
                                 <svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;"><path d="M12 3.8l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.2 6.7 19.9l1-5.8L3.5 10l5.9-.9L12 3.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
                                 <span id="articleFavCount" class="il-feed-action__num community-article__action-num">0</span>
                             </button>
@@ -81,9 +83,8 @@
                 <div class="community-article-comments__body">
                     <!-- 评论编辑器：默认收起为「假输入框」，点击展开为编辑态 -->
                     <div class="il-comment-composer" id="commentComposer">
-                        <div class="il-comment-composer__avatar" id="commentComposerAvatar" aria-hidden="true"></div>
-                        <button type="button" class="il-comment-composer__trigger" id="commentComposerTrigger"
-                                aria-label="写评论">
+                        <div class="il-comment-composer__avatar" id="commentComposerAvatar"></div>
+                        <button type="button" class="il-comment-composer__trigger" id="commentComposerTrigger">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
                                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M12 20h9"></path>

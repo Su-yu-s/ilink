@@ -17,6 +17,22 @@ class TeamAgentIntentRouterTest {
         null, Date.from(Instant.parse("2026-12-31T00:00:00Z")), Instant.now());
 
     @Test
+    void shippedQuickPromptsRouteToTheirOwnIntents() {
+        assertEquals(TeamAgentIntentRouter.Route.TEAM_METRICS,
+            router.route("汇总当前团队的任务数量、完成率和逾期情况", "AUTO", studentScope));
+        assertEquals(TeamAgentIntentRouter.Route.TEAM_RISK,
+            router.route("巡检当前团队逾期、未指派和长期待审核的任务风险", "AUTO", studentScope));
+    }
+
+    @Test
+    void unassignedWordingIsRiskNotAssignAction() {
+        assertEquals(TeamAgentIntentRouter.Route.TEAM_RISK,
+            router.route("队里有未指派的任务吗", "AUTO", studentScope));
+        assertEquals(TeamAgentIntentRouter.Route.ACTION_PLAN,
+            router.route("把任务指派给张三", "AUTO", studentScope));
+    }
+
+    @Test
     void actionIntentOutranksRiskAndMetricsKeywords() {
         assertEquals(TeamAgentIntentRouter.Route.ACTION_PLAN,
             router.route("请安排任务并检查风险和完成率", "AUTO", studentScope));

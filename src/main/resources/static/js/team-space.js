@@ -11,6 +11,7 @@
     var tasks = [];
     var members = [];
     var currentPanelId = 'kanban-panel';
+    var activeAssetsTab = 'files';
     var stompClient = null;
     var isConnected = false;
     var pollingTimer = null;
@@ -427,6 +428,23 @@
             var roleChip = '<span class="member-role-chip' +
                 (isOwnerRow || member.memberRole === 'MENTOR' ? ' member-role-chip--mentor' : '') +
                 (pending ? ' member-role-chip--pending' : '') + '">' + escapeHtml(roleLabel) + '</span>';
+
+            // 职责：队长给自己之外的在队成员填，组队大厅的席位下方显示的就是这个值
+            var dutyValue = member.duty ? String(member.duty) : '';
+            var dutyChip = '';
+            if (!isOwnerRow && !pending) {
+                if (canManageMembers()) {
+                    dutyChip = '<button type="button" class="member-duty-chip' +
+                        (dutyValue ? '' : ' member-duty-chip--empty') + '"' +
+                        ' data-duty-user="' + escapeHtml(userId) + '"' +
+                        ' data-duty-value="' + escapeHtml(dutyValue) + '"' +
+                        ' title="' + (dutyValue ? '点击修改职责' : '点击设置职责') + '">' +
+                        (dutyValue ? escapeHtml(dutyValue) : '＋ 职责') + '</button>';
+                } else if (dutyValue) {
+                    dutyChip = '<span class="member-duty-chip member-duty-chip--readonly">' +
+                        escapeHtml(dutyValue) + '</span>';
+                }
+            }
             var skills = Array.isArray(member.skills) ? member.skills.slice(0, 4) : [];
             var skillHtml = skills.length ? '<div class="member-card-skills">' + skills.map(function (skill) {
                 return '<span class="skill-tag">' + escapeHtml(skill) + '</span>';
@@ -447,7 +465,7 @@
             return '<div class="member-card' + (pending ? ' member-card--pending' : '') + '" data-user-id="' + escapeHtml(userId) + '">' +
                 '<span class="member-card-avatar">' + avatarHtml + '</span>' +
                 '<span class="member-card-info">' +
-                    '<span class="member-card-name">' + escapeHtml(name) + roleChip + '</span>' +
+                    '<span class="member-card-name">' + escapeHtml(name) + roleChip + dutyChip + '</span>' +
                     (meta ? '<span class="member-card-meta">' + meta + '</span>' : '') +
                     joinTime +
                     skillHtml +
@@ -459,6 +477,9 @@
             '</div>';
         }).join('');
 
+        area.querySelectorAll('[data-duty-user]').forEach(function (chip) {
+            chip.addEventListener('click', function () { startDutyEdit(chip); });
+        });
         area.querySelectorAll('[data-remove-member]').forEach(function (button) {
             button.addEventListener('click', function () {
                 var userId = button.getAttribute('data-remove-member');
@@ -472,6 +493,63 @@
                 window.teamSpace.confirmLeaveTeam();
             });
         }
+    }
+
+    /**
+     * 职责就地编辑：把 chip 换成输入框，回车或失焦保存，Esc 取消。
+     * 不弹窗是故意的——一次只改一个词，弹窗比输入框重，还会打断「一列人逐个填」的节奏。
+     */
+    function startDutyEdit(chip) {
+        if (chip.dataset.editing === '1') return;
+        var userId = chip.getAttribute('data-duty-user');
+        var current = chip.getAttribute('data-duty-value') || '';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'member-duty-input';
+        input.maxLength = 8;
+        input.value = current;
+        input.placeholder = '如 策划';
+        chip.dataset.editing = '1';
+        chip.replaceWith(input);
+        input.focus();
+        input.select();
+
+        var finished = false;
+        function finish(save) {
+            if (finished) return;
+            finished = true;
+            var next = save ? input.value.trim() : current;
+            if (!save || next === current) {
+                renderMembersList();
+                return;
+            }
+            api('/team/' + teamId + '/members/' + encodeURIComponent(userId) + '/duty', {
+                method: 'PUT',
+                body: JSON.stringify({ duty: next })
+            }).then(function () {
+                for (var i = 0; i < members.length; i++) {
+                    if (Number(members[i].userId) === Number(userId)) {
+                        members[i].duty = next || null;
+                    }
+                }
+                notify(next ? '职责已更新' : '职责已清除', 'success');
+                renderMembersList();
+            }).catch(function (error) {
+                notify(error.message || '职责保存失败', 'error');
+                renderMembersList();
+            });
+        }
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                finish(true);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                finish(false);
+            }
+        });
+        // 失焦即保存：队长往往是填完一个直接点下一个，不该逼他先点确认
+        input.addEventListener('blur', function () { finish(true); });
     }
 
     /**
@@ -737,7 +815,7 @@
             '</span>';
         }
 
-        return '<article class="task-card" data-task-id="' + escapeHtml(task.id) + '" role="button" tabindex="0" aria-label="查看任务：' + escapeHtml(task.taskTitle) + '">' +
+        return '<article class="task-card" data-task-id="' + escapeHtml(task.id) + '" role="button" tabindex="0">' +
             '<header class="task-card-header">' +
                 '<h2 class="task-card-title">' + escapeHtml(task.taskTitle) + '</h2>' +
                 '<span class="' + statusBadgeClass(task.status) + '">' + statusLabel(task.status) + '</span>' +
@@ -1022,6 +1100,47 @@
         applyMobileKanbanStatus(activeMobileStatus);
     }
 
+    /**
+     * 资料与资产：文件 / 文档 / 表格 / 材料。
+     * 「文件」是原有团队资料库；其余三个复用 team-collab 的页签渲染。
+     */
+    function activateAssetsTab(tab) {
+        activeAssetsTab = tab || 'files';
+        document.querySelectorAll('[data-assets-tab]').forEach(function (button) {
+            var active = button.dataset.assetsTab === activeAssetsTab;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+
+        var filesView = byId('assets-files');
+        var collabView = byId('assets-collab');
+        var isFiles = activeAssetsTab === 'files';
+        if (filesView) filesView.hidden = !isFiles;
+        if (collabView) collabView.hidden = isFiles;
+
+        if (isFiles) {
+            libraryIndexPollAttempts = 0;
+            loadLibraryTree(libraryTrashView);
+            return;
+        }
+
+        stopLibraryIndexPolling();
+        if (!isConnected && !stompClient) connectWebSocket();
+        if (window.teamCollab && typeof window.teamCollab.selectTab === 'function') {
+            window.teamCollab.selectTab(activeAssetsTab);
+        } else if (window.teamCollab && typeof window.teamCollab.reload === 'function') {
+            window.teamCollab.reload();
+        }
+    }
+
+    function setupAssetsTabs() {
+        document.querySelectorAll('[data-assets-tab]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                activateAssetsTab(button.dataset.assetsTab);
+            });
+        });
+    }
+
     function setupSidebarNav() {
         document.querySelectorAll('.sidebar-nav-item').forEach(function (item) {
             item.addEventListener('click', function () {
@@ -1047,18 +1166,12 @@
         } else if (currentPanelId === 'members-panel') {
             stopLibraryIndexPolling();
             loadMembers();
-        } else if (currentPanelId === 'library-panel') {
-            libraryIndexPollAttempts = 0;
-            loadLibraryTree(libraryTrashView);
         } else if (currentPanelId === 'ai-panel') {
             stopLibraryIndexPolling();
             loadAiPanel();
-        } else if (currentPanelId === 'collab-panel') {
+        } else if (currentPanelId === 'assets-panel') {
             stopLibraryIndexPolling();
-            if (!isConnected && !stompClient) connectWebSocket();
-            if (window.teamCollab && typeof window.teamCollab.reload === 'function') {
-                window.teamCollab.reload();
-            }
+            activateAssetsTab(activeAssetsTab);
         } else {
             stopLibraryIndexPolling();
             loadTasks();
@@ -1525,6 +1638,15 @@
             if (currentPanelId === 'chat-panel') ok = await loadChatHistory();
             else if (currentPanelId === 'members-panel') ok = await loadMembers();
             else if (currentPanelId === 'ai-panel') ok = await loadAiPanel();
+            else if (currentPanelId === 'assets-panel') {
+                if (activeAssetsTab === 'files') {
+                    libraryIndexPollAttempts = 0;
+                    ok = !!(await loadLibraryTree(libraryTrashView));
+                } else if (window.teamCollab && typeof window.teamCollab.reload === 'function') {
+                    window.teamCollab.reload();
+                    ok = true;
+                }
+            }
             else ok = await loadTasks();
             await loadOverview();
             notify(ok ? '已刷新' : '刷新失败', ok ? 'success' : 'error');
@@ -1993,13 +2115,13 @@
             window.clearTimeout(libraryIndexPollTimer);
             libraryIndexPollTimer = null;
         }
-        if (currentPanelId !== 'library-panel' || libraryTrashView) {
+        if (currentPanelId !== 'assets-panel' || activeAssetsTab !== 'files' || libraryTrashView) {
             libraryIndexPollAttempts = 0;
         }
     }
 
     function scheduleLibraryIndexPolling() {
-        if (libraryTrashView || currentPanelId !== 'library-panel') {
+        if (libraryTrashView || currentPanelId !== 'assets-panel' || activeAssetsTab !== 'files') {
             return;
         }
         if (!hasPendingLibraryIndex(libraryTreeData)) {
@@ -2694,6 +2816,7 @@
             return;
         }
         setupSidebarNav();
+        setupAssetsTabs();
         setupProjectMenu();
         setupMobileKanbanTabs();
         setupMobileTaskActions();

@@ -41,7 +41,8 @@ class TeamAgentRunExecutorStartupTest {
             mock(TeamAgentEventService.class),
             completionService,
             admission,
-            new TeamAgentProperties());
+            new TeamAgentProperties(),
+            new PendingAgentDrafts());
     }
 
     @Test

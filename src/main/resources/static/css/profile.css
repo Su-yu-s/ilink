@@ -19,7 +19,7 @@
 
 @keyframes pf-panel-enter {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 body[data-profile-page] {
@@ -30,9 +30,13 @@ body[data-profile-page] .il-page-wrapper {
   background: transparent !important;
 }
 
+/* 初始透明度必须写在关键帧里、用 fill-mode: both 承担，
+ * 不能直接声明在 body 上：page-transitions.css 在
+ * prefers-reduced-motion 下会把 body 动画置为 none，
+ * 若 body 自带 opacity:0 就再也没有规则把它还原，
+ * 个人中心全部页面会整页空白。 */
 body[data-profile-page] {
-  opacity: 0;
-  animation: pf-page-enter 0.35s ease 0.05s forwards;
+  animation: pf-page-enter 0.35s ease 0.05s both;
 }
 
 .ilink-app body[data-profile-page] .il-fade-in {
@@ -165,8 +169,8 @@ body[data-profile-page] {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 0 20px;
+  border-radius: 12px;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
@@ -195,7 +199,7 @@ body[data-profile-page] {
 .ilink-app body[data-profile-page] .il-btn-dark:hover {
   background: var(--pf-accent-dark);
   border-color: var(--pf-accent-dark);
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .ilink-app body[data-profile-page] .il-btn-ghost {
@@ -232,13 +236,13 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page] .il-btn-sm {
-  padding: 8px 16px;
+  padding: 0 16px;
   border-radius: 8px;
   font-size: var(--font-size-xs);
 }
 
 .ilink-app body[data-profile-page] .il-btn-xs {
-  padding: 6px 14px;
+  padding: 0 14px;
   border-radius: 8px;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
@@ -366,7 +370,7 @@ body[data-profile-page] {
 .ilink-app body[data-profile-page] .il-form-select:focus,
 .ilink-app body[data-profile-page] textarea.il-form-input:focus {
   border-color: var(--pf-accent) !important;
-  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1) !important;
 }
 
 .ilink-app body[data-profile-page] .il-form-input.is-invalid,
@@ -623,7 +627,7 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page] .il-list-item:hover {
-  border-color: rgba(196, 167, 125, 0.3);
+  border-color: rgba(0, 113, 227, 0.3);
   box-shadow: var(--pf-shadow);
 }
 
@@ -727,7 +731,7 @@ body[data-profile-page] {
   margin-bottom: 12px;
   background: var(--pf-border-light);
   border: 1px solid var(--pf-border);
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: var(--font-size-sm);
 }
 
@@ -772,7 +776,7 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page="honors"] .honor-list-card:hover {
-  border-color: rgba(196, 167, 125, 0.3);
+  border-color: rgba(0, 113, 227, 0.3);
   box-shadow: var(--pf-shadow);
 }
 
@@ -994,8 +998,8 @@ body[data-profile-page] {
 .ilink-app body[data-profile-page="honors"] #honorModal .il-input:focus,
 .ilink-app body[data-profile-page="honors"] #honorModal .il-select:focus,
 .ilink-app body[data-profile-page="honors"] #honorModal textarea.il-input:focus {
-  border-color: var(--pf-accent);
-  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
+  border-color: var(--field-focus-border, #1d1d1f);
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12));
 }
 
 .ilink-app body[data-profile-page="honors"] #honorModal .il-field {
@@ -1037,7 +1041,7 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page] .profile-post-card:hover {
-  border-color: rgba(196, 167, 125, 0.3);
+  border-color: rgba(0, 113, 227, 0.3);
   box-shadow: var(--pf-shadow);
 }
 
@@ -1188,7 +1192,7 @@ body[data-profile-page] {
 
 @keyframes ppMenuIn {
   from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 .ilink-app body[data-profile-page] .profile-post-menu__item {
@@ -1197,7 +1201,7 @@ body[data-profile-page] {
   gap: 8px;
   padding: 8px 10px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   font-size: var(--font-size-sm);
   font-family: var(--font-sans);
@@ -1273,9 +1277,10 @@ body[data-profile-page] {
   color: var(--pf-text-secondary);
   background: var(--pf-card);
   border: 1px solid var(--pf-border);
-  border-radius: 8px;
+  border-radius: var(--pagination-radius, 8px);
+  height: var(--pagination-size, 36px);
   font-size: var(--font-size-sm);
-  padding: 8px 14px;
+  padding: 0 14px;
   transition: all 0.2s ease;
 }
 
@@ -1340,14 +1345,14 @@ body[data-profile-page] {
 .ilink-app body[data-profile-page="posts"] .profile-article-edit-body .form-control:focus,
 .ilink-app body[data-profile-page="posts"] .profile-article-edit-body .form-select:focus {
   border-color: var(--pf-accent);
-  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
 }
 
 .ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-primary {
   background: var(--pf-text);
   border-color: var(--pf-text);
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: 12px;
+  padding: 0 20px;
   font-weight: var(--font-weight-semibold);
 }
 
@@ -1358,8 +1363,8 @@ body[data-profile-page] {
 
 .ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-outline-secondary,
 .ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-outline-primary {
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: 12px;
+  padding: 0 20px;
   font-weight: var(--font-weight-semibold);
   border-color: var(--pf-border);
   color: var(--pf-text-secondary);
@@ -1616,7 +1621,7 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page="overview"] .profile-activity-list .list-group-item:hover {
-  border-color: rgba(196, 167, 125, 0.3);
+  border-color: rgba(0, 113, 227, 0.3);
   box-shadow: var(--pf-shadow);
 }
 
@@ -1652,7 +1657,7 @@ body[data-profile-page] {
 .ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-primary {
   background: var(--pf-text);
   border-color: var(--pf-text);
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-primary:hover {
@@ -1663,7 +1668,7 @@ body[data-profile-page] {
 .ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-outline-primary {
   border-color: var(--pf-border);
   color: var(--pf-text-secondary);
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-outline-primary:hover {
@@ -1705,23 +1710,34 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page] .il-activity-toolbar__select {
+  /* 工具条里的筛选器是紧凑档：与右侧主操作同高，浅灰底、无描边，
+     避免“工具条边框 + 下拉边框 + 焦点环”三层方框叠在一起 */
+  --field-height-current: var(--field-height-sm, 36px);
   appearance: none;
   -webkit-appearance: none;
-  padding: 8px 32px 8px 14px;
+  height: var(--field-height-sm, 36px);
+  padding: 0 32px 0 12px;
+  background: var(--ui-surface-subtle, #f5f5f7);
   background-size: 12px;
-  border: 1px solid var(--pf-border);
+  border: 1px solid transparent;
+  border-radius: var(--field-radius, 8px);
+  color: var(--ui-text-secondary, #424245);
   font-family: var(--font-sans);
-  font-size: var(--font-size-xs);
+  font-size: 13px;
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
   outline: none;
   min-width: 120px;
 }
 
-.ilink-app body[data-profile-page] .il-activity-toolbar__select:focus {
-  border-color: var(--pf-accent);
-  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.1);
+.ilink-app body[data-profile-page] .il-activity-toolbar__select:hover {
+  background: var(--ui-surface-selected, #ECEDEF);
+}
+
+html.ilink-app body[data-profile-page] .il-activity-toolbar__select:focus {
+  border-color: var(--field-focus-border, #1d1d1f) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
 }
 
 .ilink-app body[data-profile-page] .il-activity-toolbar__action {
@@ -1754,7 +1770,7 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page] .il-team-card:hover {
-  border-color: rgba(196, 167, 125, 0.3);
+  border-color: rgba(0, 113, 227, 0.3);
   box-shadow: var(--pf-shadow);
   transform: translateY(-2px);
 }
@@ -1790,7 +1806,7 @@ body[data-profile-page] {
 .ilink-app body[data-profile-page] .il-team-card__icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--pf-border);
   display: flex;
   align-items: center;
@@ -2083,7 +2099,7 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page] .kanban-mini-card:hover {
-  border-color: rgba(196, 167, 125, 0.3);
+  border-color: rgba(0, 113, 227, 0.3);
   box-shadow: var(--pf-shadow-sm);
 }
 
@@ -2186,7 +2202,7 @@ body[data-profile-page="edit"] .il-avatar-overlay {
 }
 
 .ilink-app body[data-profile-page="honors"] .modal-backdrop {
-  background-color: rgba(17, 24, 39, 0.45);
+  background-color: rgba(29, 29, 31, 0.45);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-bs-form-modal .modal-dialog {
@@ -2213,8 +2229,8 @@ html.ilink-app body[data-profile-page] {
   --pf-danger: var(--ui-danger);
   --pf-danger-light: var(--ui-danger-soft);
   --pf-shadow-sm: none;
-  --pf-shadow: 0 10px 24px rgba(40, 42, 47, 0.08);
-  --pf-shadow-lg: var(--ui-shadow-float);
+  --pf-shadow: var(--shadow-card);
+  --pf-shadow-lg: var(--shadow-float);
   --pf-radius: var(--ui-radius-control);
   --pf-radius-lg: var(--ui-radius-surface);
   --pf-radius-xl: var(--ui-radius-panel);
@@ -2254,10 +2270,10 @@ html.ilink-app body[data-profile-page] .il-profile-sidebar {
 
 html.ilink-app body[data-profile-page] .il-profile-sidebar-title {
   margin: 4px 8px 2px;
-  color: #111827 !important;
+  color: #1d1d1f !important;
   font-family: var(--ui-font) !important;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
@@ -2276,12 +2292,12 @@ html.ilink-app body[data-profile-page] .il-profile-nav {
 
 html.ilink-app body[data-profile-page] .il-profile-nav-item {
   position: relative;
-  min-height: 42px;
+  min-height: var(--nav-item-height, 44px);
   gap: 12px;
-  padding: 10px 14px;
-  color: #4b5563 !important;
+  padding: 0 14px;
+  color: #424245 !important;
   border: 0 !important;
-  border-radius: 12px !important;
+  border-radius: var(--nav-item-radius, 8px) !important;
   background: transparent !important;
   font-family: var(--ui-font) !important;
   font-size: 14px;
@@ -2297,14 +2313,14 @@ html.ilink-app body[data-profile-page] .il-profile-nav-item svg {
 }
 
 html.ilink-app body[data-profile-page] .il-profile-nav-item:hover {
-  color: #111827 !important;
-  background: #f3f4f6 !important;
+  color: #1d1d1f !important;
+  background: var(--nav-hover-bg, #f5f5f7) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-profile-nav-item.active,
 html.ilink-app body[data-profile-page] .il-profile-nav-item.active:hover {
-  color: #111827 !important;
-  background: #f3f4f6 !important;
+  color: #1d1d1f !important;
+  background: var(--nav-active-bg, #ECEDEF) !important;
   box-shadow: none !important;
   font-weight: 600;
 }
@@ -2316,7 +2332,7 @@ html.ilink-app body[data-profile-page] .il-profile-nav-item.active::before {
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: #111827;
+  background: #1d1d1f;
   border-radius: 0 4px 4px 0;
 }
 
@@ -2396,7 +2412,7 @@ html.ilink-app body[data-profile-page] .il-avatar-fallback {
   color: var(--ui-text-secondary) !important;
   background: var(--ui-surface-selected) !important;
   font-size: 26px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 html.ilink-app body[data-profile-page] .il-profile-name {
@@ -2404,7 +2420,7 @@ html.ilink-app body[data-profile-page] .il-profile-name {
   color: var(--ui-text) !important;
   font-family: var(--ui-font) !important;
   font-size: 24px;
-  font-weight: 680;
+  font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.025em;
 }
@@ -2422,7 +2438,7 @@ html.ilink-app body[data-profile-page] .profile-post-card__chip {
   border-radius: 999px !important;
   box-shadow: none !important;
   font-size: 12px;
-  font-weight: 550;
+  font-weight: 500;
 }
 
 html.ilink-app body[data-profile-page] .meta-chip--primary {
@@ -2475,7 +2491,7 @@ html.ilink-app body[data-profile-page] .il-form-section-title {
   color: var(--ui-text) !important;
   font-family: var(--ui-font) !important;
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.015em;
 }
@@ -2525,7 +2541,7 @@ html.ilink-app body[data-profile-page="overview"] .il-teacher-competition-overvi
   gap: 0;
   overflow: hidden;
   border: 1px solid var(--ui-border);
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 html.ilink-app body[data-profile-page="overview"] .il-teacher-competition-block {
@@ -2549,7 +2565,7 @@ html.ilink-app body[data-profile-page="overview"] .il-teacher-competition-block_
   margin: 0;
   color: var(--ui-text);
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 html.ilink-app body[data-profile-page="overview"] .il-teacher-competition-block__header a {
@@ -2661,23 +2677,26 @@ html.ilink-app body[data-profile-page] .il-tabs {
   display: flex;
   width: fit-content;
   gap: 2px;
-  padding: 3px;
-  background: var(--ui-surface-subtle) !important;
-  border: 1px solid var(--ui-border) !important;
-  border-radius: 8px !important;
+  padding: 2px;
+  background: var(--tab-track-bg, #f5f5f7) !important;
+  border: 0 !important;
+  border-radius: var(--tab-track-radius, 8px) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-tab {
-  min-height: 34px;
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  height: var(--tab-item-height, 30px);
+  min-height: var(--tab-item-height, 30px);
+  padding: 0 14px;
   color: var(--ui-text-secondary) !important;
   background: transparent !important;
   border: 0 !important;
-  border-radius: 6px !important;
+  border-radius: var(--tab-item-radius, 6px) !important;
   box-shadow: none !important;
   font-family: var(--ui-font) !important;
-  font-size: 13px;
-  font-weight: 550;
+  font-size: var(--tab-font-size, 13px);
+  font-weight: 500;
 }
 
 html.ilink-app body[data-profile-page] .il-tab:hover {
@@ -2687,8 +2706,9 @@ html.ilink-app body[data-profile-page] .il-tab:hover {
 
 html.ilink-app body[data-profile-page] .il-tab.active {
   color: var(--ui-text) !important;
-  background: var(--ui-surface) !important;
-  box-shadow: 0 1px 2px rgba(40, 42, 47, 0.08) !important;
+  background: var(--tab-active-bg, #ffffff) !important;
+  box-shadow: var(--tab-active-shadow, 0 1px 2px rgba(29, 29, 31, 0.08)) !important;
+  font-weight: 600;
 }
 
 html.ilink-app body[data-profile-page] .il-tab-panel {
@@ -2734,7 +2754,7 @@ html.ilink-app body[data-profile-page] textarea.il-input {
 html.ilink-app body[data-profile-page] .il-form-input::placeholder,
 html.ilink-app body[data-profile-page] .il-input::placeholder,
 html.ilink-app body[data-profile-page] .form-control::placeholder {
-  color: #9A9CA1 !important;
+  color: var(--field-placeholder, #6e6e73) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-form-input:focus,
@@ -2821,7 +2841,7 @@ html.ilink-app body[data-profile-page="edit"] .il-profile-read-avatar {
   background: var(--ui-text);
   border-radius: 50%;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 html.ilink-app body[data-profile-page="edit"] .il-profile-read-avatar img {
@@ -2834,7 +2854,7 @@ html.ilink-app body[data-profile-page="edit"] .il-profile-read-name {
   display: block;
   color: var(--ui-text);
   font-size: 20px;
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.35;
 }
 
@@ -2857,7 +2877,7 @@ html.ilink-app body[data-profile-page="edit"] .il-profile-read-section__title {
   margin: 0 0 14px;
   color: var(--ui-text);
   font-size: 16px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 html.ilink-app body[data-profile-page="edit"] .il-profile-read-grid {
@@ -2878,14 +2898,16 @@ html.ilink-app body[data-profile-page="edit"] .il-profile-read-grid__wide {
   grid-column: 1 / -1;
 }
 
-html.ilink-app body[data-profile-page="edit"] .il-profile-read-grid dt {
+html.ilink-app body[data-profile-page="edit"] .il-profile-read-grid__term {
+  display: block;
   margin-bottom: 5px;
   color: var(--ui-text-muted);
   font-size: 12px;
   font-weight: 500;
 }
 
-html.ilink-app body[data-profile-page="edit"] .il-profile-read-grid dd {
+html.ilink-app body[data-profile-page="edit"] .il-profile-read-grid__value {
+  display: block;
   margin: 0;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -2935,7 +2957,7 @@ html.ilink-app body[data-profile-page="edit"] .il-profile-read-honor {
   padding: 12px;
   background: var(--ui-surface-subtle);
   border: 1px solid var(--ui-border);
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 html.ilink-app body[data-profile-page="edit"] .il-profile-read-honor__proof {
@@ -2981,7 +3003,7 @@ html.ilink-app body[data-profile-page="edit"] .il-profile-read-honor__proof-fall
   color: var(--ui-text-secondary);
   background: var(--ui-surface);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.02em;
 }
 
@@ -3078,7 +3100,7 @@ html.ilink-app body[data-profile-page] .il-avatar-container {
 
 html.ilink-app body[data-profile-page] .il-avatar-overlay {
   color: var(--ui-surface) !important;
-  background: rgba(40, 42, 47, 0.58) !important;
+  background: rgba(29, 29, 31, 0.58) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-avatar-hint,
@@ -3102,7 +3124,7 @@ html.ilink-app body[data-profile-page] .skill-tag {
 
 html.ilink-app body[data-profile-page] .il-btn,
 html.ilink-app body[data-profile-page] .btn {
-  min-height: 38px;
+  min-height: var(--btn-height-current, var(--btn-height, 36px));
   border-radius: 8px !important;
   box-shadow: none !important;
   font-family: var(--ui-font) !important;
@@ -3113,16 +3135,16 @@ html.ilink-app body[data-profile-page] .btn {
 
 html.ilink-app body[data-profile-page] .il-btn-primary,
 html.ilink-app body[data-profile-page] .btn-primary {
-  color: var(--ui-text, #282a2f) !important;
-  background: var(--ui-surface-subtle, #f1f1f2) !important;
-  border-color: var(--ui-border-strong, #d7d8db) !important;
+  color: var(--btn-primary-text) !important;
+  background: var(--btn-primary-bg) !important;
+  border-color: var(--btn-primary-bg) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-btn-primary:hover,
 html.ilink-app body[data-profile-page] .btn-primary:hover {
-  color: var(--ui-text, #282a2f) !important;
-  background: var(--ui-border, #e5e5e7) !important;
-  border-color: var(--ui-border-strong, #d7d8db) !important;
+  color: var(--btn-primary-text) !important;
+  background: var(--btn-primary-bg-hover) !important;
+  border-color: var(--btn-primary-bg-hover) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-btn-ghost,
@@ -3154,7 +3176,7 @@ html.ilink-app body[data-profile-page] .il-btn-danger,
 html.ilink-app body[data-profile-page] .il-btn-xs-danger,
 html.ilink-app body[data-profile-page] .btn-danger {
   background: var(--ui-danger-soft) !important;
-  border-color: rgba(220, 38, 38, 0.28) !important;
+  border-color: rgba(215, 0, 21, 0.28) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-btn-danger:hover,
@@ -3188,7 +3210,7 @@ html.ilink-app body[data-profile-page] .il-empty-title,
 html.ilink-app body[data-profile-page] .honors-empty__title {
   color: var(--ui-text) !important;
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 html.ilink-app body[data-profile-page] .il-empty-text,
@@ -3198,7 +3220,7 @@ html.ilink-app body[data-profile-page] .honors-empty__text {
 }
 
 html.ilink-app body[data-profile-page] .il-activity-toolbar {
-  padding: 12px;
+  padding: 10px 12px;
   background: var(--ui-surface) !important;
   border: 1px solid var(--ui-border) !important;
   border-radius: var(--ui-radius-surface) !important;
@@ -3206,18 +3228,22 @@ html.ilink-app body[data-profile-page] .il-activity-toolbar {
 }
 
 html.ilink-app body[data-profile-page] .il-activity-toolbar__select {
-  min-height: 38px;
+  min-height: var(--field-height-sm, 36px);
   color: var(--ui-text-secondary) !important;
-  background: var(--ui-surface) !important;
-  border-color: var(--ui-border-strong) !important;
-  border-radius: 8px !important;
+  background: var(--ui-surface-subtle, #f5f5f7) !important;
+  border-color: transparent !important;
+  border-radius: var(--field-radius, 8px) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-activity-toolbar__action {
-  min-height: 38px;
-  color: var(--ui-surface) !important;
-  background: var(--ui-text) !important;
-  border: 1px solid var(--ui-text) !important;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--btn-height, 36px);
+  padding: 0 14px;
+  font-size: 13px;
+  color: var(--btn-primary-text) !important;
+  background: var(--btn-primary-bg) !important;
+  border: 1px solid var(--btn-primary-bg) !important;
   border-radius: 8px !important;
   box-shadow: none !important;
 }
@@ -3252,7 +3278,7 @@ html.ilink-app body[data-profile-page] .il-team-card__title,
 html.ilink-app body[data-profile-page] .profile-post-card__title-link,
 html.ilink-app body[data-profile-page] .il-honor-item__title {
   color: var(--ui-text) !important;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 html.ilink-app body[data-profile-page] .il-team-card__meta,
@@ -3274,7 +3300,7 @@ html.ilink-app body[data-profile-page] .il-back-btn {
   color: var(--ui-text-secondary) !important;
   background: var(--ui-surface) !important;
   border: 1px solid var(--ui-border-strong) !important;
-  border-radius: 7px !important;
+  border-radius: 8px !important;
   box-shadow: none !important;
   font-size: 12px;
   font-weight: 600;
@@ -3289,10 +3315,20 @@ html.ilink-app body[data-profile-page] .profile-post-card__btn.il-btn-xs-dark {
   border-color: var(--ui-text) !important;
 }
 
+/* 一张卡里三个按钮：邀请 / 进入 / 详情。三者同级同形，不加主次区分——
+   实测给「进入团队」加浅底会让它单独跳出来，反而不像一组。
+   这里只把 --primary 拉回和另两个完全一致的外观（原样式是深色实心块）。 */
+html.ilink-app body[data-profile-page] .il-team-card__btn.il-team-card__btn--primary {
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border-strong) !important;
+  font-weight: 600 !important;
+}
+
 html.ilink-app body[data-profile-page] .il-team-card__btn--danger {
   color: var(--ui-danger) !important;
   background: var(--ui-danger-soft) !important;
-  border-color: rgba(220, 38, 38, 0.28) !important;
+  border-color: rgba(215, 0, 21, 0.28) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-team-card__badge,
@@ -3307,15 +3343,40 @@ html.ilink-app body[data-profile-page] .meta-chip--muted {
 
 html.ilink-app body[data-profile-page] .il-team-card__badge--open,
 html.ilink-app body[data-profile-page] .il-team-card__badge--approved {
+  --ui-status-color: var(--ui-success);
   color: var(--ui-success) !important;
   background: var(--ui-success-soft) !important;
   border-color: rgba(22, 163, 74, 0.24) !important;
 }
 
+html.ilink-app body[data-profile-page] .il-team-card__badge--teaming {
+  /* 「已组队」用青灰：和组队大厅、详情页的同一状态保持一个色相，不用蓝 */
+  --ui-status-color: #17403f;
+  color: #17403f !important;
+  background: #d9eaea !important;
+  border-color: rgba(23, 64, 63, 0.22) !important;
+}
+
+html.ilink-app body[data-profile-page] .il-team-card__badge--pending {
+  --ui-status-color: var(--ui-warning);
+  color: var(--ui-warning) !important;
+  background: var(--ui-warning-soft) !important;
+  border-color: rgba(138, 83, 0, 0.24) !important;
+}
+
+html.ilink-app body[data-profile-page] .il-team-card__badge--closed {
+  --ui-status-color: var(--ui-text-muted);
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface-subtle) !important;
+  border-color: var(--ui-border) !important;
+}
+
+html.ilink-app body[data-profile-page] .il-team-card__badge--dissolved,
 html.ilink-app body[data-profile-page] .il-team-card__badge--rejected {
+  --ui-status-color: var(--ui-danger);
   color: var(--ui-danger) !important;
   background: var(--ui-danger-soft) !important;
-  border-color: rgba(220, 38, 38, 0.24) !important;
+  border-color: rgba(215, 0, 21, 0.24) !important;
 }
 
 html.ilink-app body[data-profile-page] .kanban-mini-card,
@@ -3381,7 +3442,7 @@ html.ilink-app body[data-profile-page] .profile-unfavorite-btn {
   color: var(--ui-text-secondary) !important;
   background: var(--ui-surface) !important;
   border: 1px solid var(--ui-border) !important;
-  border-radius: 7px !important;
+  border-radius: 8px !important;
 }
 
 html.ilink-app body[data-profile-page] .il-honors-batch-bar {
@@ -3493,7 +3554,7 @@ html.ilink-app body[data-profile-page] .modal-footer {
 html.ilink-app body[data-profile-page] .modal-title {
   color: var(--ui-text) !important;
   font-size: 18px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .honor-asset-grid {
@@ -3514,7 +3575,7 @@ html.ilink-app body[data-profile-page] .modal-title {
 
 .honor-asset-card:hover {
   border-color: var(--ui-border-strong);
-  box-shadow: 0 4px 12px rgba(40,42,47,0.06);
+  box-shadow: 0 4px 12px rgba(29,29,31,0.06);
   transform: translateY(-2px);
 }
 
@@ -3549,7 +3610,7 @@ html.ilink-app body[data-profile-page] .modal-title {
 
 .honor-asset-card__cover-text {
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ui-text-secondary);
   letter-spacing: 0.04em;
 }
@@ -3587,7 +3648,7 @@ html.ilink-app body[data-profile-page] .modal-title {
 .honor-asset-card__title {
   margin: 0;
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--ui-text);
   line-height: 1.4;
   overflow: hidden;
@@ -3735,7 +3796,7 @@ html.ilink-app body[data-profile-page] .modal-title {
     max-height: none;
     padding: 4px;
     overflow: hidden;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
   }
   html.ilink-app body[data-profile-page] .il-profile-sidebar-title,
   html.ilink-app body[data-profile-page] .il-profile-sidebar-subtitle { display: none; }
@@ -3843,7 +3904,7 @@ html.ilink-app body[data-profile-page] .modal-title {
   }
   html.ilink-app body[data-profile-page] .modal-content {
     max-height: calc(100dvh - 24px);
-    border-radius: 14px !important;
+    border-radius: 12px !important;
   }
   html.ilink-app body[data-profile-page] .modal-header,
   html.ilink-app body[data-profile-page] .modal-footer { padding: 16px; }
@@ -3944,6 +4005,10 @@ html.ilink-app body[data-profile-page] .modal-title {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+  /* 兜底：即使动画被更高优先级的规则关掉，页面也必须可见 */
+  html.ilink-app body[data-profile-page] {
+    opacity: 1 !important;
+  }
 }
 
 
@@ -3999,7 +4064,7 @@ html.ilink-app body[data-profile-page] .modal-title {
 }
 .il-builtin-avatar-content {
     border: none;
-    border-radius: 16px;
+    border-radius: 18px;
     overflow: hidden;
 }
 .il-builtin-avatar-header {
@@ -4053,8 +4118,8 @@ html.ilink-app body[data-profile-page] .modal-title {
     outline-offset: 2px;
 }
 .il-builtin-avatar-item.is-selected {
-    border-color: var(--pf-accent, #2563eb);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18);
+    border-color: var(--pf-accent, #0066cc);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.18);
 }
 .il-builtin-avatar-check {
     position: absolute;
@@ -4066,8 +4131,8 @@ html.ilink-app body[data-profile-page] .modal-title {
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    color: #fff;
-    background: var(--pf-accent, #2563eb);
+    color: #ffffff;
+    background: var(--pf-accent, #0066cc);
     border-radius: 50%;
 }
 .il-builtin-avatar-empty,

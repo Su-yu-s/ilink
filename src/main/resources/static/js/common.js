@@ -1303,7 +1303,17 @@ function bindLanguageSwitch() {
     if (!button || button.dataset.i18nBound === 'true') return;
     button.dataset.i18nBound = 'true';
     button.textContent = t('language.switch');
-    button.setAttribute('aria-label', t('language.switchLabel'));
+    // 可见文案会被 i18n 的 MutationObserver 再翻译一次（中文 → English），
+    // 所以可访问名称必须跟着最终可见文本重算，否则语音控制看到的词与可访问名不一致。
+    const syncLanguageLabel = function () {
+        const visible = button.textContent.trim();
+        const action = t('language.switchLabel');
+        button.setAttribute('aria-label', visible ? visible + ' · ' + action : action);
+    };
+    syncLanguageLabel();
+    if (typeof MutationObserver !== 'undefined') {
+        new MutationObserver(syncLanguageLabel).observe(button, { childList: true, characterData: true, subtree: true });
+    }
     button.addEventListener('click', function (event) {
         event.preventDefault();
         const url = new URL(window.location.href);

@@ -36,6 +36,7 @@ public class TeamAgentRunExecutor {
     private final TeamAgentRunCompletionService completionService;
     private final TeamAgentAdmissionController admission;
     private final TeamAgentProperties properties;
+    private final PendingAgentDrafts pendingDrafts;
     private final SecureRandom random = new SecureRandom();
     private final String workerId = ManagementFactory.getRuntimeMXBean().getName();
 
@@ -49,7 +50,8 @@ public class TeamAgentRunExecutor {
                                 TeamAgentEventService eventService,
                                 TeamAgentRunCompletionService completionService,
                                 TeamAgentAdmissionController admission,
-                                TeamAgentProperties properties) {
+                                TeamAgentProperties properties,
+                                PendingAgentDrafts pendingDrafts) {
         this.workerPool = workerPool;
         this.runMapper = runMapper;
         this.messageMapper = messageMapper;
@@ -61,6 +63,7 @@ public class TeamAgentRunExecutor {
         this.completionService = completionService;
         this.admission = admission;
         this.properties = properties;
+        this.pendingDrafts = pendingDrafts;
     }
 
     public void submit(Long runId) {
@@ -160,8 +163,11 @@ public class TeamAgentRunExecutor {
             // Authorization is rebuilt after the longest-running external work.
             requireStillExecutable(runId, leaseToken);
             TeamAgentScope freshScope = authorization.requireScope(run.getTeamId(), run.getUserId());
+            // 工具直接产生的草案（例如 agent 生成的文件）与模型草案合并后再建动作组。
+            List<TeamAgentActionDraft> allDrafts = new java.util.ArrayList<>(answer.actionDrafts());
+            allDrafts.addAll(pendingDrafts.take(runId));
             List<TeamAgentActionProposalService.EnrichedDraft> drafts =
-                proposalService.prepare(freshScope, answer.actionDrafts());
+                proposalService.prepare(freshScope, allDrafts);
             completionService.complete(runId, leaseToken, answer, drafts);
         } catch (TeamAgentException e) {
             log.info("团队 Agent 运行 {} 业务失败: {}", runId, e.getErrorCode());

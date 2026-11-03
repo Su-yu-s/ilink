@@ -122,7 +122,7 @@
 }
 
 .glass-btn:active {
-  transform: translateY(0);
+  transform: var(--btn-press, scale(0.97));
 }
 
 /* === Glass Modal === */
@@ -286,7 +286,7 @@
 
 .glass-tooltip.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 /* === Glass Badge === */

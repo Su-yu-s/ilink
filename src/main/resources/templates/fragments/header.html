@@ -121,7 +121,7 @@
                 </th:block>
 
                 <!-- Mobile menu toggle -->
-                <button class="il-header__language-switch" id="languageSwitch" type="button" th:text="#{language.switch}" th:attr="aria-label=#{language.switchLabel}">EN</button>
+                <button class="il-header__language-switch" id="languageSwitch" type="button" th:text="#{language.switch}" th:attr="aria-label=${#messages.msg('language.switch') + ' · ' + #messages.msg('language.switchLabel')}">EN</button>
                 <button class="il-header__menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="ilHeaderNav" th:attr="aria-label=#{header.drawer.open}">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                 </button>

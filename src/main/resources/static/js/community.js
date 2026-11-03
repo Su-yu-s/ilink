@@ -546,9 +546,6 @@ async function loadPosts(page) {
             if (p.pinned || p.top || p.isTop) card.classList.add('is-pinned');
             card.setAttribute('role', 'link');
             card.setAttribute('tabindex', '0');
-            card.setAttribute('aria-label', t('ui.community.readFull', {
-                title: p.title || t('ui.community.unnamedPost')
-            }));
 
             const authorAvatar = (p.authorDisplay || '用户').charAt(0).toUpperCase();
             const authorAvatarUrl = p.authorAvatar || null;
@@ -600,17 +597,17 @@ async function loadPosts(page) {
                         <span>${formatTime(p.createdAt)}</span>
                     </div>
                     <div class="il-feed-actions" data-post-id="${p.id}">
-                        <button type="button" class="action-btn il-feed-action" data-action="like" aria-label="点赞">
+                        <button type="button" class="action-btn il-feed-action" data-action="like">
                             ${iconThumbUpSvg()}
                             <span class="action-label">点赞</span>
                             <span class="il-feed-action__num">${likes}</span>
                         </button>
-                        <button type="button" class="action-btn il-feed-action" data-action="favorite" aria-label="收藏">
+                        <button type="button" class="action-btn il-feed-action" data-action="favorite">
                             ${iconStarSvg()}
                             <span class="action-label">收藏</span>
                             <span class="il-feed-action__num">${favs}</span>
                         </button>
-                        <button type="button" class="action-btn il-feed-action" aria-label="评论">
+                        <button type="button" class="action-btn il-feed-action">
                             ${iconCommentSvg()}
                             <span class="action-label">评论</span>
                             <span class="il-feed-action__num">${comments}</span>

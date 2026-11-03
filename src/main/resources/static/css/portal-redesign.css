@@ -68,45 +68,8 @@ body[data-app-page="competitions"] .competition-hub {
   padding-top: 0 !important;
 }
 
-body[data-app-page="team-market"] .hero-eyebrow,
-body[data-app-page="teacher-wall"] .hero-eyebrow,
-body[data-app-page="community"] .il-hero__eyebrow,
-body[data-app-page="competitions"] .il-hero__eyebrow,
-body[data-app-page="gallery"] .il-hero__badge {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  width: auto !important;
-  max-width: max-content !important;
-  min-width: 0 !important;
-  height: 32px !important;
-  padding: 0 14px !important;
-  margin: 0 0 18px !important;
-  border: 1px solid #f5efe6 !important;
-  border-radius: 999px !important;
-  background: #faf6f0 !important;
-  color: #a08055 !important;
-  box-shadow: none !important;
-  font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  line-height: 1 !important;
-  letter-spacing: 0 !important;
-  text-transform: none !important;
-}
+/* hero 规则已归拢到 demo-refresh.css 的「列表页 hero」区块 */
 
-body[data-app-page="team-market"] .hero-eyebrow svg,
-body[data-app-page="teacher-wall"] .hero-eyebrow svg,
-body[data-app-page="community"] .il-hero__eyebrow svg,
-body[data-app-page="competitions"] .il-hero__eyebrow svg,
-body[data-app-page="gallery"] .il-hero__badge svg {
-  width: 15px !important;
-  height: 15px !important;
-  flex: 0 0 15px !important;
-  color: #a08055 !important;
-  stroke: currentColor !important;
-}
 
 body[data-app-page="team-market"] .toolbar-section,
 body[data-app-page="teacher-wall"] .toolbar-section {
@@ -147,111 +110,6 @@ html.ilink-app body[data-app-page="teacher-wall"] .content-inner {
   padding: 0 0 56px !important;
 }
 
-/* Team discovery: two readable records rather than a decorative tile wall. */
-html.ilink-app body[data-app-page="team-market"] #teamList {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)) !important;
-  gap: 20px !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .il-team-card-shell {
-  display: block !important;
-  min-width: 0;
-  color: inherit !important;
-  text-decoration: none !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card {
-  display: flex !important;
-  min-height: 258px;
-  flex-direction: column;
-  padding: 20px !important;
-  overflow: hidden;
-  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .card-header {
-  display: flex !important;
-  min-width: 0;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 0 12px !important;
-  border: 0 !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .card-title {
-  min-width: 0;
-  margin: 0 !important;
-  overflow: hidden;
-  color: var(--ui-text) !important;
-  font-family: var(--ui-font) !important;
-  font-size: 18px !important;
-  font-weight: 650 !important;
-  line-height: 1.35 !important;
-  text-decoration: none !important;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .category-tag,
-html.ilink-app body[data-app-page="team-market"] .team-card .skill-tag {
-  flex: 0 0 auto;
-  color: var(--ui-text-secondary) !important;
-  background: var(--ui-surface-subtle) !important;
-  border: 1px solid transparent !important;
-  border-radius: 999px !important;
-  box-shadow: none !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .card-meta {
-  display: flex !important;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  margin: 0 !important;
-  color: var(--ui-text-muted) !important;
-  font-size: 13px !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .meta-dot,
-html.ilink-app body[data-app-page="team-market"] .team-card .il-team-meta-item:not(:last-child)::after {
-  display: none !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .skill-tags {
-  display: flex !important;
-  flex-wrap: wrap;
-  gap: 6px !important;
-  margin: 16px 0 0 !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .card-desc {
-  display: -webkit-box;
-  min-height: 44px;
-  margin: 16px 0 !important;
-  overflow: hidden;
-  color: var(--ui-text-secondary) !important;
-  font-size: 14px !important;
-  line-height: 1.65 !important;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .card-divider {
-  margin: auto 0 14px !important;
-  border-color: var(--ui-border) !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .card-footer {
-  display: flex !important;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 !important;
-  border: 0 !important;
-}
-
-html.ilink-app body[data-app-page="team-market"] .team-card .author-info,
 html.ilink-app body[data-app-page="community"] .article-card .author-info {
   min-width: 0;
 }
@@ -299,7 +157,7 @@ html.ilink-app .il-post-avatar .il-post-avatar-fallback:not(.avatar-fallback--hi
   height: 100%;
   color: var(--ui-text-secondary);
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 /* Mentor discovery uses compact professional records; the old corner ornament is retired. */
@@ -359,14 +217,14 @@ html.ilink-app body[data-app-page="teacher-wall"] .mentor-avatar .avatar-fallbac
   place-items: center;
   color: var(--ui-text-secondary);
   font-size: 22px;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 html.ilink-app body[data-app-page="teacher-wall"] .mentor-name {
   color: var(--ui-text) !important;
   font-family: var(--ui-font) !important;
   font-size: 18px !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
   line-height: 1.35 !important;
 }
 
@@ -487,7 +345,7 @@ html.ilink-app body[data-app-page="community"] .article-card .card-title {
 
 html.ilink-app body[data-app-page="community"] .article-card .author-name {
   font-size: 14px !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
 }
 
 html.ilink-app body[data-app-page="community"] .article-card .author-meta,
@@ -499,7 +357,7 @@ html.ilink-app body[data-app-page="community"] .article-card .meta-item {
 html.ilink-app body[data-app-page="community"] .article-card .card-title {
   margin: 18px 0 8px !important;
   font-size: 20px !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
   line-height: 1.4 !important;
 }
 
@@ -609,7 +467,7 @@ html.ilink-app body[data-app-page="gallery"] .gc-title {
   color: var(--ui-text) !important;
   font-family: var(--ui-font) !important;
   font-size: 17px !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
   line-height: 1.4 !important;
 }
 
@@ -758,8 +616,8 @@ html.ilink-app .community-article__title,
 html.ilink-app .project-title {
   color: var(--ui-text) !important;
   font-family: var(--ui-font) !important;
-  font-weight: 650 !important;
-  letter-spacing: -0.03em;
+  font-weight: 600 !important;
+  letter-spacing: -0.022em;
 }
 
 html.ilink-app .detail-view__body,
@@ -801,11 +659,22 @@ html.ilink-app body[data-app-page="team-detail"] .team-detail-status::before {
 html.ilink-app body[data-app-page="team-detail"] .team-detail-status.is-open {
   color: var(--ui-success);
   background: var(--ui-success-soft);
-  border-color: #bbf7d0;
+  border-color: #cbe8d6;
 }
 
 html.ilink-app body[data-app-page="team-detail"] .team-detail-status.is-open::before {
   background: var(--ui-success);
+}
+
+/* 加载/错误态标题此前没有规则，直接吃了 h1 的 2.5rem 默认值，
+   比正常页面标题还大；统一进 type scale。 */
+html.ilink-app .detail-load-state__title,
+html.ilink-app .asset-detail-state__title,
+html.ilink-app .community-article-state__title {
+  font-size: var(--type-title-size, 20px) !important;
+  font-weight: var(--type-title-weight, 600) !important;
+  line-height: var(--type-title-leading, 1.45) !important;
+  letter-spacing: var(--type-title-tracking, 0) !important;
 }
 
 html.ilink-app .detail-load-state,
@@ -889,7 +758,6 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
     max-width: none !important;
   }
 
-  html.ilink-app body[data-app-page="team-market"] #teamList,
   html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
   html.ilink-app body[data-app-page="gallery"] .gc-grid,
   html.ilink-app body[data-app-page="competitions"] .competition-grid {
@@ -973,7 +841,6 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
     line-height: 1.7 !important;
   }
 
-  html.ilink-app body[data-app-page="team-market"] #teamList,
   html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
   html.ilink-app body[data-app-page="gallery"] .gc-grid,
   html.ilink-app body[data-app-page="competitions"] .competition-grid {
@@ -1164,14 +1031,14 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   min-height: 56px !important;
   padding: 6px !important;
   background: #ffffff !important;
-  border: 1px solid #e8e8e6 !important;
+  border: 1px solid #e8e8ed !important;
   border-radius: 28px !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02) !important;
   transition: box-shadow .25s ease, border-color .25s ease;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar:focus-within {
-  border-color: #c7d2fe !important;
-  box-shadow: 0 0 0 4px rgba(37,99,235,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
+  border-color: #d6e4fb !important;
+  box-shadow: 0 0 0 4px rgba(0,113,227,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
 }
 
 /* input wrap */
@@ -1185,7 +1052,7 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   height: 44px !important;
   padding: 0 14px 0 6px !important;
   border: none !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   background: transparent !important;
   box-shadow: none !important;
   transition: background .2s ease;
@@ -1200,7 +1067,7 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   left: auto !important;
   width: 18px !important;
   height: 18px !important;
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
   margin: 0 !important;
   flex-shrink: 0 !important;
 }
@@ -1220,10 +1087,10 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   transition: background .2s ease !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-icon-search-btn:hover {
-  background: #f3f4f6 !important;
+  background: #f5f5f7 !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-icon-search-btn:hover svg {
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap input,
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap .il-search-field__input {
@@ -1232,12 +1099,12 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   box-shadow: none !important;
   background: transparent !important;
   font-size: 14px !important;
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
   height: auto !important;
   padding: 0 12px 0 0 !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap input::placeholder {
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
 }
 
 /* custom select */
@@ -1246,14 +1113,14 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   height: 44px !important;
   padding: 0 !important;
   border: none !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   background: transparent !important;
   cursor: pointer !important;
   user-select: none !important;
   transition: background .2s ease;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select:hover {
-  background: #f3f4f6 !important;
+  background: #f5f5f7 !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.cs-inited select {
   position: absolute !important;
@@ -1294,13 +1161,13 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   flex: 0 0 auto !important;
   height: 44px !important;
   padding: 0 14px !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   cursor: pointer !important;
   white-space: nowrap !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-label {
   font-size: 13px !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
   margin-right: 6px !important;
   font-weight: 400 !important;
 }
@@ -1308,13 +1175,13 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   flex: 0 0 auto !important;
   font-size: 14px !important;
   font-weight: 500 !important;
-  color: #374151 !important;
+  color: #424245 !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-chevron {
   margin-left: 10px !important;
   width: 14px !important;
   height: 14px !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
   flex-shrink: 0 !important;
   transition: transform .25s ease !important;
 }
@@ -1333,7 +1200,7 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   width: 100% !important;
   overflow: hidden !important;
   background: #ffffff !important;
-  border: 1px solid #e8e8e6 !important;
+  border: 1px solid #e8e8ed !important;
   border-radius: 12px !important;
   box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06) !important;
   padding: 6px !important;
@@ -1355,16 +1222,16 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   border-radius: 8px !important;
   font-size: 14px !important;
   cursor: pointer !important;
-  color: #374151 !important;
+  color: #424245 !important;
   transition: background .15s ease !important;
   white-space: nowrap !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-item:hover {
-  background: #f3f4f6 !important;
+  background: #f5f5f7 !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-item.active {
-  background: #eff6ff !important;
-  color: #2563eb !important;
+  background: #f2f7fd !important;
+  color: #0066cc !important;
   font-weight: 600 !important;
 }
 
@@ -1376,7 +1243,7 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   gap: 7px !important;
   height: 44px !important;
   padding: 0 22px !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
@@ -1391,7 +1258,7 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   height: 16px !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary {
-  background: #1f2937 !important;
+  background: #1d1d1f !important;
   color: #ffffff !important;
   margin-left: 8px !important;
   width: 44px !important;
@@ -1407,26 +1274,26 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   margin: 0 !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary:hover {
-  background: #374151 !important;
+  background: #424245 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 16px rgba(31,41,55,0.25) !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary:active {
-  transform: translateY(0) !important;
+  transform: var(--btn-press, scale(0.97)) !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--ghost {
   background: transparent !important;
-  color: #374151 !important;
-  border: 1px solid #d1d5db !important;
+  color: #424245 !important;
+  border: 1px solid #d2d2d7 !important;
   margin-left: 8px !important;
   border-radius: 22px !important;
   height: 44px !important;
   padding: 0 18px !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--ghost:hover {
-  background: #f9fafb !important;
-  border-color: #9ca3af !important;
-  color: #1f2937 !important;
+  background: #f5f5f7 !important;
+  border-color: #6e6e73 !important;
+  color: #1d1d1f !important;
 }
 
 /* hide spacer */
@@ -1449,15 +1316,15 @@ html.ilink-app body[data-app-page="competitions"] .il-search-bar.competition-too
   min-height: 56px !important;
   padding: 6px !important;
   background: #ffffff !important;
-  border: 1px solid #e8e8e6 !important;
+  border: 1px solid #e8e8ed !important;
   border-radius: 28px !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02) !important;
   transition: box-shadow .25s ease, border-color .25s ease;
   margin-bottom: 24px !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-search-bar.competition-toolbar:focus-within {
-  border-color: #c7d2fe !important;
-  box-shadow: 0 0 0 4px rgba(37,99,235,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
+  border-color: #d6e4fb !important;
+  box-shadow: 0 0 0 4px rgba(0,113,227,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
 }
 html.ilink-app body[data-app-page="competitions"] .competition-toolbar__search {
   flex: 1 1 auto !important;
@@ -1475,7 +1342,7 @@ html.ilink-app body[data-app-page="competitions"] .il-search-field--combo {
   height: 44px !important;
   padding: 0 14px 0 6px !important;
   border: none !important;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   background: transparent !important;
   box-shadow: none !important;
   transition: background .2s ease;
@@ -1491,7 +1358,7 @@ html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-se
   left: auto !important;
   width: 18px !important;
   height: 18px !important;
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
   margin: 0 !important;
   flex-shrink: 0 !important;
 }
@@ -1511,10 +1378,10 @@ html.ilink-app body[data-app-page="competitions"] .il-icon-search-btn {
   transition: background .2s ease !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-icon-search-btn:hover {
-  background: #f3f4f6 !important;
+  background: #f5f5f7 !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-icon-search-btn:hover svg {
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__input {
   border: none !important;
@@ -1522,14 +1389,14 @@ html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-se
   box-shadow: none !important;
   background: transparent !important;
   font-size: 14px !important;
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
   flex: 1 1 auto !important;
   min-width: 0 !important;
   height: auto !important;
   padding: 0 12px 0 0 !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__input::placeholder {
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__action {
   display: inline-flex !important;
@@ -1543,14 +1410,14 @@ html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-se
   font-size: 0 !important;
   cursor: pointer !important;
   border: none !important;
-  background: #1f2937 !important;
+  background: #1d1d1f !important;
   color: #ffffff !important;
   transition: all .2s ease !important;
   box-shadow: none !important;
   flex-shrink: 0 !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__action:hover {
-  background: #374151 !important;
+  background: #424245 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 16px rgba(31,41,55,0.25) !important;
 }
@@ -1573,27 +1440,27 @@ html.ilink-app body[data-app-page="competitions"] .competition-track-tabs {
 }
 html.ilink-app body[data-app-page="competitions"] .competition-track-tab {
   padding: 8px 16px !important;
-  border-radius: 20px !important;
+  border-radius: 18px !important;
   font-size: 14px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
-  border: 1px solid #e8e8e6 !important;
+  border: 1px solid #e8e8ed !important;
   background: #ffffff !important;
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
   transition: all .2s ease !important;
   box-shadow: none !important;
   line-height: 1.4 !important;
   height: auto !important;
 }
 html.ilink-app body[data-app-page="competitions"] .competition-track-tab:hover {
-  background: #f9fafb !important;
-  border-color: #d1d5db !important;
-  color: #1f2937 !important;
+  background: #f5f5f7 !important;
+  border-color: #d2d2d7 !important;
+  color: #1d1d1f !important;
 }
 html.ilink-app body[data-app-page="competitions"] .competition-track-tab.active {
-  background: #1f2937 !important;
+  background: #1d1d1f !important;
   color: #ffffff !important;
-  border-color: #1f2937 !important;
+  border-color: #1d1d1f !important;
   font-weight: 600 !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-search-field__action {
@@ -1623,13 +1490,13 @@ html.ilink-app body[data-app-page="community"] #channelTabs.il-search-bar__tags 
 }
 html.ilink-app body[data-app-page="community"] .il-search-bar__tag {
   padding: 8px 16px !important;
-  border-radius: 20px !important;
+  border-radius: 18px !important;
   font-size: 14px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
-  border: 1px solid #e8e8e6 !important;
+  border: 1px solid #e8e8ed !important;
   background: #ffffff !important;
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
   transition: all .2s ease !important;
   box-shadow: none !important;
   height: auto !important;
@@ -1637,14 +1504,14 @@ html.ilink-app body[data-app-page="community"] .il-search-bar__tag {
   margin: 0 !important;
 }
 html.ilink-app body[data-app-page="community"] .il-search-bar__tag:hover {
-  background: #f9fafb !important;
-  border-color: #d1d5db !important;
-  color: #1f2937 !important;
+  background: #f5f5f7 !important;
+  border-color: #d2d2d7 !important;
+  color: #1d1d1f !important;
 }
 html.ilink-app body[data-app-page="community"] .il-search-bar__tag.active {
-  background: #1f2937 !important;
+  background: #1d1d1f !important;
   color: #ffffff !important;
-  border-color: #1f2937 !important;
+  border-color: #1d1d1f !important;
   font-weight: 600 !important;
 }
 /* solid 实心主操作按钮（写文章等，区别于被隐藏的搜索primary） */
@@ -1659,9 +1526,9 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   font-size: 14px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
-  border: 1px solid var(--ui-border-strong, #d7d8db) !important;
-  background: var(--ui-surface-subtle, #f1f1f2) !important;
-  color: var(--ui-text, #282a2f) !important;
+  border: 1px solid var(--ui-border-strong, #d2d2d7) !important;
+  background: var(--ui-surface-subtle, #f5f5f7) !important;
+  color: var(--ui-text, #1d1d1f) !important;
   margin-left: 8px !important;
   white-space: nowrap !important;
   transition: all .2s ease !important;
@@ -1673,7 +1540,7 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   height: 16px !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--solid:hover {
-  background: var(--ui-border, #e5e5e7) !important;
+  background: var(--ui-border, #e8e8ed) !important;
   transform: none !important;
   box-shadow: none !important;
 }
@@ -1689,16 +1556,16 @@ html.ilink-app body[data-app-page="community"] .il-search-bar .il-search-bar__bt
   font-weight: 500 !important;
   cursor: pointer !important;
   background: transparent !important;
-  color: #374151 !important;
-  border: 1px solid #d1d5db !important;
+  color: #424245 !important;
+  border: 1px solid #d2d2d7 !important;
   margin-left: 8px !important;
   white-space: nowrap !important;
   transition: all .2s ease !important;
 }
 html.ilink-app body[data-app-page="community"] .il-search-bar .il-search-bar__btn--secondary:hover {
-  background: #f9fafb !important;
-  border-color: #9ca3af !important;
-  color: #1f2937 !important;
+  background: #f5f5f7 !important;
+  border-color: #6e6e73 !important;
+  color: #1d1d1f !important;
 }
 
 /* ====== Plan A: 分类pill收进单行扁胶囊（与组队大厅一致，一行） ====== */
@@ -1710,7 +1577,7 @@ html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"
   gap: 6px !important;
   margin: 0 !important;
   padding: 0 12px !important;
-  border-left: 1px solid #e8e8e6 !important;
+  border-left: 1px solid #e8e8ed !important;
   border-bottom: none !important;
   flex-shrink: 0 !important;
   height: 44px !important;
@@ -1740,7 +1607,7 @@ html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"
 html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .competition-track-tab,
 html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .il-search-bar__tag {
   padding: 6px 12px !important;
-  border-radius: 16px !important;
+  border-radius: 18px !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   white-space: nowrap !important;
@@ -1787,31 +1654,31 @@ html.ilink-app body[data-app-page="team-publish"] .il-surface {
   width: min(100%, 860px) !important;
   margin: 0 auto !important;
   padding: 4px 40px 28px !important;
-  border-radius: 20px !important;
-  box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 30px rgba(29,29,31,0.05) !important;
 }
 /* 表单卡片不是内容卡：跟 hover 上浮会把整张表单抬起来，观感很怪 */
 html.ilink-app body[data-app-page="team-publish"] .il-surface:hover {
   transform: none !important;
-  box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
+  box-shadow: 0 8px 30px rgba(29,29,31,0.05) !important;
 }
 
 /* 字段分组：六个字段糊成一整列会看不出层次，按「基本信息 / 队伍设置」切开 */
 html.ilink-app body[data-app-page="team-publish"] .tp-section {
   padding: 22px 0 !important;
-  border-bottom: 1px solid #f0efec !important;
+  border-bottom: 1px solid #f5f5f7 !important;
 }
 html.ilink-app body[data-app-page="team-publish"] .tp-section:first-child { padding-top: 24px !important; }
 html.ilink-app body[data-app-page="team-publish"] .tp-section__title {
   margin: 0 0 14px !important;
   font-size: 15px !important;
-  font-weight: 700 !important;
-  color: #1f2937 !important;
+  font-weight: 600 !important;
+  color: #1d1d1f !important;
 }
 html.ilink-app body[data-app-page="team-publish"] .tp-section__hint {
   margin: 0 0 18px !important;
   font-size: 12.5px !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
 }
 
 html.ilink-app body[data-app-page="team-publish"] .tp-field { margin-bottom: 16px !important; }
@@ -1828,19 +1695,19 @@ html.ilink-app body[data-app-page="team-publish"] .tp-grid .tp-field { margin-bo
 
 html.ilink-app body[data-app-page="team-publish"] .tp-req {
   margin-left: 2px !important;
-  color: #dc2626 !important;
+  color: #d70015 !important;
   font-weight: 600 !important;
 }
 html.ilink-app body[data-app-page="team-publish"] .tp-optional {
   margin-left: 4px !important;
   font-size: 12px !important;
   font-weight: 400 !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
 }
 html.ilink-app body[data-app-page="team-publish"] .tp-field__hint {
   margin: 7px 0 0 !important;
   font-size: 12.5px !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
 }
 
 html.ilink-app body[data-app-page="team-publish"] .il-form-label {
@@ -1848,7 +1715,7 @@ html.ilink-app body[data-app-page="team-publish"] .il-form-label {
   margin-bottom: 8px !important;
   font-size: 14px !important;
   font-weight: 600 !important;
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
 }
 /* 权重说明：layout.css 里那条 `.ilink-app input:not([type=checkbox])...`（五个 :not，
    每个都算一个属性选择器）权重是 (0,6,1)，只写 body[data-app-page] .il-form-input 是 (0,3,2)，
@@ -1857,14 +1724,14 @@ html.ilink-app body[data-app-page="team-publish"] .il-form-label {
 html.ilink-app body[data-app-page="team-publish"] .tp-card .tp-section .tp-field .il-form-input,
 html.ilink-app body[data-app-page="team-publish"] .il-form-select {
   width: 100% !important;
-  height: 46px !important;
-  min-height: 46px !important;
+  height: var(--field-height, 44px) !important;
+  min-height: var(--field-height, 44px) !important;
   padding: 0 15px !important;
-  border: 1px solid #e3e4e0 !important;
-  border-radius: 12px !important;
-  background: #ffffff !important;
-  font-size: 14.5px !important;
-  color: #1f2937 !important;
+  border: 1px solid var(--field-border, #d2d2d7) !important;
+  border-radius: var(--field-radius, 8px) !important;
+  background: var(--field-bg, #ffffff) !important;
+  font-size: var(--field-font-size, 14px) !important;
+  color: #1d1d1f !important;
   box-shadow: none !important;
   transition: border-color .18s ease, box-shadow .18s ease !important;
   box-sizing: border-box !important;
@@ -1886,12 +1753,12 @@ html.ilink-app body[data-app-page="team-publish"] select.il-form-select {
   background-position: right 14px center !important;
   padding-right: 40px !important;
 }
-html.ilink-app body[data-app-page="team-publish"] .il-form-input::placeholder { color: #b4b5b0 !important; }
+html.ilink-app body[data-app-page="team-publish"] .il-form-input::placeholder { color: var(--field-placeholder, #6e6e73) !important; }
 html.ilink-app body[data-app-page="team-publish"] .il-form-input:focus,
 html.ilink-app body[data-app-page="team-publish"] .il-form-select:focus {
   outline: none !important;
-  border-color: #1f2937 !important;
-  box-shadow: 0 0 0 3px rgba(31,41,55,0.08) !important;
+  border-color: var(--field-focus-border, #1d1d1f) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
 }
 
 /* 标签行：左标题右注解（字数统计 / 一直开放招募） */
@@ -1910,7 +1777,7 @@ html.ilink-app body[data-app-page="team-publish"] .tp-counter,
 html.ilink-app body[data-app-page="team-publish"] .tp-label-note {
   flex: 0 0 auto !important;
   font-size: 12.5px !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
   font-variant-numeric: tabular-nums !important;
 }
 
@@ -1928,26 +1795,26 @@ html.ilink-app body[data-app-page="team-publish"] .tp-chip {
   font-family: inherit !important;
   font-size: 14.5px !important;
   font-weight: 500 !important;
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
   background: #ffffff !important;
-  border: 1px solid #e3e4e0 !important;
+  border: 1px solid #d2d2d7 !important;
   border-radius: 12px !important;
   cursor: pointer !important;
   transition: background-color .16s ease, border-color .16s ease, color .16s ease !important;
 }
 html.ilink-app body[data-app-page="team-publish"] .tp-chip:hover {
-  border-color: #c9cac6 !important;
+  border-color: #c9c9cc !important;
   background: #fafaf9 !important;
 }
 html.ilink-app body[data-app-page="team-publish"] .tp-chip:focus-visible {
-  outline: 2px solid #1f2937 !important;
+  outline: 2px solid #1d1d1f !important;
   outline-offset: 2px !important;
 }
 /* 选中态：深色实底 + 白字，和全站主按钮同一套语言 */
 html.ilink-app body[data-app-page="team-publish"] .tp-chip.is-active {
   color: #ffffff !important;
-  background: #282a2f !important;
-  border-color: #282a2f !important;
+  background: #1d1d1f !important;
+  border-color: #1d1d1f !important;
   font-weight: 600 !important;
 }
 
@@ -1983,7 +1850,7 @@ html.ilink-app body[data-app-page="team-publish"] .tp-actions {
   padding-top: 22px !important;
 }
 html.ilink-app body[data-app-page="team-publish"] .il-btn {
-  height: 46px !important;
+  height: var(--btn-height-lg, 44px) !important;
   padding: 0 24px !important;
   border-radius: 12px !important;
   font-size: 14.5px !important;
@@ -2021,27 +1888,28 @@ html.ilink-app body[data-app-page="team-publish"] .il-btn {
 /* ---------- B. 组队/导师详情：信息网格卡片 ---------- */
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view,
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-card {
-  border-radius: 20px !important;
-  box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 30px rgba(29,29,31,0.05) !important;
   overflow: hidden !important;
 }
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__header,
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__header {
   padding: 28px 32px 22px !important;
-  border-bottom: 1px solid #f0efec !important;
+  border-bottom: 1px solid #f5f5f7 !important;
 }
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__eyebrow,
 html.ilink-app body[data-app-page="teacher-detail"] .detail-view__eyebrow {
   font-size: 12.5px !important;
   font-weight: 600 !important;
   letter-spacing: .04em !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
   text-transform: uppercase !important;
   margin-bottom: 8px !important;
 }
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__title {
-  font-size: 26px !important;
-  line-height: 1.3 !important;
+  font-size: var(--type-display-size, 32px) !important;
+  line-height: var(--type-display-leading, 1.3) !important;
+  letter-spacing: var(--type-display-tracking, -0.02em) !important;
 }
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__body,
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__body { padding: 28px 32px 32px !important; }
@@ -2056,38 +1924,38 @@ html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-det
   flex-direction: column !important;
   gap: 7px !important;
   padding: 14px 16px !important;
-  background: #f8f8f6 !important;
-  border: 1px solid #f0efec !important;
-  border-bottom: 1px solid #f0efec !important;
-  border-radius: 14px !important;
+  background: #f5f5f7 !important;
+  border: 1px solid #f5f5f7 !important;
+  border-bottom: 1px solid #f5f5f7 !important;
+  border-radius: 12px !important;
   grid-template-columns: 1fr !important;
 }
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row--block {
   grid-column: 1 / -1 !important;
 }
-html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row dt {
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row .detail-view__term {
   font-size: 12.5px !important;
   font-weight: 500 !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
   margin: 0 !important;
 }
-html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row dd {
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row .detail-view__value {
   margin: 0 !important;
   font-size: 15px !important;
   font-weight: 600 !important;
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
   line-height: 1.5 !important;
 }
-html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row--block dd { font-weight: 400 !important; }
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__row--block .detail-view__value { font-weight: 400 !important; }
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__text {
   font-size: 14.5px !important;
   line-height: 1.75 !important;
-  color: #4b5563 !important;
+  color: #424245 !important;
 }
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__actions {
   margin-top: 22px !important;
   padding-top: 22px !important;
-  border-top: 1px solid #f0efec !important;
+  border-top: 1px solid #f5f5f7 !important;
   display: flex !important;
   flex-wrap: wrap !important;
   gap: 12px !important;
@@ -2125,7 +1993,7 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot
   overflow: hidden !important;
   flex-shrink: 0 !important;
   background: #eef0ef !important;
-  box-shadow: 0 4px 14px rgba(17,24,39,0.10) !important;
+  box-shadow: 0 4px 14px rgba(29,29,31,0.10) !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot img {
   /* display 不能加 !important：onerror 会写内联 display:none 让位给文字头像，
@@ -2142,26 +2010,26 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__title-wrap 
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply {
   margin-top: 16px !important;
   padding: 22px !important;
-  background: #f8f8f6 !important;
-  border: 1px solid #f0efec !important;
-  border-radius: 16px !important;
+  background: #f5f5f7 !important;
+  border: 1px solid #f5f5f7 !important;
+  border-radius: 18px !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__section-label {
   font-size: 16px !important;
-  font-weight: 650 !important;
-  color: #1f2937 !important;
+  font-weight: 600 !important;
+  color: #1d1d1f !important;
   margin-bottom: 6px !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-hint {
   font-size: 13px !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
   margin-bottom: 14px !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea {
   width: 100% !important;
   min-height: 116px !important;
   padding: 13px 15px !important;
-  border: 1px solid #e3e4e0 !important;
+  border: 1px solid #d2d2d7 !important;
   border-radius: 12px !important;
   background: #ffffff !important;
   font-size: 14px !important;
@@ -2172,7 +2040,7 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea {
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea:focus {
   outline: none !important;
-  border-color: #1f2937 !important;
+  border-color: #1d1d1f !important;
   box-shadow: 0 0 0 3px rgba(31,41,55,0.08) !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actions { margin-top: 14px !important; }
@@ -2183,10 +2051,10 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actio
   border-radius: 12px !important;
   font-weight: 600 !important;
   border: none !important;
-  background: #1f2937 !important;
-  color: #fff !important;
+  background: #1d1d1f !important;
+  color: #ffffff !important;
 }
-html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit:hover { background: #374151 !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit:hover { background: #424245 !important; }
 
 /* ============================================================
    社区文章详情页排版优化
@@ -2194,71 +2062,67 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit:hove
 html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb {
   margin-bottom: 18px !important;
   font-size: 13.5px !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb a {
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
   text-decoration: none !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb a:hover { color: #1f2937 !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb__current { color: #1f2937 !important; font-weight: 600 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb a:hover { color: #1d1d1f !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb__current { color: #1d1d1f !important; font-weight: 600 !important; }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-card,
 html.ilink-app body[data-app-page="community-article"] .community-article-comments {
-  border: 1px solid #f0efec !important;
-  border-radius: 20px !important;
-  box-shadow: 0 8px 30px rgba(17,24,39,0.05) !important;
+  border: 1px solid #f5f5f7 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 30px rgba(29,29,31,0.05) !important;
   overflow: hidden !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article-comments { margin-top: 20px !important; }
 
-html.ilink-app body[data-app-page="community-article"] .community-article-card__header { padding: 30px 34px 20px !important; border-bottom: 1px solid #f0efec !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-card__header { padding: 30px 34px 20px !important; border-bottom: 1px solid #f5f5f7 !important; }
 html.ilink-app body[data-app-page="community-article"] .community-article-card__header-top {
   display: flex !important; align-items: flex-start !important; justify-content: space-between !important; gap: 18px !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__title {
-  font-size: 28px !important; line-height: 1.35 !important; font-weight: 700 !important;
-  color: #1f2937 !important; letter-spacing: -0.02em !important;
+  font-size: 28px !important; line-height: 1.35 !important; font-weight: 600 !important;
+  color: #1d1d1f !important; letter-spacing: -0.02em !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions {
   display: flex !important; align-items: center !important; gap: 10px !important; flex-shrink: 0 !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn {
-  min-height: 40px !important; border-radius: 11px !important; border: 1px solid #e8e8e6 !important;
-  background: #fff !important; color: #4b5563 !important; font-size: 13px !important; padding: 8px 13px !important;
+  min-height: var(--btn-height, 36px) !important; border-radius: var(--ui-radius-control, 8px) !important; border: 1px solid var(--ui-border-strong, #d2d2d7) !important;
+  background: #ffffff !important; color: #424245 !important; font-size: 13px !important; padding: 0 14px !important;
   transition: all .18s ease !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn:hover {
-  background: #f8f8f6 !important; border-color: #d1d5db !important; color: #1f2937 !important;
+  background: #f5f5f7 !important; border-color: #d2d2d7 !important; color: #1d1d1f !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleLikeBtn.community-article__action-btn--active,
-html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleLikeBtn[aria-pressed="true"] {
-  background: #fff !important; border-color: #d1d5db !important; color: #4b5563 !important;
-}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleLikeBtn[aria-pressed="true"],
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleFavBtn.community-article__action-btn--active,
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleFavBtn[aria-pressed="true"] {
-  background: #fff !important; border-color: #d1d5db !important; color: #4b5563 !important;
+  background: var(--nav-active-bg, #ECEDEF) !important; border-color: #d2d2d7 !important; color: #1d1d1f !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleLikeBtn:is(.community-article__action-btn--active, [aria-pressed="true"]) svg {
-  color: #2563eb !important;
-}
+html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleLikeBtn:is(.community-article__action-btn--active, [aria-pressed="true"]) svg,
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions #articleFavBtn:is(.community-article__action-btn--active, [aria-pressed="true"]) svg {
-  color: #d97706 !important;
+  color: var(--ui-text, #1d1d1f) !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn:is(.community-article__action-btn--active, [aria-pressed="true"]) .community-article__action-num {
-  background: rgba(17, 24, 39, 0.08) !important;
-  color: #4b5563 !important;
+  background: rgba(29, 29, 31, 0.08) !important;
+  color: #424245 !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__header-back {
-  min-height: 40px !important; border-radius: 11px !important; display: inline-flex !important; align-items: center !important;
-  border: 1px solid #e8e8e6 !important; background: #fff !important; color: #4b5563 !important;
-  padding: 8px 16px !important; font-size: 13px !important; font-weight: 500 !important; text-decoration: none !important;
+  min-height: var(--btn-height, 36px) !important; border-radius: var(--ui-radius-control, 8px) !important; display: inline-flex !important; align-items: center !important;
+  border: 1px solid var(--ui-border-strong, #d2d2d7) !important; background: #ffffff !important; color: #424245 !important;
+  padding: 0 14px !important; font-size: 13px !important; font-weight: 500 !important; text-decoration: none !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article__header-back:hover { background: #f8f8f6 !important; color:#1f2937 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__header-back:hover { background: #f5f5f7 !important; color:#1d1d1f !important; }
 
 html.ilink-app body[data-app-page="community-article"] .community-article__meta-stats {
-  margin-top: 18px !important; padding-top: 16px !important; border-top: 1px solid #f0efec !important;
-  font-size: 13.5px !important; color: #9ca3af !important; gap: 6px 10px !important;
+  margin-top: 18px !important; padding-top: 16px !important; border-top: 1px solid #f5f5f7 !important;
+  font-size: 13.5px !important; color: #6e6e73 !important; gap: 6px 10px !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__meta-author { display:inline-flex !important; align-items:center !important; gap:7px !important; }
 html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot {
@@ -2273,8 +2137,8 @@ html.ilink-app body[data-app-page="community-article"] .community-article__avata
   width:30px !important; height:30px !important;
   min-width:30px !important; max-width:30px !important; min-height:30px !important; max-height:30px !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot .il-avatar-fallback { font-size:13px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article__meta-item { color: #6b7280 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__avatar-slot .il-avatar-fallback { font-size: 13px !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article__meta-item { color: #6e6e73 !important; }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-card__body { padding: 28px 34px 32px !important; }
 
@@ -2282,8 +2146,8 @@ html.ilink-app body[data-app-page="community-article"] .community-article-card__
 html.ilink-app body[data-app-page="community-article"] .community-article-comments__header {
   padding: 22px 34px 0 !important; display:flex !important; align-items:baseline !important; gap:10px !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-comments__title { font-size: 18px !important; font-weight: 700 !important; color:#1f2937 !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article-comments__hint { font-size: 13px !important; color:#9ca3af !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__title { font-size: 18px !important; font-weight: 600 !important; color:#1d1d1f !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__hint { font-size: 13px !important; color:#6e6e73 !important; }
 html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding: 18px 34px 28px !important; }
 html.ilink-app body[data-app-page="community-article"] .community-article-comment-list { margin-top: 0 !important; }
 
@@ -2294,7 +2158,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer {
   gap: 12px !important;
   padding: 0 0 20px !important;
   margin-bottom: 20px !important;
-  border-bottom: 1px solid #f3f4f6 !important;
+  border-bottom: 1px solid #f5f5f7 !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar {
@@ -2317,7 +2181,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__ava
   align-items: center !important;
   justify-content: center !important;
   font-size: 14px !important;
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
 }
 
 /* 收起态：假输入框 */
@@ -2329,10 +2193,10 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tri
   gap: 10px !important;
   min-height: 44px !important;
   padding: 10px 14px !important;
-  background: #f9fafb !important;
-  border: 1px solid #e5e7eb !important;
+  background: #f5f5f7 !important;
+  border: 1px solid #e8e8ed !important;
   border-radius: 12px !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
   font-size: 13.5px !important;
   font-weight: 400 !important;
   text-align: left !important;
@@ -2344,7 +2208,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tri
   width: 16px !important;
   height: 16px !important;
   flex: 0 0 16px !important;
-  color: #b6b8bd !important;
+  color: #b6b6bb !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger[hidden] {
@@ -2352,13 +2216,13 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tri
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger:hover {
-  background: #f3f4f6 !important;
-  border-color: #d1d5db !important;
+  background: #f5f5f7 !important;
+  border-color: #d2d2d7 !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger:focus-visible {
   outline: none !important;
-  border-color: #1f2937 !important;
+  border-color: #1d1d1f !important;
   box-shadow: 0 0 0 3px rgba(31, 41, 55, .06) !important;
 }
 
@@ -2366,8 +2230,8 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tri
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__editor {
   flex: 1 1 auto !important;
   min-width: 0 !important;
-  background: #f9fafb !important;
-  border: 1px solid #e5e7eb !important;
+  background: #f5f5f7 !important;
+  border: 1px solid #e8e8ed !important;
   border-radius: 12px !important;
   overflow: hidden !important;
   animation: ilCommentEditorIn .18s ease both;
@@ -2379,7 +2243,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__edi
 
 @keyframes ilCommentEditorIn {
   from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea {
@@ -2390,7 +2254,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tex
   padding: 12px 16px 8px !important;
   border: 0 !important;
   background: transparent !important;
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
   font-family: inherit !important;
   font-size: 13.5px !important;
   line-height: 1.7 !important;
@@ -2405,7 +2269,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tex
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea::placeholder {
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__toolbar {
@@ -2415,7 +2279,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__too
   gap: 12px !important;
   min-height: 40px !important;
   padding: 6px 10px !important;
-  border-top: 1px solid #eceef1 !important;
+  border-top: 1px solid #e8e8ed !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tools {
@@ -2435,8 +2299,8 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-tool {
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
-  border-radius: 6px !important;
-  color: #9ca3af !important;
+  border-radius: 8px !important;
+  color: #6e6e73 !important;
   cursor: pointer !important;
   transition: background-color .15s ease, color .15s ease !important;
 }
@@ -2447,8 +2311,8 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-tool svg {
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-tool:hover {
-  background: #eceef1 !important;
-  color: #4b5563 !important;
+  background: #e8e8ed !important;
+  color: #424245 !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__actions {
@@ -2459,9 +2323,9 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__act
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count {
-  font-size: 10.5px !important;
+  font-size: 11px !important;
   font-weight: 500 !important;
-  color: #9ca3af !important;
+  color: #6e6e73 !important;
   font-variant-numeric: tabular-nums !important;
 }
 
@@ -2470,11 +2334,11 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__cou
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count.is-warn {
-  color: #d97706 !important;
+  color: #8a5300 !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count.is-over {
-  color: #dc2626 !important;
+  color: #d70015 !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-cancel {
@@ -2483,7 +2347,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-cancel {
   border: 0 !important;
   background: transparent !important;
   border-radius: 8px !important;
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
@@ -2491,8 +2355,8 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-cancel {
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-cancel:hover {
-  background: #eceef1 !important;
-  color: #1f2937 !important;
+  background: #e8e8ed !important;
+  color: #1d1d1f !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit {
@@ -2500,8 +2364,8 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-submit {
   padding: 0 16px !important;
   border: 1px solid transparent !important;
   border-radius: 8px !important;
-  background: #e5e7eb !important;
-  color: #9ca3af !important;
+  background: #e8e8ed !important;
+  color: #6e6e73 !important;
   font-size: 13px !important;
   font-weight: 600 !important;
   cursor: not-allowed !important;
@@ -2509,21 +2373,21 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-submit {
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready {
-  background: var(--ui-surface-subtle, #f1f1f2) !important;
-  color: var(--ui-text, #282a2f) !important;
+  background: var(--btn-primary-bg, #0066cc) !important;
+  color: var(--btn-primary-text, #ffffff) !important;
   cursor: pointer !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready:hover {
-  background: var(--ui-border, #e5e5e7) !important;
+  background: var(--ui-border, #e8e8ed) !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready:active {
-  transform: scale(.97) !important;
+  transform: var(--btn-press, scale(0.97)) !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-loading {
-  background: #1f2937 !important;
+  background: #1d1d1f !important;
   color: #ffffff !important;
   cursor: progress !important;
 }
@@ -2532,8 +2396,8 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-loa
 html.ilink-app body[data-app-page="community-article"] .community-article-comment {
   padding: 14px 12px !important;
   margin: 0 -12px !important;
-  border-radius: 10px !important;
-  border-bottom: 1px solid #f3f4f6 !important;
+  border-radius: 12px !important;
+  border-bottom: 1px solid #f5f5f7 !important;
   transition: background-color .15s ease !important;
 }
 
@@ -2563,21 +2427,21 @@ html.ilink-app body[data-app-page="community-article"] .community-article-commen
   padding: 2px 8px !important;
   border: 0 !important;
   background: transparent !important;
-  border-radius: 6px !important;
-  color: #9ca3af !important;
+  border-radius: 8px !important;
+  color: #6e6e73 !important;
   font-size: 12px !important;
   cursor: pointer !important;
   transition: background-color .15s ease, color .15s ease !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__action:hover {
-  background: #f3f4f6 !important;
-  color: #1f2937 !important;
+  background: #f5f5f7 !important;
+  color: #1d1d1f !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__delete:hover {
   background: #fee2e2 !important;
-  color: #dc2626 !important;
+  color: #d70015 !important;
 }
 
 /* 回复列表：单层缩进，左侧细引导线 */
@@ -2587,7 +2451,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-replies {
   gap: 2px !important;
   margin-top: 10px !important;
   padding-left: 12px !important;
-  border-left: 2px solid #f3f4f6 !important;
+  border-left: 2px solid #f5f5f7 !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply {
@@ -2614,7 +2478,7 @@ html.ilink-app body[data-app-page="community-article"] .community-article-commen
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__reply-to {
   margin-right: 3px !important;
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
   font-weight: 500 !important;
 }
 
@@ -2622,9 +2486,9 @@ html.ilink-app body[data-app-page="community-article"] .community-article-commen
 html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box {
   margin-top: 10px !important;
   padding: 8px 10px !important;
-  background: #f9fafb !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 10px !important;
+  background: #f5f5f7 !important;
+  border: 1px solid #e8e8ed !important;
+  border-radius: 12px !important;
   animation: ilCommentEditorIn .18s ease both;
 }
 
@@ -2635,7 +2499,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box__in
   padding: 4px 2px !important;
   border: 0 !important;
   background: transparent !important;
-  color: #1f2937 !important;
+  color: #1d1d1f !important;
   font-family: inherit !important;
   font-size: 13px !important;
   line-height: 1.65 !important;
@@ -2669,10 +2533,10 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-more[hidden] 
 html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn {
   height: 34px !important;
   padding: 0 18px !important;
-  border: 1px solid #e5e7eb !important;
-  border-radius: 9px !important;
+  border: 1px solid #e8e8ed !important;
+  border-radius: 8px !important;
   background: #ffffff !important;
-  color: #6b7280 !important;
+  color: #6e6e73 !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   cursor: pointer !important;
@@ -2680,9 +2544,9 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn {
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn:hover {
-  background: #f9fafb !important;
-  border-color: #d1d5db !important;
-  color: #1f2937 !important;
+  background: #f5f5f7 !important;
+  border-color: #d2d2d7 !important;
+  color: #1d1d1f !important;
 }
 
 /* 平板：隐藏工具栏尾部提示；移动端：精简图标、头像缩小 */
@@ -2708,15 +2572,15 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn:hov
   }
 }
 html.ilink-app body[data-app-page="community-article"] .community-article-comment-list__empty {
-  padding: 22px !important; text-align:center !important; color:#9ca3af !important; font-size:13.5px !important;
-  background:#f9fafb !important; border:1px solid #f3f4f6 !important; border-radius:12px !important;
+  padding: 22px !important; text-align:center !important; color:#6e6e73 !important; font-size: 13.5px !important;
+  background:#f5f5f7 !important; border:1px solid #f5f5f7 !important; border-radius:12px !important;
 }
 @media (max-width: 700px) {
   html.ilink-app body[data-app-page="community-article"] .community-article-card__header,
   html.ilink-app body[data-app-page="community-article"] .community-article-card__body,
   html.ilink-app body[data-app-page="community-article"] .community-article-comments__header,
   html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding-left:20px !important; padding-right:20px !important; }
-  html.ilink-app body[data-app-page="community-article"] .community-article__title { font-size:23px !important; }
+  html.ilink-app body[data-app-page="community-article"] .community-article__title { font-size: 23px !important; }
 }
 
 /* ====== 组队详情：成员横向同一行排列 ====== */
@@ -2748,7 +2612,7 @@ html.ilink-app .tp-comp-menu {
   top: calc(100% + 6px);
   z-index: 30;
   background: #ffffff;
-  border: 1px solid #e3e4e0;
+  border: 1px solid #d2d2d7;
   border-radius: 12px;
   box-shadow: 0 12px 30px -10px rgba(20, 25, 40, 0.18);
   padding: 6px;
@@ -2768,7 +2632,7 @@ html.ilink-app .tp-comp-item {
   cursor: pointer;
   font-family: inherit;
   font-size: 13.5px;
-  color: #1f2937;
+  color: #1d1d1f;
   text-align: left;
   transition: background-color .14s ease;
 }
@@ -2780,29 +2644,30 @@ html.ilink-app .tp-comp-name {
 }
 html.ilink-app .tp-comp-org {
   font-size: 12px;
-  color: #8a8c87;
+  color: #6e6e73;
   flex-shrink: 0;
 }
 html.ilink-app .tp-comp-empty {
   padding: 12px;
   font-size: 12.5px;
-  color: #8a8c87;
+  color: #6e6e73;
   text-align: center;
 }
 html.ilink-app .tp-comp-toggle {
   border: 0;
   background: transparent;
-  padding: 6px 0;
+  min-height: 24px;
+  padding: 4px 0;
   margin-top: 8px;
   font-size: 13px;
   font-family: inherit;
-  color: #52555c;
+  color: #424245;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 html.ilink-app .tp-comp-toggle:hover {
-  color: #282a2f;
+  color: #1d1d1f;
 }
 
 /* 组队大厅卡片：参赛竞赛一行 */
@@ -2812,12 +2677,12 @@ html.ilink-app .il-team-competition {
   gap: 6px;
   margin-top: 8px;
   font-size: 13px;
-  color: #52555c;
+  color: #424245;
   overflow-wrap: anywhere;
 }
 html.ilink-app .il-team-competition svg {
   flex-shrink: 0;
-  color: #8a8c87;
+  color: #6e6e73;
 }
 
 }
@@ -2836,7 +2701,7 @@ html.ilink-app .tp-helper-row {
 }
 
 html.ilink-app .tp-helper-hint {
-  color: #9aa1ab;
+  color: #6e6e73;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -2859,7 +2724,7 @@ html.ilink-app .tp-comp-toggle {
   font-size: 12px;
   font-family: inherit;
   font-weight: 500;
-  color: #6366f1;
+  color: #0066cc;
   cursor: pointer;
   text-decoration: none;
   border-bottom: 1px solid transparent;
@@ -2872,6 +2737,32 @@ html.ilink-app .tp-comp-toggle svg {
 }
 
 html.ilink-app .tp-comp-toggle:hover {
-  color: #4f46e5;
-  border-bottom-color: #6366f1;
+  color: #0066cc;
+  border-bottom-color: #0066cc;
+}
+/* 分页链接在浅底上需达到 4.5:1，避免 Bootstrap 默认灰过低 */
+html.ilink-app .pagination .page-link {
+  color: #424245 !important;
+}
+html.ilink-app .pagination .page-item.disabled .page-link {
+  color: #6e6e73 !important;
+  background: #f5f5f7 !important;
+  opacity: 1 !important;
+}
+
+/* 成果详情 / 社区文章：正文容器不再套灰底（本文件最后加载） */
+html.ilink-app body:is([data-app-page="asset-detail"],[data-app-page="community-article"]) .desc-box,
+html.ilink-app body:is([data-app-page="asset-detail"],[data-app-page="community-article"]) .insight-section,
+html.ilink-app body:is([data-app-page="asset-detail"],[data-app-page="community-article"]) .insight-body,
+html.ilink-app body:is([data-app-page="asset-detail"],[data-app-page="community-article"]) .desc-body {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app body:is([data-app-page="asset-detail"],[data-app-page="community-article"]) .insight-header,
+html.ilink-app body:is([data-app-page="asset-detail"],[data-app-page="community-article"]) .desc-header {
+  border-bottom: 1px solid var(--ui-border) !important;
+  background: transparent !important;
 }

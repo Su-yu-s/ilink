@@ -6,9 +6,9 @@
    ======================================== */
 
 body[data-app-page="gallery"] {
-    --accent: #4b5563;
-    --accent-dark: #374151;
-    --accent-light: #f3f4f6;
+    --accent: #424245;
+    --accent-dark: #424245;
+    --accent-light: #f5f5f7;
 }
 
 /* === Hero Section === */
@@ -25,21 +25,21 @@ body[data-app-page="gallery"] .il-hero__badge {
     gap: 6px;
     height: 28px;
     padding: 0 12px;
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
+    background: #f5f5f7;
+    border: 1px solid #e8e8ed;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #6b7280;
+    color: #6e6e73;
     margin-bottom: 16px;
 }
 
 body[data-app-page="gallery"] .il-hero__badge svg {
     width: 14px;
     height: 14px;
-    color: #6b7280;
+    color: #6e6e73;
 }
 
 body[data-app-page="gallery"] .il-hero__title {
@@ -69,10 +69,10 @@ body[data-app-page="gallery"] .gc-grid {
 body[data-app-page="gallery"] .result-card,
 body[data-app-page="gallery"] .gc-card {
   background: #ffffff;
-  border: 1px solid #e8e2d9;
-  border-radius: 16px;
+  border: 1px solid #d2d2d7;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04);
+  box-shadow: 0 1px 3px rgba(29, 29, 31, 0.04);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -80,12 +80,12 @@ body[data-app-page="gallery"] .result-card:hover,
 body[data-app-page="gallery"] .gc-card:hover {
   transform: translateY(-2px);
   border-color: #d4ccc0;
-  box-shadow: 0 12px 34px rgba(44, 36, 25, 0.1);
+  box-shadow: 0 12px 34px rgba(29, 29, 31, 0.1);
 }
 
 body[data-app-page="gallery"] .result-card.featured {
-  border-color: #b8956a;
-  box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04), 0 0 0 1px #f5efe6;
+  border-color: #0066cc;
+  box-shadow: 0 1px 3px rgba(29, 29, 31, 0.04), 0 0 0 1px #f5f5f7;
 }
 
 body[data-app-page="gallery"] .result-card__cover,
@@ -110,7 +110,7 @@ body[data-app-page="gallery"] .gc-card:hover .gc-cover img {
 
 body[data-app-page="gallery"] .result-card__cover-overlay,
 body[data-app-page="gallery"] .gc-cover-overlay {
-  background: linear-gradient(to bottom, rgba(44, 36, 25, 0), rgba(44, 36, 25, 0.4));
+  background: linear-gradient(to bottom, rgba(29, 29, 31, 0), rgba(29, 29, 31, 0.4));
 }
 
 body[data-app-page="gallery"] .result-card__favorite,
@@ -122,14 +122,14 @@ body[data-app-page="gallery"] .gc-cover-badge {
   border-radius: 50%;
   border: 1px solid rgba(232, 226, 217, 0.72);
   background: rgba(255, 255, 255, 0.82);
-  color: #6b5e4f;
-  box-shadow: 0 8px 20px rgba(44, 36, 25, 0.08);
+  color: #6e6e73;
+  box-shadow: 0 8px 20px rgba(29, 29, 31, 0.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
 body[data-app-page="gallery"] .result-card:hover .gc-cover-badge {
-  background: #b8956a;
+  background: #0066cc;
   color: #ffffff;
   transform: none;
 }
@@ -167,18 +167,18 @@ body[data-app-page="gallery"] .result-card .il-publisher-avatar__img {
 }
 
 body[data-app-page="gallery"] .result-card .il-avatar-wrap {
-  border: 2px solid #e8e2d9;
+  border: 2px solid #d2d2d7;
   transition: border-color 0.3s ease, transform 0.3s ease;
 }
 
 body[data-app-page="gallery"] .result-card .il-publisher-avatar:hover .il-avatar-wrap {
-  border-color: #b8956a;
+  border-color: #0066cc;
   transform: scale(1.05);
 }
 
 body[data-app-page="gallery"] .result-card__author-name,
 body[data-app-page="gallery"] .gc-author-name {
-  color: #2c2419;
+  color: #1d1d1f;
   font-size: 14px;
   font-weight: 600;
 }
@@ -189,17 +189,17 @@ body[data-app-page="gallery"] .gallery-tag[class*="gallery-tag--"] {
   display: inline-flex;
   align-items: center;
   padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid #f5efe6;
-  background: #faf6f0;
-  color: #a08055;
+  border-radius: 8px;
+  border: 1px solid #f5f5f7;
+  background: #f5f5f7;
+  color: #0066cc;
   font-size: 13px;
   font-weight: 600;
 }
 
 body[data-app-page="gallery"] .result-card__date,
 body[data-app-page="gallery"] .gc-date {
-  color: #a89a8a;
+  color: #6e6e73;
   font-size: 13px;
 }
 
@@ -210,19 +210,19 @@ body[data-app-page="gallery"] .gc-title {
   font-size: 20px;
   font-weight: 600;
   line-height: 1.45;
-  color: #2c2419;
+  color: #1d1d1f;
   letter-spacing: 0;
   transition: color 0.3s ease;
 }
 
 body[data-app-page="gallery"] .result-card:hover .gc-title {
-  color: #a08055;
+  color: #0066cc;
 }
 
 body[data-app-page="gallery"] .result-card__desc,
 body[data-app-page="gallery"] .gc-desc {
   margin: 0;
-  color: #6b5e4f;
+  color: #6e6e73;
   font-size: 14px;
   line-height: 1.7;
   display: -webkit-box;
@@ -235,7 +235,7 @@ body[data-app-page="gallery"] .result-card__divider {
   width: 100%;
   height: 1px;
   margin: 16px 0;
-  background: linear-gradient(90deg, #e8e2d9, transparent);
+  background: linear-gradient(90deg, #d2d2d7, transparent);
 }
 
 body[data-app-page="gallery"] .result-card__footer,
@@ -264,7 +264,7 @@ body[data-app-page="gallery"] .gc-action {
   border-radius: 8px;
   border: 0;
   background: transparent;
-  color: #a89a8a;
+  color: #6e6e73;
   font-size: 13px;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -272,13 +272,13 @@ body[data-app-page="gallery"] .gc-action {
 
 body[data-app-page="gallery"] .result-card__action:hover,
 body[data-app-page="gallery"] .gc-action:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: #f5f5f7;
+  color: #424245;
 }
 
 body[data-app-page="gallery"] .gc-action--on {
-  background: #f3f4f6;
-  color: #374151;
+  background: #f5f5f7;
+  color: #424245;
 }
 
 body[data-app-page="gallery"] .result-card__arrow,
@@ -286,16 +286,16 @@ body[data-app-page="gallery"] .gc-arrow {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 1px solid #e8e2d9;
+  border: 1px solid #d2d2d7;
   background: #ffffff;
-  color: #2c2419;
+  color: #1d1d1f;
   transition: all 0.3s ease;
 }
 
 body[data-app-page="gallery"] .result-card:hover .gc-arrow {
-  background: #3d3229;
-  border-color: #3d3229;
-  color: #faf6f0;
+  background: #1d1d1f;
+  border-color: #1d1d1f;
+  color: #f5f5f7;
   transform: none;
 }
 
@@ -349,16 +349,16 @@ body[data-app-page="gallery"] .result-card__avatar-link {
   align-items: center !important;
   justify-content: center !important;
   overflow: hidden !important;
-  border: 2px solid #e8e2d9 !important;
+  border: 2px solid #d2d2d7 !important;
   border-radius: 50% !important;
-  background: #faf6f0 !important;
-  color: #a08055 !important;
+  background: #f5f5f7 !important;
+  color: #0066cc !important;
   text-decoration: none !important;
   transition: border-color 0.3s ease, transform 0.3s ease !important;
 }
 
 body[data-app-page="gallery"] .result-card__avatar-link:hover {
-  border-color: #b8956a !important;
+  border-color: #0066cc !important;
   transform: scale(1.05) !important;
 }
 
@@ -375,7 +375,7 @@ body[data-app-page="gallery"] .result-card__avatar-fallback {
   align-items: center !important;
   justify-content: center !important;
   font-size: 15px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   line-height: 1 !important;
 }
 
@@ -391,18 +391,18 @@ body[data-app-page="gallery"] .pagination-wrap {
 }
 
 body[data-app-page="gallery"] .page-btn {
-    min-width: 40px;
-    min-height: 40px;
-    height: 40px;
+    min-width: var(--pagination-size, 36px);
+    min-height: var(--pagination-size, 36px);
+    height: var(--pagination-size, 36px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0 16px;
-    border-radius: 10px;
+    padding: 0 14px;
+    border-radius: var(--pagination-radius, 8px);
     font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary, #5c5c5c);
-    background: var(--bg-white, #fff);
+    background: var(--bg-white, #ffffff);
     border: 1px solid var(--border-light, #ebeae8);
     cursor: pointer;
     font-family: var(--font-sans, "Inter", "Microsoft YaHei", "微软雅黑", sans-serif);
@@ -410,14 +410,14 @@ body[data-app-page="gallery"] .page-btn {
 }
 
 body[data-app-page="gallery"] .page-btn:hover:not(:disabled) {
-    background: var(--color-gray-100, #f3f4f6);
-    border-color: var(--border-default, #d1d5db);
-    color: var(--accent-dark, #374151);
+    background: var(--color-gray-100, #f5f5f7);
+    border-color: var(--border-default, #d2d2d7);
+    color: var(--accent-dark, #424245);
 }
 
 body[data-app-page="gallery"] .page-btn.active {
     background: var(--text-primary, #1a1a1a);
-    color: var(--text-inverse, #fff);
+    color: var(--text-inverse, #ffffff);
     border-color: var(--text-primary, #1a1a1a);
 }
 

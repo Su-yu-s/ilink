@@ -104,7 +104,7 @@ html.ilink-app,
   font-family: var(--font-display);
   font-size: clamp(1.75rem, 4vw, 2.25rem);
   font-weight: var(--font-weight-bold);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.022em;
   line-height: var(--line-height-tight);
   color: var(--text-primary);
   margin: 0 0 var(--space-2);
@@ -206,26 +206,77 @@ html.ilink-app,
   max-width: 24rem;
 }
 
+/* 原生控件的 UA 字体是 Arial，中文会回退到雅黑，和全站 Inter/Noto 字体栈不一致。
+   显式继承一次，让按钮、输入框、下拉都使用页面字体。 */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 /* --- Form polish (Bootstrap + native) --- */
+/* 字段基座：高度、描边、圆角只在这里定义一次。各页的 padding 纵向一律清零，
+   否则同一档字号会因为页面 padding 不同长出 42/45/46/48 四种高度。 */
 .ilink-app input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
-.ilink-app textarea,
-.ilink-app select,
-.ilink-app .form-control {
-  border-radius: var(--radius-md) !important;
-  border-color: var(--border-default) !important;
+.ilink-app select {
+  border-radius: var(--field-radius, 8px) !important;
+  border-color: var(--field-border, #d2d2d7) !important;
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast) !important;
-  min-height: 42px !important;
+  min-height: var(--field-height-current, var(--field-height, 44px)) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }
 
-.ilink-app input:focus,
+.ilink-app textarea,
+.ilink-app .form-control {
+  border-radius: var(--field-radius, 8px) !important;
+  border-color: var(--field-border, #d2d2d7) !important;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast) !important;
+}
+
+/* 输入框的 :not 链让基础描边特异度升到 (0,6,1)，焦点态必须同样带上这条链
+   才能把 border 从灰翻黑；否则只有光圈、没有描边变化。 */
+.ilink-app input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not(.il-search-field__input):not(.il-search-bar__input):focus,
 .ilink-app textarea:focus,
 .ilink-app select:focus,
 .ilink-app .form-control:focus {
-  border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px var(--brand-ring) !important;
+  border-color: var(--field-focus-border, #1d1d1f) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
   outline: none !important;
+}
+
+/* 校验失败态：必须压过上面的字段基座（输入框那条有五个 :not，特异度很高） */
+.ilink-app input.il-input-invalid:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
+.ilink-app input.is-invalid:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]),
+.ilink-app textarea.il-input-invalid,
+.ilink-app textarea.is-invalid,
+.ilink-app select.il-input-invalid,
+.ilink-app select.is-invalid,
+.ilink-app .il-form-input.il-input-invalid,
+.ilink-app .il-form-select.il-input-invalid {
+  border-color: var(--field-invalid-border, #d70015) !important;
+  box-shadow: var(--field-invalid-ring, 0 0 0 3px rgba(215, 0, 21, 0.12)) !important;
+}
+
+/* 原生勾选框统一尺寸与颜色；移动端由各页的 22px 规则接管 */
+.ilink-app input[type="checkbox"],
+.ilink-app input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin: 0;
+  accent-color: var(--color-black, #1d1d1f);
+}
+
+.ilink-app input[type="checkbox"]:focus-visible,
+.ilink-app input[type="radio"]:focus-visible {
+  outline: 2px solid var(--color-black, #1d1d1f);
+  outline-offset: 2px;
 }
 
 /* --- Tables --- */
@@ -289,7 +340,7 @@ html.ilink-app,
   font-family: var(--font-display);
   font-weight: var(--font-weight-bold);
   font-size: 15px;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
   box-shadow: var(--shadow-sm);
 }
 
@@ -309,7 +360,7 @@ html.ilink-app,
   font-size: clamp(4rem, 12vw, 6rem);
   font-weight: var(--font-weight-bold);
   line-height: 1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
   color: var(--primary);
   margin: 0 0 var(--space-2);
 }

@@ -289,6 +289,7 @@ public class TeamSpaceController {
                 view.put("isOwner", false);
                 view.put("memberRole", app.getMemberRole() == null
                         ? TeamMembershipService.deriveMemberRole(u) : app.getMemberRole());
+                view.put("duty", app.getDuty());
                 view.put("status", app.getStatus());
                 view.put("joinedAt", app.getCreatedAt());
                 members.add(view);

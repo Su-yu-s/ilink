@@ -130,7 +130,8 @@
         arr.sort(function (a, b) { return num(b, key) - num(a, key); });
         arr.forEach(function (c) { wrap.appendChild(c); });
       }
-      empty.classList.toggle('is-visible', visible === 0);
+      // 列表整体为空时由页面自己的空态负责，筛选空态只在“有内容但筛不到”时出现
+      empty.classList.toggle('is-visible', cards().length > 0 && visible === 0);
       if (wrap) wrap.style.display = visible === 0 ? 'none' : '';
       var pager = document.getElementById(pagerId);
       if (pager) { if (kw || cat !== 'all' || (sortSel && sortSel.value !== 'latest')) pager.classList.add('d-none'); else pager.classList.remove('d-none'); }

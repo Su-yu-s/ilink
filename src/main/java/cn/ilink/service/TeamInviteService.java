@@ -37,6 +37,9 @@ import cn.ilink.util.DisplayNameResolver;
 @Slf4j
 public class TeamInviteService {
 
+    /** 职责字数上限：席位列宽固定 64px，超过会被省略号吃掉 */
+    public static final int DUTY_MAX_LENGTH = 8;
+
     private final TeamDemandServiceImpl teamDemandService;
     private final TeamApplicationServiceImpl teamApplicationService;
     private final TeamApplicationMapper teamApplicationMapper;
@@ -201,6 +204,39 @@ public class TeamInviteService {
         }
         notificationService.markInviteHandled(userId, teamId);
         return row;
+    }
+
+    /**
+     * 设置成员的团队职责（如「策划」「摄影」）。队长或队内导师可操作，传空值即清除。
+     *
+     * <p>只写 team_application.duty，不动 member_role —— 后者是 MENTOR/STUDENT 的权限枚举，
+     * 改错会把人踢出导师权限（见 {@link TeamMembershipService#canManageMembers}）。
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void setDuty(Long teamId, Long operatorId, Long targetUserId, String rawDuty) {
+        TeamDemand team = teamDemandService.getById(teamId);
+        if (team == null) {
+            throw new TeamMembershipException(404, "团队不存在");
+        }
+        if (!membershipService.canManageMembers(team, operatorId)) {
+            throw new TeamMembershipException(403, "只有队长或导师可以设置职责");
+        }
+        if (TeamMembershipService.isOwner(team, targetUserId)) {
+            throw new TeamMembershipException(400, "队长本身就是负责人，不需要单独设置职责");
+        }
+        TeamApplication row = membershipService.findRow(teamId, targetUserId);
+        if (row == null || !TeamMembershipService.STATUS_APPROVED.equals(row.getStatus())) {
+            throw new TeamMembershipException(404, "该成员不在团队中");
+        }
+        String duty = rawDuty == null ? "" : rawDuty.trim();
+        // 席位列只有 64px 宽，8 个字已经是上限；再长会被省略号吃掉，不如直接拒绝
+        if (duty.length() > DUTY_MAX_LENGTH) {
+            throw new TeamMembershipException(400, "职责最多 " + DUTY_MAX_LENGTH + " 个字");
+        }
+        row.setDuty(duty.isEmpty() ? null : duty);
+        if (teamApplicationMapper.updateById(row) != 1) {
+            throw new IllegalStateException("职责更新失败");
+        }
     }
 
     /** 移除成员；传入本人即为主动退出。 */

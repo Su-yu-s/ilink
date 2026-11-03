@@ -35,7 +35,7 @@ public class TeamAgentIntentRouter {
             + "|collaboration\\s+document",
         Pattern.CASE_INSENSITIVE);
     private static final Pattern ACTION = Pattern.compile(
-        "拆解|拆分|创建任务|新建任务|后续任务|行动规划|行动计划|规划|计划|安排|指派"
+        "拆解|拆分|创建任务|新建任务|后续任务|行动规划|行动计划|规划|计划|安排|(?<!未)(?<!被)(?<!待)指派"
             + "|改派|重新分配|优先级|截止日期|提醒"
             + "|create\\s+task|break\\s*down|reassign|priority|deadline|remind",
         Pattern.CASE_INSENSITIVE);
@@ -44,7 +44,7 @@ public class TeamAgentIntentRouter {
      * "安排任务" never turns into a document/table proposal.
      */
     private static final Pattern TASK_ACTION = Pattern.compile(
-        "创建任务|新建任务|后续任务|拆解|拆分|安排任务|任务安排|指派|改派|重新分配"
+        "创建任务|新建任务|后续任务|拆解|拆分|安排任务|任务安排|(?<!未)(?<!被)(?<!待)指派|改派|重新分配"
             + "|优先级|截止日期|提醒|行动规划|行动计划"
             + "|create\\s+task|break\\s*down|reassign|priority|deadline|remind",
         Pattern.CASE_INSENSITIVE);
@@ -64,8 +64,9 @@ public class TeamAgentIntentRouter {
         Route collaboration = collaborationRoute(value);
         if (collaboration != null) return collaboration;
         if (ACTION.matcher(value).find()) return Route.ACTION_PLAN;
-        if (RISK.matcher(value).find()) return Route.TEAM_RISK;
+        // 统计类问句常顺带问「逾期」，先判 METRICS 才能命中「数量/完成率」的主意图
         if (METRICS.matcher(value).find()) return Route.TEAM_METRICS;
+        if (RISK.matcher(value).find()) return Route.TEAM_RISK;
         if ("KNOWLEDGE_QUICK".equals(mode)) return Route.KNOWLEDGE_QUICK;
         if ("KNOWLEDGE_DEEP".equals(mode)) return Route.KNOWLEDGE_DEEP;
         if ("TEAM_INSIGHT".equals(mode)) return Route.TEAM_METRICS;

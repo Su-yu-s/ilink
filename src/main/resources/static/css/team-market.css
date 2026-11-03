@@ -22,20 +22,20 @@
     height: 28px;
     padding: 0 12px;
     border-radius: 999px;
-    background: #faf6f0;
-    border: 1px solid #f5efe6;
+    background: #f5f5f7;
+    border: 1px solid #f5f5f7;
     font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #a08055;
+    color: #0066cc;
     margin-bottom: 16px;
 }
 
 .hero-eyebrow svg {
     width: 14px;
     height: 14px;
-    stroke: #a08055;
+    stroke: #0066cc;
     fill: none;
     stroke-width: 2;
     stroke-linecap: round;
@@ -47,7 +47,7 @@
     font-size: clamp(32px, 4vw, 48px);
     font-weight: 600;
     line-height: 1.3;
-    color: #2c2419;
+    color: #1d1d1f;
     max-width: 600px;
     margin-bottom: 12px;
 }
@@ -55,7 +55,7 @@
 .hero-desc {
     font-size: 16px;
     line-height: 1.8;
-    color: #6b5e4f;
+    color: #6e6e73;
     margin-top: 16px;
     max-width: 480px;
 }
@@ -86,7 +86,7 @@
 .empty-state {
     text-align: center;
     padding: 80px 24px;
-    color: #a89a8a;
+    color: #6e6e73;
 }
 
 .empty-state svg {
@@ -130,23 +130,23 @@
     border-radius: 999px;
     font-size: 14px;
     font-weight: 500;
-    color: #6b5e4f;
-    background: #fff;
-    border: 1px solid #e8e2d9;
+    color: #6e6e73;
+    background: #ffffff;
+    border: 1px solid #d2d2d7;
     text-decoration: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
 }
 
 #pagination .page-link:hover {
-    border-color: #b8956a;
-    color: #2c2419;
+    border-color: #0066cc;
+    color: #1d1d1f;
 }
 
 #pagination .page-item.active .page-link {
-    background: #3d3229;
-    color: #faf6f0;
-    border-color: #3d3229;
+    background: #1d1d1f;
+    color: #f5f5f7;
+    border-color: #1d1d1f;
 }
 
 #pagination .page-item.disabled .page-link {
@@ -154,362 +154,11 @@
     cursor: not-allowed;
 }
 
-/* === Team Card Foundation === */
+/* 旧的 .team-card 卡片样式已删除：组队大厅改用下面的 .tm-* 席位行。
+   .il-team-card 仍属于「我的团队」（profile.css），不要在这里重定义。 */
+
 body[data-app-page="team-market"] {
-  background: #faf9f7;
-}
-
-body[data-app-page="team-market"] .team-card {
-  background: #ffffff;
-  border: 1px solid #e8e2d9;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04);
-  color: #2c2419;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-app-page="team-market"] .team-card {
-  padding: 22px;
-}
-
-body[data-app-page="team-market"] .team-card::before {
-  display: none;
-  content: none;
-}
-
-body[data-app-page="team-market"] .team-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(44, 36, 25, 0.08);
-  border-color: #d4ccc0;
-}
-
-body[data-app-page="team-market"] #teamList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-  gap: 20px;
-  align-items: stretch;
-}
-
-body[data-app-page="team-market"] .team-card .card-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  border: 0;
-}
-
-body[data-app-page="team-market"] .team-card .card-header {
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-body[data-app-page="team-market"] .team-card .card-title {
-
-  font-weight: 600;
-  color: #2c2419;
-  line-height: 1.4;
-  margin: 0;
-  letter-spacing: 0;
-  transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-app-page="team-market"] .team-card .card-title {
-  font-size: 20px;
-}
-
-body[data-app-page="team-market"] .team-card .card-title:hover {
-  color: #a08055;
-}
-
-body[data-app-page="team-market"] .team-card .category-tag {
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 6px;
-  background: #faf6f0;
-  border: 1px solid #f5efe6;
-  color: #a08055;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-app-page="team-market"] .team-card .category-tag {
-  font-size: 13px;
-  font-weight: 500;
-}
-
-body[data-app-page="team-market"] .team-card .category-tag:hover {
-  background: #f5efe6;
-}
-
-body[data-app-page="team-market"] .team-card .card-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 13px;
-  color: #a89a8a;
-}
-
-body[data-app-page="team-market"] .team-card .card-meta {
-  margin-bottom: 14px;
-}
-
-body[data-app-page="team-market"] .team-card .meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: #a89a8a;
-  min-width: 0;
-}
-
-body[data-app-page="team-market"] .team-card .meta-item svg {
-  width: 15px;
-  height: 15px;
-  flex: 0 0 15px;
-  color: #a89a8a;
-  stroke: currentColor;
-}
-
-body[data-app-page="team-market"] .team-card .meta-dot {
-  display: inline-block;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #d4ccc0;
-  flex: 0 0 3px;
-}
-
-body[data-app-page="team-market"] .team-card .il-team-meta-item:not(:last-child)::after {
-  display: none;
-  content: none;
-}
-
-body[data-app-page="team-market"] .team-card .skill-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-body[data-app-page="team-market"] .team-card .skill-tags {
-  margin-bottom: 16px;
-}
-
-body[data-app-page="team-market"] .team-card .skill-tag {
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 6px;
-  background: #f0ebe5;
-  border: 1px solid transparent;
-  color: #6b5e4f;
-  display: inline-flex;
-  align-items: center;
-  font-size: 13px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-app-page="team-market"] .team-card .skill-tag:hover {
-  background: #faf6f0;
-  color: #a08055;
-}
-
-body[data-app-page="team-market"] .team-card .card-desc {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  color: #6b5e4f;
-  margin: 0;
-  word-break: break-word;
-}
-
-body[data-app-page="team-market"] .team-card .card-desc {
-  -webkit-line-clamp: 2;
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-body[data-app-page="team-market"] .team-card .card-divider {
-  height: 1px;
-  width: 100%;
-  margin: 18px 0 0;
-  background: linear-gradient(to right, #e8e2d9, transparent);
-}
-
-body[data-app-page="team-market"] .team-card .card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 0 0;
-  margin: 0;
-  background: transparent;
-  border: 0;
-  border-image: none;
-}
-
-body[data-app-page="team-market"] .team-card .author-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-body[data-app-page="team-market"] .team-card .author-avatar {
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 2px solid #e8e2d9;
-  background: #f5f0eb;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-body[data-app-page="team-market"] .team-card .author-avatar {
-  width: 36px;
-  height: 36px;
-}
-
-body[data-app-page="team-market"] .team-card .author-avatar:hover {
-  border-color: #b8956a;
-  transform: scale(1.05);
-}
-
-body[data-app-page="team-market"] .team-card .author-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-body[data-app-page="team-market"] .team-card .il-author-name {
-  color: #2c2419;
-  min-width: 0;
-}
-
-body[data-app-page="team-market"] .team-card .il-author-name {
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-body[data-app-page="team-market"] .team-card .status-badge {
-  height: 32px;
-  padding: 0 14px 0 20px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  position: relative;
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-body[data-app-page="team-market"] .team-card .status-recruiting {
-  background: #faf6f0;
-  color: #a08055;
-}
-
-body[data-app-page="team-market"] .team-card .status-recruiting::before,
-body[data-app-page="team-market"] .team-card.urgent .card-title::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #b8956a;
-  animation: il-card-dot-pulse 2s ease-in-out infinite;
-}
-
-body[data-app-page="team-market"] .team-card .status-recruiting::before {
-  position: absolute;
-  left: 7px;
-  top: 50%;
-  transform: translateY(-50%);
-  animation-name: il-card-status-pulse;
-}
-
-body[data-app-page="team-market"] .team-card .status-full,
-body[data-app-page="team-market"] .team-card .il-status-closed {
-  background: #f0ebe5;
-  color: #a89a8a;
-}
-
-body[data-app-page="team-market"] .team-card .status-full::before,
-body[data-app-page="team-market"] .team-card .il-status-closed::before {
-  content: "";
-  position: absolute;
-  left: 7px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #c5bdb3;
-  animation: none;
-}
-
-body[data-app-page="team-market"] .team-card.urgent {
-  border-color: #d8c6ad;
-}
-
-body[data-app-page="team-market"] .team-card.urgent .card-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-body[data-app-page="team-market"] .team-card .avatar-fallback--hidden {
-  display: none;
-}
-
-@keyframes il-card-status-pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.55;
-    transform: translateY(-50%) scale(1.3);
-  }
-}
-
-body[data-app-page="team-market"] .team-card.urgent .card-title::before {
-  position: static;
-  transform: none;
-}
-
-@keyframes il-card-dot-pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.55;
-    transform: scale(1.35);
-  }
-}
-
-/* Card sizing details retained from the original team implementation. */
-body[data-app-page="team-market"] .team-card {
-    max-width: 100%;
-}
-
-body[data-app-page="team-market"] .team-card .card-title {
-    flex: 1 1 0%;
-}
-
-body[data-app-page="team-market"] .team-card .meta-item {
-    flex: 0 0 auto;
-}
-
-body[data-app-page="team-market"] .team-card .il-author-avatar-fallback {
-    font-size: 13px;
-    font-weight: 700;
-    line-height: 1;
+  background: #f5f5f7;
 }
 
 /* === team-market-ui-refresh：紧凑搜索栏（页面级，确认后再推广全局） === */
@@ -536,14 +185,409 @@ body[data-app-page="team-market"] .il-search-bar__select select {
     }
 }
 
-/* 栅格窄屏兜底：手机单列 */
-@media (max-width: 640px) {
-    body[data-app-page="team-market"] #teamList {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    body[data-app-page="team-market"] .team-card {
-        padding: 18px;
-    }
+/* ============================================================
+   组队大厅 · 席位行（tm- 命名空间）
+   一条队伍 = 左席位 / 中信息 / 右动作。不给卡片外壳，靠分隔线成列。
+   注意：本段必须留在 @layer legacy 内，层外的 !important 会输给层内。
+   ============================================================ */
+
+html.ilink-app body[data-app-page="team-market"] #teamList {
+  display: block;
+  border-top: 1px solid var(--ui-border);
 }
 
+html.ilink-app body[data-app-page="team-market"] .tm-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) minmax(0, 252px) 120px;
+  column-gap: 26px;
+  align-items: center;
+  padding: 24px 6px;
+  border-bottom: 1px solid var(--ui-border);
+  transition: background 140ms ease;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-row:hover {
+  background: rgba(255, 255, 255, .65);
+}
+
+/* —— 席位 —— */
+html.ilink-app body[data-app-page="team-market"] .tm-seats {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-seat {
+  display: flex;
+  flex: 0 0 50px;
+  width: 50px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-seat__face {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #E3E8EE;
+  color: var(--ui-text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(22, 35, 46, .06);
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-seat__face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 队长圈：白色内环 + 石墨色外环，和下方「队长」标签互为印证 */
+html.ilink-app body[data-app-page="team-market"] .tm-seat[data-lead] .tm-seat__face {
+  box-shadow: 0 0 0 2px var(--ui-surface), 0 0 0 3.5px var(--ui-action-line);
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-seat--empty .tm-seat__face {
+  border: 1.5px dashed #B7CBD9;
+  background: #F5F9FC;
+  color: #6E8CA3;
+  font-size: 19px;
+  font-weight: 300;
+  line-height: 1;
+  box-shadow: none;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-seat--more .tm-seat__face {
+  background: var(--ui-surface-subtle);
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--ui-border-strong);
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-seat__duty {
+  max-width: 64px;
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: 10.5px;
+  line-height: 1.25;
+  letter-spacing: .02em;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* —— 中间信息 —— */
+html.ilink-app body[data-app-page="team-market"] .tm-body {
+  min-width: 0;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-title__link {
+  color: var(--ui-text);
+  text-decoration: none;
+  transition: color 140ms ease;
+}
+
+/* 整行可点：链接的伪元素铺满 .tm-row，右侧按钮靠 z-index 浮在其上 */
+html.ilink-app body[data-app-page="team-market"] .tm-title__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-row:hover .tm-title__link {
+  color: var(--ui-action-solid);
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-need {
+  margin: 7px 0 0;
+  color: var(--ui-text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-need b {
+  color: var(--ui-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 元信息靠在动作按钮左侧，填掉中列右侧的空白；右对齐成两行数据栏 */
+html.ilink-app body[data-app-page="team-market"] .tm-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  color: var(--ui-text-muted);
+  font-size: 11.5px;
+  line-height: 1.45;
+  text-align: right;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-meta__name {
+  color: var(--ui-text-secondary);
+  font-weight: 500;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-meta__rest {
+  font-variant-numeric: tabular-nums;
+}
+
+/* —— 右侧动作 —— */
+html.ilink-app body[data-app-page="team-market"] .tm-act {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 10px;
+  background: var(--ui-action-soft);
+  color: var(--ui-action-ink);
+  box-shadow: inset 0 0 0 1px var(--ui-action-line);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 140ms ease;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-btn:hover {
+  background: var(--ui-action-hover);
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-btn--flat {
+  background: transparent;
+  color: var(--ui-text-muted);
+  box-shadow: inset 0 0 0 1px rgba(22, 35, 46, .1);
+  cursor: default;
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-row--closed .tm-title__link {
+  color: var(--ui-text-secondary);
+}
+
+html.ilink-app body[data-app-page="team-market"] .tm-row--closed .tm-seat__face img {
+  filter: grayscale(.35);
+  opacity: .85;
+}
+
+@media (max-width: 900px) {
+  html.ilink-app body[data-app-page="team-market"] .tm-row {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 16px;
+    padding: 20px 2px;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .tm-meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 4px 12px;
+    text-align: left;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .tm-act {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+  }
+}
+}
+
+
+/* ============================================================
+   2026-11 组队大厅版面
+   全局 hero 规则已用 :where() 降权，这里正常写即可
+   ============================================================ */
+
+body[data-app-page="team-market"] .hero-section {
+  display: block !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  text-align: left !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .hero-section .hero-inner {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 24px;
+  width: 100% !important;
+  max-width: 1180px !important;
+  margin: 0 auto !important;
+  padding: 34px 32px 0 !important;
+}
+
+body[data-app-page="team-market"] .hero-lead { min-width: 0; }
+
+html.ilink-app body[data-app-page="team-market"] .hero-section .hero-title {
+  margin: 0 !important;
+  max-width: none !important;
+  text-align: left !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.022em !important;
+  line-height: 1.3 !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .hero-section .hero-desc {
+  margin: 7px 0 0 !important;
+  max-width: 640px !important;
+  color: var(--ui-text-muted) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+body[data-app-page="team-market"] .hero-cta {
+  display: inline-flex !important;
+  align-self: flex-end;
+  color: var(--ui-action-ink) !important;
+  background: var(--ui-action-soft) !important;
+  border: 0 !important;
+  box-shadow: inset 0 0 0 1px var(--ui-action-line), 0 1px 2px rgba(47, 58, 66, .10) !important;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 10px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+
+body[data-app-page="team-market"] .hero-cta svg { width: 15px; height: 15px; stroke: currentColor; fill: none; }
+
+body[data-app-page="team-market"] .toolbar-section {
+  display: block !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+body[data-app-page="team-market"] .toolbar-inner {
+  width: 100% !important;
+  max-width: 1180px !important;
+  margin: 20px auto 0 !important;
+  padding: 0 32px !important;
+}
+
+body[data-app-page="team-market"] .il-search-bar {
+  padding: 10px 12px !important;
+  gap: 8px !important;
+  background: var(--ui-surface) !important;
+  border: 0 !important;
+  border-radius: var(--ui-radius-surface) !important;
+  box-shadow: var(--ui-shadow-surface) !important;
+}
+
+body[data-app-page="team-market"] .content-section {
+  display: block !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+}
+
+body[data-app-page="team-market"] .content-inner {
+  width: 100% !important;
+  max-width: 1180px !important;
+  margin: 0 auto !important;
+  padding: 16px 32px 64px !important;
+}
+
+body[data-app-page="team-market"] #teamList { gap: 14px !important; }
+
+
+body[data-app-page="team-market"] .hero-lead .hero-eyebrow {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px !important;
+  padding: 5px 11px !important;
+  background: var(--ui-surface) !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  color: var(--ui-text-muted) !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+
+/* ============================================================
+   B 方案：组队大厅真改版
+   更大的标题、更松的留白、卡片信息收敛到三行
+   ============================================================ */
+
+html.ilink-app body[data-app-page="team-market"] .hero-inner {
+  padding: 48px 40px 0 !important;
+  max-width: 1240px !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .hero-section .hero-title {
+  font-size: 34px !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.2 !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .hero-section .hero-desc {
+  margin-top: 10px !important;
+  font-size: 14px !important;
+  max-width: 560px !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .hero-eyebrow {
+  margin-bottom: 22px !important;
+}
+
+/* 按钮恢复重量：页头主操作改成实心石墨 */
+html.ilink-app body[data-app-page="team-market"] .hero-cta {
+  height: 42px !important;
+  padding: 0 22px !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+  background: var(--ui-action-solid) !important;
+  font-size: 14px !important;
+  box-shadow: 0 2px 6px rgba(47, 58, 66, .18) !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .toolbar-inner {
+  max-width: 1240px !important;
+  padding: 0 40px !important;
+  margin-top: 28px !important;
+}
+
+html.ilink-app body[data-app-page="team-market"] .content-inner {
+  max-width: 1240px !important;
+  padding: 20px 40px 80px !important;
 }

@@ -84,6 +84,10 @@
     }
 
     function load() {
+        if (!teamId) {
+            renderFatal(new Error('URL 缺少团队标识'));
+            return Promise.resolve(false);
+        }
         if (loadPromise) return loadPromise;
         root.setAttribute('aria-busy', 'true');
         loadPromise = (async function () {
@@ -1309,8 +1313,11 @@
     document.addEventListener('DOMContentLoaded', function () {
         root = byId('teamAgentWorkbench');
         if (!root) return;
-        var match = window.location.search.match(/[?&]id=(\d+)/);
-        teamId = match ? Number(match[1]) : null;
+        // 团队空间有两种入口写法（?id= 与 ?teamId=），这里必须与 team-space.js 保持一致；
+        // 只认 ?id= 会让面板在 ?teamId= 下拿到 null，切到 Agent 页签时请求 /api/team/null/...
+        var params = new URLSearchParams(window.location.search);
+        var rawTeamId = params.get('id') || params.get('teamId');
+        teamId = rawTeamId && /^\d+$/.test(rawTeamId) ? Number(rawTeamId) : null;
         if (!teamId) {
             renderFatal(new Error('URL 缺少团队标识'));
             return;

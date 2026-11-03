@@ -1,5 +1,6 @@
 package cn.ilink.controller;
 
+import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,7 @@ public class ErrorContractController implements ErrorController {
         Object statusAttr = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
         int status = statusAttr instanceof Integer ? (Integer) statusAttr : 500;
 
-        if (!expectsJson(request)) {
+        if (!ControllerUtils.expectsJson(request)) {
             response.setStatus(status);
             ModelAndView mav = new ModelAndView(status == 404 ? "404" : "error");
             mav.addObject("status", status);
@@ -60,19 +61,4 @@ public class ErrorContractController implements ErrorController {
             .body(Result.fail(status, "请求无法处理"));
     }
 
-    /** 请求方是否期望 JSON 响应 */
-    private boolean expectsJson(HttpServletRequest request) {
-        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-            return true;
-        }
-        String accept = request.getHeader("Accept");
-        if (accept == null || accept.isBlank()) {
-            return false;
-        }
-        String lower = accept.toLowerCase();
-        if (lower.contains("text/html")) {
-            return false;
-        }
-        return lower.contains("application/json") || lower.contains("*/*");
-    }
 }

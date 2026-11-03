@@ -219,6 +219,25 @@ function renderAdminServerPager(pagerId, page, size, total, onPage) {
     });
 }
 
+// 行内操作的统一形态：一个文字主操作 + 行尾「更多」菜单。
+// 一行并排三四个按钮时，红色的「删除」会变成整屏饱和度最高的东西，
+// 在数据表里它不该抢过数据本身。
+function adminRowActions(primary, items) {
+    const menu = (items || []).map(item =>
+        `<button type="button"${item.danger ? ' class="adk-more__danger"' : ''} onclick="${item.onclick}">${escapeHtml(item.label)}</button>`
+    ).join('');
+    const detailAttr = primary.detail ? ' data-admin-action="detail"' : '';
+    const menuBlock = menu
+        ? `<details class="adk-more">
+                <summary aria-label="更多操作">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+                </summary>
+                <div class="adk-more__menu">${menu}</div>
+            </details>`
+        : '';
+    return `<button type="button" class="adk-rowactions__link"${detailAttr} onclick="${primary.onclick}">${escapeHtml(primary.label)}</button>${menuBlock}`;
+}
+
 function setTableRowCells(tr, cells) {
     tr.innerHTML = cells.map(cell => {
         const className = cell.className ? ` class="${cell.className}"` : '';
@@ -525,11 +544,20 @@ function renderUserPage(page) {
             { label: '状态', html: renderUserStatusCell(user) },
             {
                 label: '操作',
-                className: 'admin-user-actions admin-row-actions',
+                className: 'adk-rowactions',
+                // 一行只留一个文字操作，编辑与删除收进行尾菜单：
+                // 每行三个并排按钮时，红色的删除是整屏最响的元素，压过了数据本身。
                 html: `
-                    <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openUserDetailModal(${user.id})">详情</button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="openUserEditModal(${user.id})">编辑</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">删除</button>
+                    <button type="button" class="adk-rowactions__link" data-admin-action="detail" onclick="openUserDetailModal(${user.id})">详情</button>
+                    <details class="adk-more">
+                        <summary aria-label="更多操作">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+                        </summary>
+                        <div class="adk-more__menu">
+                            <button type="button" onclick="openUserEditModal(${user.id})">编辑资料</button>
+                            <button type="button" class="adk-more__danger" onclick="deleteUser(${user.id})">删除用户</button>
+                        </div>
+                    </details>
                 `
             }
         ]);
@@ -975,12 +1003,13 @@ function renderTeamRows(teams) {
             { label: '发布时间', html: escapeHtml(formatTime(team.createdAt)) },
             {
                 label: '操作',
-                className: 'admin-row-actions',
-                html: `
-                    <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openTeamDetailModal(${team.id})">详情</button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="openTeamEditModal(${team.id})">编辑</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteTeam(${team.id})">删除</button>
-                `
+                className: 'adk-rowactions',
+                html: adminRowActions(
+                    { label: '详情', detail: true, onclick: `openTeamDetailModal(${team.id})` },
+                    [
+                        { label: '编辑', onclick: `openTeamEditModal(${team.id})` },
+                        { label: '删除', danger: true, onclick: `deleteTeam(${team.id})` }
+                    ])
             }
         ]);
         tbody.appendChild(tr);
@@ -1099,6 +1128,45 @@ function openDeleteReasonModal(title, onConfirm) {
     if (input) input.focus();
 }
 
+// 行尾「更多」菜单：表格区是独立的滚动容器（overflow:auto），
+// 绝对定位的菜单会被它裁掉，所以展开时改成 fixed 并按摘要按钮的位置定位。
+document.addEventListener('toggle', function (e) {
+    const el = e.target;
+    if (!(el instanceof HTMLDetailsElement) || !el.classList.contains('adk-more') || !el.open) return;
+    const menu = el.querySelector('.adk-more__menu');
+    const summary = el.querySelector('summary');
+    if (!menu || !summary) return;
+    const r = summary.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+    menu.style.left = 'auto';
+    // 放不下就朝上开，避免贴着底边被视口切掉
+    const menuH = menu.offsetHeight || 80;
+    const below = r.bottom + 4;
+    menu.style.top = (below + menuH > window.innerHeight - 8 ? r.top - menuH - 4 : below) + 'px';
+}, true);
+
+// 表格区滚动时关掉菜单：fixed 定位不会跟着行一起走，留着会错位
+document.addEventListener('scroll', function (e) {
+    const t = e.target;
+    if (!(t instanceof Element) || !t.closest('.adk-card')) return;
+    document.querySelectorAll('.adk-more[open]').forEach(d => d.removeAttribute('open'));
+}, true);
+
+// 行尾「更多」菜单：同一时间只展开一个。
+// <details> 自己管理开合，这里只负责「点外部关闭」和「选中任一项后收起」。
+document.addEventListener('click', function (e) {
+    const opened = document.querySelectorAll('.adk-more[open]');
+    if (!opened.length) return;
+    const inside = e.target instanceof Element ? e.target.closest('.adk-more') : null;
+    opened.forEach(el => {
+        if (el !== inside) el.removeAttribute('open');
+    });
+    if (inside && e.target.closest('.adk-more__menu')) {
+        inside.removeAttribute('open');
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function () {
     const confirmBtn = document.getElementById('adminDeleteReasonConfirmBtn');
     const input = document.getElementById('adminDeleteReasonInput');
@@ -1196,9 +1264,8 @@ function renderTeacherRows(teachers) {
 
     teachers.forEach(teacher => {
         const tr = document.createElement('tr');
-        const approveButton = String(teacher.status || '').toUpperCase() === 'PENDING'
-            ? `<button class="btn btn-success btn-sm" onclick="approveTeacher(${teacher.id})">批准</button>`
-            : '';
+        // 只有待审核的申请才出现「批准」
+        const canApprove = String(teacher.status || '').toUpperCase() === 'PENDING';
         setTableRowCells(tr, [
             { label: '申请人', html: renderUserCell(getUserLabelById(teacher.userId)) },
             { label: '研究方向', html: renderUserCell(teacher.researchDirection) },
@@ -1206,13 +1273,14 @@ function renderTeacherRows(teachers) {
             { label: '申请时间', html: escapeHtml(formatTime(teacher.createdAt)) },
             {
                 label: '操作',
-                className: 'admin-row-actions',
-                html: `
-                    <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openTeacherDetailModal(${teacher.id})">详情</button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="openTeacherEditModal(${teacher.id})">编辑</button>
-                    ${approveButton}
-                    <button class="btn btn-danger btn-sm" onclick="deleteTeacher(${teacher.id})">删除</button>
-                `
+                className: 'adk-rowactions',
+                html: adminRowActions(
+                    { label: '详情', detail: true, onclick: `openTeacherDetailModal(${teacher.id})` },
+                    [
+                        { label: '编辑', onclick: `openTeacherEditModal(${teacher.id})` }
+                    ].concat(canApprove ? [{ label: '批准', onclick: `approveTeacher(${teacher.id})` }] : []).concat([
+                        { label: '删除', danger: true, onclick: `deleteTeacher(${teacher.id})` }
+                    ]))
             }
         ]);
         tbody.appendChild(tr);
@@ -1412,13 +1480,17 @@ function renderAssetRows(assets) {
             { label: '发布时间', html: escapeHtml(formatTime(asset.createdAt)) },
             {
                 label: '操作',
-                className: 'admin-row-actions',
-                html: `
-                    <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openAssetDetailModal(${asset.id})">详情</button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="openAssetEditModal(${asset.id})">编辑</button>
-                    <button class="btn ${asset.isPinned == 1 ? 'btn-secondary' : 'btn-outline-secondary'} btn-sm" title="${asset.isPinned == 1 ? '已置顶，点击取消' : '点击置顶，列表所有排序下排最前'}" onclick="toggleAssetPinned(${asset.id}, ${asset.isPinned == 1 ? 'false' : 'true'})">置顶</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteAsset(${asset.id})">删除</button>
-                `
+                className: 'adk-rowactions',
+                html: adminRowActions(
+                    { label: '详情', detail: true, onclick: `openAssetDetailModal(${asset.id})` },
+                    [
+                        { label: '编辑', onclick: `openAssetEditModal(${asset.id})` },
+                        {
+                            label: asset.isPinned == 1 ? '取消置顶' : '置顶',
+                            onclick: `toggleAssetPinned(${asset.id}, ${asset.isPinned == 1 ? 'false' : 'true'})`
+                        },
+                        { label: '删除', danger: true, onclick: `deleteAsset(${asset.id})` }
+                    ])
             }
         ]);
         tbody.appendChild(tr);
@@ -1585,13 +1657,17 @@ function renderCommunityPostRows(posts) {
             { label: '发布时间', html: escapeHtml(formatTime(post.createdAt)) },
             {
                 label: '操作',
-                className: 'admin-row-actions',
-                html: `
-                    <button class="btn btn-outline-secondary btn-sm" data-admin-action="detail" onclick="openCommunityPostDetailModal(${post.id})">详情</button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="openCommunityPostEditModal(${post.id})">编辑</button>
-                    <button class="btn ${post.isPinned == 1 ? 'btn-secondary' : 'btn-outline-secondary'} btn-sm" title="${post.isPinned == 1 ? '已置顶，点击取消' : '点击置顶，列表所有排序下排最前'}" onclick="toggleCommunityPostPinned(${post.id}, ${post.isPinned == 1 ? 'false' : 'true'})">置顶</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteCommunityPost(${post.id})">删除</button>
-                `
+                className: 'adk-rowactions',
+                html: adminRowActions(
+                    { label: '详情', detail: true, onclick: `openCommunityPostDetailModal(${post.id})` },
+                    [
+                        { label: '编辑', onclick: `openCommunityPostEditModal(${post.id})` },
+                        {
+                            label: post.isPinned == 1 ? '取消置顶' : '置顶',
+                            onclick: `toggleCommunityPostPinned(${post.id}, ${post.isPinned == 1 ? 'false' : 'true'})`
+                        },
+                        { label: '删除', danger: true, onclick: `deleteCommunityPost(${post.id})` }
+                    ])
             }
         ]);
         tbody.appendChild(tr);
@@ -1824,6 +1900,7 @@ async function loadAuditLogs(page) {
         const rows = Array.isArray(result.data) ? result.data : [];
         const pagination = (result.extra && result.extra.pagination) || {};
         renderAuditRows(rows);
+        if (page === 1) renderOverviewRecent(rows);
         AdminState.auditPage = pagination.page || 1;
         AdminState.auditTotal = pagination.total || rows.length;
         renderAdminServerPager('auditPager', AdminState.auditPage, ADMIN_PAGE_SIZE, AdminState.auditTotal, loadAuditLogs);
@@ -1856,6 +1933,29 @@ function renderAuditRows(rows) {
         ]);
         tbody.appendChild(tr);
     });
+}
+
+// 概览页的「最近操作」：直接复用审计日志第一页的数据，不另开接口
+function renderOverviewRecent(rows) {
+    const box = document.getElementById('overviewRecent');
+    if (!box) return;
+    const list = Array.isArray(rows) ? rows.slice(0, 8) : [];
+    if (!list.length) {
+        box.innerHTML = '<div class="adk-recent__row"><span class="adk-recent__what">暂无管理操作</span></div>';
+        return;
+    }
+    box.innerHTML = list.map(row => {
+        const actionLabel = ADMIN_AUDIT_ACTION_LABELS[String(row.action || '').toUpperCase()] || row.action || '';
+        const targetLabel = ADMIN_AUDIT_TARGET_LABELS[String(row.targetType || '').toUpperCase()] || row.targetType || '';
+        const target = targetLabel + (row.targetId ? ' #' + row.targetId : '');
+        const who = row.adminName || ('用户#' + row.adminUserId);
+        return '<div class="adk-recent__row">' +
+            '<span class="adk-recent__time">' + escapeHtml(formatTime(row.createdAt)) + '</span>' +
+            '<span class="adk-recent__action">' + escapeHtml(actionLabel) + '</span>' +
+            '<span class="adk-recent__what" title="' + escapeHtml(target) + '">' + escapeHtml(target) + '</span>' +
+            '<span class="adk-recent__who" title="' + escapeHtml(who) + '">' + escapeHtml(who) + '</span>' +
+            '</div>';
+    }).join('');
 }
 
 function applyCompetitionSearchAndRender() {
@@ -1923,11 +2023,13 @@ function renderCompetitionAdminRows(items) {
             { label: '状态', html: status },
             {
                 label: '操作',
-                className: 'admin-row-actions',
-                html: '<button class="btn btn-outline-secondary btn-sm" onclick="openCompetitionEditModal(' +
-                    item.id + ')">编辑</button> ' +
-                    '<button class="btn btn-danger btn-sm" onclick="deleteCompetitionAdmin(' +
-                    item.id + ')">删除</button>'
+                className: 'adk-rowactions',
+                // 竞赛没有详情页，主操作直接是「编辑」
+                html: adminRowActions(
+                    { label: '编辑', onclick: `openCompetitionEditModal(${item.id})` },
+                    [
+                        { label: '删除', danger: true, onclick: `deleteCompetitionAdmin(${item.id})` }
+                    ])
             }
         ]);
         tbody.appendChild(tr);

@@ -14,20 +14,44 @@ import java.util.Map;
 /** Binds a server-built team scope around the existing Agentic GraphRAG tools. */
 @Service
 public class TeamScopedGraphRagAdapter {
+    private static final org.slf4j.Logger log =
+        org.slf4j.LoggerFactory.getLogger(TeamScopedGraphRagAdapter.class);
+
     private final AgenticGraphRagService graphRagService;
     private final GraphRagService fastGraphRagService;
     private final KgAgentTraceMapper traceMapper;
+    private final PiAgentClient piAgentClient;
+    private final TeamAgentProperties properties;
 
     public TeamScopedGraphRagAdapter(AgenticGraphRagService graphRagService,
                                      GraphRagService fastGraphRagService,
-                                     KgAgentTraceMapper traceMapper) {
+                                     KgAgentTraceMapper traceMapper,
+                                     PiAgentClient piAgentClient,
+                                     TeamAgentProperties properties) {
         this.graphRagService = graphRagService;
         this.fastGraphRagService = fastGraphRagService;
         this.traceMapper = traceMapper;
+        this.piAgentClient = piAgentClient;
+        this.properties = properties;
     }
 
     public Result query(String question, TeamAgentScope scope, Long runId, Long conversationId,
                         AgenticGraphRagService.AgenticStreamListener listener) {
+        if (properties.getPiAgent().allows(scope.teamId())) {
+            try {
+                return piAgentClient.query(question, scope, runId, listener);
+            } catch (RuntimeException failed) {
+                // 灰度期宁可回退到已验证的进程内链路，也不把失败暴露给用户。
+                log.warn("pi agent 执行失败，回退进程内 Agentic GraphRAG：team={} run={}",
+                    scope.teamId(), runId, failed);
+            }
+        }
+        return legacyQuery(question, scope, runId, conversationId, listener);
+    }
+
+    private Result legacyQuery(String question, TeamAgentScope scope, Long runId,
+                               Long conversationId,
+                               AgenticGraphRagService.AgenticStreamListener listener) {
         Date startedAt = new Date();
         AgenticGraphRagService.AgenticAnswer answer;
         try (TeamAgentScopeContext.BoundScope ignored = TeamAgentScopeContext.bind(scope)) {

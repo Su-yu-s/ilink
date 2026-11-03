@@ -1,0 +1,867 @@
+@layer legacy {
+/* ========================================
+   管理后台 · 独立工作台外壳
+   ------------------------------------------------------------
+   替换原先「公开站点容器 + 浮动侧栏卡片 + 常驻统计条」的结构：
+   顶部沿用全局 header（仅保留品牌与账号操作），下方是
+   240px 全高左栏 + 铺满剩余宽度的数据区。
+
+   加载顺序必须排在 admin-redesign.css 之后：
+   旧文件仍在管表格、徽章和弹窗，这里只负责外壳与密度。
+   ======================================== */
+
+body[data-app-page="admin"] {
+  --adk-top: 56px;
+  --adk-side: 240px;
+  --adk-gap: 24px;
+}
+
+/* ---------- 顶部工具条 ----------
+   全局 header 里有通知、头像菜单、语言切换和退出登录，
+   后台无法自建一套而不重写这些脚本，所以保留节点、只收起营销导航。 */
+html.ilink-app body[data-app-page="admin"] .il-header {
+  height: var(--adk-top) !important;
+  min-height: var(--adk-top) !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .il-header__inner {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: var(--adk-top) !important;
+  padding: 0 var(--adk-gap) !important;
+  gap: 16px !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .il-header__nav {
+  display: none !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .il-header__logo {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 9px !important;
+  font-size: 12px !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .il-header__title {
+  font-size: 17px !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .il-header__menu-toggle {
+  display: none !important;
+}
+
+/* ---------- 外壳 ---------- */
+body[data-app-page="admin"] .adk {
+  display: grid;
+  grid-template-columns: var(--adk-side) minmax(0, 1fr);
+  height: calc(100dvh - var(--adk-top));
+  background: var(--ui-canvas);
+}
+
+/* ---------- 左栏 ---------- */
+body[data-app-page="admin"] .adk-side {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  padding: 14px 12px 12px;
+  background: var(--ui-surface);
+  border-right: 1px solid var(--ui-border);
+}
+
+body[data-app-page="admin"] .adk-nav {
+  display: grid;
+  gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+body[data-app-page="admin"] .adk-nav__item {
+  display: flex;
+  width: 100%;
+  min-height: 36px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  color: var(--ui-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-family: var(--ui-font);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-app-page="admin"] .adk-nav__item:hover {
+  color: var(--ui-text);
+  background: var(--ui-canvas);
+}
+
+/* 选中态：浅底 + 加粗，不再用左侧竖条——
+   全站导航（团队空间 / 个人中心）已经统一成这个表达。 */
+body[data-app-page="admin"] .adk-nav__item.active {
+  color: var(--ui-text);
+  background: var(--ui-canvas);
+  font-weight: 600;
+}
+
+body[data-app-page="admin"] .adk-nav__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body[data-app-page="admin"] .adk-side__foot {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--ui-border);
+}
+
+body[data-app-page="admin"] .adk-side__link {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  color: var(--ui-text-muted);
+  border-radius: 8px;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+body[data-app-page="admin"] .adk-side__link:hover {
+  color: var(--ui-text);
+  background: var(--ui-canvas);
+  text-decoration: none;
+}
+
+/* ---------- 主区 ---------- */
+body[data-app-page="admin"] .adk-main {
+  min-width: 0;
+  padding: var(--adk-gap);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body[data-app-page="admin"] .adk-pagehead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+body[data-app-page="admin"] .adk-pagehead__title {
+  margin: 0;
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+body[data-app-page="admin"] .adk-pagehead__sub {
+  margin: 4px 0 0;
+  color: var(--ui-text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 面板显隐：原来这一步由 admin-shell.css 里
+   `.admin-content-panel .tab-content > .tab-pane { display:none }` 负责，
+   外壳换掉后那条选择器不再命中，未激活的面板会全部摊开。这里接回来。 */
+body[data-app-page="admin"] .tab-content > .tab-pane {
+  display: none;
+}
+
+body[data-app-page="admin"] .tab-content > .tab-pane.active {
+  display: block;
+}
+
+/* ---------- 卡片 ----------
+   overflow: clip + 超长 clip-margin：既保住圆角裁切，
+   又让行尾「更多」菜单能越过卡片下沿而不被切掉。 */
+body[data-app-page="admin"] .adk-card {
+  overflow: clip;
+  overflow-clip-margin: 320px;
+  background: var(--ui-surface) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+/* 其余 6 个 tab 保留 card-body + Bootstrap 行栅格，但把外层内边距去掉，
+   让筛选行和表格像「用户管理」一样通栏：
+   筛选行 → 工具条（底部分隔线），表尾 → 表尾栏（顶部分隔线）。
+   行栅格的列自带 12px 内边距，所以工具条横向只给 4px 补到 16。 */
+body[data-app-page="admin"] .adk-card > .card-body {
+  padding: 0 !important;
+}
+
+body[data-app-page="admin"] .adk-card > .card-body > .row:first-child {
+  margin: 0 !important;
+  padding: 12px 4px;
+  align-items: center;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+body[data-app-page="admin"] .adk-card > .card-body > .mt-3 {
+  margin-top: 0 !important;
+  background: var(--ui-surface);
+  padding: 8px 16px;
+}
+
+body[data-app-page="admin"] .adk-card > .card-body > .d-flex.mt-3 {
+  /* 表体是独立的滚动区，底边会切掉半行；表尾得有自己的底色，
+     否则被切的那半行会透到分页下面，看起来像压在一起。 */
+  background: var(--ui-surface);
+  padding: 10px 16px;
+  border-top: 1px solid var(--ui-border);
+}
+
+/* ---------- 筛选工具条 ---------- */
+body[data-app-page="admin"] .adk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+body[data-app-page="admin"] .adk-toolbar__search {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+body[data-app-page="admin"] .adk-toolbar .il-search-field--admin {
+  --field-height-current: 36px;
+  min-height: 36px !important;
+  background: var(--ui-canvas) !important;
+  border-radius: 8px !important;
+}
+
+body[data-app-page="admin"] .adk-toolbar .il-search-field--admin .il-search-field__input {
+  --field-height-current: 34px;
+}
+
+body[data-app-page="admin"] .adk-select {
+  width: auto;
+  min-width: 132px;
+  height: 36px;
+  padding: 0 32px 0 12px;
+  color: var(--ui-text);
+  background-color: var(--ui-surface);
+  border: 1px solid var(--ui-border-strong) !important;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+/* base-select 自带的 ::picker-icon 在窄屏会掉到控件外（渲染在框下方），
+   这里换成背景箭头，控件高度不受它影响。下拉面板本身仍是 base-select 的样式。
+   选择器必须带上 html.ilink-app —— app-redesign.css 里那条全局 base-select 规则
+   是 (0,2,2)，不带的话压不过它，背景会被 background-image:none 抹掉。 */
+html.ilink-app body[data-app-page="admin"] .adk-select::picker-icon,
+html.ilink-app body[data-app-page="admin"] select.form-select::picker-icon {
+  display: none;
+}
+
+/* 其余 tab 和弹窗里的下拉还是 .form-select，同样换成背景箭头 */
+html.ilink-app body[data-app-page="admin"] select.form-select {
+  padding-right: 30px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 12px !important;
+}
+
+html.ilink-app body[data-app-page="admin"] .adk-select {
+  padding-right: 30px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  background-size: 12px !important;
+}
+
+body[data-app-page="admin"] .adk-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+body[data-app-page="admin"] .adk-btn--ghost {
+  color: var(--ui-text);
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border-strong);
+}
+
+body[data-app-page="admin"] .adk-btn--ghost:hover {
+  background: var(--ui-canvas);
+  border-color: var(--ui-text-muted);
+}
+
+/* 主操作：深色实心。全屏只此一处深色，
+   把它留给当前 tab 最常用的那个动作。 */
+body[data-app-page="admin"] .adk-btn--primary {
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border: 1px solid var(--ui-text) !important;
+}
+
+body[data-app-page="admin"] .adk-btn--primary:hover {
+  color: var(--ui-surface) !important;
+  background: var(--ui-text-secondary) !important;
+  border-color: var(--ui-text-secondary) !important;
+}
+
+/* 旧的后台主按钮（搜索/新增/保存）统一改成深色实心，
+   让 design-tokens 里遗留的 #0066cc 在后台不再出现。 */
+body[data-app-page="admin"] .btn-primary,
+body[data-app-page="admin"] .btn-outline-primary {
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border-color: var(--ui-text) !important;
+}
+
+body[data-app-page="admin"] .btn-primary:hover,
+body[data-app-page="admin"] .btn-outline-primary:hover {
+  background: var(--ui-text-secondary) !important;
+  border-color: var(--ui-text-secondary) !important;
+}
+
+/* ---------- 表格 ---------- */
+body[data-app-page="admin"] .adk-card .table-responsive {
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* 只有用户表换成 fixed 布局并给了列宽；其余表沿用 auto，
+   否则旧规则里那些像素列宽会把「竞赛名称」这类弹性列挤成 0 宽。 */
+@media (min-width: 861px) {
+  body[data-app-page="admin"] .admin-table:has(#userTableBody) {
+    table-layout: fixed;
+  }
+}
+
+/* 表格区自己滚动，且给出上限高度：
+   1) 表头 sticky 需要一个真正会滚的容器，否则钉不住；
+   2) 窄屏下列宽放不下时，横向滚动也落在这里，不会把整页撑宽。 */
+body[data-app-page="admin"] .adk-card .table-responsive {
+  max-height: calc(100dvh - 300px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+/* 列多，窄屏放不下就让表格保持可读宽度、容器横向滚动，
+   而不是把名称列压成 0 宽。 */
+body[data-app-page="admin"] .adk-card .table-responsive > .admin-table {
+  min-width: 860px;
+}
+
+/* 审计日志的「动作」列原定 76px，「取消置顶」四个字会折成两行，
+   而行高已经收到 48，折行等于溢出。按最长动作给宽并禁止折行。 */
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) th:nth-child(3),
+body[data-app-page="admin"] .admin-table:has(#auditTableBody) td:nth-child(3) {
+  width: 104px;
+  white-space: nowrap;
+}
+
+/* 用户表列宽：学校列吃剩余空间，其余按内容定宽。
+   只在 fixed 布局生效的宽度下给，窄屏让表格自己按内容排、必要时横向滚动。 */
+@media (min-width: 861px) {
+body[data-app-page="admin"] .admin-table:has(#userTableBody) th:nth-child(1),
+body[data-app-page="admin"] .admin-table:has(#userTableBody) td:nth-child(1) {
+  width: 150px;
+}
+
+body[data-app-page="admin"] .admin-table:has(#userTableBody) th:nth-child(2),
+body[data-app-page="admin"] .admin-table:has(#userTableBody) td:nth-child(2) {
+  width: 120px;
+}
+
+body[data-app-page="admin"] .admin-table:has(#userTableBody) th:nth-child(3),
+body[data-app-page="admin"] .admin-table:has(#userTableBody) td:nth-child(3) {
+  width: 132px;
+}
+
+body[data-app-page="admin"] .admin-table:has(#userTableBody) th:nth-child(5),
+body[data-app-page="admin"] .admin-table:has(#userTableBody) td:nth-child(5) {
+  width: 104px;
+}
+
+body[data-app-page="admin"] .admin-table:has(#userTableBody) th:nth-child(6),
+body[data-app-page="admin"] .admin-table:has(#userTableBody) td:nth-child(6) {
+  width: 100px;
+}
+
+body[data-app-page="admin"] .admin-table:has(#userTableBody) th:nth-child(7),
+body[data-app-page="admin"] .admin-table:has(#userTableBody) td:nth-child(7) {
+  width: 118px;
+}
+}
+
+body[data-app-page="admin"] .admin-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 40px;
+  padding: 0 14px !important;
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-canvas) !important;
+  border-bottom: 1px solid var(--ui-border) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+
+/* admin-shell.css 里有一条 `.admin-table td { height:auto!important; min-height:56px }`，
+   min-height 会顶住行高，所以这里连它一起压掉。 */
+body[data-app-page="admin"] .admin-table tbody td {
+  height: 48px !important;
+  min-height: 0 !important;
+  padding: 0 14px !important;
+  font-size: 13px !important;
+  line-height: 1.4;
+}
+
+body[data-app-page="admin"] .admin-table tbody tr:hover > * {
+  background: var(--ui-canvas) !important;
+}
+
+body[data-app-page="admin"] .admin-table td:first-child {
+  color: var(--ui-text) !important;
+  font-weight: 500;
+}
+
+/* 行操作列：操作现在是「一个文字 + 一个图标」，
+   旧规则按三个按钮给的 180px 会留下大片空白，统一收到 112。
+   旧规则里带 id 的 :has() 选择器权重很高，所以用 !important 压。 */
+body[data-app-page="admin"] .admin-table:has(.adk-rowactions) th:last-child,
+body[data-app-page="admin"] .admin-table:has(.adk-rowactions) td:last-child {
+  width: 112px !important;
+  min-width: 0 !important;
+}
+
+/* 标题跟着按钮一起靠右，免得「操作」二字贴左、按钮贴右 */
+body[data-app-page="admin"] .admin-table:has(.adk-rowactions) th:last-child {
+  text-align: right;
+}
+
+/* 行操作：一个文字操作 + 行尾菜单，不再并排三个按钮。 */
+body[data-app-page="admin"] .adk-rowactions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+body[data-app-page="admin"] .adk-rowactions__link {
+  height: 28px;
+  padding: 0 8px;
+  color: var(--ui-text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+body[data-app-page="admin"] .adk-rowactions__link:hover {
+  color: var(--ui-text);
+  background: var(--ui-canvas);
+}
+
+body[data-app-page="admin"] .adk-more {
+  position: relative;
+}
+
+body[data-app-page="admin"] .adk-more > summary {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  color: var(--ui-text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  list-style: none;
+}
+
+body[data-app-page="admin"] .adk-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+body[data-app-page="admin"] .adk-more > summary:hover,
+body[data-app-page="admin"] .adk-more[open] > summary {
+  color: var(--ui-text);
+  background: var(--ui-canvas);
+}
+
+body[data-app-page="admin"] .adk-more__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  min-width: 148px;
+  padding: 4px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgb(40 42 47 / 12%);
+}
+
+body[data-app-page="admin"] .adk-more__menu > button {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 10px;
+  color: var(--ui-text);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-app-page="admin"] .adk-more__menu > button:hover {
+  background: var(--ui-canvas);
+}
+
+body[data-app-page="admin"] .adk-more__menu > .adk-more__danger {
+  color: var(--ui-danger);
+}
+
+body[data-app-page="admin"] .adk-more__menu > .adk-more__danger:hover {
+  background: var(--ui-danger-soft);
+}
+
+/* ---------- 表尾 ---------- */
+/* 右侧留给全站悬浮入口（AI / 反馈 / 关于）：它们固定贴在右下角，
+   表格分页又正好落在同一位置，不给让位就会压住“下一页”。 */
+body[data-app-page="admin"] .adk-tablefoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--ui-border);
+}
+
+@media (min-width: 861px) {
+  body[data-app-page="admin"] .adk-tablefoot,
+  /* 其余 6 个 tab 这一轮还是旧结构，分页行是最外层 card-body 的最后一个 div */
+  body[data-app-page="admin"] .adk-card > .card-body > .d-flex.mt-3 {
+    padding-right: 84px;
+  }
+}
+
+/* 空结果：表格里的一行文字，给足高度，别让整张卡塌成一条 */
+body[data-app-page="admin"] .admin-empty-cell {
+  padding: 56px 16px !important;
+  color: var(--ui-text-muted) !important;
+  font-size: 13px !important;
+}
+
+body[data-app-page="admin"] .adk-hint {
+  color: var(--ui-text-muted);
+  font-size: 12px;
+}
+
+/* 分页按钮：中性描边，当前页深色实心。 */
+body[data-app-page="admin"] .admin-user-pager .pagination {
+  display: flex;
+  gap: 4px;
+  margin: 0 !important;
+}
+
+body[data-app-page="admin"] .admin-user-pager .page-link,
+body[data-app-page="admin"] .admin-user-pager .pagination button {
+  display: grid;
+  min-width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0 8px;
+  color: var(--ui-text-secondary);
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 7px !important;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+body[data-app-page="admin"] .admin-user-pager .page-link:hover,
+body[data-app-page="admin"] .admin-user-pager .pagination button:hover {
+  color: var(--ui-text);
+  background: var(--ui-canvas);
+}
+
+body[data-app-page="admin"] .admin-user-pager .page-item.active .page-link,
+body[data-app-page="admin"] .admin-user-pager .pagination button.active {
+  color: var(--ui-surface) !important;
+  background: var(--ui-text) !important;
+  border-color: var(--ui-text) !important;
+}
+
+body[data-app-page="admin"] .admin-user-pager .page-item.disabled .page-link,
+body[data-app-page="admin"] .admin-user-pager .pagination button:disabled {
+  color: var(--ui-text-muted) !important;
+  background: var(--ui-canvas) !important;
+  opacity: 1;
+}
+
+/* ---------- 弹窗字段分组 ----------
+   15 个字段平铺在一个网格里时，账号/身份/联系方式混在一起，
+   字段间距完全均匀，扫读时找不到分组边界。用小标题 + 细线切三段。 */
+body[data-app-page="admin"] .adk-fieldgroup + .adk-fieldgroup {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--ui-border);
+}
+
+body[data-app-page="admin"] .adk-fieldgroup__head {
+  margin-bottom: 12px;
+}
+
+body[data-app-page="admin"] .adk-fieldgroup__title {
+  margin: 0;
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+  /* 比字段标签略大一号：分组标题要压得住下面那一片 label */
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+body[data-app-page="admin"] .adk-fieldgroup__hint {
+  margin: 2px 0 0;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 只读字段（用户名）要和可编辑字段区分开，否则用户会先点一遍才发现改不了 */
+body[data-app-page="admin"] .adk-fieldgroup .form-control[readonly] {
+  color: var(--ui-text-secondary);
+  background: var(--ui-canvas);
+  border-color: var(--ui-border);
+}
+
+/* ---------- 概览 ---------- */
+body[data-app-page="admin"] .adk-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+body[data-app-page="admin"] .adk-metric {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 92px;
+  padding: 14px 16px;
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+}
+
+body[data-app-page="admin"] .adk-metric__label {
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+body[data-app-page="admin"] .adk-metric__value {
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+body[data-app-page="admin"] .adk-recent {
+  display: grid;
+  gap: 0;
+}
+
+body[data-app-page="admin"] .adk-recent__row {
+  display: grid;
+  grid-template-columns: 148px 104px minmax(0, 1fr) 120px;
+  gap: 12px;
+  align-items: baseline;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--ui-border);
+  font-size: 13px;
+}
+
+body[data-app-page="admin"] .adk-recent__action {
+  color: var(--ui-text-secondary);
+}
+
+body[data-app-page="admin"] .adk-recent__row:last-child {
+  border-bottom: 0;
+}
+
+body[data-app-page="admin"] .adk-recent__time {
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-app-page="admin"] .adk-recent__what {
+  overflow: hidden;
+  color: var(--ui-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-app-page="admin"] .adk-recent__who {
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- 徽章统一 ----------
+   用户表用 admin-status-badge，其余表用 status-badge，两套并存导致
+   同名状态在不同 tab 长得不一样。这里把两者收敛成同一颗胶囊。 */
+body[data-app-page="admin"] .admin-status-badge,
+body[data-app-page="admin"] .status-badge {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px !important;
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-canvas) !important;
+  border: 1px solid var(--ui-border) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+body[data-app-page="admin"] .admin-status-badge::before,
+body[data-app-page="admin"] .status-badge::before {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  background: currentColor;
+  border-radius: 50%;
+  content: "";
+}
+
+body[data-app-page="admin"] .admin-status-badge--danger,
+body[data-app-page="admin"] .status-badge.closed {
+  color: var(--ui-danger) !important;
+  background: var(--ui-danger-soft) !important;
+  border-color: #f7cfcd !important;
+}
+
+body[data-app-page="admin"] .status-badge.approved {
+  color: var(--ui-success) !important;
+  background: var(--ui-success-soft) !important;
+  border-color: #cbe8d6 !important;
+}
+
+/* ---------- 窄屏：左栏收成顶部横条 ---------- */
+@media (max-width: 1024px) {
+  body[data-app-page="admin"] {
+    --adk-side: 200px;
+  }
+}
+
+@media (max-width: 860px) {
+  body[data-app-page="admin"] .adk {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: calc(100dvh - var(--adk-top));
+  }
+
+  body[data-app-page="admin"] .adk-side {
+    position: sticky;
+    top: var(--adk-top);
+    z-index: 5;
+    padding: 8px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--ui-border);
+  }
+
+  /* 换成顶部横条后 7 项一排放不下，允许换行而不是横向滚动：
+     横向滚动没有可发现的提示，最后一项会被当成不存在。 */
+  body[data-app-page="admin"] .adk-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  body[data-app-page="admin"] .adk-nav__item {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  body[data-app-page="admin"] .adk-side__foot {
+    display: none;
+  }
+
+  body[data-app-page="admin"] .adk-main {
+    padding: 16px;
+    overflow: visible;
+  }
+
+  body[data-app-page="admin"] .adk-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* 窄屏有全局规则把表单控件拉到 48px / 16px，这里收回统一尺度；
+     下拉必须保持 width:auto —— 撑满时 base-select 的箭头会跟着文字跑到中间。 */
+  body[data-app-page="admin"] .adk-toolbar .adk-select {
+    width: auto !important;
+    max-width: 100%;
+    height: 40px;
+    min-height: 40px !important;
+    font-size: 14px;
+  }
+
+  body[data-app-page="admin"] .adk-toolbar .adk-btn {
+    height: 40px;
+  }
+}
+
+/* ≤767 表格会切成「标签 + 值」的块布局，行操作格是 flex，
+   需要把标签补成第一个 flex 项，否则只有按钮没有「操作」二字。 */
+@media (max-width: 767.98px) {
+  body[data-app-page="admin"] .admin-table td.adk-rowactions {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+  }
+
+  body[data-app-page="admin"] .admin-table td.adk-rowactions::before {
+    flex: 0 0 86px;
+  }
+}
+}

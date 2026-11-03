@@ -514,7 +514,7 @@ function renderPreview(textareaId, previewId) {
         const hint = textareaId === 'mdInsightEditor'
             ? '记录你的竞赛心得、经验教训...'
             : '开始输入，这里会实时预览你的成果...';
-        preview.innerHTML = `<p style="color:#d1d5db;font-style:italic;text-align:center;margin-top:80px;">${hint}</p>`;
+        preview.innerHTML = `<p style="color:#6e6e73;font-style:italic;text-align:center;margin-top:80px;">${hint}</p>`;
         return;
     }
     if (typeof marked !== 'undefined') renderMarkdownSafe(preview, raw);

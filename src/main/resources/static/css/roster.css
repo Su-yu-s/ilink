@@ -152,9 +152,9 @@
     padding: 3px 10px;
     font-size: var(--font-size-xs);
     font-weight: 600;
-    color: #15803d;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    color: #186a35;
+    background: #e7f4ec;
+    border: 1px solid #cbe8d6;
     border-radius: var(--radius-full);
 }
 

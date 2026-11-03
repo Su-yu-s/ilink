@@ -53,6 +53,14 @@ class PageControllerWebTest {
             .andExpect(view().name("404"));
     }
 
+    /** 作品集托管在 GitHub Pages，/portfolio 只负责跳转，不能掉进 404 */
+    @Test
+    void portfolioRedirectsToExternalPortfolio() throws Exception {
+        mockMvc.perform(get("/portfolio"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(view().name("redirect:https://su-yu-s.github.io/iLink-cn/"));
+    }
+
     @Test
     void galleryHtmlResolvedAsSystemModule() throws Exception {
         mockMvc.perform(get("/gallery.html"))

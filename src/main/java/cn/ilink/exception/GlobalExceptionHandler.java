@@ -1,5 +1,6 @@
 package cn.ilink.exception;
 
+import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import cn.ilink.collab.TeamCollabException;
 import cn.ilink.teamagent.TeamAgentException;
@@ -24,8 +25,11 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import java.util.List;
@@ -176,9 +180,26 @@ public class GlobalExceptionHandler {
         return response.body(result);
     }
 
+    /**
+     * 没有匹配到任何路由。
+     *
+     * <p>配置了 {@code throw-exception-if-no-handler-found: true} 后，这类请求以异常形式进到这里，
+     * 绕过了 {@link cn.ilink.controller.ErrorContractController} 的 Accept 判断。若一律回 JSON，
+     * 用户在浏览器里敲一个错地址（如 {@code /portfolio}）看到的就是一段裸 JSON。
+     * 因此这里按请求方期望分流：接口调用仍回 Result 契约，浏览器导航渲染 404 页面。
+     */
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<Result<?>> handleNoHandlerFoundException(NoHandlerFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Result.notFound("请求的资源不存在"));
+    public Object handleNoHandlerFoundException(NoHandlerFoundException e,
+                                                HttpServletRequest request,
+                                                HttpServletResponse response) {
+        if (ControllerUtils.expectsJson(request)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Result.notFound("请求的资源不存在"));
+        }
+        response.setStatus(HttpStatus.NOT_FOUND.value());
+        ModelAndView mav = new ModelAndView("404");
+        mav.addObject("status", HttpStatus.NOT_FOUND.value());
+        mav.addObject("error", HttpStatus.NOT_FOUND.getReasonPhrase());
+        return mav;
     }
 
     /**

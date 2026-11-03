@@ -12,16 +12,16 @@
     min-height: 72px;
     padding: 0 20px;
     background: #ffffff;
-    border: 1px solid #e8e2d9;
-    border-radius: 16px;
-    box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04);
+    border: 1px solid #d2d2d7;
+    border-radius: 18px;
+    box-shadow: 0 1px 3px rgba(29, 29, 31, 0.04);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     flex-wrap: wrap;
 }
 
 .il-search-bar:hover {
     border-color: #d4ccc0;
-    box-shadow: 0 8px 24px rgba(44, 36, 25, 0.07);
+    box-shadow: 0 8px 24px rgba(29, 29, 31, 0.07);
 }
 
 /* === 搜索输入框 === */
@@ -63,7 +63,7 @@
 }
 
 .il-search-bar__input:focus {
-    border-color: var(--accent, #b8956a);
+    border-color: var(--accent, #0066cc);
     background: var(--bg-white);
     box-shadow: 0 0 0 3px rgba(184, 149, 106, 0.12);
 }
@@ -100,7 +100,7 @@
 }
 
 .il-search-bar__select select:focus {
-    border-color: var(--accent, #b8956a);
+    border-color: var(--accent, #0066cc);
     box-shadow: 0 0 0 3px rgba(184, 149, 106, 0.12);
     color: var(--text-primary);
 }
@@ -139,9 +139,9 @@
     border-radius: var(--radius-sm);
     font-size: 13px;
     font-weight: 500;
-    color: #374151;
+    color: #424245;
     background: #ffffff;
-    border: 1px solid #d1d5db;
+    border: 1px solid #d2d2d7;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -153,14 +153,14 @@
 }
 
 .il-search-bar__tag:hover {
-    background: #f3f4f6;
-    color: #111827;
+    background: #f5f5f7;
+    color: #1d1d1f;
 }
 
 .il-search-bar__tag.active {
-    background: #111827;
+    background: #1d1d1f;
     color: #ffffff;
-    border-color: #111827;
+    border-color: #1d1d1f;
 }
 
 /* === 按钮 === */
@@ -180,15 +180,15 @@
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: var(--font-sans, "Inter", "Microsoft YaHei", "微软雅黑", sans-serif);
     border: none;
-    background: #3d3229;
-    color: #faf9f7;
+    background: #1d1d1f;
+    color: #f5f5f7;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 .il-search-bar__btn--primary:hover {
-    background: #2c2419;
-    transform: translateY(-1px);
+    background: #1d1d1f;
+    transform: none;
     box-shadow: var(--shadow-md);
 }
 
@@ -251,10 +251,10 @@
 }
 
 .il-search-bar__btn--ghost:hover {
-    background: #3d3229;
-    color: #faf6f0;
-    border-color: #3d3229;
-    transform: translateY(-1px);
+    background: #1d1d1f;
+    color: #f5f5f7;
+    border-color: #1d1d1f;
+    transform: none;
     box-shadow: var(--shadow-sm);
 }
 

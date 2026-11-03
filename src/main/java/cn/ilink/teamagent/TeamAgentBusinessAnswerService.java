@@ -34,17 +34,26 @@ public class TeamAgentBusinessAnswerService {
         输出必须是一个 JSON 对象，且只能包含 answer 与 actions 两个字段。
         answer 是给用户看的中文精简 Markdown，不得输出隐藏推理过程。
         actions 是数组，最多 10 项，每项只能包含 actionType、targetId、after、reason、evidence。
+        evidence 是可选数组，每项只能包含 kind、id、label、generatedAt 四个字段：
+        kind 取 TASK、TEAM_TASK、TEAM_MEMBER、TEAM、TEAM_STATE、TEAM_METRIC、
+        WEEKLY_METRIC、KNOWLEDGE_FRESHNESS 之一；id 必须是当前事实中真实存在的数字 ID；
+        label 是不超过 160 字的来源名；generatedAt 为 ISO-8601 时间。
+        不要为来源另起字段名（例如用 type 代替 kind）；说不清来源就省略 evidence。
         after 必须是 JSON 对象，并按动作类型使用以下字段：
         - CREATE_TASK：taskTitle、taskDescription、taskType、priority、estimatedHours、
           deadline、assignedTo、requiresReview。taskTitle 与 assignedTo 必填，
           requiresReview 必须为 true；未知截止时间时省略 deadline。taskType 只能取
           DEVELOPMENT、DESIGN、TESTING、DOCUMENTATION、OTHER 之一；priority 只能取 1-4。
-        - CREATE_SUBTASK：与 CREATE_TASK 相同，并额外必填 parentTaskId。
+        - CREATE_SUBTASK：与 CREATE_TASK 相同，并额外必填 parentTaskId；子任务是新建，
+          不要携带 targetId。
         - ASSIGN_TASK：{"assignedTo": 当前成员 ID}
         - SET_TASK_PRIORITY：{"priority": 1-4 的整数}
         - SET_TASK_DEADLINE：{"deadline": ISO-8601 时间或 null}
         - SEND_TASK_REMINDER：{"reminderText": 纯文本}
-        - SEND_WEEKLY_REPORT：仅使用服务端提供的周报字段，不要在普通任务规划中生成。
+        同一个任务在一次规划里最多只能出现一个修改或提醒动作（ASSIGN_TASK、
+        SET_TASK_PRIORITY、SET_TASK_DEADLINE、SEND_TASK_REMINDER 互斥）；确实需要多步时，
+        只保留最关键的一步，或改为新建子任务。
+        - SEND_WEEKLY_REPORT：只能由服务端周报流程生成，普通任务规划一律不要输出该动作类型。
         当请求涉及团队协作文档、表格或竞赛材料时，改用以下动作类型：
         - CREATE_TEAM_DOCUMENT：title（必填，≤120 字）、contentMarkdown（Markdown 正文，
           可省略）、visibility（TEAM 或 RESTRICTED，默认 TEAM）。
@@ -80,7 +89,7 @@ public class TeamAgentBusinessAnswerService {
         你不得生成审核任务、删除任务、移除成员、解散团队、转让队长或修改团队状态。
         没有把握时不生成动作，只给出保守建议。
         JSON 形态示例（字段值仅作格式参考，实际内容必须来自当前团队事实）：
-        {"answer":"已根据团队事实生成任务提案。","actions":[{"actionType":"CREATE_TASK","after":{"taskTitle":"完成接口联调","taskDescription":"按验收清单完成联调并记录结果","taskType":"DEVELOPMENT","priority":2,"estimatedHours":4,"deadline":"2026-10-30T10:00:00Z","assignedTo":75,"requiresReview":true},"reason":"联调是当前阶段的关键路径","evidence":[]}]}
+        {"answer":"已根据团队事实生成任务提案。","actions":[{"actionType":"CREATE_TASK","after":{"taskTitle":"完成接口联调","taskDescription":"按验收清单完成联调并记录结果","taskType":"DEVELOPMENT","priority":2,"estimatedHours":4,"deadline":"2026-10-30T10:00:00Z","assignedTo":75,"requiresReview":true},"reason":"联调是当前阶段的关键路径","evidence":[{"kind":"TASK","id":41,"label":"接口联调（进行中）"}]}]}
         """;
     private static final String COLLAB_DOCUMENT_HINT = """
         本次请求聚焦团队协作文档：优先生成 CREATE_TEAM_DOCUMENT 或 APPEND_TEAM_DOCUMENT，

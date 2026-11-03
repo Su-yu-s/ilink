@@ -31,15 +31,15 @@ body[data-app-page="community"] .il-compose-editor {
 
 /* === Feed Card Foundation === */
 body[data-app-page="community"] {
-  background: #faf9f7;
+  background: #f5f5f7;
 }
 
 body[data-app-page="community"] .article-card {
   background: #ffffff;
-  border: 1px solid #e8e2d9;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04);
-  color: #2c2419;
+  border: 1px solid #d2d2d7;
+  border-radius: 18px;
+  box-shadow: 0 1px 3px rgba(29, 29, 31, 0.04);
+  color: #1d1d1f;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -54,7 +54,7 @@ body[data-app-page="community"] .article-card::before {
 
 body[data-app-page="community"] .article-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(44, 36, 25, 0.08);
+  box-shadow: 0 4px 12px rgba(29, 29, 31, 0.08);
   border-color: #d4ccc0;
 }
 
@@ -76,7 +76,7 @@ body[data-app-page="community"] .article-card .card-header {
 body[data-app-page="community"] .article-card .card-title {
 
   font-weight: 600;
-  color: #2c2419;
+  color: #1d1d1f;
   line-height: 1.4;
   margin: 0;
   letter-spacing: 0;
@@ -88,17 +88,17 @@ body[data-app-page="community"] .article-card .card-title {
 }
 
 body[data-app-page="community"] .article-card .card-title:hover {
-  color: #a08055;
+  color: #0066cc;
 }
 
 body[data-app-page="community"] .article-card .article-badge,
 body[data-app-page="community"] .article-card .card-tag.primary {
   height: 28px;
   padding: 0 12px;
-  border-radius: 6px;
-  background: #faf6f0;
-  border: 1px solid #f5efe6;
-  color: #a08055;
+  border-radius: 8px;
+  background: #f5f5f7;
+  border: 1px solid #f5f5f7;
+  color: #0066cc;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -131,7 +131,7 @@ body[data-app-page="community"] .article-card .article-badge.badge-hot {
 }
 
 body[data-app-page="community"] .article-card .card-tag.primary:hover {
-  background: #f5efe6;
+  background: #f5f5f7;
 }
 
 body[data-app-page="community"] .article-card .author-meta {
@@ -140,14 +140,14 @@ body[data-app-page="community"] .article-card .author-meta {
   flex-wrap: wrap;
   gap: 8px;
   font-size: 13px;
-  color: #a89a8a;
+  color: #6e6e73;
 }
 
 body[data-app-page="community"] .article-card .meta-item {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #a89a8a;
+  color: #6e6e73;
   min-width: 0;
 }
 
@@ -155,7 +155,7 @@ body[data-app-page="community"] .article-card .meta-item svg {
   width: 15px;
   height: 15px;
   flex: 0 0 15px;
-  color: #a89a8a;
+  color: #6e6e73;
   stroke: currentColor;
 }
 
@@ -193,10 +193,10 @@ body[data-app-page="community"] .article-card .card-tags {
 body[data-app-page="community"] .article-card .card-tag {
   height: 28px;
   padding: 0 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #f0ebe5;
   border: 1px solid transparent;
-  color: #6b5e4f;
+  color: #6e6e73;
   display: inline-flex;
   align-items: center;
   font-size: 13px;
@@ -204,15 +204,15 @@ body[data-app-page="community"] .article-card .card-tag {
 }
 
 body[data-app-page="community"] .article-card .card-tag:hover {
-  background: #faf6f0;
-  color: #a08055;
+  background: #f5f5f7;
+  color: #0066cc;
 }
 
 body[data-app-page="community"] .article-card .card-excerpt {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  color: #6b5e4f;
+  color: #6e6e73;
   margin: 0;
   word-break: break-word;
 }
@@ -227,7 +227,7 @@ body[data-app-page="community"] .article-card .card-divider {
   height: 1px;
   width: 100%;
   margin: 18px 0 0;
-  background: linear-gradient(to right, #e8e2d9, transparent);
+  background: linear-gradient(to right, #d2d2d7, transparent);
 }
 
 body[data-app-page="community"] .article-card .card-footer {
@@ -253,7 +253,7 @@ body[data-app-page="community"] .article-card .author-avatar {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  border: 2px solid #e8e2d9;
+  border: 2px solid #d2d2d7;
   background: #f5f0eb;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -273,7 +273,7 @@ html.ilink-app body[data-app-page="community"] .article-card .author-avatar.il-p
 }
 
 body[data-app-page="community"] .article-card .author-avatar:hover {
-  border-color: #b8956a;
+  border-color: #0066cc;
   transform: scale(1.05);
 }
 
@@ -284,7 +284,7 @@ body[data-app-page="community"] .article-card .author-avatar img {
 }
 
 body[data-app-page="community"] .article-card .author-name {
-  color: #2c2419;
+  color: #1d1d1f;
   min-width: 0;
 }
 
@@ -313,7 +313,7 @@ body[data-app-page="community"] .article-card .action-btn {
   border-radius: 8px;
   background: transparent;
   border: 0;
-  color: #a89a8a;
+  color: #6e6e73;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -332,17 +332,17 @@ body[data-app-page="community"] .article-card .action-btn svg {
 
 body[data-app-page="community"] .article-card .action-btn:hover {
   background: #f5f0eb;
-  color: #6b5e4f;
+  color: #6e6e73;
 }
 
 body[data-app-page="community"] .article-card .action-btn.il-feed-action--on {
-  background: #faf6f0;
-  color: #a08055;
+  background: #f5f5f7;
+  color: #0066cc;
 }
 
 body[data-app-page="community"] .article-card .action-btn.il-feed-action--on svg {
-  fill: #b8956a;
-  stroke: #b8956a;
+  fill: #0066cc;
+  stroke: #0066cc;
 }
 
 body[data-app-page="community"] .article-card .read-more-btn {
@@ -352,8 +352,8 @@ body[data-app-page="community"] .article-card .read-more-btn {
   padding: 0 20px;
   border-radius: 8px;
   background: #ffffff;
-  border: 1px solid #e8e2d9;
-  color: #2c2419;
+  border: 1px solid #d2d2d7;
+  color: #1d1d1f;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -370,9 +370,9 @@ body[data-app-page="community"] .article-card .read-more-btn span {
 }
 
 body[data-app-page="community"] .article-card .read-more-btn:hover {
-  background: #3d3229;
-  border-color: #3d3229;
-  color: #faf6f0;
+  background: #1d1d1f;
+  border-color: #1d1d1f;
+  color: #f5f5f7;
 }
 
 body[data-app-page="community"] .article-card .read-more-btn:hover span {
@@ -380,8 +380,8 @@ body[data-app-page="community"] .article-card .read-more-btn:hover span {
 }
 
 body[data-app-page="community"] .article-card.featured {
-  border-color: #b8956a;
-  box-shadow: 0 1px 3px rgba(44, 36, 25, 0.04), 0 0 0 1px #f5efe6;
+  border-color: #0066cc;
+  box-shadow: 0 1px 3px rgba(29, 29, 31, 0.04), 0 0 0 1px #f5f5f7;
 }
 
 body[data-app-page="community"] .article-card.with-cover {
@@ -410,7 +410,7 @@ body[data-app-page="community"] .article-card.with-cover .card-cover::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(44, 36, 25, 0), rgba(44, 36, 25, 0.4));
+  background: linear-gradient(to bottom, rgba(29, 29, 31, 0), rgba(29, 29, 31, 0.4));
 }
 
 body[data-app-page="community"] .article-card.with-cover .card-body {
@@ -446,7 +446,7 @@ body[data-app-page="community"] #composeModal.il-modal-overlay {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(44, 36, 25, 0.28);
+  background: rgba(29, 29, 31, 0.28);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -460,10 +460,10 @@ body[data-app-page="community"] #composeModal > .il-modal {
   max-height: min(86vh, 860px);
   overflow: hidden;
   background: #ffffff;
-  border: 1px solid #e8e2d9;
-  border-radius: 16px;
-  box-shadow: 0 24px 70px rgba(44, 36, 25, 0.18);
-  color: #2c2419;
+  border: 1px solid #d2d2d7;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(29, 29, 31, 0.18);
+  color: #1d1d1f;
 }
 
 body[data-app-page="community"] #composeModal .il-modal-header,
@@ -473,12 +473,12 @@ body[data-app-page="community"] #composeModal .il-modal-footer {
   justify-content: space-between;
   gap: 16px;
   padding: 20px 24px;
-  border-bottom: 1px solid #e8e2d9;
+  border-bottom: 1px solid #d2d2d7;
 }
 
 body[data-app-page="community"] #composeModal .il-modal-footer {
   justify-content: flex-end;
-  border-top: 1px solid #e8e2d9;
+  border-top: 1px solid #d2d2d7;
   border-bottom: 0;
 }
 
@@ -487,7 +487,7 @@ body[data-app-page="community"] #composeModal .il-modal-title {
 
   font-size: 22px;
   font-weight: 600;
-  color: #2c2419;
+  color: #1d1d1f;
 }
 
 body[data-app-page="community"] #composeModal .il-modal-close {
@@ -496,16 +496,16 @@ body[data-app-page="community"] #composeModal .il-modal-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e8e2d9;
-  border-radius: 10px;
+  border: 1px solid #d2d2d7;
+  border-radius: 12px;
   background: #ffffff;
-  color: #6b5e4f;
+  color: #6e6e73;
   cursor: pointer;
 }
 
 body[data-app-page="community"] #composeModal .il-modal-close:hover {
   background: #f5f0eb;
-  color: #2c2419;
+  color: #1d1d1f;
 }
 
 body[data-app-page="community"] #composeModal .il-modal-body {
@@ -523,23 +523,23 @@ body[data-app-page="community"] #composeModal .il-form-label {
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #2c2419;
+  color: #1d1d1f;
 }
 
 body[data-app-page="community"] #composeModal .il-form-select,
 body[data-app-page="community"] #composeModal .il-form-input {
   width: 100%;
   min-height: 42px;
-  border: 1px solid #e8e2d9;
+  border: 1px solid #d2d2d7;
   border-radius: 12px;
   background: #ffffff;
-  color: #2c2419;
+  color: #1d1d1f;
   padding: 0 14px;
 }
 
 body[data-app-page="community"] #composeModal .ql-toolbar,
 body[data-app-page="community"] #composeModal .ql-container {
-  border-color: #e8e2d9;
+  border-color: #d2d2d7;
 }
 
 /* Alias classes emitted by community.js keep the article as one vertical record. */
@@ -578,7 +578,7 @@ body[data-app-page="community"] #submitPostBtn.il-btn-primary {
     width: 100%;
     max-width: none;
     max-height: calc(100dvh - 32px - env(safe-area-inset-bottom));
-    border-radius: 16px;
+    border-radius: 18px;
   }
 
   body[data-app-page="community"] .il-modal-header,

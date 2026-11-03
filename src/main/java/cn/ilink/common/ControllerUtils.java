@@ -2,6 +2,7 @@ package cn.ilink.common;
 
 import cn.ilink.entity.User;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -100,6 +101,28 @@ public final class ControllerUtils {
      */
     public static boolean isTeacher(User user) {
         return user != null && "TEACHER".equals(user.getRole());
+    }
+
+    /**
+     * 请求方是否期望 JSON 响应（而不是 HTML 页面）。
+     *
+     * <p>浏览器地址栏导航的 Accept 一定含 {@code text/html}；fetch/XHR 默认是
+     * {@code *}{@code /*}、显式设置时含 {@code application/json}。所有「路径不存在」的兜底
+     * 都要先问这一句，否则用户在浏览器里输入一个错地址，拿到的是裸 JSON。
+     */
+    public static boolean expectsJson(HttpServletRequest request) {
+        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+            return true;
+        }
+        String accept = request.getHeader("Accept");
+        if (accept == null || accept.isBlank()) {
+            return false;
+        }
+        String lower = accept.toLowerCase(java.util.Locale.ROOT);
+        if (lower.contains("text/html")) {
+            return false;
+        }
+        return lower.contains("application/json") || lower.contains("*/*");
     }
 
     /** 统一分页参数安全处理：page≥1 */

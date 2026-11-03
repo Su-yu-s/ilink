@@ -39,28 +39,28 @@
   padding: 0.75rem 0.9rem;
   font-size: 13px;
   line-height: 1.55;
-  color: #4b5563;
-  background: #f9fafb;
-  border: 1px solid #f0f2f5;
+  color: #424245;
+  background: #f5f5f7;
+  border: 1px solid #f5f5f7;
   border-radius: 8px;
 }
 
 .il-asset-publish-modal__intro strong {
-  color: #111827;
+  color: #1d1d1f;
   font-weight: 600;
 }
 
 .il-asset-publish-modal__optional {
   font-size: 12px;
   font-weight: 400;
-  color: #9ca3af;
+  color: #6e6e73;
 }
 
 .il-asset-publish-modal__hint {
   margin: 0.35rem 0 0;
   font-size: 12px;
   line-height: 1.45;
-  color: #9ca3af;
+  color: #6e6e73;
 }
 
 .il-asset-publish-modal__file {
@@ -81,7 +81,7 @@
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
   font-size: 14px;
   line-height: 1.7;
-  color: var(--ui-text, #1f2937);
+  color: var(--ui-text, #1d1d1f);
   background: transparent !important;
 }
 

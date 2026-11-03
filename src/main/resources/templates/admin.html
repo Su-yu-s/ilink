@@ -8,106 +8,98 @@
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <link th:href="@{/css/admin-shell.css}" rel="stylesheet">
     <link th:href="@{/css/admin-redesign.css}" rel="stylesheet">
+    <link th:href="@{/css/admin-workbench.css}" rel="stylesheet">
 </head>
 <body data-app-page="admin" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
 
-    <div class="container main-content admin-shell">
-        <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    <div class="adk">
+        <aside class="adk-side" aria-label="后台管理模块">
+            <nav class="adk-nav" id="adminTabs" role="tablist" aria-label="管理模块">
+                <button class="adk-nav__item active" id="overview-tab" type="button" role="tab" aria-selected="true" aria-controls="overview" data-bs-toggle="tab" data-bs-target="#overview">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span>概览</span>
+                </button>
+                <button class="adk-nav__item" id="users-tab" type="button" role="tab" aria-selected="false" aria-controls="users" data-bs-toggle="tab" data-bs-target="#users">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span>用户管理</span>
+                </button>
+                <button class="adk-nav__item" id="teams-tab" type="button" role="tab" aria-selected="false" aria-controls="teams" data-bs-toggle="tab" data-bs-target="#teams">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>组队管理</span>
+                </button>
+                <button class="adk-nav__item" id="teachers-tab" type="button" role="tab" aria-selected="false" aria-controls="teachers" data-bs-toggle="tab" data-bs-target="#teachers">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8 12-2 9 6-3 6 3-2-9"/></svg>
+                    <span>导师管理</span>
+                </button>
+                <button class="adk-nav__item" id="assets-tab" type="button" role="tab" aria-selected="false" aria-controls="assets" data-bs-toggle="tab" data-bs-target="#assets">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span>成果管理</span>
+                </button>
+                <button class="adk-nav__item" id="community-tab" type="button" role="tab" aria-selected="false" aria-controls="community" data-bs-toggle="tab" data-bs-target="#community">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>社区帖子</span>
+                </button>
+                <button class="adk-nav__item" id="competitions-tab" type="button" role="tab" aria-selected="false" aria-controls="competitions" data-bs-toggle="tab" data-bs-target="#competitions">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M9 15h6"/><path d="M12 15v4"/><path d="M8 21h8"/></svg>
+                    <span>竞赛目录</span>
+                </button>
+                <button class="adk-nav__item" id="audit-tab" type="button" role="tab" aria-selected="false" aria-controls="audit" data-bs-toggle="tab" data-bs-target="#audit">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+                    <span>审计日志</span>
+                </button>
+            </nav>
+            <div class="adk-side__foot">
+                <a class="adk-side__link" th:href="@{/index.html}">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                    <span>返回站点</span>
+                </a>
+            </div>
+        </aside>
 
-        <div class="page-header admin-page-header">
-            <div class="page-header-info">
-                <h1 class="neon-text">管理后台</h1>
-                <p class="page-subtitle">管理平台用户、组队需求、导师申请、竞赛目录、成果作品与社区帖子</p>
-            </div>
-        </div>
-
-        <div class="stats-grid mb-4 admin-stats-grid">
-            <div class="stat-tile">
-                <span class="label">用户总数</span>
-                <span class="value" id="userCount">0</span>
-            </div>
-            <div class="stat-tile">
-                <span class="label">组队需求</span>
-                <span class="value" id="teamCount">0</span>
-            </div>
-            <div class="stat-tile">
-                <span class="label">导师申请</span>
-                <span class="value" id="teacherCount">0</span>
-            </div>
-            <div class="stat-tile">
-                <span class="label">成果作品</span>
-                <span class="value" id="assetCount">0</span>
-            </div>
-            <div class="stat-tile">
-                <span class="label">社区帖子</span>
-                <span class="value" id="postCount">0</span>
-            </div>
-        </div>
-
-        <div class="admin-workspace">
-            <aside class="admin-sidebar" aria-label="后台管理模块">
-                <div class="admin-sidebar-title">管理模块</div>
-                <ul class="nav nav-pills admin-tabs" id="adminTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
-                            <span>用户管理</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="teams-tab" data-bs-toggle="tab" data-bs-target="#teams" type="button" role="tab">
-                            <span>组队管理</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab">
-                            <span>导师管理</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="assets-tab" data-bs-toggle="tab" data-bs-target="#assets" type="button" role="tab">
-                            <span>成果管理</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="community-tab" data-bs-toggle="tab" data-bs-target="#community" type="button" role="tab">
-                            <span>社区帖子</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="competitions-tab" data-bs-toggle="tab" data-bs-target="#competitions" type="button" role="tab">
-                            <span>竞赛目录</span>
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" role="tab">
-                            <span>审计日志</span>
-                        </button>
-                    </li>
-                </ul>
-            </aside>
-
-            <section class="admin-content-panel">
-                <div class="tab-content" id="adminTabContent">
-            <div class="tab-pane fade show active" id="users" role="tabpanel">
-                <div class="card admin-table-card">
-                    <div class="card-header"><h5 class="mb-0">用户列表</h5></div>
-                    <div class="card-body">
-                        <div class="row g-2 align-items-center mb-3">
-                            <div class="col-md-8">
-                                <div th:replace="~{fragments/search-field :: field('userSearchInput', '搜索：用户名 / 姓名 / 学号 / 学校 / 角色', '搜索用户', 'text', 'il-search-field--admin')}"></div>
+        <main class="adk-main">
+            <div class="tab-content" id="adminTabContent">
+                <section class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                    <header class="adk-pagehead">
+                        <div>
+                            <h1 class="adk-pagehead__title">概览</h1>
+                            <p class="adk-pagehead__sub">平台现有数据，以及最近的管理操作</p>
+                        </div>
+                    </header>
+                    <div class="adk-metrics">
+                        <div class="adk-metric"><span class="adk-metric__label">用户总数</span><span class="adk-metric__value" id="userCount">0</span></div>
+                        <div class="adk-metric"><span class="adk-metric__label">组队需求</span><span class="adk-metric__value" id="teamCount">0</span></div>
+                        <div class="adk-metric"><span class="adk-metric__label">导师申请</span><span class="adk-metric__value" id="teacherCount">0</span></div>
+                        <div class="adk-metric"><span class="adk-metric__label">成果作品</span><span class="adk-metric__value" id="assetCount">0</span></div>
+                        <div class="adk-metric"><span class="adk-metric__label">社区帖子</span><span class="adk-metric__value" id="postCount">0</span></div>
+                    </div>
+                    <div class="card admin-table-card adk-card">
+                        <div class="adk-toolbar">
+                            <span class="adk-hint" style="flex:1;">最近 8 条管理操作</span>
+                            <button type="button" class="adk-btn adk-btn--ghost" onclick="document.getElementById('audit-tab').click()">查看全部</button>
+                        </div>
+                        <div class="adk-recent" id="overviewRecent"></div>
+                    </div>
+                </section>
+                <section class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+                    <header class="adk-pagehead">
+                        <div>
+                            <h1 class="adk-pagehead__title">用户管理</h1>
+                            <p class="adk-pagehead__sub">学生、教师与管理员的账号、身份与状态</p>
+                        </div>
+                    </header>
+                    <div class="card admin-table-card adk-card">
+                        <div class="adk-toolbar">
+                            <div class="adk-toolbar__search">
+                                <div th:replace="~{fragments/search-field :: field('userSearchInput', '搜索：用户名 / 姓名 / 学号 / 学校', '搜索用户', 'text', 'il-search-field--admin')}"></div>
                             </div>
-                            <div class="col-md-2">
-                                <select class="form-select form-select-sm" id="userRoleFilter" aria-label="按角色筛选">
-                                    <option value="">全部角色</option>
-                                    <option value="STUDENT">学生</option>
-                                    <option value="TEACHER">教师</option>
-                                    <option value="ADMIN">管理员</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2 d-flex justify-content-md-end gap-2">
-                                <button type="button" class="btn btn-primary btn-sm" id="userSearchBtn">搜索</button>
-                            </div>
+                            <select class="form-select adk-select" id="userRoleFilter" aria-label="按角色筛选">
+                                <option value="">全部角色</option>
+                                <option value="STUDENT">学生</option>
+                                <option value="TEACHER">教师</option>
+                                <option value="ADMIN">管理员</option>
+                            </select>
+                            <button type="button" class="adk-btn adk-btn--primary" id="userSearchBtn">搜索</button>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-striped align-middle admin-table">
@@ -125,18 +117,22 @@
                                 <tbody id="userTableBody"></tbody>
                             </table>
                         </div>
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
-                            <small class="text-muted" id="userListHint">共 0 条</small>
+                        <div class="adk-tablefoot">
+                            <small class="adk-hint" id="userListHint">共 0 条</small>
                             <nav id="userPagination" class="admin-user-pager" aria-label="用户列表分页"></nav>
                         </div>
                     </div>
-                </div>
-            </div>
+                </section>
 
-            <div class="tab-pane fade" id="teams" role="tabpanel">
-                <div class="card admin-table-card">
-                    <div class="card-header"><h5 class="mb-0">组队需求列表</h5></div>
-                    <div class="card-body">
+                <section class="tab-pane fade" id="teams" role="tabpanel" aria-labelledby="teams-tab">
+                    <header class="adk-pagehead">
+                        <div>
+                            <h1 class="adk-pagehead__title">组队管理</h1>
+                            <p class="adk-pagehead__sub">平台上的组队需求，含状态与解散操作</p>
+                        </div>
+                    </header>
+                    <div class="card admin-table-card adk-card">
+                        <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
                             <div class="col-md-8">
                                 <div th:replace="~{fragments/search-field :: field('teamSearchInput', '搜索：标题 / 发布者 / 状态 / 技能', '搜索组队需求', 'text', 'il-search-field--admin')}"></div>
@@ -174,11 +170,16 @@
                         </div>
                     </div>
                 </div>
-            </div>
+                </section>
 
-            <div class="tab-pane fade" id="teachers" role="tabpanel">
-                <div class="card admin-table-card">
-                    <div class="card-header"><h5 class="mb-0">导师申请列表</h5></div>
+            <div class="tab-pane fade" id="teachers" role="tabpanel" aria-labelledby="teachers-tab">
+                <header class="adk-pagehead">
+                    <div>
+                        <h1 class="adk-pagehead__title">导师管理</h1>
+                        <p class="adk-pagehead__sub">教师入驻申请与认证状态</p>
+                    </div>
+                </header>
+                <div class="card admin-table-card adk-card">
                     <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
                             <div class="col-md-10">
@@ -210,9 +211,14 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="assets" role="tabpanel">
-                <div class="card admin-table-card">
-                    <div class="card-header"><h5 class="mb-0">成果列表</h5></div>
+            <div class="tab-pane fade" id="assets" role="tabpanel" aria-labelledby="assets-tab">
+                <header class="adk-pagehead">
+                    <div>
+                        <h1 class="adk-pagehead__title">成果管理</h1>
+                        <p class="adk-pagehead__sub">学生提交的成果作品与审核状态</p>
+                    </div>
+                </header>
+                <div class="card admin-table-card adk-card">
                     <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
                             <div class="col-md-10">
@@ -244,9 +250,14 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="community" role="tabpanel">
-                <div class="card admin-table-card">
-                    <div class="card-header"><h5 class="mb-0">交流社区帖子</h5></div>
+            <div class="tab-pane fade" id="community" role="tabpanel" aria-labelledby="community-tab">
+                <header class="adk-pagehead">
+                    <div>
+                        <h1 class="adk-pagehead__title">社区帖子</h1>
+                        <p class="adk-pagehead__sub">社区分区、帖子与置顶状态</p>
+                    </div>
+                </header>
+                <div class="card admin-table-card adk-card">
                     <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
                             <div class="col-md-10">
@@ -279,12 +290,15 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="competitions" role="tabpanel">
-                <div class="card admin-table-card">
-                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                        <h5 class="mb-0">竞赛目录</h5>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="openCompetitionEditModal()">新增竞赛</button>
+            <div class="tab-pane fade" id="competitions" role="tabpanel" aria-labelledby="competitions-tab">
+                <header class="adk-pagehead">
+                    <div>
+                        <h1 class="adk-pagehead__title">竞赛目录</h1>
+                        <p class="adk-pagehead__sub">平台收录的竞赛与赛道分类</p>
                     </div>
+                    <button type="button" class="adk-btn adk-btn--primary" onclick="openCompetitionEditModal()">新增竞赛</button>
+                </header>
+                <div class="card admin-table-card adk-card">
                     <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
                             <div class="col-md-6">
@@ -326,12 +340,14 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="audit" role="tabpanel">
-                <div class="card admin-table-card">
-                    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                        <h5 class="mb-0">操作审计日志</h5>
-                        <small class="text-muted">记录管理员的每一次写操作；只可查询，不可修改</small>
+            <div class="tab-pane fade" id="audit" role="tabpanel" aria-labelledby="audit-tab">
+                <header class="adk-pagehead">
+                    <div>
+                        <h1 class="adk-pagehead__title">审计日志</h1>
+                        <p class="adk-pagehead__sub">记录管理员的每一次写操作；只可查询，不可修改</p>
                     </div>
+                </header>
+                <div class="card admin-table-card adk-card">
                     <div class="card-body">
                         <div class="row g-2 align-items-center mb-3">
                             <div class="col-md-8">
@@ -374,9 +390,8 @@
                     </div>
                 </div>
             </div>
-                </div>
-            </section>
-        </div>
+            </div>
+        </main>
     </div>
 
     <div class="modal fade" id="adminUserEditModal" tabindex="-1" aria-hidden="true">
@@ -388,75 +403,100 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="adminEditUserId">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="adminEditUsername" class="form-label">用户名</label>
-                            <input type="text" class="form-control" id="adminEditUsername" maxlength="64" readonly aria-describedby="adminEditUsernameHint">
-                            <div class="form-text" id="adminEditUsernameHint">系统内部标识，不可修改</div>
+
+                    <section class="adk-fieldgroup">
+                        <header class="adk-fieldgroup__head">
+                            <h6 class="adk-fieldgroup__title">账号与权限</h6>
+                            <p class="adk-fieldgroup__hint">决定这个账号能做什么、能不能登录</p>
+                        </header>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-4">
+                                <label for="adminEditUsername" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="adminEditUsername" maxlength="64" readonly aria-describedby="adminEditUsernameHint">
+                                <div class="form-text" id="adminEditUsernameHint">系统内部标识，不可修改</div>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="adminEditRole" class="form-label">角色 *</label>
+                                <select class="form-select" id="adminEditRole">
+                                    <option value="STUDENT">学生</option>
+                                    <option value="TEACHER">教师</option>
+                                    <option value="ADMIN">管理员</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="adminEditStatus" class="form-label">账号状态</label>
+                                <select class="form-select" id="adminEditStatus">
+                                    <option value="ACTIVE">正常</option>
+                                    <option value="DISABLED">暂停使用</option>
+                                </select>
+                            </div>
+                            <div class="col-12" id="adminEditDisabledReasonGroup" hidden>
+                                <label for="adminEditDisabledReason" class="form-label">暂停原因 *</label>
+                                <input type="text" class="form-control" id="adminEditDisabledReason" maxlength="255"
+                                       placeholder="例如：发布虚假招募信息，经核实后暂停账号">
+                                <div class="form-text">该原因会记录在审计日志中，用于说明处置依据。</div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label for="adminEditRole" class="form-label">角色 *</label>
-                            <select class="form-select" id="adminEditRole">
-                                <option value="STUDENT">学生</option>
-                                <option value="TEACHER">教师</option>
-                                <option value="ADMIN">管理员</option>
-                            </select>
+                    </section>
+
+                    <section class="adk-fieldgroup">
+                        <header class="adk-fieldgroup__head">
+                            <h6 class="adk-fieldgroup__title">基本资料</h6>
+                            <p class="adk-fieldgroup__hint">会展示在个人主页，并用于搜索和筛选</p>
+                        </header>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="adminEditRealName" class="form-label">姓名</label>
+                                <input type="text" class="form-control" id="adminEditRealName" maxlength="64">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="adminEditGender" class="form-label">性别</label>
+                                <select class="form-select" id="adminEditGender">
+                                    <option value="">未设置</option>
+                                    <option value="MALE">男</option>
+                                    <option value="FEMALE">女</option>
+                                    <option value="OTHER">其他</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="adminEditStudentId" class="form-label">学号/工号</label>
+                                <input type="number" class="form-control" id="adminEditStudentId">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="adminEditGrade" class="form-label">年级</label>
+                                <input type="text" class="form-control" id="adminEditGrade" maxlength="32">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="adminEditMajor" class="form-label">专业</label>
+                                <input type="text" class="form-control" id="adminEditMajor" maxlength="64">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="adminEditCollege" class="form-label">学院</label>
+                                <input type="text" class="form-control" id="adminEditCollege" maxlength="128">
+                            </div>
+                            <div class="col-12">
+                                <label for="adminEditSchool" class="form-label">学校</label>
+                                <input type="text" class="form-control" id="adminEditSchool" maxlength="128">
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label for="adminEditEmail" class="form-label">邮箱</label>
-                            <input type="email" class="form-control" id="adminEditEmail" maxlength="128">
+                    </section>
+
+                    <section class="adk-fieldgroup">
+                        <header class="adk-fieldgroup__head">
+                            <h6 class="adk-fieldgroup__title">联系方式</h6>
+                            <p class="adk-fieldgroup__hint">用于找回密码和接收通知，修改后即时生效</p>
+                        </header>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label for="adminEditEmail" class="form-label">邮箱</label>
+                                <input type="email" class="form-control" id="adminEditEmail" maxlength="128">
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="adminEditPhoneNumber" class="form-label">手机号</label>
+                                <input type="text" class="form-control" id="adminEditPhoneNumber" maxlength="32">
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <label for="adminEditRealName" class="form-label">姓名</label>
-                            <input type="text" class="form-control" id="adminEditRealName" maxlength="64">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminEditPhoneNumber" class="form-label">手机号</label>
-                            <input type="text" class="form-control" id="adminEditPhoneNumber" maxlength="32">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminEditStudentId" class="form-label">学号/工号</label>
-                            <input type="number" class="form-control" id="adminEditStudentId">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminEditGrade" class="form-label">年级</label>
-                            <input type="text" class="form-control" id="adminEditGrade" maxlength="32">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminEditMajor" class="form-label">专业</label>
-                            <input type="text" class="form-control" id="adminEditMajor" maxlength="64">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminEditSchool" class="form-label">学校</label>
-                            <input type="text" class="form-control" id="adminEditSchool" maxlength="128">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminEditCollege" class="form-label">学院</label>
-                            <input type="text" class="form-control" id="adminEditCollege" maxlength="128">
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminEditGender" class="form-label">性别</label>
-                            <select class="form-select" id="adminEditGender">
-                                <option value="">未设置</option>
-                                <option value="MALE">男</option>
-                                <option value="FEMALE">女</option>
-                                <option value="OTHER">其他</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="adminEditStatus" class="form-label">账号状态</label>
-                            <select class="form-select" id="adminEditStatus">
-                                <option value="ACTIVE">正常</option>
-                                <option value="DISABLED">暂停使用</option>
-                            </select>
-                        </div>
-                        <div class="col-12" id="adminEditDisabledReasonGroup" hidden>
-                            <label for="adminEditDisabledReason" class="form-label">暂停原因 *</label>
-                            <input type="text" class="form-control" id="adminEditDisabledReason" maxlength="255"
-                                   placeholder="例如：发布虚假招募信息，经核实后暂停账号">
-                            <div class="form-text">该原因会记录在审计日志中，用于说明处置依据。</div>
-                        </div>
-                    </div>
+                    </section>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>

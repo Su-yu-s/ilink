@@ -1,0 +1,100 @@
+/* 团队空间 · 资料与资产（文件 / 文档 / 表格 / 材料）
+   合并原「团队资料」与「协作资产」两个侧栏入口。
+   页签样式沿用 tc-tabs 的视觉语言，但作用在面板层，因此独立成类。 */
+body[data-app-page="team-space"] #assets-panel {
+    min-height: 0;
+}
+
+body[data-app-page="team-space"] .assets-tabs {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-self: flex-start;
+    gap: 2px;
+    margin: 0 0 12px;
+    padding: 2px;
+    background: var(--tab-track-bg, #f5f5f7);
+    border-radius: var(--tab-track-radius, 8px);
+}
+
+body[data-app-page="team-space"] .assets-tab {
+    display: inline-flex;
+    align-items: center;
+    height: var(--tab-item-height, 30px);
+    border: 0;
+    background: transparent;
+    color: var(--color-gray-600, #6e6e73);
+    font-size: var(--tab-font-size, 13px);
+    font-weight: 500;
+    line-height: 1;
+    padding: 0 14px;
+    border-radius: var(--tab-item-radius, 6px);
+    cursor: pointer;
+    transition: background .16s ease, color .16s ease;
+}
+
+body[data-app-page="team-space"] .assets-tab:hover {
+    color: var(--color-black, #1d1d1f);
+}
+
+body[data-app-page="team-space"] .assets-tab.active {
+    background: var(--tab-active-bg, #fff);
+    color: var(--color-black, #1d1d1f);
+    box-shadow: var(--tab-active-shadow, 0 1px 2px rgba(29, 29, 31, 0.08));
+    font-weight: 600;
+}
+
+body[data-app-page="team-space"] .assets-tab:focus-visible {
+    outline: 2px solid var(--color-black, #1d1d1f);
+    outline-offset: 2px;
+}
+
+/* 两个视图共享剩余高度，内部各自滚动 */
+body[data-app-page="team-space"] .assets-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+body[data-app-page="team-space"] .assets-view[hidden] {
+    display: none;
+}
+
+body[data-app-page="team-space"] .assets-view > .library-layout,
+body[data-app-page="team-space"] .assets-view > .tc-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* 文件视图原来靠 100vh 撑高，合并后交给 flex 布局，避免多出一段空白 */
+body[data-app-page="team-space"] .assets-view > .library-layout {
+    margin-top: 0;
+    max-height: none;
+}
+
+body[data-app-page="team-space"] .assets-view > .tc-shell {
+    height: auto;
+}
+
+/* 页签已上移到面板层，协作资产内的操作栏只保留右侧动作，不要多余的分隔线与留白。
+   空栏由 team-collab.js 依据最终按钮数设置 #tcHead[hidden] 收起。 */
+body[data-app-page="team-space"] .assets-view .tc-head {
+    padding: 10px 18px;
+    justify-content: flex-end;
+}
+
+@media (max-width: 767.98px) {
+    body[data-app-page="team-space"] .assets-tabs {
+        width: 100%;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    body[data-app-page="team-space"] .assets-tabs::-webkit-scrollbar { display: none; }
+    body[data-app-page="team-space"] .assets-tab {
+        flex: 0 0 auto;
+        padding: 0 14px;
+    }
+    body[data-app-page="team-space"] .assets-view > .library-layout {
+        max-height: none;
+    }
+}

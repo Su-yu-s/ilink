@@ -5,7 +5,7 @@
  */
 
 body[data-app-page="asset-detail"].asset-detail-page {
-  background: linear-gradient(145deg, #f3f4f6 0%, #e5e7eb 100%) !important;
+  background: linear-gradient(145deg, #f5f5f7 0%, #e8e8ed 100%) !important;
 }
 
 body[data-app-page="asset-detail"] .asset-detail-shell {
@@ -20,18 +20,18 @@ body[data-app-page="asset-detail"] .asset-detail-breadcrumb {
   align-items: center;
   gap: 0.55rem;
   margin: 0 0 1rem;
-  color: #6b7280;
+  color: #6e6e73;
   font-size: 0.88rem;
 }
 
 body[data-app-page="asset-detail"] .asset-detail-breadcrumb a {
-  color: #374151;
+  color: #424245;
   font-weight: 600;
   text-decoration: none;
 }
 
 body[data-app-page="asset-detail"] .asset-detail-breadcrumb a:hover {
-  color: #111827;
+  color: #1d1d1f;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -44,9 +44,9 @@ body[data-app-page="asset-detail"] .asset-detail-state {
   padding: 4rem 1.5rem;
   text-align: center;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e8e8ed;
   border-radius: 1.5rem;
-  box-shadow: 0 18px 40px -24px rgba(17, 24, 39, 0.28);
+  box-shadow: 0 18px 40px -24px rgba(29, 29, 31, 0.28);
 }
 
 body[data-app-page="asset-detail"] .asset-detail-state[hidden] {
@@ -56,8 +56,8 @@ body[data-app-page="asset-detail"] .asset-detail-state[hidden] {
 body[data-app-page="asset-detail"] .asset-detail-state__indicator {
   width: 42px;
   height: 42px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #111827;
+  border: 3px solid #e8e8ed;
+  border-top-color: #1d1d1f;
   border-radius: 50%;
   animation: asset-detail-spin 0.8s linear infinite;
 }
@@ -65,7 +65,7 @@ body[data-app-page="asset-detail"] .asset-detail-state__indicator {
 body[data-app-page="asset-detail"] .asset-detail-state--error .asset-detail-state__indicator {
   position: relative;
   border: 0;
-  background: #fef2f2;
+  background: #fdecec;
   animation: none;
 }
 
@@ -77,7 +77,7 @@ body[data-app-page="asset-detail"] .asset-detail-state--error .asset-detail-stat
   width: 20px;
   height: 2px;
   content: "";
-  background: #dc2626;
+  background: #d70015;
 }
 
 body[data-app-page="asset-detail"] .asset-detail-state--error .asset-detail-state__indicator::before {
@@ -90,24 +90,25 @@ body[data-app-page="asset-detail"] .asset-detail-state--error .asset-detail-stat
 
 body[data-app-page="asset-detail"] .asset-detail-state__eyebrow {
   margin: 0;
-  color: #6b7280;
+  color: #6e6e73;
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 body[data-app-page="asset-detail"] .asset-detail-state__title {
   margin: 0 !important;
-  color: #111827 !important;
-  font-size: clamp(1.4rem, 3vw, 1.9rem) !important;
-  line-height: 1.25 !important;
+  color: #1d1d1f !important;
+  font-size: var(--type-display-size, 32px) !important;
+  line-height: var(--type-display-leading, 1.3) !important;
+  letter-spacing: var(--type-display-tracking, -0.02em) !important;
 }
 
 body[data-app-page="asset-detail"] .asset-detail-state__message {
   max-width: 520px;
   margin: 0;
-  color: #6b7280;
+  color: #6e6e73;
   line-height: 1.65;
 }
 
@@ -131,10 +132,10 @@ body[data-app-page="asset-detail"] .share-card {
   width: 100%;
   background: #ffffff;
   border-radius: 1.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e8e8ed;
   box-shadow:
-    0 25px 45px -12px rgba(17, 24, 39, 0.12),
-    0 4px 12px rgba(17, 24, 39, 0.04);
+    0 25px 45px -12px rgba(29, 29, 31, 0.12),
+    0 4px 12px rgba(29, 29, 31, 0.04);
   overflow: hidden;
 }
 
@@ -152,7 +153,7 @@ body[data-app-page="asset-detail"] .achievement-section {
 
 body[data-app-page="asset-detail"] .insight-section {
 	  padding: 2rem;
-	  background: #fafafa;
+	  background: #f5f5f7;
 	}
 
 body[data-app-page="asset-detail"] .detail-badge {
@@ -164,8 +165,8 @@ body[data-app-page="asset-detail"] .detail-badge {
   margin-bottom: 1.25rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #111827;
-  background: #f3f4f6;
+  color: #1d1d1f;
+  background: #f5f5f7;
   border-radius: 9999px;
 }
 
@@ -176,7 +177,7 @@ body[data-app-page="asset-detail"] .honor-badge {
   padding: 0.2rem 0.75rem;
   font-size: 0.72rem;
   font-weight: 600;
-  color: #374151;
+  color: #424245;
   background: #fef3c7;
   border-radius: 9999px;
 }
@@ -185,17 +186,17 @@ body[data-app-page="asset-detail"] .project-title {
   margin: 0 0 0.35rem !important;
   padding: 0 !important;
   font-size: clamp(1.75rem, 3vw, 2.1rem) !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   line-height: 1.25 !important;
   letter-spacing: -0.02em;
-  color: #111827 !important;
+  color: #1d1d1f !important;
 }
 
 body[data-app-page="asset-detail"] .project-subtitle {
   margin: 0 0 1rem;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #6b7280;
+  color: #6e6e73;
 }
 
 body[data-app-page="asset-detail"] .project-sub {
@@ -206,7 +207,7 @@ body[data-app-page="asset-detail"] .project-sub {
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid #f5f5f7;
 }
 
 body[data-app-page="asset-detail"] .author-info {
@@ -214,8 +215,8 @@ body[data-app-page="asset-detail"] .author-info {
   align-items: center;
   gap: 0.6rem;
   padding: 0.35rem 1rem 0.35rem 0.5rem;
-  background: #f9fafb;
-  border: 1px solid #f0f2f5;
+  background: #f5f5f7;
+  border: 1px solid #f5f5f7;
   border-radius: 9999px;
 }
 
@@ -223,7 +224,7 @@ body[data-app-page="asset-detail"] .author-info .detail-view__author-name,
 body[data-app-page="asset-detail"] .author-info .author-name-text {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #111827;
+  color: #1d1d1f;
 }
 
 body[data-app-page="asset-detail"] .meta-stats {
@@ -239,8 +240,8 @@ body[data-app-page="asset-detail"] .meta-item {
   gap: 0.35rem;
   padding: 0.3rem 0.75rem;
   font-size: 0.8rem;
-  color: #4b5563;
-  background: #f3f4f6;
+  color: #424245;
+  background: #f5f5f7;
   border-radius: 9999px;
 }
 
@@ -248,21 +249,22 @@ body[data-app-page="asset-detail"] .detail-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 9999px;
-  background: #f9fafb;
-  color: #374151;
-  font-size: 0.85rem;
+  height: var(--btn-height, 36px);
+  padding: 0 14px;
+  border: 1px solid var(--field-border, #d2d2d7);
+  border-radius: var(--ui-radius-control, 8px);
+  background: #ffffff;
+  color: #424245;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   font-family: var(--font-sans, "Inter", "Microsoft YaHei", "微软雅黑", sans-serif);
   transition: all 0.15s ease;
 }
 body[data-app-page="asset-detail"] .detail-action-btn:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
-  color: #111827;
+  background: #f5f5f7;
+  border-color: #d2d2d7;
+  color: #1d1d1f;
 }
 body[data-app-page="asset-detail"] .detail-action-btn svg {
   width: 15px;
@@ -270,25 +272,28 @@ body[data-app-page="asset-detail"] .detail-action-btn svg {
   flex-shrink: 0;
 }
 body[data-app-page="asset-detail"] .detail-action--on {
-  background: var(--ui-surface-subtle, #f1f1f2);
-  border-color: var(--ui-border-strong, #d7d8db);
-  color: var(--ui-text, #282a2f);
+  background: var(--nav-active-bg, #ECEDEF);
+  border-color: var(--ui-border-strong, #d2d2d7);
+  color: var(--ui-text, #1d1d1f);
 }
 body[data-app-page="asset-detail"] .detail-action--on:hover {
-  background: #374151;
-  border-color: #374151;
-  color: #fff;
+  background: var(--nav-hover-bg, #f5f5f7);
+  border-color: var(--ui-border-strong, #d2d2d7);
+  color: var(--ui-text, #1d1d1f);
+}
+body[data-app-page="asset-detail"] .detail-action-btn:active {
+  transform: var(--btn-press, scale(0.97));
 }
 
 body[data-app-page="asset-detail"] .meta-item i {
-  color: #6b7280;
+  color: #6e6e73;
   font-size: 0.75rem;
 }
 
 body[data-app-page="asset-detail"] .category-tag {
   font-weight: 600;
-  color: #111827;
-  background: #e5e7eb;
+  color: #1d1d1f;
+  background: #e8e8ed;
 }
 
 body[data-app-page="asset-detail"] .desc-header {
@@ -297,7 +302,7 @@ body[data-app-page="asset-detail"] .desc-header {
 	  gap: 10px;
 	  margin-bottom: 1rem;
 	  padding: 0 0 0.75rem 0;
-	  border-bottom: 2px solid #e5e7eb;
+	  border-bottom: 2px solid #e8e8ed;
 	}
 
 body[data-app-page="asset-detail"] .achievement-section .desc-header i {
@@ -307,8 +312,8 @@ body[data-app-page="asset-detail"] .achievement-section .desc-header i {
 	  width: 2.5rem;
 	  height: 2.5rem;
 	  font-size: 1rem;
-	  color: #b45309;
-	  background: linear-gradient(135deg, #fef3c7, #fde68a);
+	  color: #8a5300;
+	  background: linear-gradient(135deg, #fef3c7, #f0dfc0);
 	  border-radius: var(--radius-md);
 	}
 
@@ -316,14 +321,14 @@ body[data-app-page="asset-detail"] .achievement-section .desc-header h2 {
 	  margin: 0 !important;
 	  padding: 0 !important;
 	  font-size: 1.2rem !important;
-	  font-weight: 700 !important;
-	  color: #111827 !important;
+	  font-weight: 600 !important;
+	  color: #1d1d1f !important;
 	}
 
 body[data-app-page="asset-detail"] .desc-box {
   padding: 1.15rem 1.25rem;
-  background: #f9fafb;
-  border: 1px solid #f0f2f5;
+  background: #f5f5f7;
+  border: 1px solid #f5f5f7;
   border-radius: var(--radius-lg);
 }
 
@@ -331,7 +336,7 @@ body[data-app-page="asset-detail"] .desc-text {
 	  font-size: 0.95rem;
 	  font-weight: 400;
 	  line-height: 1.7;
-	  color: #111827;
+	  color: #1d1d1f;
 	  /* 长链接按 md-editor.css 的 overflow-wrap:anywhere 折行；勿用废弃值 word-break:break-word，
 	     它会在最小内容宽度计算中压制 anywhere，导致长 URL 撑破 grid 轨道被 share-card 裁掉 */
 	  overflow-wrap: anywhere;
@@ -340,13 +345,13 @@ body[data-app-page="asset-detail"] .desc-text {
 body[data-app-page="asset-detail"] .desc-text h2 {
 	  margin: 1.5em 0 0.6em;
 	  font-size: 1.2rem;
-	  font-weight: 700;
+	  font-weight: 600;
 	}
 
 body[data-app-page="asset-detail"] .desc-text h3 {
 	  margin: 1.2em 0 0.5em;
 	  font-size: 1.05rem;
-	  font-weight: 650;
+	  font-weight: 600;
 	}
 
 body[data-app-page="asset-detail"] .desc-text p {
@@ -365,13 +370,13 @@ body[data-app-page="asset-detail"] .desc-text li {
 
 body[data-app-page="asset-detail"] .desc-text hr {
 	  border: none;
-	  border-top: 1px solid #e5e7eb;
+	  border-top: 1px solid #e8e8ed;
 	  margin: 1.5em 0;
 	}
 
 body[data-app-page="asset-detail"] .desc-text pre {
 	  padding: 1em;
-	  background: #f3f4f6;
+	  background: #f5f5f7;
 	  border-radius: 8px;
 	  overflow-x: auto;
 	  font-size: 0.85rem;
@@ -392,8 +397,8 @@ body[data-app-page="asset-detail"] .desc-extra {
 	  padding-top: 0.65rem;
 	  font-size: 0.9rem;
 	  line-height: 1.65;
-	  color: #4b5563;
-	  border-top: 1px dashed #e5e7eb;
+	  color: #424245;
+	  border-top: 1px dashed #e8e8ed;
 	  overflow-wrap: anywhere;
 	}
 
@@ -408,7 +413,7 @@ body[data-app-page="asset-detail"] .insight-header {
 	  gap: 10px;
 	  margin-bottom: 1.25rem;
 	  padding: 0 0 0.75rem 0;
-	  border-bottom: 2px solid #fde68a;
+	  border-bottom: 2px solid #f0dfc0;
 	}
 
 body[data-app-page="asset-detail"] .insight-header i {
@@ -419,7 +424,7 @@ body[data-app-page="asset-detail"] .insight-header i {
 	  height: 2.5rem;
 	  font-size: 1.1rem;
 	  color: #92400e;
-	  background: linear-gradient(135deg, #fef3c7, #fde68a);
+	  background: linear-gradient(135deg, #fef3c7, #f0dfc0);
 	  border-radius: var(--radius-md);
 	}
 
@@ -427,15 +432,15 @@ body[data-app-page="asset-detail"] .insight-header h2 {
 	  margin: 0 !important;
 	  padding: 0 !important;
 	  font-size: 1.35rem !important;
-	  font-weight: 700 !important;
+	  font-weight: 600 !important;
 	  line-height: 1.3 !important;
-	  color: #111827 !important;
+	  color: #1d1d1f !important;
 	}
 
 body[data-app-page="asset-detail"] .insight-content {
   font-size: 0.95rem;
   line-height: 1.7;
-  color: #374151;
+  color: #424245;
 }
 
 body[data-app-page="asset-detail"] .insight-content p {
@@ -446,20 +451,20 @@ body[data-app-page="asset-detail"] .insight-quote {
   padding: 1rem 1.1rem;
   margin: 0.5rem 0 0.85rem;
   font-style: italic;
-  color: #4b5563;
-  background: #f3f4f6;
-  border-left: 3px solid #111827;
+  color: #424245;
+  background: #f5f5f7;
+  border-left: 3px solid #1d1d1f;
   border-radius: var(--radius-md);
 }
 
 body[data-app-page="asset-detail"] .insight-empty {
-  color: #111827;
+  color: #1d1d1f;
   font-size: 0.9rem;
 }
 
 body[data-app-page="asset-detail"] .highlight-text {
   font-weight: 600;
-  color: #111827;
+  color: #1d1d1f;
 }
 
 body[data-app-page="asset-detail"] .insight-signature {
@@ -468,20 +473,20 @@ body[data-app-page="asset-detail"] .insight-signature {
   font-size: 0.85rem;
   font-weight: 500;
   text-align: right;
-  color: #6b7280;
-  border-top: 1px solid #e5e7eb;
+  color: #6e6e73;
+  border-top: 1px solid #e8e8ed;
 }
 
 body[data-app-page="asset-detail"] .full-width-attachment {
   padding: 1.5rem 2rem 1.75rem;
   background: #ffffff;
-  border-top: 1px solid #f0f2f5;
+  border-top: 1px solid #f5f5f7;
 }
 
 body[data-app-page="asset-detail"] .attachment-area {
   padding: 1.15rem 1.35rem 1.35rem;
-  background: #fafafa;
-  border: 1px solid #f0f2f5;
+  background: #f5f5f7;
+  border: 1px solid #f5f5f7;
   border-radius: var(--radius-xl);
 }
 
@@ -492,9 +497,9 @@ body[data-app-page="asset-detail"] .attachment-title {
   margin-bottom: 1rem;
   padding-left: 0.75rem;
   font-size: 1rem;
-  font-weight: 700;
-  color: #111827;
-  border-left: 4px solid #111827;
+  font-weight: 600;
+  color: #1d1d1f;
+  border-left: 4px solid #1d1d1f;
 }
 
 body[data-app-page="asset-detail"] .file-list {
@@ -514,18 +519,18 @@ body[data-app-page="asset-detail"] .asset-attachment-card {
   aspect-ratio: 21 / 13;
   min-width: 0;
   padding: 0.75rem;
-  color: var(--text-primary, #111827);
+  color: var(--text-primary, #1d1d1f);
   background: #ffffff;
-  border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 10px;
+  border: 1px solid var(--border-light, #e8e8ed);
+  border-radius: 12px;
   text-decoration: none;
   transition: border-color 0.16s ease, background-color 0.16s ease;
 }
 
 body[data-app-page="asset-detail"] .asset-attachment-card:hover {
-  color: var(--text-primary, #111827);
-  border-color: #c7c9c5;
-  background: var(--surface-subtle, #f8f8f6);
+  color: var(--text-primary, #1d1d1f);
+  border-color: #c7c7ca;
+  background: var(--surface-subtle, #f5f5f7);
   text-decoration: none;
 }
 
@@ -536,10 +541,10 @@ body[data-app-page="asset-detail"] .asset-attachment-card .il-upload-file-icon {
   justify-content: center;
   width: 34px;
   height: 38px;
-  color: var(--text-secondary, #4b5563);
-  border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: 7px;
-  background: var(--surface-subtle, #f8f8f6);
+  color: var(--text-secondary, #424245);
+  border: 1px solid var(--border-light, #e8e8ed);
+  border-radius: 8px;
+  background: var(--surface-subtle, #f5f5f7);
 }
 
 body[data-app-page="asset-detail"] .asset-attachment-card .il-upload-file-icon svg {
@@ -553,9 +558,9 @@ body[data-app-page="asset-detail"] .asset-attachment-card .il-upload-file-icon s
   bottom: 1px;
   max-width: 29px;
   overflow: hidden;
-  color: var(--text-primary, #111827);
-  font-size: 6.5px;
-  font-weight: 700;
+  color: var(--text-primary, #1d1d1f);
+  font-size: 11px;
+  font-weight: 600;
   line-height: 1.2;
   text-overflow: ellipsis;
 }
@@ -579,7 +584,7 @@ body[data-app-page="asset-detail"] .asset-attachment-card__body strong {
 
 body[data-app-page="asset-detail"] .asset-attachment-card__body small {
   margin-top: 0.125rem;
-  color: var(--text-tertiary, #9ca3af);
+  color: var(--text-tertiary, #6e6e73);
   font-size: 0.72rem;
 }
 
@@ -587,7 +592,7 @@ body[data-app-page="asset-detail"] .download-hint {
   margin: 0.85rem 0 0;
   font-size: 0.72rem;
   text-align: center;
-  color: #9ca3af;
+  color: #6e6e73;
 }
 
 body[data-app-page="asset-detail"] .return-footer {
@@ -598,7 +603,7 @@ body[data-app-page="asset-detail"] .return-footer {
   flex-wrap: wrap;
   padding: 1rem 2rem 1.25rem;
   background: #ffffff;
-  border-top: 1px solid #f0f2f5;
+  border-top: 1px solid #f5f5f7;
 }
 
 body[data-app-page="asset-detail"] .asset-edit-btn {
@@ -608,20 +613,20 @@ body[data-app-page="asset-detail"] .asset-edit-btn {
   padding: 0.55rem 1.35rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--ui-text, #282a2f);
-  background: var(--ui-surface-subtle, #f1f1f2);
-  border: 1px solid var(--ui-border-strong, #d7d8db);
+  color: var(--ui-text, #1d1d1f);
+  background: var(--ui-surface-subtle, #f5f5f7);
+  border: 1px solid var(--ui-border-strong, #d2d2d7);
   border-radius: 8px;
   cursor: pointer;
   transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 body[data-app-page="asset-detail"] .asset-edit-btn:hover {
-  background: var(--ui-border, #e5e5e7);
+  background: var(--ui-border, #e8e8ed);
 }
 
 body[data-app-page="asset-detail"] .asset-edit-btn:active {
-  transform: scale(0.98);
+  transform: var(--btn-press, scale(0.97));
 }
 
 body[data-app-page="asset-detail"] .return-btn {
@@ -631,16 +636,16 @@ body[data-app-page="asset-detail"] .return-btn {
   padding: 0.55rem 1.35rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #374151;
+  color: #424245;
   cursor: pointer;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background: #f5f5f7;
+  border: 1px solid #e8e8ed;
   border-radius: 9999px;
   transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 body[data-app-page="asset-detail"] .return-btn:hover {
-  background: #e5e7eb;
+  background: #e8e8ed;
   transform: translateX(-2px);
 }
 
@@ -658,7 +663,7 @@ body[data-app-page="asset-detail"] .author-info .il-publisher-avatar__img {
 
   body[data-app-page="asset-detail"] .insight-section {
     border-left: none;
-    border-top: 1px solid #f0f2f5;
+    border-top: 1px solid #f5f5f7;
   }
 }
 
@@ -699,8 +704,8 @@ body[data-app-page="asset-detail"] .detail-page__column {
 body[data-app-page="asset-detail"] .detail-view.card {
   border-radius: 12px;
   box-shadow:
-    0 1px 2px rgba(17, 24, 39, 0.06),
-    0 8px 24px rgba(17, 24, 39, 0.08);
+    0 1px 2px rgba(29, 29, 31, 0.06),
+    0 8px 24px rgba(29, 29, 31, 0.08);
 }
 body[data-app-page="asset-detail"] .detail-view__author--lead {
   align-self: flex-start;
@@ -785,17 +790,70 @@ body[data-app-page="asset-detail"] .desc-text table {
 body[data-app-page="asset-detail"] .desc-text th,
 body[data-app-page="asset-detail"] .desc-text td {
 	  padding: 10px 14px;
-	  border: 1px solid var(--ui-border, #d1d5db);
+	  border: 1px solid var(--ui-border, #d2d2d7);
 	  text-align: left;
 	}
 
 body[data-app-page="asset-detail"] .desc-text th {
-	  background: var(--ui-surface-subtle, #f3f4f6);
+	  background: var(--ui-surface-subtle, #f5f5f7);
 	  font-weight: 600;
 	}
 
 body[data-app-page="asset-detail"] .desc-text td {
-	  background: var(--ui-surface, #fff);
+	  background: var(--ui-surface, #ffffff);
 	}
 
+}
+
+/* 成果详情：补容器宽度与顶部留白，并去掉标题下的橙色分隔线 */
+html.ilink-app .asset-detail-shell {
+  width: 100% !important;
+  max-width: 1080px !important;
+  margin: 0 auto !important;
+  padding: 24px 32px 64px !important;
+}
+
+html.ilink-app .asset-detail-breadcrumb {
+  margin: 0 0 16px !important;
+  color: var(--ui-text-muted) !important;
+  font-size: 12.5px !important;
+}
+
+html.ilink-app .asset-detail-shell h2,
+html.ilink-app .asset-detail-shell h3 {
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+html.ilink-app .asset-detail-shell hr {
+  border-color: var(--ui-border) !important;
+}
+
+/* 成果详情的分区标题：橙沙色 2px 下划线改成中性 1px 细线 */
+html.ilink-app .asset-detail-shell .insight-header,
+html.ilink-app .asset-detail-shell .desc-header,
+html.ilink-app .asset-detail-shell [class*="header"] {
+  border-bottom: 1px solid var(--ui-border) !important;
+  background: transparent !important;
+}
+
+/* 正文块不再套灰底，和白卡同一层 */
+html.ilink-app .asset-detail-shell .insight-body,
+html.ilink-app .asset-detail-shell .desc-body,
+html.ilink-app .asset-detail-shell .markdown-body,
+html.ilink-app .asset-detail-shell .il-markdown {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+/* 正文容器不再套灰底：内容直接落在白卡上 */
+html.ilink-app .desc-box,
+html.ilink-app .insight-section,
+html.ilink-app .insight-body,
+html.ilink-app .desc-body {
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }

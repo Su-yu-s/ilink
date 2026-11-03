@@ -21,7 +21,7 @@ a.il-link {
 a.il-link:hover {
     color: var(--color-link-hover);
     text-decoration: underline;
-    text-decoration-color: rgba(92, 107, 130, 0.35);
+    text-decoration-color: rgba(110, 110, 115, 0.35);
 }
 
 .il-link:active,
@@ -44,7 +44,7 @@ a.il-link:active {
 .form-options a:hover {
     color: var(--color-link-hover);
     text-decoration: underline;
-    text-decoration-color: rgba(92, 107, 130, 0.35);
+    text-decoration-color: rgba(110, 110, 115, 0.35);
 }
 
 .auth-card__footer a:active,
@@ -97,22 +97,22 @@ a.il-link:active {
     height: 36px;
     background: var(--primary);
     color: var(--color-white);
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-display);
-    font-weight: 700;
+    font-weight: 600;
     font-size: 13px;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
     box-shadow: var(--shadow-sm);
 }
 
 .il-header__title {
     font-family: var(--font-display);
     font-size: 1.125rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
+    font-weight: 600;
+    letter-spacing: -0.022em;
     color: var(--color-black);
 }
 
@@ -179,7 +179,7 @@ a.il-link:active {
     background: var(--glass-bg-light);
     font: inherit;
     font-size: 12px;
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1;
     cursor: pointer;
     transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
@@ -232,7 +232,7 @@ a.il-link:active {
     background: var(--bg-muted);
     display: block;
     border: 2px solid var(--color-white);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
     position: absolute;
     top: 0;
     left: 0;
@@ -250,7 +250,7 @@ a.il-link:active {
     font-weight: 600;
     font-size: 13px;
     border: 2px solid var(--color-white);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
     position: absolute;
     top: 0;
     left: 0;
@@ -315,7 +315,7 @@ a.il-link:active {
 .il-header__dropdown--open .il-header__dropdown-menu {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: none;
 }
 
 .il-header__dropdown-item {
@@ -347,7 +347,7 @@ a.il-link:active {
 }
 
 .il-header__dropdown-item--danger:hover {
-    background: rgba(220, 38, 38, 0.06);
+    background: rgba(215, 0, 21, 0.06);
 }
 
 /* Auth Buttons */
@@ -367,7 +367,7 @@ a.il-link:active {
     padding: 8px 18px;
     font-size: 14px;
     font-weight: 600;
-    color: #111827 !important;
+    color: #1d1d1f !important;
     background: #ffffff !important;
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
@@ -379,15 +379,15 @@ a.il-link:active {
 
 .il-header__auth-link:hover,
 .il-header__auth-btn:hover {
-    background: #f9fafb !important;
-    color: #111827 !important;
+    background: #f5f5f7 !important;
+    color: #1d1d1f !important;
     border-color: var(--border-default) !important;
     transform: none;
 }
 
 .il-header__auth-link:active,
 .il-header__auth-btn:active {
-    transform: translateY(0);
+    transform: none;
 }
 
 /* Mobile Menu Toggle */
@@ -443,7 +443,7 @@ html.ilink-app .il-header__logo {
     place-items: center;
     color: var(--ui-surface);
     background: var(--ui-text) !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     box-shadow: none !important;
     font-size: 14px;
 }
@@ -452,7 +452,7 @@ html.ilink-app .il-header__title {
     color: var(--ui-text) !important;
     font-family: var(--ui-font) !important;
     font-size: 20px;
-    font-weight: 650;
+    font-weight: 600;
 }
 
 html.ilink-app .il-header__nav {
@@ -509,7 +509,7 @@ html.ilink-app .il-header__auth-link {
 }
 
 html.ilink-app .il-header__auth-btn {
-    color: #111827 !important;
+    color: #1d1d1f !important;
     background: #ffffff !important;
     border: 1px solid var(--ui-border) !important;
 }
@@ -519,12 +519,12 @@ html.ilink-app .il-header__dropdown-menu {
     color: var(--ui-text);
     background: var(--ui-surface) !important;
     border: 1px solid var(--ui-border) !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     box-shadow: var(--ui-shadow-float) !important;
 }
 
 html.ilink-app .il-header__dropdown-item {
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--ui-text-secondary) !important;
 }
 
@@ -573,7 +573,7 @@ html.ilink-app .il-header__dropdown-item:hover {
         height: calc(56px + env(safe-area-inset-top)) !important;
         min-height: calc(56px + env(safe-area-inset-top));
         padding-top: env(safe-area-inset-top);
-        background: #fcfcfd;
+        background: #fbfbfd;
         border-bottom: 1px solid var(--border-light);
         box-shadow: 0 1px 8px rgba(24, 28, 34, 0.04);
         backdrop-filter: none;
@@ -653,7 +653,7 @@ html.ilink-app .il-header__dropdown-item:hover {
     .il-header__drawer-title {
         color: var(--text-primary);
         font-size: 16px;
-        font-weight: 650;
+        font-weight: 600;
     }
 
     .il-header__drawer-close {
@@ -665,7 +665,7 @@ html.ilink-app .il-header__dropdown-item:hover {
         color: var(--text-secondary);
         background: transparent;
         border: 0;
-        border-radius: 10px;
+        border-radius: 12px;
     }
 
     html.ilink-app .il-header__nav .il-header__link {
@@ -677,7 +677,7 @@ html.ilink-app .il-header__dropdown-item:hover {
         font-size: 16px;
         font-weight: 500;
         color: var(--color-gray-700);
-        border-radius: 10px;
+        border-radius: 12px;
         transition: background-color 0.15s ease, color 0.15s ease;
         -webkit-tap-highlight-color: transparent;
         line-height: 1.4;
@@ -715,7 +715,7 @@ html.ilink-app .il-header__dropdown-item:hover {
         color: var(--text-primary);
         background: var(--bg-white);
         border: 1px solid var(--border-default);
-        border-radius: 10px;
+        border-radius: 12px;
         font-size: 15px;
         font-weight: 600;
         text-decoration: none;
@@ -783,12 +783,12 @@ html.ilink-app .il-header__dropdown-item:hover {
     position: relative;
     width: 100%;
     max-width: none;
-    background: #111827;
+    background: #1d1d1f;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border: 0;
     border-radius: 0;
-    color: #9ca3af;
+    color: #6e6e73;
     padding: 48px 24px 24px;
     margin: 0;
     box-shadow: none;
@@ -821,24 +821,24 @@ html.ilink-app .il-header__dropdown-item:hover {
 .il-footer-logo-mark {
     width: 40px;
     height: 40px;
-    background: #111827 !important;
-    border-radius: 10px;
+    background: #1d1d1f !important;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #ffffff !important;
-    font-weight: 800;
+    font-weight: 600;
     font-size: 18px;
 }
 
 .il-footer-title {
     color: #ffffff;
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .il-footer-desc {
-    color: #9ca3af;
+    color: #6e6e73;
     font-size: 14px;
     line-height: 1.6;
 }
@@ -867,7 +867,7 @@ html.ilink-app .il-header__dropdown-item:hover {
 .il-footer-link {
     display: block;
     padding: 6px 0;
-    color: #9ca3af;
+    color: #6e6e73;
     text-decoration: none;
     font-size: 14px;
     /* 「意见反馈」是 <button>，需要抹掉浏览器默认外观才能和同列 <a> 对齐 */
@@ -934,7 +934,7 @@ html.ilink-app .il-header__dropdown-item:hover {
     margin: 32px auto 0;
     padding-top: 24px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    color: #9ca3af;
+    color: #6e6e73;
     font-size: 13px;
     display: flex;
     flex-wrap: wrap;
@@ -1066,6 +1066,19 @@ html.ilink-app .il-header__dropdown-item:hover {
     }
 }
 
+/* 仅供读屏的文本：不占布局、不可见，但仍进入可访问名称 */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
 /* ========================================
    2. BUTTONS
    ======================================== */
@@ -1121,12 +1134,12 @@ html.ilink-app .il-header__dropdown-item:hover {
 
 .il-btn--primary:hover {
     background: var(--color-primary-light);
-    transform: translateY(-1px);
+    transform: none;
     box-shadow: var(--shadow-md);
 }
 
 .il-btn--primary:active {
-    transform: translateY(0);
+    transform: var(--btn-press, scale(0.97));
 }
 
 .il-btn--secondary {
@@ -1138,7 +1151,7 @@ html.ilink-app .il-header__dropdown-item:hover {
 .il-btn--secondary:hover {
     background: var(--bg-surface-hover);
     border-color: var(--border-default);
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .il-btn--outline {
@@ -1149,7 +1162,7 @@ html.ilink-app .il-header__dropdown-item:hover {
 
 .il-btn--outline:hover {
     background: var(--color-gray-100);
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .il-btn--ghost {
@@ -1170,8 +1183,8 @@ html.ilink-app .il-header__dropdown-item:hover {
 }
 
 .il-btn--danger:hover {
-    background: #b91c1c;
-    transform: translateY(-1px);
+    background: #b00012;
+    transform: none;
 }
 
 .il-btn:disabled,
@@ -1375,20 +1388,20 @@ html.ilink-app .il-header__dropdown-item:hover {
 }
 
 .il-badge--success {
-    background: rgba(5, 150, 105, 0.1);
-    border-color: rgba(5, 150, 105, 0.2);
+    background: rgba(13, 122, 92, 0.1);
+    border-color: rgba(13, 122, 92, 0.2);
     color: var(--color-success);
 }
 
 .il-badge--warning {
-    background: rgba(217, 119, 6, 0.1);
-    border-color: rgba(217, 119, 6, 0.2);
+    background: rgba(138, 83, 0, 0.1);
+    border-color: rgba(138, 83, 0, 0.2);
     color: var(--color-warning);
 }
 
 .il-badge--danger {
-    background: rgba(220, 38, 38, 0.1);
-    border-color: rgba(220, 38, 38, 0.2);
+    background: rgba(215, 0, 21, 0.1);
+    border-color: rgba(215, 0, 21, 0.2);
     color: var(--color-danger);
 }
 
@@ -1588,20 +1601,20 @@ html.ilink-app .il-header__dropdown-item:hover {
 }
 
 .il-alert--success {
-    background: rgba(5, 150, 105, 0.08);
-    border-color: rgba(5, 150, 105, 0.2);
+    background: rgba(13, 122, 92, 0.08);
+    border-color: rgba(13, 122, 92, 0.2);
     color: var(--color-success);
 }
 
 .il-alert--error {
-    background: rgba(220, 38, 38, 0.08);
-    border-color: rgba(220, 38, 38, 0.2);
+    background: rgba(215, 0, 21, 0.08);
+    border-color: rgba(215, 0, 21, 0.2);
     color: var(--color-danger);
 }
 
 .il-alert--warning {
-    background: rgba(217, 119, 6, 0.08);
-    border-color: rgba(217, 119, 6, 0.2);
+    background: rgba(138, 83, 0, 0.08);
+    border-color: rgba(138, 83, 0, 0.2);
     color: var(--color-warning);
 }
 
@@ -1634,7 +1647,7 @@ html.ilink-app .il-header__dropdown-item:hover {
 
 .il-tooltip--visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
 }
 
 /* ========================================
@@ -1648,22 +1661,22 @@ html.ilink-app .il-header__dropdown-item:hover {
    ======================================== */
 .ilink-toast-host {
     /* 组件私有令牌：容器作用域，避免污染全站色板 */
-    --il-toast-surface: #FFFFFF;
-    --il-toast-border: #ECEEF1;
-    --il-toast-title: #1F2328;
-    --il-toast-desc: #6B7280;
-    --il-toast-close: #B0B6BF;
-    --il-toast-close-hover-bg: #F4F5F7;
-    --il-toast-success: #0F9D63;
+    --il-toast-surface: #ffffff;
+    --il-toast-border: #e8e8ed;
+    --il-toast-title: #1d1d1f;
+    --il-toast-desc: #6e6e73;
+    --il-toast-close: #b0b0b5;
+    --il-toast-close-hover-bg: #f5f5f7;
+    --il-toast-success: #12805f;
     --il-toast-success-bg: #ECFDF5;
-    --il-toast-error: #DC2626;
-    --il-toast-error-bg: #FEF2F2;
-    --il-toast-warning: #D97706;
-    --il-toast-warning-bg: #FFFBEB;
-    --il-toast-info: #2563EB;
-    --il-toast-info-bg: #EFF6FF;
-    --il-toast-loading: #6B7280;
-    --il-toast-loading-bg: #F4F5F7;
+    --il-toast-error: #d70015;
+    --il-toast-error-bg: #fdecec;
+    --il-toast-warning: #8a5300;
+    --il-toast-warning-bg: #fbf1e0;
+    --il-toast-info: #0066cc;
+    --il-toast-info-bg: #f2f7fd;
+    --il-toast-loading: #6e6e73;
+    --il-toast-loading-bg: #f5f5f7;
 
     position: fixed;
     top: calc(var(--header-height, 64px) + 12px);
@@ -1768,8 +1781,8 @@ html.ilink-app .il-header__dropdown-item:hover {
 
 .ilink-toast__close {
     flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     display: grid;
     place-items: center;
     margin-top: 1px;
@@ -1793,7 +1806,7 @@ html.ilink-app .il-header__dropdown-item:hover {
 }
 
 .ilink-toast__close:focus-visible {
-    outline: 2px solid #CBD0D9;
+    outline: 2px solid #cbccd1;
     outline-offset: 2px;
 }
 
@@ -2112,11 +2125,11 @@ select.il-input-invalid {
 }
 
 .profile-post-card__btn:hover {
-    transform: translateY(-1px);
+    transform: none;
 }
 
 .profile-post-card__btn:active {
-    transform: translateY(0);
+    transform: var(--btn-press, scale(0.97));
 }
 
 .profile-posts-empty {
@@ -2238,7 +2251,7 @@ select.il-input-invalid {
 .honor-chip--type.honor-chip--t-competition {
     background: rgba(168, 85, 247, 0.1);
     border-color: rgba(168, 85, 247, 0.2);
-    color: #a855f7;
+    color: #5b3fae;
 }
 
 .honor-chip--type.honor-chip--t-scholarship {
@@ -2256,13 +2269,13 @@ select.il-input-invalid {
 .honor-chip--type.honor-chip--t-paper {
     background: rgba(14, 165, 233, 0.1);
     border-color: rgba(14, 165, 233, 0.2);
-    color: #0ea5e9;
+    color: #0071a8;
 }
 
 .honor-chip--type.honor-chip--t-research {
-    background: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.2);
-    color: #22c55e;
+    background: rgba(30, 122, 62, 0.1);
+    border-color: rgba(30, 122, 62, 0.2);
+    color: #1e8a46;
 }
 
 .honor-chip--type.honor-chip--t-work {
@@ -2272,9 +2285,9 @@ select.il-input-invalid {
 }
 
 .honor-chip--type.honor-chip--t-other {
-    background: rgba(107, 114, 128, 0.1);
-    border-color: rgba(107, 114, 128, 0.2);
-    color: #6b7280;
+    background: rgba(110, 110, 115, 0.1);
+    border-color: rgba(110, 110, 115, 0.2);
+    color: #6e6e73;
 }
 
 .honor-level-pill {
@@ -2286,21 +2299,21 @@ select.il-input-invalid {
 }
 
 .honor-level-pill.tier-school {
-    background: rgba(107, 114, 128, 0.1);
-    border: 1px solid rgba(107, 114, 128, 0.2);
-    color: #6b7280;
+    background: rgba(110, 110, 115, 0.1);
+    border: 1px solid rgba(110, 110, 115, 0.2);
+    color: #6e6e73;
 }
 
 .honor-level-pill.tier-provincial {
     background: rgba(75, 85, 99, 0.1);
     border: 1px solid rgba(75, 85, 99, 0.2);
-    color: #374151;
+    color: #424245;
 }
 
 .honor-level-pill.tier-national {
-    background: rgba(17, 24, 39, 0.08);
-    border: 1px solid rgba(17, 24, 39, 0.15);
-    color: #a855f7;
+    background: rgba(29, 29, 31, 0.08);
+    border: 1px solid rgba(29, 29, 31, 0.15);
+    color: #5b3fae;
 }
 
 .honor-level-pill.tier-international {
@@ -2601,7 +2614,7 @@ a.il-btn:focus-visible {
 .il-page {
     min-height: 100vh;
     position: relative;
-    background: linear-gradient(180deg, var(--bg-body) 0%, #f0f2f5 100%);
+    background: linear-gradient(180deg, var(--bg-body) 0%, #f5f5f7 100%);
 }
 
 .il-page-content {
@@ -2703,7 +2716,7 @@ a.il-btn:focus-visible {
 .il-filter-item select:focus,
 .il-filter-select:focus {
     border-color: var(--color-gray-500);
-    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.06);
+    box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.06);
 }
 
 .il-filter-item--search {
@@ -2725,7 +2738,7 @@ a.il-btn:focus-visible {
     background: var(--bg-white);
     border: 1px solid var(--border-light);
     border-radius: 12px;
-    box-shadow: inset 0 1px 2px rgba(17, 24, 39, 0.04);
+    box-shadow: inset 0 1px 2px rgba(29, 29, 31, 0.04);
     transition:
         border-color var(--transition-fast),
         box-shadow var(--transition-fast),
@@ -2743,8 +2756,8 @@ a.il-btn:focus-visible {
 .il-search:focus-within {
     border-color: var(--color-gray-500);
     box-shadow:
-        inset 0 1px 2px rgba(17, 24, 39, 0.04),
-        0 0 0 3px rgba(17, 24, 39, 0.08);
+        inset 0 1px 2px rgba(29, 29, 31, 0.04),
+        0 0 0 3px rgba(29, 29, 31, 0.08);
     background: var(--bg-white);
 }
 
@@ -2836,7 +2849,7 @@ a.il-btn:focus-visible {
 }
 
 .il-search-field__action:active {
-    transform: scale(0.98);
+    transform: var(--btn-press, scale(0.97));
 }
 
 .il-search-field__action:focus-visible {
@@ -2987,7 +3000,7 @@ a.il-btn:focus-visible {
 
 .scroll-animate.animate-in {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
 }
 
 /* Stagger animation */
@@ -2999,7 +3012,7 @@ a.il-btn:focus-visible {
 
 .stagger-item.animate-in {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
 }
 
 /* ========================================
@@ -3174,7 +3187,7 @@ a.il-btn:focus-visible {
     backdrop-filter: blur(20px) saturate(1.8);
     -webkit-backdrop-filter: blur(20px) saturate(1.8);
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 24px;
     margin-bottom: 16px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
@@ -3206,7 +3219,7 @@ a.il-btn:focus-visible {
     min-height: 40px;
     max-height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #374151, #111827);
+    background: linear-gradient(135deg, #424245, #1d1d1f);
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -3216,7 +3229,7 @@ a.il-btn:focus-visible {
     position: relative;
     overflow: hidden;
     border: 2px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
     flex-shrink: 0;
 }
 .il-post-avatar img {
@@ -3251,24 +3264,24 @@ a.il-btn:focus-visible {
     padding: 6px 10px;
     border-radius: 8px;
     cursor: pointer;
-    color: #9ca3af;
+    color: #6e6e73;
     font-size: 0.8125rem;
     transition: all 0.15s ease;
 }
 .il-feed-action:hover {
     background: rgba(0, 0, 0, 0.06);
-    color: #111827;
+    color: #1d1d1f;
     border-color: rgba(0, 0, 0, 0.15);
 }
 .il-feed-action:active {
-    transform: scale(0.95);
+    transform: var(--btn-press, scale(0.97));
 }
 .il-feed-action--active {
-    color: #111827 !important;
+    color: #1d1d1f !important;
     background: rgba(0, 0, 0, 0.08) !important;
 }
 .il-feed-action--active-fav {
-    color: #f59e0b !important;
+    color: #a86800 !important;
     background: rgba(245, 158, 11, 0.08) !important;
 }
 
@@ -3293,9 +3306,9 @@ a.il-btn:focus-visible {
     min-height: 56px;
     max-height: 56px;
     border-radius: 50%;
-    background: var(--bg-gray, #f0f2f5);
+    background: var(--bg-gray, #f5f5f7);
     border: 1px solid var(--border-light, #e8e8e8);
-    color: var(--text-secondary, #666666);
+    color: var(--text-secondary, #6e6e73);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3326,7 +3339,7 @@ a.il-btn:focus-visible {
     justify-content: center;
     width: 100%;
     height: 100%;
-    color: var(--text-secondary, #666666);
+    color: var(--text-secondary, #6e6e73);
     font-weight: 600;
     line-height: 1;
 }
@@ -3335,7 +3348,7 @@ a.il-btn:focus-visible {
     backdrop-filter: blur(20px) saturate(1.8);
     -webkit-backdrop-filter: blur(20px) saturate(1.8);
     border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 16px;
+    border-radius: 18px;
     padding: 24px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
     transition: all 0.2s ease;
@@ -3360,7 +3373,7 @@ a.il-btn:focus-visible {
 .il-team-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #111827;
+    color: #1d1d1f;
     margin: 0;
     line-height: 1.4;
 }
@@ -3368,14 +3381,14 @@ a.il-btn:focus-visible {
     font-size: 0.75rem;
     padding: 4px 12px;
     background: rgba(0, 0, 0, 0.08);
-    color: #111827;
-    border-radius: 20px;
+    color: #1d1d1f;
+    border-radius: 18px;
     font-weight: 500;
     white-space: nowrap;
     flex-shrink: 0;
 }
 .il-team-desc {
-    color: #6b7280;
+    color: #6e6e73;
     font-size: 0.9375rem;
     line-height: 1.6;
     margin: 0 0 12px;
@@ -3384,7 +3397,7 @@ a.il-btn:focus-visible {
 .il-team-meta {
     display: flex;
     gap: 16px;
-    color: #9ca3af;
+    color: #6e6e73;
     font-size: 0.8125rem;
     margin-bottom: 12px;
 }
@@ -3402,10 +3415,10 @@ a.il-btn:focus-visible {
 }
 .il-skill-tag {
     padding: 4px 12px;
-    background: rgba(107, 114, 128, 0.08);
-    color: #4b5563;
+    background: rgba(110, 110, 115, 0.08);
+    color: #424245;
     font-size: 0.75rem;
-    border-radius: 16px;
+    border-radius: 18px;
     font-weight: 500;
 }
 
@@ -3430,8 +3443,8 @@ a.il-btn:focus-visible {
     min-height: 32px;
     max-height: 32px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #6b7280, #4b5563);
-    color: #fff;
+    background: linear-gradient(135deg, #6e6e73, #424245);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3460,7 +3473,7 @@ a.il-btn:focus-visible {
 }
 .il-author-name {
     font-size: 0.875rem;
-    color: #374151;
+    color: #424245;
     font-weight: 500;
     min-width: 0;
     overflow: hidden;
@@ -3471,24 +3484,24 @@ a.il-btn:focus-visible {
 .il-team-status {
     font-size: 0.75rem;
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: 18px;
     font-weight: 500;
 }
 .il-status-recruiting {
     background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
+    color: #12805f;
 }
 .il-status-closed {
-    background: rgba(107, 114, 128, 0.1);
-    color: #6b7280;
+    background: rgba(110, 110, 115, 0.1);
+    color: #6e6e73;
 }
 
 /* ---- 导师卡片 ---- */
 .il-teacher-card {
     width: 100%;
     background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
+    border: 1px solid #e8e8ed;
+    border-radius: 12px;
     padding: 18px 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
@@ -3514,21 +3527,21 @@ a.il-btn:focus-visible {
 .il-teacher-name {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #111827;
+    color: #1d1d1f;
     margin: 0 0 4px;
 }
 .il-teacher-title {
     font-size: 0.8125rem;
-    color: #111827;
+    color: #1d1d1f;
     margin: 0 0 4px;
     font-weight: 500;
 }
 .il-teacher-major {
     font-size: 0.8125rem;
-    color: #6b7280;
+    color: #6e6e73;
 }
 .il-teacher-bio {
-    color: #6b7280;
+    color: #6e6e73;
     font-size: 0.9375rem;
     line-height: 1.6;
     margin: 0 0 12px;
@@ -3542,9 +3555,9 @@ a.il-btn:focus-visible {
 .il-research-tag {
     padding: 4px 12px;
     background: rgba(0, 0, 0, 0.06);
-    color: #374151;
+    color: #424245;
     font-size: 0.75rem;
-    border-radius: 16px;
+    border-radius: 18px;
     font-weight: 500;
 }
 .il-teacher-footer {
@@ -3560,7 +3573,7 @@ a.il-btn:focus-visible {
     align-items: center;
     padding: 4px 12px;
     background: rgba(0, 0, 0, 0.1);
-    color: #111827;
+    color: #1d1d1f;
     font-size: 0.75rem;
     border-radius: 9999px;
     font-weight: 500;
@@ -3572,8 +3585,9 @@ a.il-btn:focus-visible {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 20px;
-    border-radius: 10px;
+    height: var(--btn-height, 36px);
+    padding: 0 20px;
+    border-radius: 12px;
     font-size: 0.875rem;
     font-weight: 500;
     border: none;
@@ -3582,17 +3596,44 @@ a.il-btn:focus-visible {
     text-decoration: none;
     white-space: nowrap;
 }
+/* 尺寸档位必须排在这条基础规则之后：同特异度下后写的赢，
+   否则会被上面的 padding 简写覆盖掉。 */
+.il-btn-xs {
+    --btn-height-current: var(--btn-height-xs, 28px);
+    height: var(--btn-height-xs, 28px);
+    padding: 0 12px;
+    font-size: 0.75rem;
+}
+.il-btn-sm,
+.il-btn--sm {
+    --btn-height-current: var(--btn-height-sm, 32px);
+    height: var(--btn-height-sm, 32px);
+    padding: 0 16px;
+    font-size: 0.8125rem;
+}
+.il-btn-lg,
+.il-btn--lg {
+    --btn-height-current: var(--btn-height-lg, 44px);
+    height: var(--btn-height-lg, 44px);
+    padding: 0 24px;
+    font-size: 0.9375rem;
+}
+/* hover 规则普遍写了 transform: none，特异性又高于这里，
+   不加 !important 按压缩放会被静默吃掉。 */
+.il-btn:active:not(:disabled) {
+    transform: var(--btn-press, scale(0.97)) !important;
+}
 .il-btn-primary {
-    background: var(--ui-surface-subtle, #f1f1f2);
-    color: var(--ui-text, #282a2f);
+    background: var(--ui-surface-subtle, #f5f5f7);
+    color: var(--ui-text, #1d1d1f);
 }
 .il-btn-primary:hover {
-    background: var(--ui-border, #e5e5e7);
-    transform: translateY(-1px);
+    background: var(--ui-border, #e8e8ed);
+    transform: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .il-btn-primary:active {
-    transform: scale(0.97);
+    transform: var(--btn-press, scale(0.97));
 }
 .il-btn-secondary,
 .il-btn-outline {
@@ -3653,30 +3694,30 @@ a.il-btn:focus-visible {
 .il-pagination .page-btn:hover:not(:disabled) {
     background: var(--bg-muted) !important;
     border-color: var(--border-dark) !important;
-    transform: translateY(-1px);
+    transform: none;
 }
 .il-pagination .page-btn:active:not(:disabled) {
-    transform: translateY(0);
+    transform: var(--btn-press, scale(0.97));
 }
 .il-pagination .page-btn:disabled {
     opacity: 0.35;
     cursor: not-allowed;
 }
 .il-pagination .page-btn--active {
-    background: var(--ui-surface-subtle, #f1f1f2) !important;
-    color: var(--ui-text, #282a2f) !important;
-    border-color: var(--ui-border-strong, #d7d8db) !important;
+    background: var(--ui-surface-subtle, #f5f5f7) !important;
+    color: var(--ui-text, #1d1d1f) !important;
+    border-color: var(--ui-border-strong, #d2d2d7) !important;
     box-shadow: var(--shadow-xs);
 }
 .il-pagination .page-info {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: #6e6e73;
     padding: 0 12px;
 }
 
 /* ---- 骨架屏加载 ---- */
 .skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, #f0f0f0 25%, #d2d2d7 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
     border-radius: 8px;
@@ -3700,13 +3741,13 @@ a.il-btn:focus-visible {
 
 /* ---- 触摸反馈 ---- */
 .il-pressable:active {
-    transform: scale(0.97);
+    transform: var(--btn-press, scale(0.97));
     transition: transform 0.1s ease;
 }
 
 /* ---- 焦点可见性 ---- */
 *:focus-visible {
-    outline: 2px solid #111827;
+    outline: 2px solid #1d1d1f;
     outline-offset: 2px;
     border-radius: 4px;
 }
@@ -3720,8 +3761,8 @@ a.il-btn:focus-visible {
     overflow: hidden;
     background: var(--bg-white);
     box-shadow:
-        0 1px 3px rgba(17, 24, 39, 0.06),
-        0 16px 40px rgba(17, 24, 39, 0.08);
+        0 1px 3px rgba(29, 29, 31, 0.06),
+        0 16px 40px rgba(29, 29, 31, 0.08);
 }
 
 .detail-view__header {
@@ -3742,7 +3783,7 @@ a.il-btn:focus-visible {
 .detail-view__title {
     margin: 0;
     font-size: clamp(1.375rem, 2.8vw, 1.625rem);
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.3;
     color: var(--text-primary);
@@ -3958,7 +3999,7 @@ body[data-app-page="teacher-detail"] .detail-view__header .detail-view__title {
 .ihp-apply-textarea:focus {
   outline: none;
   border-color: var(--home-accent);
-  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.12);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
 }
 
 /* === Search Field Standardization === */
@@ -3981,7 +4022,7 @@ body[data-app-page="teacher-detail"] .detail-view__header .detail-view__title {
 .il-search-field:focus {
   outline: none;
   border-color: var(--home-accent);
-  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.12);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
 }
 
 /* === Select Standardization === */
@@ -4012,7 +4053,7 @@ body[data-app-page="teacher-detail"] .detail-view__header .detail-view__title {
 .il-form-select:focus {
   outline: none;
   border-color: var(--home-accent);
-  box-shadow: 0 0 0 3px rgba(196, 167, 125, 0.12);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12);
 }
 
 /* === Avatar Standardization === */
@@ -4029,7 +4070,7 @@ body[data-app-page="teacher-detail"] .detail-view__header .detail-view__title {
 .il-avatar--sm {
   width: 24px;
   height: 24px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .il-avatar--md {

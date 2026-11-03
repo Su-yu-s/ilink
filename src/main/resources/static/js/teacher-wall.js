@@ -323,7 +323,6 @@ function renderTeacherList(teachers) {
 
         // 详情链接
         var detailUrl = '/teacher-detail.html?id=' + encodeURIComponent(String(teacher.id));
-        shell.setAttribute('aria-label', t('ui.teacherWall.viewMentor', { name: name }));
 
         // 研究方向标签
         var tagsHtml = tags.length > 0

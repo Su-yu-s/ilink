@@ -773,6 +773,7 @@ public class TeamController {
                 TeamMemberViewVO view = userToMemberView(user, "队员", member.getCreatedAt());
                 view.setMemberRole(member.getMemberRole() == null
                     ? TeamMembershipService.deriveMemberRole(user) : member.getMemberRole());
+                view.setDuty(member.getDuty());
                 views.add(view);
             }
         }
@@ -1044,6 +1045,7 @@ public class TeamController {
             TeamMemberViewVO view = userToMemberView(u, pending ? "待确认" : "队员", m.getCreatedAt());
             view.setMemberRole(m.getMemberRole() == null
                 ? TeamMembershipService.deriveMemberRole(u) : m.getMemberRole());
+            view.setDuty(m.getDuty());
             view.setStatus(m.getStatus());
             // 待确认的行只有邀请没有申请，谁在等他也没必要暴露给所有人
             view.setInitiatedByInvite(m.getInitiatorId() != null && !m.getInitiatorId().equals(m.getUserId()));

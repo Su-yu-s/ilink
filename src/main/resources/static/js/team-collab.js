@@ -395,6 +395,10 @@
                 byId('tcNewReqBtn').addEventListener('click', openRequirementDialog);
             }
         }
+        // 操作栏按最终渲染出的按钮决定是否收起：材料页签的按钮要到这里才拼出来，
+        // 提前用 actions 判断会把「添加要求」一起藏掉。
+        var head = byId('tcHead');
+        if (head) head.hidden = !host.children.length;
     }
 
     async function openTrashDialog() {
@@ -2323,6 +2327,7 @@
     // ==================== 初始化 ====================
 
     function init() {
+        // 页签由外层「资料与资产」面板统一渲染，这里只在独立使用时兜底绑定
         document.querySelectorAll('[data-tc-tab]').forEach(function (button) {
             button.addEventListener('click', function () { switchTab(button.dataset.tcTab); });
         });
@@ -2358,6 +2363,10 @@
 
     window.teamCollab = {
         closeDialog: closeDialog,
+        selectTab: function (tab) {
+            if (['docs', 'sheets', 'materials'].indexOf(tab) === -1) return;
+            switchTab(tab);
+        },
         activeLeaseToken: function (assetType, assetId) {
             if (String(assetType).toUpperCase() === 'DOCUMENT' && state.doc
                 && String(state.doc.id) === String(assetId)) {

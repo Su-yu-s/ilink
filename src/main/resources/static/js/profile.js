@@ -1197,7 +1197,12 @@ async function renderJoinedTeams() {
             container.innerHTML = '<div class="text-center py-4 text-muted">加载失败</div>';
             return;
         }
-        var teams = data.data;
+        // 与「我的活动」列表保持同一规则：已解散永远排最后，其余按加入时间倒序
+        var teams = data.data.slice().sort(function (a, b) {
+            var rankDiff = profileTeamStatusRank(a) - profileTeamStatusRank(b);
+            if (rankDiff) return rankDiff;
+            return new Date(b.joinedAt || 0) - new Date(a.joinedAt || 0);
+        });
         if (!teams.length) {
             container.innerHTML =
                 '<div class="il-empty-state">' +
@@ -1208,26 +1213,26 @@ async function renderJoinedTeams() {
                 '</div>';
             return;
         }
-        container.innerHTML = teams.map(function (t) {
-            var teamId = Number(t.teamId);
-            var title = escapeHtml(t.teamTitle || '未命名');
-            var status = t.status || '';
+        container.innerHTML = teams.map(function (team) {
+            var teamId = Number(team.teamId);
+            var title = escapeHtml(team.teamTitle || '未命名');
+            var status = team.status || '';
             var statusLabel = teamDemandStatusLabel(status);
             var statusClass = teamDemandStatusBadgeClass(status);
-            var joined = t.joinedAt ? formatTime(t.joinedAt) : '';
-            var isCreator = !!t.isCreator;
+            var joined = team.joinedAt ? formatTime(team.joinedAt) : '';
+            var isCreator = !!team.isCreator;
             var roleChip = isCreator
                 ? '<span class="meta-chip meta-chip--primary">队长</span>'
-                : (t.memberRole === 'MENTOR'
+                : (team.memberRole === 'MENTOR'
                     ? '<span class="meta-chip meta-chip--primary">导师</span>'
                     : '<span class="meta-chip">队员</span>');
             // 解散的团队只留「查看详情」，不再提供任何写操作
             var dissolved = status === 'DISSOLVED';
-            var pending = Number(t.pendingInviteCount) || 0;
+            var pending = Number(team.pendingInviteCount) || 0;
             var pendingChip = pending > 0
                 ? '<span class="il-team-card__pending">' + pending + ' 个邀请待确认</span>'
                 : '';
-            var inviteBtn = (!dissolved && t.canManageMembers)
+            var inviteBtn = (!dissolved && team.canManageMembers)
                 ? '<button type="button" class="il-team-card__btn" data-invite-team="' + teamId +
                   '" data-invite-title="' + title + '">邀请成员</button>'
                 : '';
@@ -1235,10 +1240,14 @@ async function renderJoinedTeams() {
                 ? ''
                 : '<a href="/team-space.html?id=' + teamId + '" class="il-team-card__btn il-team-card__btn--primary">进入团队</a>';
 
-            (function fetchTeamExtras(tid) {
+            (function fetchTeamExtras(tid, teamStatus) {
+                // 任务看板仅在组队中启用；其它状态请求会被服务端拒绝，直接跳过
+                var tasksRequest = teamStatus === 'TEAMING'
+                    ? apiFetch('/api/tasks?teamId=' + tid).then(function(r){ return r.json(); }).catch(function(){ return {}; })
+                    : Promise.resolve({ data: [] });
                 Promise.all([
                     apiFetch('/api/team/' + tid + '/members').then(function(r){ return r.json(); }).catch(function(){ return {}; }),
-                    apiFetch('/api/tasks?teamId=' + tid).then(function(r){ return r.json(); }).catch(function(){ return {}; })
+                    tasksRequest
                 ]).then(function(results) {
                     var members = Array.isArray(results[0].data) ? results[0].data : [];
                     var tasks = Array.isArray(results[1].data) ? results[1].data : [];
@@ -1258,7 +1267,7 @@ async function renderJoinedTeams() {
                             '<span class="il-team-card__stat">' + t('ui.teamSpace.todo') + ' <span class="il-team-card__stat-value">' + pendingTask + '</span>' + t('ui.common.itemSuffix') + '</span>';
                     }
                 });
-            })(teamId);
+            })(teamId, status);
 
             return '<div class="il-team-card ' + teamCardStatusClass(status) + '" data-team-id="' + teamId + '">' +
                 '<div class="il-team-card__inner">' +
@@ -1603,7 +1612,7 @@ function teamDemandStatusLabel(status) {
 }
 
 function teamDemandStatusBadgeClass(status) {
-    const map = { OPEN: 'il-team-card__badge--open', TEAMING: 'il-team-card__badge--teaming', CLOSED: 'il-team-card__badge--closed', DISSOLVED: 'il-team-card__badge--closed' };
+    const map = { OPEN: 'il-team-card__badge--open', TEAMING: 'il-team-card__badge--teaming', CLOSED: 'il-team-card__badge--closed', DISSOLVED: 'il-team-card__badge--dissolved' };
     return map[status] || 'il-team-card__badge--closed';
 }
 
@@ -1624,20 +1633,31 @@ function formatDateOnlyProfile(value) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// 状态优先级：进行中的队伍在前，已结束次之，已解散永远排最后。
+// 同状态内再按用户选择的排序项比较，避免“最新的已解散队伍”顶到列表最前面。
+const PROFILE_TEAM_STATUS_RANK = { OPEN: 0, TEAMING: 0, CLOSED: 1, DISSOLVED: 2 };
+
+function profileTeamStatusRank(team) {
+    const rank = PROFILE_TEAM_STATUS_RANK[team && team.status];
+    return rank == null ? 1 : rank;
+}
+
 function filteredProfileTeams(published) {
     let rows = Array.isArray(published) ? published.slice() : [];
     if (myTeamsStatusFilter !== 'ALL') {
         rows = rows.filter((team) => team.status === myTeamsStatusFilter);
     }
+    let compare;
     if (myTeamsSort === 'createdAsc') {
-        rows.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+        compare = (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
     } else if (myTeamsSort === 'deadlineAsc') {
-        rows.sort((a, b) => new Date(a.deadline || '9999-12-31') - new Date(b.deadline || '9999-12-31'));
+        compare = (a, b) => new Date(a.deadline || '9999-12-31') - new Date(b.deadline || '9999-12-31');
     } else if (myTeamsSort === 'applicantsDesc') {
-        rows.sort((a, b) => Number(b.applicationCount || 0) - Number(a.applicationCount || 0));
+        compare = (a, b) => Number(b.applicationCount || 0) - Number(a.applicationCount || 0);
     } else {
-        rows.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        compare = (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     }
+    rows.sort((a, b) => (profileTeamStatusRank(a) - profileTeamStatusRank(b)) || compare(a, b));
     return rows;
 }
 
@@ -1675,13 +1695,13 @@ function renderTeamActivityLists(activity) {
     const controls = `
         <div class="il-activity-toolbar">
             <div class="il-activity-toolbar__filters">
-                <select class="il-activity-toolbar__select" id="myTeamsStatusFilter">
+                <select class="il-activity-toolbar__select" id="myTeamsStatusFilter" aria-label="筛选队伍状态">
                     <option value="ALL"${myTeamsStatusFilter === 'ALL' ? ' selected' : ''}>全部状态</option>
                     <option value="OPEN"${myTeamsStatusFilter === 'OPEN' ? ' selected' : ''}>招募中</option>
                     <option value="TEAMING"${myTeamsStatusFilter === 'TEAMING' ? ' selected' : ''}>已组队</option>
                     <option value="CLOSED"${myTeamsStatusFilter === 'CLOSED' ? ' selected' : ''}>已结束</option>
                 </select>
-                <select class="il-activity-toolbar__select" id="myTeamsSort">
+                <select class="il-activity-toolbar__select" id="myTeamsSort" aria-label="队伍排序方式">
                     <option value="createdDesc"${myTeamsSort === 'createdDesc' ? ' selected' : ''}>最新发布</option>
                     <option value="createdAsc"${myTeamsSort === 'createdAsc' ? ' selected' : ''}>最早发布</option>
                     <option value="deadlineAsc"${myTeamsSort === 'deadlineAsc' ? ' selected' : ''}>截止时间近</option>

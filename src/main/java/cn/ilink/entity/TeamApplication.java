@@ -19,6 +19,8 @@ public class TeamApplication {
     private String status;
     /** 团队内角色：MENTOR / STUDENT */
     private String memberRole;
+    /** 团队内职责（队长可编辑的自由文本，如 策划 / 摄影）；不参与权限判断 */
+    private String duty;
     private String message;
     /** 审批备注（通过时选填）/ 拒绝理由（必填） */
     private String reviewerNote;

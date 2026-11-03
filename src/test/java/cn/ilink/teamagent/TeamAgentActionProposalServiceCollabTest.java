@@ -52,7 +52,8 @@ class TeamAgentActionProposalServiceCollabTest {
             mock(TeamAgentActionMapper.class),
             new TeamAgentProperties(),
             new ObjectMapper(),
-            collaborationCommands);
+            collaborationCommands,
+            mock(cn.ilink.mapper.TeamLibraryFileMapper.class));
         when(teamMapper.selectById(20L)).thenReturn(team());
         User user = new User();
         user.setId(7L);

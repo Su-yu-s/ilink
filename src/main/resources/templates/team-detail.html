@@ -108,52 +108,52 @@
                     </div>
 
                     <!-- 详情展示模式（默认） -->
-                    <dl class="detail-view__meta" id="detailViewMeta">
+                    <div class="detail-view__meta" id="detailViewMeta">
                         <div class="detail-view__row td-row-hidden">
-                            <dt>状态</dt>
-                            <dd id="teamStatus">-</dd>
+                            <span class="detail-view__term">状态</span>
+                            <span class="detail-view__value" id="teamStatus">-</span>
                         </div>
 
                         <div class="detail-view__row">
-                            <dt>参赛竞赛</dt>
-                            <dd id="teamCompetition">-</dd>
+                            <span class="detail-view__term">参赛竞赛</span>
+                            <span class="detail-view__value" id="teamCompetition">-</span>
                         </div>
 
                         <div class="td-cond-grid">
                             <div class="detail-view__row td-cond td-cond--category">
-                                <dt>项目方向</dt>
-                                <dd id="teamCategory">-</dd>
+                                <span class="detail-view__term">项目方向</span>
+                                <span class="detail-view__value" id="teamCategory">-</span>
                             </div>
                             <div class="detail-view__row td-cond td-cond--count">
-                                <dt>所需人数</dt>
-                                <dd id="teamMemberCount">-</dd>
+                                <span class="detail-view__term">所需人数</span>
+                                <span class="detail-view__value" id="teamMemberCount">-</span>
                             </div>
                             <div class="detail-view__row td-cond td-cond--deadline">
-                                <dt>截止日期</dt>
-                                <dd id="teamDeadline">-</dd>
+                                <span class="detail-view__term">截止日期</span>
+                                <span class="detail-view__value" id="teamDeadline">-</span>
                             </div>
                             <div class="detail-view__row td-cond td-cond--skills">
-                                <dt>所需技能</dt>
-                                <dd id="teamSkills">-</dd>
+                                <span class="detail-view__term">所需技能</span>
+                                <span class="detail-view__value" id="teamSkills">-</span>
                             </div>
                         </div>
 
                         <div class="td-publisher-bar">
                             <div class="detail-view__row td-publisher">
-                                <dt>发布者</dt>
-                                <dd id="teamPublisher">-</dd>
+                                <span class="detail-view__term">发布者</span>
+                                <span class="detail-view__value" id="teamPublisher">-</span>
                             </div>
                             <div class="detail-view__row td-pubtime">
-                                <dt>发布时间</dt>
-                                <dd id="teamCreateTime">-</dd>
+                                <span class="detail-view__term">发布时间</span>
+                                <span class="detail-view__value" id="teamCreateTime">-</span>
                             </div>
                         </div>
 
                         <div class="detail-view__row detail-view__row--block td-block-card">
-                            <dt>队伍描述</dt>
-                            <dd>
+                            <span class="detail-view__term">队伍描述</span>
+                            <span class="detail-view__value">
                                 <p id="teamDescription" class="detail-view__text mb-0">-</p>
-                            </dd>
+                            </span>
                         </div>
 
                         <div class="td-block-card td-members-card">
@@ -163,7 +163,7 @@
                             </div>
                             <div id="teamMembers" class="td-members-list">-</div>
                         </div>
-                    </dl>
+                    </div>
 
                     <!-- 待审批申请区：仅队长可见，仅 OPEN 状态 -->
                     <section id="pendingSection" class="team-pending-section d-none">

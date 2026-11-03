@@ -34,12 +34,12 @@
                 <div class="rw-review-body">
                     <div class="rw-current-file" id="rwCurrentFile"></div>
                     <div class="rw-section">
-                        <div class="rw-section-label"><span>针对此文件的点评</span><span class="rw-section-hint" id="rwFileCommentHint">未填写</span></div>
-                        <textarea id="rwFileComment" placeholder="写针对这个文件的修改建议…"></textarea>
+                        <div class="rw-section-label"><span id="rwFileCommentLabel">针对此文件的点评</span><span class="rw-section-hint" id="rwFileCommentHint">未填写</span></div>
+                        <textarea id="rwFileComment" aria-labelledby="rwFileCommentLabel" placeholder="写针对这个文件的修改建议…"></textarea>
                     </div>
                     <div class="rw-section">
-                        <div class="rw-section-label"><span>整体点评</span><span class="rw-section-hint">选填</span></div>
-                        <textarea id="rwOverallComment" placeholder="对整份提交的综合意见…"></textarea>
+                        <div class="rw-section-label"><span id="rwOverallCommentLabel">整体点评</span><span class="rw-section-hint">选填</span></div>
+                        <textarea id="rwOverallComment" aria-labelledby="rwOverallCommentLabel" placeholder="对整份提交的综合意见…"></textarea>
                     </div>
                     <div class="rw-section">
                         <div class="rw-section-label"><span>批阅结论</span></div>

@@ -58,14 +58,17 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         // 静态资源长期缓存 + 内容指纹版本化：模板里 @{/css/x.css} 渲染为 /css/x-<内容hash>.css，
         // 文件一变 URL 自动变，无需再手动维护 ?v= 版本号。
-        // dev 不开内容缓存，保证改文件刷新即生效；prod 缓存内容省去每次算 hash。
+        // dev 不开内容缓存且禁用浏览器缓存，保证改文件刷新即生效；prod 缓存内容省去每次算 hash。
         boolean prod = environment.acceptsProfiles(Profiles.of("prod"));
+        CacheControl staticCache = prod
+            ? CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic()
+            : CacheControl.noCache();
         registry.addResourceHandler("/css/**", "/js/**", "/lib/**", "/img/**")
             .addResourceLocations("classpath:/static/css/",
                                   "classpath:/static/js/",
                                   "classpath:/static/lib/",
                                   "classpath:/static/img/")
-            .setCacheControl(CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic())
+            .setCacheControl(staticCache)
             .resourceChain(prod)
             .addResolver(new VersionResourceResolver().addContentVersionStrategy("/**"));
     }

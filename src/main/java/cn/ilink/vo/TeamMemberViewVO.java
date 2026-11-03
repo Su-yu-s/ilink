@@ -27,6 +27,8 @@ public class TeamMemberViewVO {
     private String role;
     /** 团队内角色：MENTOR（导师）/ STUDENT（学生） */
     private String memberRole;
+    /** 团队内职责（队长填写的岗位名，如「策划」「摄影」）；为空表示未分配，展示时回落到身份名 */
+    private String duty;
     /**
      * 是否为团队创建者。
      * 同 MyTeamVO：不加注解会被序列化成 owner，前端读 isOwner 拿不到。

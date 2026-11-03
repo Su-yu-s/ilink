@@ -6,6 +6,8 @@ import cn.ilink.service.RememberMeService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -29,15 +31,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            ObjectProvider<RememberMeService> rememberMeServiceProvider,
-                                           ObjectProvider<UserSessionRegistry> sessionRegistryProvider)
+                                           ObjectProvider<UserSessionRegistry> sessionRegistryProvider,
+                                           Environment environment)
             throws Exception {
         UserSessionRegistry sessionRegistry = sessionRegistryProvider.getIfAvailable();
+        // 开发环境不缓存静态资源：否则同一 URL 的 JS/CSS 会被浏览器缓存一年，改完代码看不到效果
+        boolean prod = environment.acceptsProfiles(Profiles.of("prod"));
         http
             .authorizeRequests(authorize -> authorize
                 .antMatchers("/", "/index.html", "/404.html", "/error.html", "/favicon.ico", "/favicon.svg",
                     "/error", "/error/**",
                     "/api/login", "/api/register", "/api/register/email-code", "/api/logout", "/login", "/login.html", "/register", "/register.html",
-                    "/forgot-password.html", "/api/password-reset/**", "/terms.html", "/privacy.html").permitAll()
+                    "/forgot-password.html", "/api/password-reset/**", "/terms.html", "/privacy.html",
+                    // 作品集是对外的介绍页，未登录访客也该能直接跳过去
+                    "/portfolio").permitAll()
                 .antMatchers("/actuator/health", "/actuator/info").permitAll()
                 // 文案字典：所有页面（含匿名可访问页）都要在 <head> 里同步取用
                 .antMatchers("/i18n/**").permitAll()
@@ -134,6 +141,9 @@ public class SecurityConfig {
                             // 用户上传内容是可变的（新上传/同名覆盖/先 404 后存在），
                             // 不能发一年 immutable——否则浏览器会把 404 或旧图缓存一年。
                             response.setHeader("Cache-Control", "public, max-age=3600");
+                        } else if (!prod) {
+                            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+                            response.setHeader("Pragma", "no-cache");
                         } else {
                             response.setHeader("Cache-Control", "public, max-age=31536000, immutable");
                             response.setHeader("Pragma", "");

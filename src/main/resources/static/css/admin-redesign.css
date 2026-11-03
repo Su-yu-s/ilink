@@ -23,9 +23,9 @@ body[data-app-page="admin"] .admin-page-header .neon-text {
   margin: 0 !important;
   color: var(--ui-text) !important;
   font-family: var(--ui-font) !important;
-  font-size: 28px !important;
-  font-weight: 650 !important;
-  letter-spacing: -0.04em !important;
+  font-size: var(--type-display-size, 32px) !important;
+  font-weight: var(--type-display-weight, 600) !important;
+  letter-spacing: var(--type-display-tracking, -0.02em) !important;
   text-shadow: none !important;
 }
 
@@ -71,8 +71,8 @@ body[data-app-page="admin"] .stat-tile .value {
   color: var(--ui-text) !important;
   font-family: var(--ui-font) !important;
   font-size: 26px !important;
-  font-weight: 650 !important;
-  letter-spacing: -0.04em;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em;
   line-height: 1;
 }
 
@@ -97,7 +97,7 @@ body[data-app-page="admin"] .admin-sidebar-title {
   margin: 2px 6px 12px !important;
   color: var(--ui-text-muted) !important;
   font-size: 12px !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
 }
 
 body[data-app-page="admin"] .admin-tabs {
@@ -110,27 +110,45 @@ body[data-app-page="admin"] .admin-tabs .nav-item {
 }
 
 body[data-app-page="admin"] .admin-tabs .nav-link {
+  position: relative;
   display: flex !important;
   width: 100% !important;
-  min-height: 40px;
+  min-height: var(--nav-item-height, 44px);
   align-items: center;
   justify-content: flex-start;
-  padding: 0 10px !important;
+  padding: 0 12px !important;
   color: var(--ui-text-secondary) !important;
   background: transparent !important;
   border: 0 !important;
-  border-radius: 7px !important;
+  border-radius: 8px !important;
   box-shadow: none !important;
   font-family: var(--ui-font) !important;
   font-size: 14px !important;
   font-weight: 500 !important;
 }
 
-body[data-app-page="admin"] .admin-tabs .nav-link:hover,
-body[data-app-page="admin"] .admin-tabs .nav-link.active {
+body[data-app-page="admin"] .admin-tabs .nav-link:hover {
   color: var(--ui-text) !important;
-  background: var(--ui-surface-selected) !important;
+  background: var(--nav-hover-bg, #f5f5f7) !important;
+}
+
+body[data-app-page="admin"] .admin-tabs .nav-link.active,
+body[data-app-page="admin"] .admin-tabs .nav-link.active:hover {
+  color: var(--ui-text) !important;
+  background: var(--nav-active-bg, #ECEDEF) !important;
   font-weight: 600 !important;
+}
+
+body[data-app-page="admin"] .admin-tabs .nav-link.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--ui-text, #1d1d1f);
+  border-radius: 0 4px 4px 0;
 }
 
 body[data-app-page="admin"] .admin-content-panel {
@@ -159,7 +177,7 @@ body[data-app-page="admin"] .admin-table-card > .card-header h5 {
   color: var(--ui-text) !important;
   font-family: var(--ui-font) !important;
   font-size: 16px !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
 }
 
 body[data-app-page="admin"] .admin-table-card > .card-body {
@@ -172,19 +190,35 @@ body[data-app-page="admin"] .admin-table-card > .card-body > .row:first-child {
 }
 
 body[data-app-page="admin"] .il-search-field--admin {
-  min-height: 42px !important;
+  --field-height-current: var(--field-height-sm, 36px);
+  min-height: var(--field-height-sm, 36px) !important;
   background: var(--ui-canvas) !important;
+}
+/* 容器自带上/下各 1px 描边，内部输入框要让出这 2px 才能与外置下拉同高 */
+body[data-app-page="admin"] .il-search-field--admin .il-search-field__input {
+  --field-height-current: calc(var(--field-height-sm, 36px) - 2px);
+}
+
+/* 筛选行的主按钮与 36px 的搜索框/下拉对齐（表格行内按钮仍是 32） */
+body[data-app-page="admin"] .admin-table-card > .card-body > .row:first-child .btn-sm {
+  min-height: var(--field-height-sm, 36px) !important;
+}
+
+/* 表格上方的筛选行是紧凑档：下拉与搜索框同高，避免和 44 的表单字段混在一起 */
+body[data-app-page="admin"] .admin-table-card .form-select-sm {
+  --field-height-current: var(--field-height-sm, 36px);
+  padding-right: 30px !important;
 }
 
 body[data-app-page="admin"] .admin-table-card .btn-sm {
-  min-height: 42px !important;
+  min-height: var(--btn-height-sm, 32px) !important;
   padding: 0 16px !important;
   font-size: 13px !important;
 }
 
 body[data-app-page="admin"] .table-responsive {
   border: 1px solid var(--ui-border);
-  border-radius: 9px;
+  border-radius: 8px;
 }
 
 body[data-app-page="admin"] .admin-table {
@@ -200,7 +234,7 @@ body[data-app-page="admin"] .admin-table thead th {
   background: var(--ui-surface-subtle) !important;
   border-color: var(--ui-border) !important;
   font-size: 12px !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
   white-space: nowrap;
@@ -232,7 +266,7 @@ body[data-app-page="admin"] .admin-table td:first-child {
 body[data-app-page="admin"] .admin-table .btn {
   min-height: 32px !important;
   padding: 0 10px !important;
-  font-size: 12px !important;
+  font-size: 13px !important;
 }
 
 body[data-app-page="admin"] .status-badge {
@@ -262,7 +296,7 @@ body[data-app-page="admin"] .status-badge::before {
 body[data-app-page="admin"] .status-badge.approved {
   color: var(--ui-success) !important;
   background: var(--ui-success-soft) !important;
-  border-color: #bbf7d0 !important;
+  border-color: #cbe8d6 !important;
 }
 
 body[data-app-page="admin"] .status-badge.approved::before {
@@ -272,7 +306,7 @@ body[data-app-page="admin"] .status-badge.approved::before {
 body[data-app-page="admin"] .status-badge.closed {
   color: var(--ui-danger) !important;
   background: var(--ui-danger-soft) !important;
-  border-color: #fecaca !important;
+  border-color: #f7cfcd !important;
 }
 
 body[data-app-page="admin"] .status-badge.closed::before {
@@ -564,15 +598,15 @@ body[data-app-page="admin"] .admin-status-badge {
   align-items: center;
   min-height: 24px;
   padding: 2px 9px;
-  border: 1px solid #e5e5e7;
+  border: 1px solid #e8e8ed;
   border-radius: 999px;
   font-size: 12px;
   line-height: 1.3;
   white-space: nowrap;
 }
 body[data-app-page="admin"] .admin-status-badge--muted {
-  color: #52555c;
-  background: #f7f7f8;
+  color: #424245;
+  background: #f5f5f7;
 }
 body[data-app-page="admin"] .admin-status-badge--danger {
   color: #8f4b47;

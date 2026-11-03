@@ -42,52 +42,52 @@
                 </header>
 
                 <div class="teacher-detail__body">
-                    <dl class="detail-view__meta teacher-detail__meta">
+                    <div class="detail-view__meta teacher-detail__meta">
                         <div class="td-stat-grid">
                             <div class="detail-view__row td-stat">
-                                <dt>申请时间</dt>
-                                <dd id="applicationTime">-</dd>
+                                <span class="detail-view__term">申请时间</span>
+                                <span class="detail-view__value" id="applicationTime">-</span>
                             </div>
                             <div class="detail-view__row td-stat">
-                                <dt>已通过合作</dt>
-                                <dd id="teacherApprovedProjects">0</dd>
+                                <span class="detail-view__term">已通过合作</span>
+                                <span class="detail-view__value" id="teacherApprovedProjects">0</span>
                             </div>
                             <div class="detail-view__row td-stat">
-                                <dt>公开成果</dt>
-                                <dd id="teacherPublicAssets">0</dd>
+                                <span class="detail-view__term">公开成果</span>
+                                <span class="detail-view__value" id="teacherPublicAssets">0</span>
                             </div>
                         </div>
 
                         <div class="td-info-grid">
                             <div class="detail-view__row td-info">
-                                <dt>专业领域</dt>
-                                <dd id="teacherMajor">-</dd>
+                                <span class="detail-view__term">专业领域</span>
+                                <span class="detail-view__value" id="teacherMajor">-</span>
                             </div>
                             <div class="detail-view__row td-info">
-                                <dt>职称</dt>
-                                <dd id="teacherTitle">-</dd>
+                                <span class="detail-view__term">职称</span>
+                                <span class="detail-view__value" id="teacherTitle">-</span>
                             </div>
                         </div>
 
                         <div class="detail-view__row detail-view__row--block td-textblock td-textblock--bio">
-                            <dt>个人简介</dt>
-                            <dd>
+                            <span class="detail-view__term">个人简介</span>
+                            <span class="detail-view__value">
                                 <p id="teacherBio" class="detail-view__text mb-0">-</p>
-                            </dd>
+                            </span>
                         </div>
                         <div class="detail-view__row detail-view__row--block td-textblock td-textblock--research">
-                            <dt>研究方向</dt>
-                            <dd>
+                            <span class="detail-view__term">研究方向</span>
+                            <span class="detail-view__value">
                                 <p id="teacherResearch" class="detail-view__text mb-0">-</p>
-                            </dd>
+                            </span>
                         </div>
                         <div class="detail-view__row detail-view__row--block td-textblock td-textblock--projects" id="teacherProjectsRow" hidden>
-                            <dt>代表项目</dt>
-                            <dd>
+                            <span class="detail-view__term">代表项目</span>
+                            <span class="detail-view__value">
                                 <p id="teacherProjects" class="detail-view__text mb-0">-</p>
-                            </dd>
+                            </span>
                         </div>
-                    </dl>
+                    </div>
                 </div>
             </article>
 
@@ -96,6 +96,7 @@
                         <p id="projectApplyHint" class="teacher-detail__apply-hint">登录后可向该导师提交合作意向说明。</p>
                         <div class="td-textarea-wrap">
                             <textarea id="projectApplyMessage" class="teacher-detail__textarea" rows="5" maxlength="500"
+                                aria-label="合作意向说明"
                                 placeholder="请简述您的背景、技能与希望参与的方向（选填）"></textarea>
                             <span class="td-char-count"><span id="tdCharCount">0</span> / 500</span>
                         </div>

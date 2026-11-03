@@ -35,6 +35,16 @@ public class PageController {
         return "redirect:/profile.html";
     }
 
+    /**
+     * 作品集（个人介绍页）由 GitHub Pages 托管，不在本应用内。
+     * 这里只做跳转，免得访客直接输入 /portfolio 时拿到 404。
+     * 用 302 而非 301：作品集将来换域名时，浏览器不至于把旧地址永久缓存住。
+     */
+    @GetMapping("/portfolio")
+    public String portfolio() {
+        return "redirect:https://su-yu-s.github.io/iLink-cn/";
+    }
+
     /** 原「成果展示」已并入个人中心 · 成果与荣誉（独立页） */
     /**
      * 文章详情（路径型 URL，避免 ?id= 被缓存/代理弄丢）。

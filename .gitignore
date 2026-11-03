@@ -84,3 +84,12 @@ desktop.ini
 *.tmp.*
 *.bak
 *~
+
+# === ai-agent（pi 运行时） ===
+ai-agent/node_modules/
+ai-agent/workspace/
+ai-agent/.env
+ai-agent/*.log
+
+# === 设计工作区（本地截图与 demo，不入库） ===
+.oil-ui/
