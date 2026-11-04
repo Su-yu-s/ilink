@@ -1544,7 +1544,6 @@ body[data-app-page] .competition-track-tabs .btn.btn-dark {
 
 body[data-app-page] .il-team-card,
 body[data-app-page] .il-teacher-card,
-body[data-app-page] .il-post-card,
 body[data-app-page] .gallery-card,
 body[data-app-page] .competition-card,
 body[data-app-page] .admin-table-card {
@@ -1567,7 +1566,6 @@ body[data-app-page] .gallery-card::before {
 
 body[data-app-page] .il-team-card:hover,
 body[data-app-page] .il-teacher-card:hover,
-body[data-app-page] .il-post-card:hover,
 body[data-app-page] .gallery-card:hover,
 body[data-app-page] .competition-card:hover,
 body[data-app-page] .admin-table-card:hover {

@@ -275,7 +275,10 @@ function renderTeacherList(teachers) {
 
     teachers.forEach(function(teacher) {
         var shell = document.createElement('div');
-        shell.className = 'mentor-card-shell';
+        // 无边框杂志排版：整条即一个条目，不再套卡片容器
+        shell.className = 'editorial-item';
+        // 指针即光源：追光灯跟着指针照亮这一条
+        shell.setAttribute('data-ui-lit', '');
         shell.setAttribute('data-teacher-id', teacher.id);
         shell.setAttribute('role', 'link');
         shell.setAttribute('tabindex', '0');
@@ -299,74 +302,57 @@ function renderTeacherList(teachers) {
         // 解析研究方向标签
         var tags = [];
         if (teacher.researchDirection) {
-            tags = String(teacher.researchDirection).split(/[,，;；\s]+/).filter(function(s) { return s.trim(); }).slice(0, 5);
+            // 顿号也是分隔符：数据里「软件工程、分布式系统」是一条字符串
+            tags = String(teacher.researchDirection).split(/[,，;；、/|]+/).map(function(s) { return s.trim(); }).filter(Boolean).slice(0, 5);
         }
-
-        // 头像 HTML
-        var avatarHtml;
-        if (avatarUrl) {
-            avatarHtml = '<div class="mentor-avatar">' +
-                '<img src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(name) + '"' +
-                ' onerror="this.style.display=\'none\'; this.parentElement.querySelector(\'.avatar-fallback\').classList.remove(\'avatar-fallback--hidden\');">' +
-                '<span class="avatar-fallback avatar-fallback--hidden">' + escapeHtml(char) + '</span>' +
-                '</div>';
-        } else {
-            avatarHtml = '<div class="mentor-avatar">' +
-                '<span class="avatar-fallback">' + escapeHtml(char) + '</span>' +
-                '</div>';
-        }
-
-        // 专业方向分色（软工=蓝 / 视觉图像=紫 / 人工智能=青）
-        var deptClass = /视觉|图像/.test(dept) ? ' mentor-dept--purple' : (/人工智能|机器学习|智能|数据|算法/.test(dept) ? ' mentor-dept--teal' : '');
-        // 职称行
-        var titleRowHtml = titleText ? '<div class="mentor-title-row">' + escapeHtml(titleText) + '</div>' : '';
 
         // 详情链接
         var detailUrl = '/teacher-detail.html?id=' + encodeURIComponent(String(teacher.id));
 
-        // 研究方向标签
-        var tagsHtml = tags.length > 0
-            ? '<div class="mentor-tags">' +
-                tags.map(function(t) { return '<span class="mentor-tag">' + escapeHtml(t.trim()) + '</span>'; }).join('') +
-              '</div>'
-            : '';
+        // 数据用两位数，像档案编号 —— 视觉上比裸数字更像"科研数据"
+        function statHtml(value, label) {
+            var n = Number(value || 0);
+            var padded = n < 10 ? '0' + n : String(n);
+            return '<div class="stat-item">' +
+                '<span class="stat-num">' + padded + '</span>' +
+                '<span class="stat-label">' + label + '</span>' +
+            '</div>';
+        }
+
+        var posterHtml = avatarUrl
+            ? '<img src="' + escapeHtml(avatarUrl) + '" alt="' + escapeHtml(name) + '" loading="lazy"' +
+              ' onerror="this.style.display=\'none\'; var f=this.parentElement.querySelector(\'.poster-fallback\'); if(f){f.style.display=\'grid\';}">' +
+              '<span class="poster-fallback" style="display:none">' + escapeHtml(char) + '</span>'
+            : '<span class="poster-fallback">' + escapeHtml(char) + '</span>';
 
         shell.innerHTML =
-            '<!-- Corner Decoration -->' +
-            '<div class="mentor-corner">' +
-                '<svg viewBox="0 0 32 32"><path d="M8 2 L2 2 L2 8"/><path d="M24 2 L30 2 L30 8"/><path d="M8 30 L2 30 L2 24"/><path d="M24 30 L30 30 L30 24"/></svg>' +
+            '<div class="profile-poster">' +
+                posterHtml +
+                '<div class="floating-major">' + escapeHtml(dept) + '</div>' +
             '</div>' +
-            '<div class="mentor-header">' +
-                avatarHtml +
-                '<div class="mentor-info">' +
-                    '<div class="mentor-name">' + escapeHtml(name) + '</div>' +
-                    titleRowHtml +
-                    '<span class="mentor-dept' + deptClass + '">' + escapeHtml(dept) + '</span>' +
+            '<div class="profile-info">' +
+                '<div class="info-header">' +
+                    '<h2 class="info-name">' + escapeHtml(name) + '</h2>' +
+                    (titleText ? '<span class="info-title">' + escapeHtml(titleText) + '</span>' : '') +
                 '</div>' +
-            '</div>' +
-            '<div class="mentor-divider"></div>' +
-            '<div class="mentor-bio">' + escapeHtml(introduction) + '</div>' +
-            tagsHtml +
-            '<div class="mentor-footer">' +
-                '<div class="mentor-stats">' +
-                    '<div class="mentor-stat">' +
-                        '<span class="mentor-stat-value">' + Number(teacher.approvedProjectCount || 0) + '</span>' +
-                        '<span class="mentor-stat-label">已通过合作</span>' +
+                '<p class="info-bio">' + escapeHtml(introduction) + '</p>' +
+                (tags.length > 0
+                    ? '<div class="info-tags">' +
+                        tags.map(function (t) { return '<span class="info-tag">' + escapeHtml(t.trim()) + '</span>'; }).join('') +
+                      '</div>'
+                    : '') +
+                '<div class="info-footer">' +
+                    '<div class="stats">' +
+                        statHtml(teacher.approvedProjectCount, '已通过合作') +
+                        statHtml(teacher.publicAssetCount, '公开成果') +
                     '</div>' +
-                    '<div class="mentor-stat">' +
-                        '<span class="mentor-stat-value">' + Number(teacher.publicAssetCount || 0) + '</span>' +
-                        '<span class="mentor-stat-label">公开成果</span>' +
-                    '</div>' +
+                    '<a href="' + detailUrl + '" class="btn-detail" onclick="event.stopPropagation();">查看学术档案</a>' +
                 '</div>' +
-                '<a href="' + detailUrl + '" class="mentor-btn" onclick="event.stopPropagation();">' +
-                    '查看详情' +
-                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>' +
-                '</a>' +
             '</div>';
 
         // 点击整卡跳转详情
         shell.addEventListener('click', function(e) {
-            if (e.target.closest('.mentor-btn') || e.target.closest('a')) return;
+            if (e.target.closest('.btn-detail') || e.target.closest('a')) return;
             window.location.href = detailUrl;
         });
         shell.addEventListener('keydown', function(e) {

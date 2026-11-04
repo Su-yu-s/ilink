@@ -542,7 +542,10 @@ async function loadPosts(page) {
             const favs = p.favoriteCount != null ? p.favoriteCount : 0;
             const comments = p.commentCount != null ? p.commentCount : (p.comments != null ? p.comments : 0);
             const card = document.createElement('article');
-            card.className = 'article-card il-post-card';
+            // 不再挂 article-card：旧样式把它钉成白卡，新层压不过
+            card.className = 'il-post-card';
+            // 指针即光源：整条作为一个受光面
+            card.setAttribute('data-ui-lit', '');
             if (p.pinned || p.top || p.isTop) card.classList.add('is-pinned');
             card.setAttribute('role', 'link');
             card.setAttribute('tabindex', '0');

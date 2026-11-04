@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -65,6 +66,7 @@ public class CompetitionServiceImpl extends ServiceImpl<CompetitionMapper, Compe
         row.put("scope", competition.getScope());
         row.put("tags", parseTags(competition.getTags()));
         row.put("description", competition.getDescription());
+        row.put("highlights", parseHighlights(competition.getHighlights()));
         row.put("officialUrl", competition.getOfficialUrl());
         row.put("status", competition.getStatus());
         row.put("registrationDeadline", competition.getRegistrationDeadline());
@@ -85,6 +87,7 @@ public class CompetitionServiceImpl extends ServiceImpl<CompetitionMapper, Compe
         target.setScope(requireAllowed(request.getScope(), SCOPES, "竞赛级别"));
         target.setTags(serializeTags(request.getTags()));
         target.setDescription(optionalText(request.getDescription(), 2000));
+        target.setHighlights(serializeHighlights(request.getHighlights()));
         target.setOfficialUrl(validateOfficialUrl(request.getOfficialUrl()));
         String status = optionalText(request.getStatus(), 20).toUpperCase(Locale.ROOT);
         if (creating && status.isEmpty()) {
@@ -114,6 +117,51 @@ public class CompetitionServiceImpl extends ServiceImpl<CompetitionMapper, Compe
         }
         try {
             return objectMapper.readValue(tags, new TypeReference<List<String>>() { });
+        } catch (JsonProcessingException e) {
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 核心考察点存 JSON 数组而不是 HTML：前端按数组渲染成列表，
+     * 后台也不必手写标签，从根上避免富文本注入。
+     */
+    private String serializeHighlights(List<CompetitionRequest.Highlight> highlights) {
+        if (highlights == null || highlights.isEmpty()) {
+            return null;
+        }
+        List<Map<String, String>> safe = highlights.stream()
+            .filter(Objects::nonNull)
+            .map(item -> {
+                String t = optionalText(item.getT(), 40);
+                String d = optionalText(item.getD(), 300);
+                if (t.isEmpty() && d.isEmpty()) {
+                    return null;
+                }
+                Map<String, String> one = new LinkedHashMap<>();
+                one.put("t", t);
+                one.put("d", d);
+                return one;
+            })
+            .filter(Objects::nonNull)
+            .limit(8)
+            .collect(Collectors.toList());
+        if (safe.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(safe);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("竞赛考察点格式错误", e);
+        }
+    }
+
+    private List<Map<String, Object>> parseHighlights(String highlights) {
+        if (highlights == null || highlights.isBlank()) {
+            return new ArrayList<>();
+        }
+        try {
+            return objectMapper.readValue(highlights, new TypeReference<List<Map<String, Object>>>() { });
         } catch (JsonProcessingException e) {
             return new ArrayList<>();
         }

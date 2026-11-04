@@ -10,6 +10,8 @@
     <link th:href="@{/css/search-bar.css}" rel="stylesheet">
     <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
     <link th:href="@{/css/demo-refresh.css}" rel="stylesheet">
+    <!-- v2 页面层：单列阅读流 -->
+    <link th:href="@{/css/v2/pages/community.css}" rel="stylesheet">
 </head>
 <body data-app-page="community" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'community')"></div>

@@ -290,9 +290,10 @@ function renderTeamList(teams) {
         // 只有「招募中且没满」才给申请入口；其余状态把状态名放在同一位置，避免按钮失效还像可点。
         var canApply = isRecruiting && missing > 0;
         var flatLabel = !isRecruiting ? statusLabel : '已满员';
+        // 按钮外观全部交给 v2 材质层（components），这里只负责语义
         var actionHtml = canApply
-            ? '<a class="tm-btn" href="' + detailUrl + '">申请</a>'
-            : '<span class="tm-btn tm-btn--flat">' + escapeHtml(flatLabel) + '</span>';
+            ? '<a class="ui-btn ui-btn--quiet ui-btn--sm ui-tap" href="' + detailUrl + '">申请</a>'
+            : '<span class="ui-btn ui-btn--sm ui-btn--muted">' + escapeHtml(flatLabel) + '</span>';
 
         // 右栏只放两行：赛事名 + 「方向 · 发布人 · 截止」，再多会把行高撑得参差
         var metaRest = [competitionLabel ? category : '', authorName + ' 发布', deadline ? deadline + ' 截止' : '']
@@ -300,11 +301,14 @@ function renderTeamList(teams) {
 
         var row = document.createElement('article');
         row.className = 'tm-row' + (canApply ? '' : ' tm-row--closed');
+        // 指针即光源：光照引擎在这个元素上计算受光面
+        row.setAttribute('data-ui-lit', '');
         row.innerHTML =
             '<div class="tm-seats">' + seatsHtml + '</div>' +
             '<div class="tm-body">' +
                 '<h3 class="tm-title">' +
                     '<a class="tm-title__link" href="' + detailUrl + '">' + escapeHtml(team.title || '未命名需求') + '</a>' +
+                    (canApply ? '<span class="ui-live">招募中</span>' : '') +
                 '</h3>' +
                 '<p class="tm-need">' + needText + '</p>' +
             '</div>' +

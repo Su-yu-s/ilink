@@ -10,6 +10,8 @@
     <link th:href="@{/css/search-bar.css}" rel="stylesheet">
     <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
     <link th:href="@{/css/demo-refresh.css}" rel="stylesheet">
+    <!-- v2 页面层：资料索引卡 -->
+    <link th:href="@{/css/v2/pages/competitions.css}" rel="stylesheet">
 </head>
 <body data-app-page="competitions" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, 'competition')"></div>
@@ -44,7 +46,8 @@
 
             </div>
 
-            <div id="competitionGrid" class="row g-4 competition-grid">
+            <!-- 不再挂 Bootstrap 的 .row：那会把容器变成 flex，与新网格打架 -->
+            <div id="competitionGrid">
             </div>
 
             <div id="competitionEmpty" class="empty-state text-center py-5 rounded-3 border border-dashed bg-white bg-opacity-50 d-none">

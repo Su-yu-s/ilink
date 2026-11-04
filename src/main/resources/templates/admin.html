@@ -728,6 +728,12 @@
                         <div class="col-md-4"><label class="form-label" for="competitionEditStatus">发布状态</label><select class="form-select" id="competitionEditStatus"><option value="ACTIVE">已发布</option><option value="INACTIVE">已停用</option></select></div>
                         <div class="col-12"><label class="form-label" for="competitionEditTags">标签</label><input class="form-control" id="competitionEditTags" maxlength="300" placeholder="使用中文逗号或英文逗号分隔"></div>
                         <div class="col-12"><label class="form-label" for="competitionEditDescription">赛事简介</label><textarea class="form-control" id="competitionEditDescription" rows="4" maxlength="2000"></textarea></div>
+                        <div class="col-12">
+                            <label class="form-label" for="competitionEditHighlights">核心考察点</label>
+                            <textarea class="form-control" id="competitionEditHighlights" rows="4"
+                                      placeholder="一行一条，格式：考察维度：具体说明&#10;例如：&#10;商业落地：项目是否具备真实的商业闭环与市场验证。&#10;技术创新：核心技术壁垒、专利情况与竞品差异。"></textarea>
+                            <div class="form-text">一行一条，最多 8 条。冒号前是维度名，冒号后是说明；不写冒号则整行作为说明。</div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

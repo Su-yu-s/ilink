@@ -41,7 +41,7 @@
 
   function catTag(cat) { return TAG_CLASS[cat] || 'gallery-tag--tech'; }
 
-  function authorHtml(asset) {
+  function authorHtml(asset, meta) {
     var o = asset.ownerPreview;
     var name = '';
     var avatar = '';
@@ -55,14 +55,16 @@
     }
     name = name || (asset.authorName || asset.publisherName || '发布者');
     var letter = name.trim().charAt(0).toUpperCase() || '发';
-    var fallback = '<span class="result-card__avatar-fallback" ' + (avatar ? 'style="display:none;"' : '') + '>' + escapeHtml(letter) + '</span>';
+    var fallback = '<span class="gl-avatar-fallback" ' + (avatar ? 'style="display:none;"' : '') + '>' + escapeHtml(letter) + '</span>';
     var avatarHtml = avatar
-      ? '<img class="result-card__avatar-img" src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">'
+      ? '<img class="gl-avatar-img" src="' + escapeHtml(avatar) + '" alt="' + escapeHtml(name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'inline-flex\';">'
       : '';
     var avatarWrap = href
-      ? '<a href="' + escapeHtml(href) + '" class="result-card__avatar-link" onclick="event.stopPropagation();" aria-label="' + escapeHtml(t('ui.profile.publicProfile')) + '">' + avatarHtml + fallback + '</a>'
-      : '<span class="result-card__avatar-link">' + avatarHtml + fallback + '</span>';
-    return '<div class="gc-author result-card__author">' + avatarWrap + '<span class="gc-author-name result-card__author-name">' + escapeHtml(name) + '</span></div>';
+      ? '<a href="' + escapeHtml(href) + '" class="gl-avatar-link" onclick="event.stopPropagation();" aria-label="' + escapeHtml(t('ui.profile.publicProfile')) + '">' + avatarHtml + fallback + '</a>'
+      : '<span class="gl-avatar-link">' + avatarHtml + fallback + '</span>';
+    return '<div class="gl-author">' + avatarWrap + '<span class="gl-author-name">' + escapeHtml(name) + '</span>'
+      + (meta ? '<span class="gl-author-dot">·</span><span class="gl-date">' + escapeHtml(meta) + '</span>' : '')
+      + '</div>';
   }
 
   // ── App ──
@@ -134,7 +136,7 @@
         app.$('pagination').innerHTML = '';
         return;
       }
-      c.innerHTML = '<div class="gc-grid">' + rows.map(function (a) {
+      c.innerHTML = '<div class="gl-grid">' + rows.map(function (a) {
         var raw = a.description || '';
         // 卡片摘要优先使用 Markdown 源码，同时兼容新标记和历史注释标记。
         var mdPayload = markdownSourcePayload(raw);
@@ -154,19 +156,24 @@
         var favs = (a.favoriteCount || 0) + (s.favDelta || 0);
         // 优先用作者上传的封面；没传过才回退到按分类的内置占位图（映射见 common.js）
         var cover = a.coverUrl || window.ILinkFiles.coverForCategory(cat);
-        return '<article class="result-card gc-card with-cover" role="link" tabindex="0" onclick="location.href=\'/asset-detail.html?id=' + (a.id || '') + '\'">'
-          + '<div class="gc-cover"><img src="' + cover + '" alt="' + escapeHtml(t('ui.gallery.coverAlt')) + '" loading="lazy" decoding="async"><div class="gc-cover-overlay"></div></div>'
-          + '<div class="gc-content">' + authorHtml(a)
-          + '<div class="gc-meta-row">' + (a.pinned ? '<span class="gallery-tag gc-tag-pin">置顶</span>' : '') + (cat ? '<span class="gallery-tag ' + catTag(cat) + '">' + escapeHtml(cat) + '</span>' : '') + '<span class="gc-date">' + fmtDate(a.createdAt) + '</span></div>'
-          + '<div class="gc-body"><h3 class="gc-title">' + escapeHtml(a.title || '未命名成果') + '</h3>' + (desc ? '<p class="gc-desc">' + escapeHtml(desc) + '</p>' : '') + '</div>'
-          + '<div class="gc-stats">'
+        return '<article class="gl-card" role="link" tabindex="0" onclick="location.href=\'/asset-detail.html?id=' + (a.id || '') + '\'">'
+          + '<div class="gl-cover"><img src="' + cover + '" alt="' + escapeHtml(t('ui.gallery.coverAlt')) + '" loading="lazy" decoding="async">'
+          + '<div class="gl-cover-overlay"></div>'
+          /* 徽章浮在封面上：置顶用深色磨砂，分类用浅色磨砂 */
+          + '<div class="gl-badges">'
+          + (a.pinned ? '<span class="gl-badge gl-badge--pin">置顶</span>' : '')
+          + (cat ? '<span class="gl-badge gl-badge--cat">' + escapeHtml(cat) + '</span>' : '')
+          + '</div></div>'
+          + '<div class="gl-info">' + authorHtml(a, fmtDate(a.createdAt))
+          + '<div class="gl-body"><h3 class="gl-title">' + escapeHtml(a.title || '未命名成果') + '</h3>' + (desc ? '<p class="gl-desc">' + escapeHtml(desc) + '</p>' : '') + '</div>'
+          + '<div class="gl-foot">'
           + '<button class="gc-action' + (s.liked ? ' gc-action--on' : '') + '" data-action="like" data-id="' + (a.id || '') + '" onclick="event.stopPropagation();GalleryApp.doAction(this)">'
           + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 10V6.8c0-1.7 1.2-3.3 2.9-3.7l.7-.2c.7-.2 1.4.3 1.4 1v4.1H18c1.1 0 2 .9 2 2 0 .2 0 .4-.1.6l-1.5 6.2c-.2.9-1 1.6-2 1.6H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="4" y="10" width="4" height="9" stroke="currentColor" stroke-width="1.8"/></svg>'
           + '<span class="gc-action-num">' + likes + '</span></button>'
           + '<button class="gc-action' + (s.faved ? ' gc-action--on' : '') + '" data-action="fav" data-id="' + (a.id || '') + '" onclick="event.stopPropagation();GalleryApp.doAction(this)">'
           + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.8l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 17.2 6.7 19.9l1-5.8L3.5 10l5.9-.9L12 3.8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
           + '<span class="gc-action-num">' + favs + '</span></button></div>'
-          + '<span class="gc-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>'
+          + '<span class="gl-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>'
           + '</div></article>';
       }).join('') + '</div>';
       if (typeof hideGalleryPublisherAvatarFallbacks === 'function') hideGalleryPublisherAvatarFallbacks(c);

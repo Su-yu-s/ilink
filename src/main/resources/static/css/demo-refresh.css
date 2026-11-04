@@ -343,27 +343,15 @@ html.ilink-app .team-card,
 html.ilink-app .mentor-card-shell,
 html.ilink-app .result-card.gc-card,
 html.ilink-app .contest-card,
-html.ilink-app .article-card.il-post-card {
-    transition: transform .2s var(--dr-ease), box-shadow .2s var(--dr-ease), border-color .2s var(--dr-ease) !important;
-}
 html.ilink-app .team-card:hover,
 html.ilink-app .mentor-card-shell:hover,
 html.ilink-app .result-card.gc-card:hover,
 html.ilink-app .contest-card:hover,
-html.ilink-app .article-card.il-post-card:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: var(--dr-shadow-hover) !important;
-    border-color: var(--dr-gray-300) !important;
-}
 
 /* ============================================================
    6. 导师招贤卡片
    ============================================================ */
-html.ilink-app body[data-app-page="teacher-wall"] #teacherList {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
-    gap: 24px !important;
-}
+/* #teacherList 的排版已交给 v2 页面层（无边框编辑排版），此处不再定义 */
 html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell {
     position: relative;
     background: #ffffff !important;
@@ -432,113 +420,15 @@ html.ilink-app body[data-app-page="teacher-wall"] .mentor-stats { display: flex 
 html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat { display: flex !important; flex-direction: column !important; gap: 4px !important; }
 html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat-value { font-size: 16px !important; font-weight: 600 !important; color: var(--dr-gray-900) !important; line-height: 1 !important; }
 html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat-label { font-size: 11px !important; color: var(--dr-gray-400) !important; }
-html.ilink-app body[data-app-page="teacher-wall"] .mentor-btn {
-    display: inline-flex !important; align-items: center !important; gap: 4px !important;
-    font-size: 12px !important; font-weight: 500 !important;
-    padding: 8px 12px !important; border-radius: 12px !important;
-    background: var(--dr-gray-100) !important; color: var(--dr-gray-700) !important;
-    border: 0 !important; text-decoration: none !important;
-    transition: background-color .15s var(--dr-ease) !important;
-}
-html.ilink-app body[data-app-page="teacher-wall"] .mentor-btn:hover { background: var(--dr-gray-200) !important; color: var(--dr-gray-900) !important; }
-html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell:hover .mentor-btn svg { transform: translateX(4px); }
-html.ilink-app body[data-app-page="teacher-wall"] .mentor-btn svg { transition: transform .2s var(--dr-ease); width: 14px !important; height: 14px !important; }
+/* .mentor-btn 外观已交给 v2 材质层（.ui-btn--quiet），此处不再定义 */
 
-/* ============================================================
-   7. 成果展示卡片（双列、封面）
-   ============================================================ */
-html.ilink-app body[data-app-page="gallery"] #listContainer { width: 100%; }
-html.ilink-app body[data-app-page="gallery"] .gc-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
-    gap: 24px !important;
-}
-html.ilink-app body[data-app-page="gallery"] .result-card.gc-card {
-    /* 必须解除 gallery.css 的 max-width:420px —— 网格单元是 540px，
-       留着上限会让每张卡右边空出 120px，两卡之间的视觉间距变成 144px */
-    width: 100% !important;
-    max-width: none !important;
-    border-radius: var(--dr-radius-card) !important;
-    border: 1px solid var(--dr-gray-200) !important;
-    background: #ffffff !important;
-    box-shadow: var(--dr-shadow-card) !important;
-    overflow: hidden;
-    padding: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    cursor: pointer;
-}
-html.ilink-app body[data-app-page="gallery"] .gc-cover {
-    height: 192px !important;
-    background: var(--dr-gray-100) !important;
-    position: relative;
-    overflow: hidden;
-}
-html.ilink-app body[data-app-page="gallery"] .gc-cover img { width:100% !important; height:100% !important; object-fit: cover !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-cover-overlay { display: none !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-content {
-    padding: 24px !important;
-    display: flex !important; flex-direction: column !important; gap: 16px !important;
-    flex: 1 1 auto !important;
-}
-html.ilink-app body[data-app-page="gallery"] .gc-author { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; }
-html.ilink-app body[data-app-page="gallery"] .result-card__author { display: flex !important; align-items: center !important; gap: 8px !important; }
-html.ilink-app body[data-app-page="gallery"] .result-card__avatar-link {
-    /* min-width 必须一起写：gallery.css 用 min-width:40px 撑住 flex 不被压缩，
-       而 min-width 恒胜于 width，只改 width 会得到 40×24 的椭圆 */
-    width: 24px !important; height: 24px !important; min-width: 24px !important; border-radius: 50% !important;
-    border: 1px solid var(--dr-gray-200) !important; background: var(--dr-gray-100) !important;
-    overflow: hidden; display: inline-flex; align-items: center; justify-content: center;
-}
-html.ilink-app body[data-app-page="gallery"] .result-card__avatar-img { width:100%!important; height:100%!important; object-fit:cover; }
-html.ilink-app body[data-app-page="gallery"] .result-card__author-name { font-size: 14px !important; font-weight: 500 !important; color: var(--dr-gray-700) !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-meta-row { display:flex !important; align-items:center !important; justify-content: space-between !important; gap: 12px !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-date { font-size: 12px !important; color: var(--dr-gray-400) !important; }
-html.ilink-app body[data-app-page="gallery"] .gallery-tag {
-    font-size: 12px !important; padding: 4px 10px !important; border-radius: 8px !important; font-weight: 500 !important;
-    border: 1px solid transparent !important;
-}
-html.ilink-app body[data-app-page="gallery"] .gallery-tag--competition { background:#f2f7fd!important; color:#0066cc!important; border-color:#e8f1fc!important; }
-html.ilink-app body[data-app-page="gallery"] .gallery-tag--paper { background:#f6f2fd!important; color:#5b3fae!important; border-color:#ece3fa!important; }
-html.ilink-app body[data-app-page="gallery"] .gallery-tag--research { background:#f0fdfa!important; color:#0f6b63!important; border-color:#e0f4f1!important; }
-html.ilink-app body[data-app-page="gallery"] .gallery-tag--work,
-html.ilink-app body[data-app-page="gallery"] .gallery-tag--tech { background:#f2f7fd!important; color:#0066cc!important; border-color:#e8f1fc!important; }
-html.ilink-app body[data-app-page="gallery"] .gallery-tag--honor,
-html.ilink-app body[data-app-page="gallery"] .gallery-tag--scholarship { background:#fbf1e0!important; color:#8a5300!important; border-color:#f0dfc0!important; }
-html.ilink-app body[data-app-page="gallery"] .gc-body { display:flex; flex-direction:column; gap:8px; }
-html.ilink-app body[data-app-page="gallery"] .gc-title { font-size: var(--type-subtitle-size, 16px) !important; font-weight: var(--type-subtitle-weight, 600) !important; color: var(--dr-gray-900) !important; margin: 0 !important; line-height: 1.4 !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-desc { font-size: 14px !important; line-height: 1.65 !important; color: var(--dr-gray-500) !important; margin: 0 !important;
-    display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
-html.ilink-app body[data-app-page="gallery"] .gc-stats {
-    margin-top: auto !important;
-    padding-top: 8px !important;
-    border-top: 1px solid var(--dr-gray-100) !important;
-    display: flex !important; align-items: center !important; gap: 16px !important;
-}
-html.ilink-app body[data-app-page="gallery"] .gc-action {
-    display: inline-flex !important; align-items: center !important; gap: 6px !important;
-    background: transparent !important; border: 0 !important; padding: 4px !important;
-    font-size: 12px !important; color: var(--dr-gray-500) !important;
-    transition: transform .15s var(--dr-ease), color .2s var(--dr-ease) !important;
-}
-html.ilink-app body[data-app-page="gallery"] .gc-action:active { transform: var(--btn-press, scale(0.97)); }
-html.ilink-app body[data-app-page="gallery"] .gc-action svg { width:16px !important; height:16px !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-action--on[data-action="like"] { color: var(--ui-danger, #d70015) !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-action--on[data-action="like"] svg { fill: var(--ui-danger, #d70015) !important; stroke: var(--ui-danger, #d70015) !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-action--on[data-action="fav"] { color: #a86800 !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-action--on[data-action="fav"] svg { fill: #a86800 !important; stroke: #a86800 !important; }
-html.ilink-app body[data-app-page="gallery"] .gc-arrow { display: none !important; }
+/* 成果展示的卡片与网格已交给 v2 页面层（悬浮画廊） */
 
 /* ============================================================
    8. 竞赛目录卡片（三列、级别彩色徽章）
    ============================================================ */
 html.ilink-app body[data-app-page="competitions"] .competition-grid,
-html.ilink-app body[data-app-page="competitions"] #competitionGrid {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0,1fr)) !important;
-    gap: 24px !important;
-    margin: 0 !important;
-}
+/* #competitionGrid 的排版已交给 v2 页面层 */
 html.ilink-app body[data-app-page="competitions"] .contest-card {
     grid-column: auto !important;
     width: 100% !important;
@@ -633,14 +523,6 @@ html.ilink-app body[data-app-page="competitions"] .competition-card__link--disab
    9. 交流社区卡片（单列大卡）
    ============================================================ */
 html.ilink-app body[data-app-page="community"] #postList { display:flex; flex-direction:column; gap:16px; }
-html.ilink-app body[data-app-page="community"] .article-card.il-post-card {
-    background: #ffffff !important;
-    border: 1px solid var(--dr-gray-200) !important;
-    border-radius: var(--dr-radius-card) !important;
-    box-shadow: var(--dr-shadow-card) !important;
-    padding: 24px !important;
-    display: flex !important; flex-direction: column !important; gap: 16px !important;
-}
 html.ilink-app body[data-app-page="community"] .il-post-header {
     display:flex !important; align-items:center !important; justify-content:flex-start !important; gap:12px !important;
     padding: 0 !important; border: 0 !important; margin: 0 !important;
@@ -739,9 +621,7 @@ html.ilink-app body[data-app-page="gallery"] .page-info { font-size: 13px; color
 
 /* ============ 11. 响应式 ============ */
 @media (max-width: 1023.98px) {
-    html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
     html.ilink-app body[data-app-page="competitions"] .competition-grid,
-    html.ilink-app body[data-app-page="competitions"] #competitionGrid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
 }
 @media (max-width: 767.98px) {
     html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"]) .il-page-wrapper,
@@ -759,10 +639,8 @@ html.ilink-app body[data-app-page="gallery"] .page-info { font-size: 13px; color
     html.ilink-app .il-search-bar__select { flex: 1 1 auto !important; }
     html.ilink-app .il-search-bar__select select { width:100% !important; min-width:0 !important; }
     html.ilink-app .il-search-bar__btn { flex: 1 1 auto !important; justify-content:center !important; }
-    html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
     html.ilink-app body[data-app-page="gallery"] .gc-grid,
     html.ilink-app body[data-app-page="competitions"] .competition-grid,
-    html.ilink-app body[data-app-page="competitions"] #competitionGrid { grid-template-columns: minmax(0,1fr) !important; }
 }
 
 /* 英文社区搜索栏：中文一行排得下（频道 + 排序 + 写文章 + 刷新），英文同样几个控件
@@ -788,133 +666,12 @@ html.ilink-app body[data-app-page="gallery"] .page-info { font-size: 13px; color
 
 /* ============ 社区列表紧凑双列卡片（2026-09 方案定稿：GitHub pinned 风格） ============
    覆盖上方 community 段的单列大卡布局；计数/点赞按钮沿用系统原有组件样式。 */
-html.ilink-app body[data-app-page="community"] #postList {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 14px !important;
-}
+/* #postList 的排版已交给 v2 页面层（单列阅读流） */
 /* 空态/加载失败占满整行，避免被切半 */
 html.ilink-app body[data-app-page="community"] #postList:has(.il-empty-state) {
     display: block !important;
 }
-html.ilink-app body[data-app-page="community"] .il-post-card {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 9px !important;
-    padding: 15px 18px 13px !important;
-    margin-bottom: 0 !important;
-    background: #ffffff !important;
-    border: 1px solid var(--gray-200, #e8e8ed) !important;
-    border-radius: 12px !important;
-    box-shadow: none !important;
-    transition: border-color .15s, box-shadow .15s, transform .15s;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card:hover {
-    border-color: var(--gray-400, #6e6e73) !important;
-    box-shadow: 0 4px 12px rgba(24, 26, 30, .08) !important;
-    transform: none;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-top {
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    min-width: 0 !important;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-views {
-    margin-left: auto !important;
-    color: var(--gray-400, #6e6e73) !important;
-    font-size: 12px !important;
-    white-space: nowrap !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card .il-post-title {
-    margin: 0 !important;
-    font-size: 17px !important;
-    font-weight: 600 !important;
-    line-height: 1.4 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card:hover .il-post-title {
-    text-decoration: underline !important;
-    text-underline-offset: 3px !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card .il-post-preview {
-    display: block !important;
-    margin: 0 !important;
-    font-size: 12.5px !important;
-    line-height: 1.6 !important;
-    color: var(--gray-500, #6e6e73) !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-foot {
-    display: flex !important;
-    align-items: center !important;
-    gap: 7px !important;
-    padding-top: 9px !important;
-    border-top: 1px dashed var(--gray-100, #F1F2F4) !important;
-    min-width: 0 !important;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-author {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    min-width: 0 !important;
-    color: var(--gray-400, #6e6e73) !important;
-    font-size: 12px !important;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-author-name {
-    color: var(--gray-600, #424245) !important;
-    font-weight: 500 !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-dot {
-    color: var(--gray-300, #d2d2d7) !important;
-}
 /* 紧凑卡头像 20px；三连写死 min/max，防止旧层 40px 与 min-* 锁复活 */
-html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar {
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
-    max-width: 24px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
-    flex: 0 0 24px !important;
-    border-radius: 50% !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar .il-post-avatar-fallback {
-    width: 100% !important;
-    height: 100% !important;
-    font-size: 12px !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar img {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    border-radius: 50% !important;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-foot .il-feed-actions {
-    margin-left: auto !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-foot .il-feed-action {
-    padding: 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    gap: 4px !important;
-    font-size: 12.5px !important;
-    cursor: pointer;
-}
-html.ilink-app body[data-app-page="community"] .il-pc-foot .il-feed-action svg {
-    width: 14px !important;
-    height: 14px !important;
-}
 /* 置顶徽章：黑底白字，任何排序下该卡都排最前 */
 html.ilink-app body[data-app-page="community"] .article-badge.badge-pin {
     background: var(--primary, #1d1d1f) !important;
@@ -955,34 +712,7 @@ html.ilink-app body[data-app-page="community"] .il-sort-group button.on {
     }
 }
 /* 分类标签着色（2026-09 用户定稿：技术蓝/竞赛紫/资源绿/综合橙，与 demo 一致） */
-html.ilink-app body[data-app-page="community"] .il-post-card .il-tag--tech {
-    background: #f2f7fd !important; color: #0066cc !important; border-color: transparent !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card .il-tag--competition {
-    background: #F5F3FF !important; color: #6746c9 !important; border-color: transparent !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card .il-tag--resource {
-    background: #ECFDF5 !important; color: #0b6b50 !important; border-color: transparent !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card .il-tag--general {
-    background: #FFF7ED !important; color: #C2410C !important; border-color: transparent !important;
-}
 /* 头像必须宽高双锁：community-feed 旧层的 min/max-height:44px 只压宽度会撑出蛋形 */
-html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar {
-    min-height: 24px !important;
-    max-height: 24px !important;
-    display: grid !important;
-    overflow: hidden !important;
-}
-html.ilink-app body[data-app-page="community"] .il-post-card .il-post-avatar img {
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
-    max-width: 24px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
-    flex: 0 0 auto !important;
-}
 
 /* ============ 列表页工具栏主操作按钮：统一缩小精致化（写文章/发布成果/发布需求等） ============ */
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn {

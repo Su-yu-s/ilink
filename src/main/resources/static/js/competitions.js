@@ -46,45 +46,70 @@ function renderPager(totalItems) {
 
 function renderCompetitionCards(items) {
     const grid = document.getElementById('competitionGrid');
-    grid.innerHTML = items.map(item => {
-        const levelClass = item.levelClass || '三类';
-        const scope = item.scope || '省赛';
-        const scopeClass = /国际/.test(scope) ? 'scope--international'
-            : /国赛/.test(scope) ? 'scope--national'
-            : /省赛/.test(scope) ? 'scope--province'
-            : /校赛/.test(scope) ? 'scope--school' : 'scope--default';
-        const levelCss = levelClass.includes('一类A') ? '1a'
-            : levelClass.includes('一类B') ? '1b'
-            : levelClass.includes('二类A') ? '2a'
-            : levelClass.includes('二类B') ? '2b'
-            : levelClass.includes('三类') ? '3' : 'default';
-        const tags = (Array.isArray(item.tags) ? item.tags : []).map((tag, index) =>
-            '<span class="meta-chip contest-tag' + (index === 0 ? ' primary' : '') + '">' +
-            escapeHtml(tag) + '</span>'
-        ).join('');
-        const link = item.officialUrl
-            ? '<a href="' + escapeHtml(item.officialUrl) +
-              '" class="competition-card__link contest-card__link" target="_blank" rel="noopener noreferrer">访问官网<span aria-hidden="true">→</span></a>'
-            : '<span class="competition-card__link competition-card__link--disabled">官网请自行检索</span>';
-        return '<article class="contest-card competition-card h-100' +
-            (levelClass.includes('一类A') ? ' featured' : '') + '">' +
-            '<div class="competition-card__header"><h2 class="competition-card__title mb-0">' +
-            escapeHtml(item.name || '') + '</h2><div class="competition-card__levels">' +
-            '<span class="competition-card__level competition-card__level--scope ' + scopeClass + '">' +
-            escapeHtml(scope) + '</span><span class="competition-card__level competition-card__level--class level--' +
-            levelCss + '">' + escapeHtml(levelClass) + '</span></div></div>' +
-            '<div class="competition-card__meta">' +
-            '<div class="competition-card__meta-line"><strong>主办：</strong><span>' +
-            escapeHtml(item.organizer || '') + '</span></div>' +
-            '<div class="competition-card__meta-line"><strong>赛季参考：</strong><span>' +
-            escapeHtml(item.season || '') + '</span></div></div>' +
-            '<div class="competition-card__tags">' + tags + '</div>' +
-            '<p class="competition-card__desc">' + escapeHtml(item.description || '') + '</p>' +
-            '<div class="card-divider competition-card__divider"></div>' +
-            '<div class="competition-card__foot"><span class="competition-card__season">' +
-            '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
-            escapeHtml(item.season || '以赛事官网为准') + '</span>' + link + '</div></article>';
-    }).join('');
+    if (!grid) return;
+
+    // 不再按赛道分章节：分类已经由搜索栏的「赛道」下拉承担，
+    // 页面里再列一遍标题等于把同一个信息说两次。
+    grid.innerHTML = items.map(renderIndexItem).join('');
+}
+
+/**
+ * 一条索引：左级别 / 中正文 / 右时间与入口。
+ * 正文不截断 —— 赛制细节正是这个页面存在的理由，截断等于删掉最有价值的部分。
+ */
+function renderIndexItem(item) {
+    const levelClass = item.levelClass || '三类';
+    const scope = item.scope || '省赛';
+    const url = item.officialUrl || '';
+
+    const title = url
+        ? '<a class="comp-index-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' +
+            escapeHtml(item.name || '') + '</a>'
+        : escapeHtml(item.name || '');
+
+    // 核心考察点：结构化数据渲染成列表，不是让后台手写 HTML
+    const points = Array.isArray(item.highlights) ? item.highlights : [];
+    const pointsHtml = points.length
+        ? '<ul class="comp-index-points">' + points.map(h =>
+            '<li>' + (h.t ? '<strong>' + escapeHtml(h.t) + '：</strong>' : '') +
+            escapeHtml(h.d || '') + '</li>'
+          ).join('') + '</ul>'
+        : '';
+
+    const tagsHtml = (Array.isArray(item.tags) ? item.tags : []).map(tag =>
+        '<span class="comp-index-tag">' + escapeHtml(tag) + '</span>'
+    ).join('');
+
+    // 赛季字段常见写法是「校赛约 4-6 月，国赛约 9-10 月」，按标点拆成多行更好扫
+    const seasonLines = String(item.season || '以赛事官网为准')
+        .split(/[，,；;]/).map(s => s.trim()).filter(Boolean)
+        .map(line => '<span>' + escapeHtml(line) + '</span>').join('');
+
+    const cta = url
+        ? '<span class="comp-visit" aria-hidden="true">访问官网</span>'
+        : '<span class="comp-visit comp-visit--off">官网请自行检索</span>';
+
+    return '<article class="comp-index-item" data-ui-lit>' +
+        '<div class="comp-badges">' +
+            '<span class="comp-badge comp-badge--scope">' + escapeHtml(scope) + '</span>' +
+            '<span class="comp-badge comp-badge--class">' + escapeHtml(levelClass) + '</span>' +
+        '</div>' +
+        '<div class="comp-main">' +
+            '<h3 class="comp-index-title">' + title + '</h3>' +
+            (item.organizer
+                ? '<div class="comp-index-host">主办：' + escapeHtml(item.organizer) + '</div>'
+                : '') +
+            (item.description
+                ? '<p class="comp-index-bio">' + escapeHtml(item.description) + '</p>'
+                : '') +
+            pointsHtml +
+            (tagsHtml ? '<div class="comp-index-tags">' + tagsHtml + '</div>' : '') +
+        '</div>' +
+        '<div class="comp-action">' +
+            '<div class="comp-time">' + seasonLines + '</div>' +
+            cta +
+        '</div>' +
+    '</article>';
 }
 
 async function loadCompetitions() {

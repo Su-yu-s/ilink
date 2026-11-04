@@ -21,6 +21,8 @@ public class Competition {
     private String scope;
     private String tags;
     private String description;
+    /** 核心考察点 JSON：[{"t":"商业落地","d":"…"}]，前端渲染成列表 */
+    private String highlights;
     private String officialUrl;
     private String status;
     private LocalDate registrationDeadline;

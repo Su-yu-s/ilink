@@ -289,6 +289,10 @@ html.ilink-app body[data-app-page="team-market"] .tm-body {
 }
 
 html.ilink-app body[data-app-page="team-market"] .tm-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   margin: 0;
   font-size: 16px;
   font-weight: 600;
@@ -466,26 +470,14 @@ html.ilink-app body[data-app-page="team-market"] .hero-section .hero-desc {
   line-height: 1.6 !important;
 }
 
+/* 页头主操作只保留布局；外观交给 v2 的 .ui-btn--brand（components 层） */
 body[data-app-page="team-market"] .hero-cta {
-  display: inline-flex !important;
   align-self: flex-end;
-  color: var(--ui-action-ink) !important;
-  background: var(--ui-action-soft) !important;
-  border: 0 !important;
-  box-shadow: inset 0 0 0 1px var(--ui-action-line), 0 1px 2px rgba(47, 58, 66, .10) !important;
-  align-items: center;
-  gap: 7px;
   flex: 0 0 auto;
-  height: 38px;
-  padding: 0 18px;
-  border-radius: 10px !important;
-  font-size: 13.5px !important;
-  font-weight: 600 !important;
-  text-decoration: none !important;
-  white-space: nowrap;
+  height: 42px;
+  padding: 0 22px;
+  font-size: 14px;
 }
-
-body[data-app-page="team-market"] .hero-cta svg { width: 15px; height: 15px; stroke: currentColor; fill: none; }
 
 body[data-app-page="team-market"] .toolbar-section {
   display: block !important;
@@ -568,17 +560,6 @@ html.ilink-app body[data-app-page="team-market"] .hero-section .hero-desc {
 
 html.ilink-app body[data-app-page="team-market"] .hero-eyebrow {
   margin-bottom: 22px !important;
-}
-
-/* 按钮恢复重量：页头主操作改成实心石墨 */
-html.ilink-app body[data-app-page="team-market"] .hero-cta {
-  height: 42px !important;
-  padding: 0 22px !important;
-  border-radius: 12px !important;
-  color: #fff !important;
-  background: var(--ui-action-solid) !important;
-  font-size: 14px !important;
-  box-shadow: 0 2px 6px rgba(47, 58, 66, .18) !important;
 }
 
 html.ilink-app body[data-app-page="team-market"] .toolbar-inner {

@@ -1,0 +1,388 @@
+/*
+ * iLink 视觉系统 v1.0 · 材质层
+ * ------------------------------------------------------------------
+ * 四层光效在这里变成可复用的类。硬边界只有两条：
+ *   1. 玻璃（backdrop-filter）只允许出现在控制层，内容层一律不透明；
+ *   2. 正文永远不压在玻璃上——这是 iOS 26 最大的可读性争议换来的教训。
+ *
+ * 另一个物理事实写在这里，别再犯：
+ *   纯白上不可能有"更亮"。受光面要显示得出来，底色必须压一档。
+ *   所以 .ui-surface 的底不是 #fff，是 #fdfefe → #f3f7fc 的极浅渐变。
+ *
+ * 本文件位于 components 层，普通声明压过 legacy 层，不需要 !important。
+ */
+
+@layer components {
+
+  /* ============================================================
+     1. 内容表面 .ui-surface
+     不透明白底（略带冷调），厚度靠边缘光，浮起靠冷灰弥散阴影。
+     ============================================================ */
+  .ui-surface {
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(165deg, #fdfefe 0%, #f3f7fc 100%);
+    border: 0;
+    border-radius: var(--ui-radius-surface);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 0 rgba(15, 23, 42, calc(0.05 * var(--ui-edge-strength))),
+      0 0 0 1px rgba(15, 23, 42, 0.055),
+      var(--ui-shadow-ao),
+      var(--ui-shadow-drop);
+  }
+
+  /* ============================================================
+     2. 控制层玻璃 .ui-glass
+     全站唯一允许 backdrop-filter 的材质。blur 压在 20–24px：
+     再大滚动时每帧重绘的代价会明显上升。
+     它折射的必须是**内容**——背景铺彩色是假的，玻璃下面没东西就等于没有玻璃。
+     ============================================================ */
+  .ui-glass {
+    background: rgba(255, 255, 255, 0.62);
+    -webkit-backdrop-filter: blur(24px) saturate(170%);
+    backdrop-filter: blur(24px) saturate(170%);
+    border-radius: var(--ui-radius-panel);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      inset 0 -1px 1px rgba(15, 23, 42, 0.05),
+      0 2px 6px rgba(15, 23, 42, 0.05),
+      0 14px 34px -14px rgba(15, 23, 42, 0.2);
+  }
+
+  /* ============================================================
+     3. 指针即光源 .ui-lit
+     由 v2/lighting.js 写入：
+       --hx / --hy  亮部位置（指针与表面的交点）
+       --rx / --ry  暗部位置（几何对侧）
+       --sx / --sy  投影偏移（永远背离指针）
+     没被照到的元素保持默认光源，不参与计算。
+     ============================================================ */
+  [data-ui-lit] {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  [data-ui-lit]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(var(--ui-light-radius) circle at var(--hx, 30%) var(--hy, 20%),
+        rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 62%),
+      radial-gradient(calc(var(--ui-light-radius) * 1.2) circle at var(--rx, 72%) var(--ry, 84%),
+        rgba(15, 23, 42, var(--ui-light-shade)) 0%, rgba(15, 23, 42, 0) 66%);
+    transition: opacity 220ms var(--ui-ease);
+  }
+
+  [data-ui-lit]:hover::before,
+  [data-ui-lit]:focus-within::before {
+    opacity: 1;
+  }
+
+  /* 表面本身随光偏移投影 */
+  [data-ui-lit-cast] {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 1),
+      0 0 0 1px rgba(15, 23, 42, 0.055),
+      var(--sx, 0) var(--sy, 10px) 24px -12px rgba(15, 23, 42, 0.3),
+      var(--ui-shadow-drop);
+    transition: box-shadow 180ms linear, transform 280ms var(--ui-ease);
+  }
+
+  [data-ui-lit-cast]:hover {
+    transform: translateY(-2px);
+  }
+
+  /* ============================================================
+     4. 点触光波 .ui-tap
+     pointerdown 时在按压点扩散一圈柔光。不是整块变暗，是光从落点长出来。
+     ============================================================ */
+  .ui-tap {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ui-ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: radial-gradient(circle,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.45) 45%,
+      rgba(255, 255, 255, 0) 70%);
+    pointer-events: none;
+    animation: ui-ripple 550ms var(--ui-ease) forwards;
+  }
+
+  @keyframes ui-ripple {
+    to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+  }
+
+  /* ============================================================
+     5. 按钮
+     ============================================================ */
+  .ui-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: var(--ui-radius-control);
+    font-family: var(--ui-font);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      transform 240ms var(--ui-ease),
+      box-shadow 240ms var(--ui-ease),
+      background 180ms ease;
+  }
+
+  .ui-btn svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .ui-btn--brand {
+    color: var(--ui-brand-text);
+    background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 -2px 5px rgba(10, 61, 92, 0.18),
+      0 0 0 1px rgba(255, 255, 255, 0.5),
+      0 8px 18px -8px var(--ui-brand-glow);
+  }
+
+  .ui-btn--brand:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 -2px 5px rgba(10, 61, 92, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.7),
+      0 16px 28px -10px rgba(74, 148, 214, 0.8);
+  }
+
+  .ui-btn--brand:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  .ui-btn--quiet {
+    color: var(--ui-text-secondary);
+    background: linear-gradient(180deg, #fff, #f7f9fc);
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 -1px 0 rgba(15, 23, 42, 0.06),
+      0 0 0 1px rgba(15, 23, 42, 0.08),
+      0 2px 6px -2px rgba(15, 23, 42, 0.12);
+  }
+
+  .ui-btn--quiet:hover {
+    color: var(--ui-text);
+    transform: translateY(-1px);
+  }
+
+  .ui-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-ring);
+  }
+
+  .ui-btn--sm {
+    height: 34px;
+    padding: 0 16px;
+    font-size: 12.5px;
+    border-radius: 10px;
+  }
+
+  /* 不可点的状态词：占据和按钮一样的位置，但不给"可点"的暗示 */
+  .ui-btn--muted {
+    color: var(--ui-text-muted);
+    background: transparent;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.1);
+    cursor: default;
+  }
+
+  .ui-btn--muted:hover {
+    transform: none;
+  }
+
+  /* ============================================================
+     6. 语义光 .ui-live
+     光不只是装饰：招募中 = 极淡的呼吸点。
+     动效在 prefers-reduced-motion 下自动停止，不留静态副作用。
+     ============================================================ */
+  .ui-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 9px;
+    border-radius: var(--ui-radius-pill);
+    background: rgba(27, 122, 87, 0.08);
+    color: var(--ui-success);
+    font-size: 10.5px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .ui-live::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 0 var(--ui-breathe-color);
+    animation: ui-breathe var(--ui-breathe-duration) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  @keyframes ui-breathe {
+    0%, 100% { box-shadow: 0 0 0 0 var(--ui-breathe-color); }
+    50%      { box-shadow: 0 0 0 5px rgba(27, 122, 87, 0); }
+  }
+
+  /* ============================================================
+     6.5 表单基元
+     焦点用 2px 内圈 + 2px 外扩，不靠加粗边框——加粗会让布局跳动。
+     ============================================================ */
+  .ui-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .ui-field > label {
+    color: var(--ui-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .ui-input,
+  .ui-field input:not([type="checkbox"]):not([type="radio"]),
+  .ui-field select,
+  .ui-field textarea {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    padding: 0 13px;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: var(--ui-radius-control);
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    font-family: var(--ui-font);
+    font-size: 13.5px;
+    transition: border-color var(--ui-duration) var(--ui-ease),
+                box-shadow var(--ui-duration) var(--ui-ease);
+  }
+
+  .ui-field textarea {
+    height: auto;
+    min-height: 96px;
+    padding: 10px 13px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+
+  .ui-input::placeholder,
+  .ui-field input::placeholder,
+  .ui-field textarea::placeholder {
+    color: var(--ui-text-muted);
+  }
+
+  .ui-input:focus,
+  .ui-field input:focus,
+  .ui-field select:focus,
+  .ui-field textarea:focus {
+    outline: none;
+    border-color: #94a3b8;
+    box-shadow: var(--ui-ring);
+  }
+
+  /* ============================================================
+     6.6 状态徽章
+     彩色只出现在这里，且永远配文字 + 圆点，不做纯色块。
+     ============================================================ */
+  .ui-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--ui-radius-pill);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+  }
+
+  .ui-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: 0 0 6px;
+  }
+
+  .ui-badge--ok   { color: var(--ui-success); background: var(--ui-success-soft); }
+  .ui-badge--info { color: var(--ui-info);    background: var(--ui-info-soft); }
+  .ui-badge--warn { color: var(--ui-warning); background: var(--ui-warning-soft); }
+  .ui-badge--bad  { color: var(--ui-danger);  background: var(--ui-danger-soft); }
+  .ui-badge--mute { color: var(--ui-text-muted); background: #eff2f5; }
+
+  /* ============================================================
+     6.7 空态
+     ============================================================ */
+  .ui-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 56px 24px;
+    color: var(--ui-text-muted);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .ui-empty svg {
+    width: 36px;
+    height: 36px;
+    stroke: var(--ui-border-strong);
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  /* ============================================================
+     7. 无障碍：降低动效
+     prefers-reduced-transparency 目前 Chrome/Edge 不支持，
+     所以透明度降级走 html[data-texture="soft"]，不用媒体查询假装支持。
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    [data-ui-lit-cast]:hover,
+    .ui-btn--brand:hover,
+    .ui-btn--quiet:hover {
+      transform: none;
+    }
+
+    .ui-live::before {
+      animation: none;
+    }
+
+    .ui-ripple {
+      display: none;
+    }
+  }
+}

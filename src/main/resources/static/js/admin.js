@@ -2061,6 +2061,11 @@ function openCompetitionEditModal(competitionId) {
     setCompetitionField('competitionEditStatus', item?.status || 'ACTIVE');
     setCompetitionField('competitionEditTags', Array.isArray(item?.tags) ? item.tags.join('，') : '');
     setCompetitionField('competitionEditDescription', item?.description || '');
+    // 考察点存的是 JSON 数组，编辑时还原成「维度：说明」一行一条
+    setCompetitionField('competitionEditHighlights',
+        Array.isArray(item?.highlights)
+            ? item.highlights.map(h => (h.t ? h.t + '：' : '') + (h.d || '')).join('\n')
+            : '');
     const title = document.getElementById('adminCompetitionEditTitle');
     if (title) title.textContent = item ? '编辑竞赛' : '新增竞赛';
     AdminState.competitionEditModal?.show();
@@ -2080,7 +2085,19 @@ async function saveCompetitionFromModal() {
         status: document.getElementById('competitionEditStatus')?.value || 'ACTIVE',
         tags: (document.getElementById('competitionEditTags')?.value || '')
             .split(/[，,]/).map(tag => tag.trim()).filter(Boolean),
-        description: document.getElementById('competitionEditDescription')?.value.trim() || ''
+        description: document.getElementById('competitionEditDescription')?.value.trim() || '',
+        // 一行一条「维度：说明」；没有冒号就整行当说明
+        highlights: (document.getElementById('competitionEditHighlights')?.value || '')
+            .split('\n')
+            .map(line => line.trim())
+            .filter(Boolean)
+            .slice(0, 8)
+            .map(line => {
+                const idx = line.search(/[：:]/);
+                return idx > 0
+                    ? { t: line.slice(0, idx).trim(), d: line.slice(idx + 1).trim() }
+                    : { t: '', d: line };
+            })
     };
     if (!payload.name || !payload.organizer) {
         showMessage('请填写竞赛名称和主办单位', 'warning');

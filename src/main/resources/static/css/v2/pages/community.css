@@ -1,0 +1,291 @@
+/*
+ * 交流社区 · 沉浸式无缝瀑布流
+ * ------------------------------------------------------------------
+ * 不再有卡片。文章直接落在页面冷白底上，靠 48px 列距 / 40px 行距分栏，
+ * 视觉焦点全部交给文字本身。
+ *
+ * 光影只在"悬停"这一刻出现：
+ *   ::before  一层极淡的白色渐变底板 + 柔和落影 —— 纸张微微浮起
+ *   ::after   跟随指针的冷白光斑 —— 玻璃反光
+ * 静止时页面是干净的，没有任何装饰性盒子。
+ */
+
+@layer pages {
+
+  html.ilink-app body[data-app-page="community"] #postList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 48px;
+    row-gap: 40px;
+    padding: 0 8px;
+    margin-top: 0;
+  }
+
+  /* 空态/加载失败不切成半格 */
+  html.ilink-app body[data-app-page="community"] #postList:has(.il-empty-state) {
+    display: block;
+  }
+
+  /* ============================================================
+     文章条目：无底、无边、无影
+     ============================================================ */
+  html.ilink-app body[data-app-page="community"] .il-post-card {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    /* 不要设 height:100%：负 margin + 撑满高度会把 flex 子项压扁，文字被裁 */
+    /* 负 margin 抵消 padding：hover 区域更大，但视觉对齐不变 */
+    margin: -16px;
+    padding: 16px;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    transition: background 300ms var(--ui-ease);
+  }
+
+  /* 悬停时的追光底板 */
+  html.ilink-app body[data-app-page="community"] .il-post-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.4) 100%);
+    box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.06);
+    transition: opacity 300ms var(--ui-ease);
+  }
+
+  /* 跟随指针的镜面光斑：坐标由 lighting.js 写入 --hx/--hy */
+  html.ilink-app body[data-app-page="community"] .il-post-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(300px circle at var(--hx, 50%) var(--hy, 50%),
+      rgba(240, 248, 255, 1) 0%, rgba(240, 248, 255, 0) 100%);
+    transition: opacity 300ms var(--ui-ease);
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-post-card:hover::before,
+  html.ilink-app body[data-app-page="community"] .il-post-card:hover::after {
+    opacity: 1;
+  }
+
+  /* ============================================================
+     顶部：徽章 + 阅读数
+     ============================================================ */
+  html.ilink-app body[data-app-page="community"] .il-pc-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-badge,
+  html.ilink-app body[data-app-page="community"] .il-post-card .card-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: var(--ui-text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: none;
+  }
+
+  html.ilink-app body[data-app-page="community"] .article-badge.badge-pin {
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--ui-text);
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  /* 置顶徽章里的图标不参与换行，否则窄容器会把文字挤成竖排 */
+  html.ilink-app body[data-app-page="community"] .article-badge.badge-pin svg {
+    width: 11px;
+    height: 11px;
+    flex: 0 0 11px;
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-pc-views {
+    margin-left: auto;
+    color: #94a3b8;
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ============================================================
+     标题与摘要
+     ============================================================ */
+  html.ilink-app body[data-app-page="community"] .il-post-card .il-post-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0 0 12px;
+    color: var(--ui-text);
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    white-space: normal;
+    text-overflow: clip;
+    transition: color 200ms var(--ui-ease);
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-post-card:hover .il-post-title {
+    color: #0369a1;
+    text-decoration: none;
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-post-card .il-post-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0 0 24px;
+    color: #475569;
+    font-size: 14.5px;
+    line-height: 1.7;
+  }
+
+  /* ============================================================
+     底部：作者与互动
+     ============================================================ */
+  html.ilink-app body[data-app-page="community"] .il-pc-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-pc-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    color: #94a3b8;
+    font-size: 12.5px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-pc-author-name {
+    color: var(--ui-text-secondary);
+    font-size: 13.5px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-pc-dot {
+    color: #cbd5e1;
+  }
+
+  html.ilink-app body[data-app-page="community"] .author-avatar.il-post-avatar {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #e3e8ee;
+    color: #40566d;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid #fff;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-feed-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 0 0 auto;
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-feed-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--ui-text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 200ms var(--ui-ease);
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-post-card:hover .il-feed-action {
+    color: var(--ui-text);
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-feed-action:hover {
+    color: var(--ui-text);
+  }
+
+  html.ilink-app body[data-app-page="community"] .il-feed-action svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+  }
+
+  /* 已点赞/已收藏：只改颜色，不加底色 */
+  html.ilink-app body[data-app-page="community"] .il-feed-action.gc-action--on {
+    color: #0369a1;
+  }
+
+  /* ============================================================
+     响应式
+     ============================================================ */
+  @media (max-width: 860px) {
+    html.ilink-app body[data-app-page="community"] #postList {
+      grid-template-columns: minmax(0, 1fr);
+      column-gap: 0;
+      row-gap: 32px;
+      padding: 0;
+    }
+
+    html.ilink-app body[data-app-page="community"] .il-post-card .il-post-title {
+      font-size: 18px;
+    }
+  }
+
+  /* 移动端：关掉浮起与光斑，只留标题变色 */
+  @media (max-width: 860px) {
+    html.ilink-app body[data-app-page="community"] .il-post-card::before,
+    html.ilink-app body[data-app-page="community"] .il-post-card::after {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.ilink-app body[data-app-page="community"] .il-post-card,
+    html.ilink-app body[data-app-page="community"] .il-post-card::before,
+    html.ilink-app body[data-app-page="community"] .il-post-card::after {
+      transition: none;
+    }
+  }
+}

@@ -47,7 +47,13 @@
 
 <!-- Must be inserted after page-specific styles when a page has them. -->
 <th:block th:fragment="redesign">
+    <!-- v2 视觉系统：位于 layers.css 已声明的 tokens / components 层，
+         普通声明即可压过 legacy，不需要 !important -->
+    <link th:href="@{/css/v2/tokens.css}" rel="stylesheet">
+    <link th:href="@{/css/v2/materials.css}" rel="stylesheet">
     <link th:href="@{/css/app-redesign.css}" rel="stylesheet">
+    <!-- 光照引擎：把指针位置翻译成受光坐标（事件委托 + rAF 节流） -->
+    <script defer th:src="@{/js/v2/lighting.js}"></script>
 </th:block>
 </body>
 </html>

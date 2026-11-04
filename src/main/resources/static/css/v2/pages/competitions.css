@@ -1,0 +1,304 @@
+/*
+ * 竞赛目录 · 分组索引文档流
+ * ------------------------------------------------------------------
+ * 不是卡片网格。赛事介绍本身很长，卡片会把它压成三行省略号，
+ * 反而把"参考价值最高的内容"砍掉了。
+ * 所以做成文档：分组标题 + 三列索引条目（标签 / 正文 / 时间与入口），
+ * 正文完全展开，条目之间只用一条极细分隔线。
+ *
+ * 三列固定为 160 / 1fr / 160，align-items:start ——
+ * 不管中间正文多长，左标签和右按钮永远与标题顶对齐。
+ */
+
+@layer pages {
+
+  /* ============================================================
+     索引条目
+     ============================================================ */
+  html.ilink-app body[data-app-page="competitions"] .comp-index-item {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr) 160px;
+    gap: 40px;
+    align-items: start;
+    padding: 28px 12px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+    transition: border-color 300ms var(--ui-ease), transform 300ms var(--ui-ease);
+  }
+
+  /* 列表首条加顶线，给这份"文档"一个明确的开始 */
+  html.ilink-app body[data-app-page="competitions"] #competitionGrid > .comp-index-item:first-child {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  /* 悬停：整行被微微托起。位置由 lighting.js 写入 --hx/--hy */
+  html.ilink-app body[data-app-page="competitions"] .comp-index-item::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    border-radius: 12px;
+    pointer-events: none;
+    background:
+      radial-gradient(420px circle at var(--hx, 50%) var(--hy, 50%),
+        rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 68%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.4) 100%);
+    box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.06);
+    transition: opacity 300ms var(--ui-ease);
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-item:hover {
+    border-color: transparent;
+    transform: translateY(-2px);
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-item:hover::before,
+  html.ilink-app body[data-app-page="competitions"] .comp-index-item:focus-visible::before {
+    opacity: 1;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-item:focus-visible {
+    outline: none;
+  }
+
+  /* ---------- 列 1：级别 ---------- */
+  html.ilink-app body[data-app-page="competitions"] .comp-badges {
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-badge--scope {
+    color: #475569;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-badge--class {
+    color: var(--ui-brand-text);
+    background: var(--ui-brand-bg-top);
+    border: 1px solid var(--ui-brand-bg-bottom);
+  }
+
+  /* ---------- 列 2：正文 ---------- */
+  html.ilink-app body[data-app-page="competitions"] .comp-main {
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-title {
+    margin: 0;
+    color: var(--ui-text);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    transition: color 200ms var(--ui-ease);
+  }
+
+  /* 悬停时标题变色 = 可点击的信号，比加下划线克制 */
+  html.ilink-app body[data-app-page="competitions"] .comp-index-item:hover .comp-index-title {
+    color: #0369a1;
+  }
+
+  /* 标题就是整条链接：伪元素铺满整行，点哪儿都能进官网 */
+  html.ilink-app body[data-app-page="competitions"] .comp-index-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-host {
+    color: var(--ui-text-muted);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* 正文完全展开，不做 line-clamp：赛制细节正是这个页面存在的理由 */
+  html.ilink-app body[data-app-page="competitions"] .comp-index-bio {
+    margin: 8px 0 0;
+    color: #334155;
+    font-size: 14.5px;
+    line-height: 1.8;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-bio strong {
+    color: var(--ui-text);
+    font-weight: 600;
+  }
+
+  /* 核心考察点：无样式列表 + 4px 灰点，和正文同一套行高 */
+  html.ilink-app body[data-app-page="competitions"] .comp-index-points {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    color: #334155;
+    font-size: 14.5px;
+    line-height: 1.8;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-points li {
+    position: relative;
+    padding-left: 14px;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-points li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-points strong {
+    color: var(--ui-text);
+    font-weight: 600;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-tag {
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.03);
+    color: var(--ui-text-muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ---------- 列 3：时间与入口 ---------- */
+  html.ilink-app body[data-app-page="competitions"] .comp-action {
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 20px;
+    padding-top: 4px;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-time {
+    color: var(--ui-text-muted);
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: right;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-time span {
+    display: block;
+  }
+
+  /* 浅云蓝 CTA：默认半透明，悬停才完全实起来 */
+  html.ilink-app body[data-app-page="competitions"] .comp-visit {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--ui-brand-bg-top) 0%, var(--ui-brand-bg-bottom) 100%);
+    color: var(--ui-brand-text);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    opacity: 0.85;
+    box-shadow:
+      0 4px 12px -2px var(--ui-brand-glow),
+      inset 0 1px 1px #fff;
+    transition: opacity 200ms var(--ui-ease), transform 200ms var(--ui-ease),
+                box-shadow 200ms var(--ui-ease);
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-index-item:hover .comp-visit {
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow:
+      0 6px 16px -2px var(--ui-brand-glow),
+      inset 0 1px 1px #fff;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .comp-visit--off {
+    background: transparent;
+    color: var(--ui-text-muted);
+    border-color: rgba(15, 23, 42, 0.1);
+    box-shadow: none;
+    cursor: default;
+  }
+
+  /* ============================================================
+     响应式：900px 以下降为单列
+     ============================================================ */
+  @media (max-width: 900px) {
+    html.ilink-app body[data-app-page="competitions"] .comp-index-item {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+      padding: 28px 12px;
+    }
+
+    html.ilink-app body[data-app-page="competitions"] .comp-badges {
+      flex-direction: row;
+      align-items: center;
+      padding-top: 0;
+    }
+
+    html.ilink-app body[data-app-page="competitions"] .comp-action {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 0;
+    }
+
+    html.ilink-app body[data-app-page="competitions"] .comp-time {
+      text-align: left;
+    }
+  }
+
+  /* 低端设备 / 降低动效：关掉位移与光斑 */
+  @media (prefers-reduced-motion: reduce) {
+    html.ilink-app body[data-app-page="competitions"] .comp-index-item:hover {
+      transform: none;
+    }
+
+    html.ilink-app body[data-app-page="competitions"] .comp-index-item::before {
+      transition: none;
+    }
+  }
+}

@@ -161,11 +161,6 @@ html.ilink-app .il-post-avatar .il-post-avatar-fallback:not(.avatar-fallback--hi
 }
 
 /* Mentor discovery uses compact professional records; the old corner ornament is retired. */
-html.ilink-app body[data-app-page="teacher-wall"] #teacherList {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
-  gap: 20px !important;
-}
 
 html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell {
   display: flex !important;
@@ -298,13 +293,6 @@ html.ilink-app body[data-app-page="teacher-wall"] .mentor-stat-value {
   font-size: 18px !important;
 }
 
-html.ilink-app body[data-app-page="teacher-wall"] .mentor-btn {
-  min-height: 36px;
-  padding: 0 11px !important;
-  color: var(--ui-text) !important;
-  background: var(--ui-surface) !important;
-  border-color: var(--ui-border) !important;
-}
 
 /* Community is an editorial reading flow, not a gallery of oversized cards. */
 html.ilink-app body[data-app-page="community"] #postList,
@@ -758,7 +746,6 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
     max-width: none !important;
   }
 
-  html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
   html.ilink-app body[data-app-page="gallery"] .gc-grid,
   html.ilink-app body[data-app-page="competitions"] .competition-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -841,7 +828,6 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
     line-height: 1.7 !important;
   }
 
-  html.ilink-app body[data-app-page="teacher-wall"] #teacherList,
   html.ilink-app body[data-app-page="gallery"] .gc-grid,
   html.ilink-app body[data-app-page="competitions"] .competition-grid {
     grid-template-columns: minmax(0, 1fr) !important;
@@ -1021,7 +1007,7 @@ html.ilink-app body[data-app-page="team-detail"] .modal.show {
 
 
 /* ====== Plan A: modern unified search bar (team-market, teacher-wall, gallery) ====== */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar {
   display: flex !important;
   align-items: center !important;
   flex-wrap: nowrap !important;
@@ -1036,13 +1022,13 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02) !important;
   transition: box-shadow .25s ease, border-color .25s ease;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar:focus-within {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar:focus-within {
   border-color: #d6e4fb !important;
   box-shadow: 0 0 0 4px rgba(0,113,227,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
 }
 
 /* input wrap */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap {
   display: flex !important;
   align-items: center !important;
   flex: 1 1 auto !important;
@@ -1057,10 +1043,10 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   box-shadow: none !important;
   transition: background .2s ease;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap:focus-within {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap:focus-within {
   background: #f8fafc !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap svg {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap svg {
   position: static !important;
   transform: none !important;
   top: auto !important;
@@ -1092,8 +1078,8 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-icon-search-btn:hover svg {
   color: #1d1d1f !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap input,
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap .il-search-field__input {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap input,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap .il-search-field__input {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
@@ -1103,12 +1089,12 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   height: auto !important;
   padding: 0 12px 0 0 !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap input::placeholder {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap input::placeholder {
   color: #6e6e73 !important;
 }
 
 /* custom select */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select {
   position: relative !important;
   height: 44px !important;
   padding: 0 !important;
@@ -1119,10 +1105,10 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   user-select: none !important;
   transition: background .2s ease;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select:hover {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select:hover {
   background: #f5f5f7 !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.cs-inited select {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select.cs-inited select {
   position: absolute !important;
   inset: 0 !important;
   opacity: 0 !important;
@@ -1136,13 +1122,13 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
 }
 
 /* hide legacy native-select triangle arrow (search-bar.css ::after), replaced by injected .cs-chevron */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.cs-inited::after {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select.cs-inited::after {
   display: none !important;
 }
 
 /* vertical dividers */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__input-wrap + .il-search-bar__select::before,
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select + .il-search-bar__select::before {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__input-wrap + .il-search-bar__select::before,
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select + .il-search-bar__select::before {
   content: '' !important;
   position: absolute !important;
   left: 0 !important;
@@ -1155,7 +1141,7 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
 }
 
 /* custom select trigger (injected by JS) */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-trigger {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-trigger {
   display: flex !important;
   align-items: center !important;
   flex: 0 0 auto !important;
@@ -1165,19 +1151,19 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   cursor: pointer !important;
   white-space: nowrap !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-label {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-label {
   font-size: 13px !important;
   color: #6e6e73 !important;
   margin-right: 6px !important;
   font-weight: 400 !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-value {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-value {
   flex: 0 0 auto !important;
   font-size: 14px !important;
   font-weight: 500 !important;
   color: #424245 !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-chevron {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-chevron {
   margin-left: 10px !important;
   width: 14px !important;
   height: 14px !important;
@@ -1185,12 +1171,12 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   flex-shrink: 0 !important;
   transition: transform .25s ease !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.open .cs-chevron {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select.open .cs-chevron {
   transform: rotate(180deg) !important;
 }
 
 /* dropdown panel */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-dropdown {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-dropdown {
   position: absolute !important;
   top: calc(100% + 8px) !important;
   left: 0 !important;
@@ -1210,14 +1196,14 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   transition: opacity .22s ease, visibility .22s ease, transform .22s cubic-bezier(.4,0,.2,1) !important;
   z-index: 30 !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__select.open .cs-dropdown {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__select.open .cs-dropdown {
   width: auto !important;
   overflow: visible !important;
   opacity: 1 !important;
   visibility: visible !important;
   transform: translateY(0) !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-item {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-item {
   padding: 9px 12px !important;
   border-radius: 8px !important;
   font-size: 14px !important;
@@ -1226,17 +1212,17 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   transition: background .15s ease !important;
   white-space: nowrap !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-item:hover {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-item:hover {
   background: #f5f5f7 !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .cs-item.active {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .cs-item.active {
   background: #f2f7fd !important;
   color: #0066cc !important;
   font-weight: 600 !important;
 }
 
 /* buttons */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1253,11 +1239,11 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   box-shadow: none !important;
   text-decoration: none !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn svg {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn svg {
   width: 16px !important;
   height: 16px !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--primary {
   background: #1d1d1f !important;
   color: #ffffff !important;
   margin-left: 8px !important;
@@ -1268,20 +1254,20 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   font-size: 0 !important;
   flex-shrink: 0 !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary svg {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--primary svg {
   width: 18px !important;
   height: 18px !important;
   margin: 0 !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary:hover {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--primary:hover {
   background: #424245 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 16px rgba(31,41,55,0.25) !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary:active {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--primary:active {
   transform: var(--btn-press, scale(0.97)) !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--ghost {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--ghost {
   background: transparent !important;
   color: #424245 !important;
   border: 1px solid #d2d2d7 !important;
@@ -1290,17 +1276,17 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   height: 44px !important;
   padding: 0 18px !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--ghost:hover {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--ghost:hover {
   background: #f5f5f7 !important;
   border-color: #6e6e73 !important;
   color: #1d1d1f !important;
 }
 
 /* hide spacer */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__spacer {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__spacer {
   display: none !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--primary {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--primary {
   display: none !important;
 }
 
@@ -1515,7 +1501,7 @@ html.ilink-app body[data-app-page="community"] .il-search-bar__tag.active {
   font-weight: 600 !important;
 }
 /* solid 实心主操作按钮（写文章等，区别于被隐藏的搜索primary） */
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--solid {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--solid {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1535,11 +1521,11 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   text-decoration: none !important;
   box-shadow: none !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--solid svg {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--solid svg {
   width: 16px !important;
   height: 16px !important;
 }
-html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn--solid:hover {
+html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--solid:hover {
   background: var(--ui-border, #e8e8ed) !important;
   transform: none !important;
   box-shadow: none !important;
@@ -1592,7 +1578,7 @@ html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"
   display: none !important;
 }
 html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) .competition-track-tabs,
-html.ilink-app body:is([data-app-page="competitions"],[data-app-page="community"]) #channelTabs.il-search-bar__tags {
+html.ilink-app body:is([data-app-page="competitions"]) #channelTabs.il-search-bar__tags {
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;

@@ -6,7 +6,9 @@
  */
 
 :root {
-  /* === 冷白工作台 · 见 DESIGN.md === */
+  /* === 冷白工作台 · 见 DESIGN.md ===
+     令牌已迁往 v2/tokens.css（@layer tokens，压过本层）。
+     这里保留旧值只作兜底，新代码不要再引用本块。 */
   --ui-canvas: #f6f8fa;
   --ui-surface: #ffffff;
   --ui-surface-subtle: #f4f7fa;
@@ -344,9 +346,10 @@ html.ilink-app .il-btn-xs-ghost:hover {
 
 /* 搜索栏里的发布/创建动作：保留文字胶囊，不要变成图标圆钮 */
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn.il-search-bar__btn--create {
-  color: var(--btn-primary-text) !important;
-  background: var(--btn-primary-bg) !important;
-  border: 1px solid var(--btn-primary-bg) !important;
+  /* 浏览页的「写文章 / 发布成果」是页面唯一的主操作，给品牌浅云蓝 */
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.9) !important;
   border-radius: 22px !important;
   width: auto !important;
   height: 44px !important;
@@ -356,11 +359,11 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   margin-left: 8px !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="community"],[data-app-page="competitions"]) .il-search-bar .il-search-bar__btn.il-search-bar__btn--create:hover {
-  color: var(--btn-primary-text) !important;
-  background: var(--btn-primary-bg-hover) !important;
-  border-color: var(--btn-primary-bg-hover) !important;
-  transform: none !important;
-  box-shadow: none !important;
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, #ffffff, var(--ui-brand-bg-bottom)) !important;
+  border-color: rgba(255, 255, 255, 1) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 18px -6px var(--ui-brand-glow) !important;
 }
 
 html.ilink-app .btn-danger,
@@ -718,9 +721,6 @@ html.ilink-app .team-card,
 html.ilink-app .il-team-card,
 html.ilink-app .mentor-card,
 html.ilink-app .mentor-card-shell,
-html.ilink-app .article-card,
-html.ilink-app .il-post-card,
-html.ilink-app .gc-card,
 html.ilink-app .contest-card,
 html.ilink-app .competition-card,
 html.ilink-app .il-profile-card,
@@ -739,9 +739,6 @@ html.ilink-app .detail-view {
 html.ilink-app .team-card:hover,
 html.ilink-app .il-team-card:hover,
 html.ilink-app .mentor-card-shell:hover,
-html.ilink-app .article-card:hover,
-html.ilink-app .il-post-card:hover,
-html.ilink-app .gc-card:hover,
 html.ilink-app .contest-card:hover,
 html.ilink-app .competition-card:hover {
   border-color: transparent !important;
