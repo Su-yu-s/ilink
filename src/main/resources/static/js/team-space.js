@@ -2046,6 +2046,9 @@
 
     // ============ 团队资料库实现 ============
     var libraryTreeData = [];
+    // 展开状态单独存：libraryTreeData 每次刷新都会换成新对象，
+    // 把 open 挂在节点上，一次轮询就会把用户展开的目录收回去。
+    var libraryOpenIds = new Set();
     var libraryTrashView = false;
     var librarySelectedFileId = null;
     var librarySelectedFolder = null;
@@ -2375,7 +2378,7 @@
                 if (node.isFolder) {
                     var childCount = (node.children || []).length;
                     var matchesChild = keyword && librarySubtreeHasMatch(node, keyword);
-                    var open = !!node.open || !!keyword;
+                    var open = libraryOpenIds.has(node.id) || !!keyword;
                     if (keyword && !matchesChild && !node.name.toLowerCase().includes(keyword)) return;
                     row.innerHTML =
                         '<span class="library-row__arrow' + (open ? ' open' : '') + '">' + window.ILinkPreview.icons.chevronRight + '</span>' +
@@ -2385,7 +2388,11 @@
                     row.addEventListener('click', function (e) {
                         e.stopPropagation();
                         if (keyword) return; // 搜索中禁用折叠
-                        node.open = !node.open;
+                        if (libraryOpenIds.has(node.id)) {
+                            libraryOpenIds.delete(node.id);
+                        } else {
+                            libraryOpenIds.add(node.id);
+                        }
                         renderLibraryTree();
                     });
                     row.addEventListener('contextmenu', function (e) {
@@ -2396,7 +2403,7 @@
                     bindLibraryDrag(row, node);
                     bindLibraryRowDrop(row, node);
                     parent.appendChild(row);
-                    if (node.children && (node.open || keyword)) {
+                    if (node.children && (libraryOpenIds.has(node.id) || keyword)) {
                         var wrap = document.createElement('div');
                         wrap.className = 'library-children';
                         parent.appendChild(wrap);
@@ -2450,6 +2457,8 @@
     /** 仅显示当前有效文件的可检索状态；回收站中的文件不暗示仍可检索。 */
     function libraryIndexBadge(node) {
         if (libraryTrashView || !node.indexStatus) return '';
+        // 「等待检索」是尚未入库的默认态，几乎每个文件都有，显示出来只是噪声
+        if (node.indexStatus === 'PENDING') return '';
         var label = LIBRARY_INDEX_LABELS[node.indexStatus] || '索引状态未知';
         var title = node.indexError && (node.indexStatus === 'FAILED' || node.indexStatus === 'SKIPPED')
             ? label + '：' + node.indexError

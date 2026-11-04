@@ -1,0 +1,513 @@
+/*
+ * 团队空间 · 一体化工作台
+ * ------------------------------------------------------------------
+ * 三层材质，一眼能分出"谁在谁上面"：
+ *   磨砂侧栏  —— 半透明，让背景透出来，压在最下面
+ *   白玉画板  —— 纯白主内容区，最强的投影，托起整个工作台
+ *   充气卡片  —— 画板里的任务/成员/文件，只靠阴影浮起，不描边
+ *
+ * 和参考方案的一处改动：没有照搬紫蓝极光背景。
+ * 全站是冷白，这里再铺一层彩色光会立刻割裂；厚度改由侧栏玻璃与画板投影表达。
+ */
+
+@layer pages {
+
+  /* ============================================================
+     一、大框架
+     ============================================================ */
+  html.ilink-app body[data-app-page="team-space"] .workspace-layout {
+    display: flex;
+    gap: 20px;
+    width: min(1440px, 100%);
+    margin: 0 auto;
+    padding: 8px 24px 24px;
+    align-items: stretch;
+  }
+
+  /* ---------- 左侧磨砂导航 ---------- */
+  html.ilink-app body[data-app-page="team-space"] .sidebar {
+    flex: 0 0 230px;
+    width: 230px;
+    padding: 22px 12px;
+    border: 0;
+    border-radius: 20px;
+    background: var(--ui-glass-bg);
+    -webkit-backdrop-filter: var(--ui-glass-blur);
+    backdrop-filter: var(--ui-glass-blur);
+    box-shadow:
+      0 16px 32px -8px rgba(15, 23, 42, 0.08),
+      0 0 0 1px rgba(255, 255, 255, 0.8),
+      inset 0 1px 1px #fff;
+  }
+
+  /* ---------- 右侧白玉画板 ---------- */
+  html.ilink-app body[data-app-page="team-space"] .main-content-area {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    border: 0;
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: var(--ui-shadow-panel);
+    overflow: hidden;
+  }
+
+  /* ============================================================
+     二、侧栏导航项
+     ============================================================ */
+  html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    margin-bottom: 4px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--ui-text-secondary);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background 200ms var(--ui-ease), color 200ms var(--ui-ease),
+                box-shadow 200ms var(--ui-ease);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item:hover {
+    background: rgba(255, 255, 255, 0.4);
+    color: var(--ui-text);
+  }
+
+  /* 选中项：从玻璃里浮出来的一张小玉牌 */
+  html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item.active {
+    background: #ffffff;
+    color: var(--ui-text);
+    box-shadow:
+      0 4px 12px rgba(15, 23, 42, 0.04),
+      inset 0 1px 1px #fff,
+      0 0 0 1px rgba(15, 23, 42, 0.02);
+  }
+
+  /* 保留图标，只去掉旧的左侧竖条，让选中态是一张纯白卡片 */
+  html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item::before,
+  html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar-nav-item {
+    padding: 11px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  /* ============================================================
+     三、面板基座
+     ============================================================ */
+  html.ilink-app body[data-app-page="team-space"] .workspace-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  /* 看板：极浅冷灰，让纯白任务卡"跃出" */
+  html.ilink-app body[data-app-page="team-space"] #kanban-panel {
+    background: #f8fafc;
+    padding: 24px;
+  }
+
+  /* ============================================================
+     四、充气卡片：任务 / 成员 / 文件行
+     ============================================================ */
+  html.ilink-app body[data-app-page="team-space"] .task-card,
+  html.ilink-app body[data-app-page="team-space"] .member-card,
+  html.ilink-app body[data-app-page="team-space"] .kanban-card {
+    border: 0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: var(--ui-shadow-card);
+    transition: transform 300ms var(--ui-ease), box-shadow 300ms var(--ui-ease);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .task-card:hover,
+  html.ilink-app body[data-app-page="team-space"] .member-card:hover,
+  html.ilink-app body[data-app-page="team-space"] .kanban-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 6px 8px -2px rgba(15, 23, 42, 0.04),
+      0 16px 24px -6px rgba(15, 23, 42, 0.08),
+      inset 0 1px 1px #fff,
+      0 0 0 1px rgba(15, 23, 42, 0.04);
+  }
+
+  /* ============================================================
+     五、群聊气泡
+     对方：纯白 + 左上角小圆角；自己：浅蓝冰晶 + 右上角小圆角
+     ============================================================ */
+  /* 群聊头部：白底 + 细线，标题左对齐，给消息区一个明确的起点 */
+  html.ilink-app body[data-app-page="team-space"] .chat-window-panel .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 62px;
+    padding: 0 28px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+    background: #ffffff;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-window-panel .panel-title {
+    margin: 0;
+    color: var(--ui-text);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-messages-area {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 28px 32px;
+    background: #f8fafc;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 75%;
+    align-self: flex-start;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-msg.sent {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-msg-avatar {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(15, 23, 42, 0.08);
+  }
+
+  /* 外层只是排版容器：不要给它上底色，否则会变成"蓝框套灰框" */
+  html.ilink-app body[data-app-page="team-space"] .chat-msg-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    background: transparent;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-msg-name {
+    color: var(--ui-text-muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-msg.sent .chat-msg-name {
+    text-align: right;
+  }
+
+  /* 真正的气泡 */
+  html.ilink-app body[data-app-page="team-space"] .chat-msg-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.65;
+    word-break: break-word;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-msg.received .chat-msg-bubble {
+    border-top-left-radius: 4px;
+    background: #ffffff;
+    color: var(--ui-text);
+    box-shadow:
+      0 2px 8px rgba(15, 23, 42, 0.04),
+      inset 0 1px 1px #fff,
+      0 0 0 1px rgba(15, 23, 42, 0.03);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-msg.sent .chat-msg-bubble {
+    border-top-right-radius: 4px;
+    background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
+    color: #0369a1;
+    font-weight: 500;
+    box-shadow:
+      0 4px 12px rgba(186, 230, 253, 0.4),
+      inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  }
+
+  /* 时间在气泡外面，小字、弱色 */
+  html.ilink-app body[data-app-page="team-space"] .chat-msg-time {
+    color: #94a3b8;
+    font-size: 11.5px;
+    line-height: 1;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .chat-msg.sent .chat-msg-time {
+    text-align: right;
+  }
+
+  /* 有头像图时，别再显示首字母占位，否则会叠在气泡上 */
+  html.ilink-app body[data-app-page="team-space"] .chat-msg-avatar img + span {
+    display: none !important;
+  }
+
+  /* ============================================================
+     六、Agent 输入舱：整页最浮的一层
+     ============================================================ */
+  html.ilink-app body[data-app-page="team-space"] .taw-composer,
+  html.ilink-app body[data-app-page="team-space"] .agent-composer {
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: var(--ui-shadow-input);
+    transition: box-shadow 300ms var(--ui-ease);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .taw-composer:focus-within,
+  html.ilink-app body[data-app-page="team-space"] .agent-composer:focus-within {
+    box-shadow:
+      0 12px 32px -8px rgba(15, 23, 42, 0.12),
+      0 0 0 2px #bae6fd,
+      0 0 0 6px rgba(224, 242, 254, 0.5);
+  }
+
+  /* ============================================================
+     六点五、资料与资产：浅冷灰目录树 + 浮起的选中项
+     ============================================================ */
+  html.ilink-app body[data-app-page="team-space"] .library-tree-panel {
+    background: #f8fafc;
+    border-right: 1px solid rgba(15, 23, 42, 0.04);
+  }
+
+  /* 选中的文件夹像一块小玉石从灰底里凸出来 */
+  html.ilink-app body[data-app-page="team-space"] .library-row.active,
+  html.ilink-app body[data-app-page="team-space"] .library-row.is-active {
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: var(--ui-shadow-card);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .library-row:hover {
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 10px;
+  }
+
+  /* 未选择文件时的立体占位图标 */
+  html.ilink-app body[data-app-page="team-space"] .library-pv-empty svg,
+  html.ilink-app body[data-app-page="team-space"] .library-pv-empty img {
+    filter: drop-shadow(0 12px 24px rgba(15, 23, 42, 0.08));
+  }
+
+  /* ============================================================
+     八、按 demo 尺寸表对齐的四个模块
+     ============================================================ */
+
+  /* ---------- 看板 ---------- */
+  html.ilink-app body[data-app-page="team-space"] .kanban-board,
+  html.ilink-app body[data-app-page="team-space"] .board-columns {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .kanban-column,
+  html.ilink-app body[data-app-page="team-space"] .board-column {
+    flex: 0 0 300px;
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .task-card {
+    padding: 20px;
+    border-radius: 14px;
+  }
+
+  /* ---------- Agent 工作台 ---------- */
+  html.ilink-app body[data-app-page="team-space"] .taw-welcome,
+  html.ilink-app body[data-app-page="team-space"] .agent-welcome {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .taw-feature-card,
+  html.ilink-app body[data-app-page="team-space"] .agent-feature-card {
+    padding: 20px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: var(--ui-shadow-card);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .taw-composer,
+  html.ilink-app body[data-app-page="team-space"] .agent-composer {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 16px 20px;
+  }
+
+  /* ---------- 资料与资产 ---------- */
+  html.ilink-app body[data-app-page="team-space"] .library-tree-panel {
+    width: 280px;
+    flex: 0 0 280px;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .library-row {
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  /* ---------- 成员 ---------- */
+  html.ilink-app body[data-app-page="team-space"] .member-card {
+    padding: 20px 24px;
+    border-radius: 16px;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .member-card-avatar,
+  html.ilink-app body[data-app-page="team-space"] .member-card-avatar img {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(15, 23, 42, 0.08);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .member-card-name {
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  /* ============================================================
+     九、Agent 会话：提升到侧栏二级目录
+     会话属于"导航"而不是"面板内容"——切到别的面板时它仍然在，
+     这正是 demo 的信息架构。
+     ============================================================ */
+
+  /* 会话列搬走后，主区只剩两栏 */
+  html.ilink-app body[data-app-page="team-space"] .taw-layout {
+    grid-template-columns: minmax(0, 1fr) 310px;
+  }
+
+  /* 侧栏空间有限，「仅你可见」的说明收起来 */
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-private-note {
+    display: none !important;
+  }
+
+  /* 侧栏里的会话组：透明、缩进、小字 */
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-conversations {
+    margin: 6px 0 0 12px;
+    padding: 8px 0 0;
+    border: 0;
+    border-top: 1px solid rgba(15, 23, 42, 0.06);
+    background: transparent;
+    box-shadow: none;
+    display: block;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-conversations__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px 6px 10px;
+    color: var(--ui-text-muted);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-new-chat {
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ui-text-secondary);
+    cursor: pointer;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-new-chat:hover {
+    background: rgba(15, 23, 42, 0.05);
+    color: var(--ui-text);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-conversation-list {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* 侧栏里的会话项 */
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-conversation-item {
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: var(--ui-text-secondary);
+    font-size: 12.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-conversation-item:hover {
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--ui-text);
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-conversation-item.is-active,
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-conversation-item.active {
+    background: #fff;
+    color: var(--ui-brand-text);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  }
+
+  /* 侧栏空间有限，"仅你可见"的说明收起来 */
+  html.ilink-app body[data-app-page="team-space"] .sidebar .taw-private-note {
+    display: none;
+  }
+
+  /* ============================================================
+     七、响应式
+     ============================================================ */
+  @media (max-width: 900px) {
+    html.ilink-app body[data-app-page="team-space"] .workspace-layout {
+      flex-direction: column;
+      padding: 8px 12px 16px;
+      gap: 12px;
+    }
+
+    html.ilink-app body[data-app-page="team-space"] .sidebar {
+      flex: 0 0 auto;
+      width: 100%;
+    }
+  }
+}
+
+/* ============================================================
+   层外规则：会话是 Agent 的面板二级目录
+   team-agent-workbench.css 未分层，其中的 display:flex 会压过 pages 层，
+   所以这两条必须写在层外，靠"本文件最后加载"的源序取胜。
+   ============================================================ */
+html.ilink-app body[data-app-page="team-space"] .sidebar .taw-conversations {
+  display: none;
+}
+
+html.ilink-app body[data-app-page="team-space"] .sidebar-nav:has(.sidebar-nav-item.active[data-panel="ai-panel"]) .taw-conversations {
+  display: block;
+}

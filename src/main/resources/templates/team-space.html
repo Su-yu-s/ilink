@@ -12,6 +12,9 @@
     <link rel="stylesheet" th:href="@{/css/team-agent-workbench.css}">
     <link rel="stylesheet" th:href="@{/css/team-collab.css}">
     <link rel="stylesheet" th:href="@{/css/team-assets.css}">
+    <!-- v2 页面层：一体化工作台（磨砂侧栏 + 白玉画板） -->
+    <link rel="stylesheet" th:href="@{/css/v2/pages/team-space.css}">
+
 </head>
 <body data-app-page="team-space" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -101,6 +104,22 @@
                         </svg>
                         <span>Agent 工作台</span>
                     </button>
+    <aside class="taw-conversations" id="tawConversations" aria-label="Agent 会话">
+                                    <div class="taw-conversations__head">
+                                        <span>会话</span>
+                                        <button type="button" class="taw-new-chat" id="tawNewConversation" aria-label="新建会话">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                                        </button>
+                                    </div>
+                                    <div class="taw-conversation-list" id="tawConversationList">
+                                        <div class="taw-loading-lines" aria-label="加载会话"><span></span><span></span><span></span></div>
+                                    </div>
+                                    <button class="taw-load-more" id="tawMoreConversations" type="button" hidden>加载更多会话</button>
+                                    <p class="taw-private-note">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+                                        会话默认仅你可见
+                                    </p>
+                                </aside>
 
                     <div class="sidebar-members-card" id="sidebarMembersCard">
                         <div class="smc-avatars" id="smcAvatars"></div>
@@ -184,6 +203,7 @@
 
                 <section class="workspace-panel chat-window-panel" id="chat-panel" aria-label="团队群聊">
                     <div class="panel-header">
+                        <h2 class="panel-title">项目群聊</h2>
                     </div>
                     <div class="chat-messages-area" id="chatMessagesArea">
                         <div class="panel-loading">加载中...</div>
@@ -375,22 +395,6 @@
                         </header>
 
                         <div class="taw-layout">
-                            <aside class="taw-conversations" id="tawConversations" aria-label="Agent 会话">
-                                <div class="taw-conversations__head">
-                                    <span>会话</span>
-                                    <button type="button" class="taw-new-chat" id="tawNewConversation" aria-label="新建会话">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                                    </button>
-                                </div>
-                                <div class="taw-conversation-list" id="tawConversationList">
-                                    <div class="taw-loading-lines" aria-label="加载会话"><span></span><span></span><span></span></div>
-                                </div>
-                                <button class="taw-load-more" id="tawMoreConversations" type="button" hidden>加载更多会话</button>
-                                <p class="taw-private-note">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
-                                    会话默认仅你可见
-                                </p>
-                            </aside>
 
                             <section class="taw-chat" id="tawChat" aria-label="Agent 对话">
                                 <div class="taw-mobile-tabs" role="tablist" aria-label="工作台区域">
