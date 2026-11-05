@@ -626,7 +626,7 @@ html.ilink-app .il-header__dropdown-item:hover {
         width: 100%;
         height: 100%;
         padding: 0;
-        background: rgba(0, 0, 0, 0.4);
+        background: rgba(15, 23, 42, 0.34);
         border: 0;
         z-index: 1100;
         opacity: 0;
@@ -1351,7 +1351,7 @@ html.ilink-app .il-header__dropdown-item:hover {
 .il-textarea:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
 }
 
 .il-input::placeholder,
@@ -1482,7 +1482,7 @@ html.ilink-app .il-header__dropdown-item:hover {
 .il-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(15, 23, 42, 0.34);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     z-index: var(--z-modal-backdrop);
@@ -1704,8 +1704,8 @@ html.ilink-app .il-header__dropdown-item:hover {
     border-radius: 12px;
     background: var(--il-toast-surface);
     box-shadow:
-        0 1px 2px rgba(20, 25, 40, 0.04),
-        0 12px 32px -12px rgba(20, 25, 40, 0.16);
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 12px 32px -12px rgba(15, 23, 42, 0.16);
     pointer-events: auto;
     animation: il-toast-in 0.32s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
@@ -2032,7 +2032,7 @@ select.il-input-invalid {
 
 .profile-post-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--glass-shadow), 0 12px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--glass-shadow), 0 12px 40px rgba(15, 23, 42, 0.1);
     border-color: var(--glass-border-strong);
 }
 
@@ -2180,7 +2180,7 @@ select.il-input-invalid {
 
 .honor-list-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--glass-shadow), 0 12px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--glass-shadow), 0 12px 40px rgba(15, 23, 42, 0.1);
     border-color: var(--glass-border-strong);
 }
 
@@ -2311,8 +2311,8 @@ select.il-input-invalid {
 }
 
 .honor-level-pill.tier-national {
-    background: rgba(29, 29, 31, 0.08);
-    border: 1px solid rgba(29, 29, 31, 0.15);
+    background: rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(15, 23, 42, 0.15);
     color: #5b3fae;
 }
 
@@ -2716,7 +2716,7 @@ a.il-btn:focus-visible {
 .il-filter-item select:focus,
 .il-filter-select:focus {
     border-color: var(--color-gray-500);
-    box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.06);
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
 }
 
 .il-filter-item--search {
@@ -2738,7 +2738,7 @@ a.il-btn:focus-visible {
     background: var(--bg-white);
     border: 1px solid var(--border-light);
     border-radius: 12px;
-    box-shadow: inset 0 1px 2px rgba(29, 29, 31, 0.04);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
     transition:
         border-color var(--transition-fast),
         box-shadow var(--transition-fast),
@@ -2756,8 +2756,8 @@ a.il-btn:focus-visible {
 .il-search:focus-within {
     border-color: var(--color-gray-500);
     box-shadow:
-        inset 0 1px 2px rgba(29, 29, 31, 0.04),
-        0 0 0 3px rgba(29, 29, 31, 0.08);
+        inset 0 1px 2px rgba(15, 23, 42, 0.04),
+        0 0 0 3px rgba(15, 23, 42, 0.08);
     background: var(--bg-white);
 }
 
@@ -2987,7 +2987,7 @@ a.il-btn:focus-visible {
 }
 
 .hover-glow:hover {
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3),
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.3),
         0 0 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -3190,13 +3190,13 @@ a.il-btn:focus-visible {
     border-radius: 18px;
     padding: 24px;
     margin-bottom: 16px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
     transition: all 0.2s ease;
     cursor: pointer;
 }
 .il-post-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
     border-color: rgba(0, 0, 0, 0.14);
 }
 .il-post-card:active {
@@ -3350,13 +3350,13 @@ a.il-btn:focus-visible {
     border: 1px solid rgba(0, 0, 0, 0.08);
     border-radius: 18px;
     padding: 24px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
     transition: all 0.2s ease;
     cursor: pointer;
 }
 .il-team-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
     border-color: rgba(0, 0, 0, 0.14);
 }
 .il-team-card:active {
@@ -3503,13 +3503,13 @@ a.il-btn:focus-visible {
     border: 1px solid #e8e8ed;
     border-radius: 12px;
     padding: 18px 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     cursor: pointer;
 }
 .il-teacher-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 .il-teacher-card:active {
     transform: scale(0.985);
@@ -3630,7 +3630,7 @@ a.il-btn:focus-visible {
 .il-btn-primary:hover {
     background: var(--ui-border, #e8e8ed);
     transform: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
 }
 .il-btn-primary:active {
     transform: var(--btn-press, scale(0.97));
@@ -3736,7 +3736,7 @@ a.il-btn:focus-visible {
 }
 .il-card-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
 /* ---- 触摸反馈 ---- */
@@ -3761,8 +3761,8 @@ a.il-btn:focus-visible {
     overflow: hidden;
     background: var(--bg-white);
     box-shadow:
-        0 1px 3px rgba(29, 29, 31, 0.06),
-        0 16px 40px rgba(29, 29, 31, 0.08);
+        0 1px 3px rgba(15, 23, 42, 0.06),
+        0 16px 40px rgba(15, 23, 42, 0.08);
 }
 
 .detail-view__header {

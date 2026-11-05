@@ -313,33 +313,30 @@ body[data-app-page="admin"] .adk-btn--ghost:hover {
   border-color: var(--ui-text-muted);
 }
 
-/* 主操作：深色实心。全屏只此一处深色，
-   把它留给当前 tab 最常用的那个动作。 */
-body[data-app-page="admin"] .adk-btn--primary {
-  color: var(--ui-surface) !important;
-  background: var(--ui-text) !important;
-  border: 1px solid var(--ui-text) !important;
-}
-
-body[data-app-page="admin"] .adk-btn--primary:hover {
-  color: var(--ui-surface) !important;
-  background: var(--ui-text-secondary) !important;
-  border-color: var(--ui-text-secondary) !important;
-}
-
-/* 旧的后台主按钮（搜索/新增/保存）统一改成深色实心，
-   让 design-tokens 里遗留的 #0066cc 在后台不再出现。 */
+/* 主操作：浅云蓝，和组队大厅的 .ui-btn--brand 同一套材质。
+   后台不再出现大块深色，最重的颜色留给文字。 */
+body[data-app-page="admin"] .adk-btn--primary,
 body[data-app-page="admin"] .btn-primary,
 body[data-app-page="admin"] .btn-outline-primary {
-  color: var(--ui-surface) !important;
-  background: var(--ui-text) !important;
-  border-color: var(--ui-text) !important;
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  border: 1px solid rgba(12, 74, 110, 0.10) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 5px rgba(10, 61, 92, 0.14),
+    0 6px 14px -8px var(--ui-brand-glow) !important;
 }
 
+body[data-app-page="admin"] .adk-btn--primary:hover,
 body[data-app-page="admin"] .btn-primary:hover,
 body[data-app-page="admin"] .btn-outline-primary:hover {
-  background: var(--ui-text-secondary) !important;
-  border-color: var(--ui-text-secondary) !important;
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff) !important;
+  border-color: rgba(12, 74, 110, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -2px 5px rgba(10, 61, 92, 0.16),
+    0 12px 22px -10px var(--ui-brand-glow) !important;
 }
 
 /* ---------- 表格 ---------- */
@@ -519,7 +516,7 @@ body[data-app-page="admin"] .adk-more__menu {
   background: var(--ui-surface);
   border: 1px solid var(--ui-border);
   border-radius: 8px;
-  box-shadow: 0 12px 28px rgb(40 42 47 / 12%);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 12%);
 }
 
 body[data-app-page="admin"] .adk-more__menu > button {
@@ -854,14 +851,107 @@ body[data-app-page="admin"] .status-badge.approved {
 /* ≤767 表格会切成「标签 + 值」的块布局，行操作格是 flex，
    需要把标签补成第一个 flex 项，否则只有按钮没有「操作」二字。 */
 @media (max-width: 767.98px) {
-  body[data-app-page="admin"] .admin-table td.adk-rowactions {
+  /* 448 行那条 `.admin-table:has(.adk-rowactions) td:last-child { width:112px }`
+     带 :has() 后特异性是 (0,4,1)，这里必须用同长度的选择器才能压过：
+     `.admin-table:has(.adk-rowactions) td.adk-rowactions` = (0,5,1)。
+     卡片布局下整行就是一张卡，行操作格要占满宽度，否则「详情」被挤成竖排。 */
+  body[data-app-page="admin"] .admin-table:has(.adk-rowactions) th:last-child,
+  body[data-app-page="admin"] .admin-table:has(.adk-rowactions) td:last-child {
+    width: auto !important;
+  }
+
+  body[data-app-page="admin"] .admin-table:has(.adk-rowactions) td.adk-rowactions {
     display: flex !important;
     align-items: center;
     gap: 8px;
+    width: auto !important;
+    min-width: 0 !important;
   }
 
   body[data-app-page="admin"] .admin-table td.adk-rowactions::before {
     flex: 0 0 86px;
+  }
+
+  /* —— 卡片式表格的窄屏还原（2026-11） ——
+     下面这些桌面规则都在本文件（@layer legacy）里用了 !important，
+     同层内 !important 只能靠"同层更晚的源序"或更高特异性取胜，
+     所以必须写在文件最末尾的这个媒体查询里。 */
+  body[data-app-page="admin"] .admin-table tbody td {
+    /* 48px 硬行高在块布局下会裁掉换行的长文本 */
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 8px 0 !important;
+  }
+
+  /* 审计详情列在块布局里被 220px 顶住，值只剩约 134px。
+     注意断点要用 768 而不是 767.98：卡片式布局的分界在 admin-shell
+     的 @media (max-width: 768px)，恰好 768px（iPad 竖屏）会落进空隙。 */
+  html.ilink-app body[data-app-page="admin"] .adk-main #auditTableBody td:nth-child(5) {
+    max-width: 100% !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+  }
+
+  /* 行内「编辑 / 更多」只有 28px 高，触摸目标要 44px */
+  body[data-app-page="admin"] .adk-rowactions__link,
+  body[data-app-page="admin"] .adk-more > summary {
+    height: 44px !important;
+    min-height: 44px !important;
+  }
+
+  body[data-app-page="admin"] .adk-rowactions__link {
+    padding: 0 12px !important;
+  }
+
+  body[data-app-page="admin"] .adk-more > summary {
+    width: 44px !important;
+  }
+
+  /* 顶部横条导航项同样要够高；v2 只改了宽度没改高度 */
+  html.ilink-app body[data-app-page="admin"] .adk-nav__item {
+    min-height: 44px !important;
+    padding: 0 12px !important;
+  }
+
+  /* 表格容器在块布局下不该再限高滚动：会让页面出现嵌套滚动区，
+     也会裁掉 .adk-more 的绝对定位菜单 */
+  body[data-app-page="admin"] .adk-card .table-responsive {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+
+/* 恰好 768px：卡片式布局的分界（admin-shell 的 ≤768）与上面那条
+   ≤767.98 的还原块差 0.02px，iPad 竖屏正落在这个空隙里 —— 补一条
+   同内容的规则，让审计列在 768px 也还原。 */
+@media (min-width: 767.99px) and (max-width: 768px) {
+  html.ilink-app body[data-app-page="admin"] .adk-main #auditTableBody td:nth-child(5) {
+    max-width: 100% !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
+    overflow: visible !important;
+  }
+
+  body[data-app-page="admin"] .admin-table tbody td {
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 8px 0 !important;
+  }
+}
+
+/* 769–860px（iPad 竖屏等）：表格仍是表格形态，需要横向滚动兜底。
+   v2 的 min-width:0 还原写在 ≤860 里，会让 table-layout:fixed 把 7 列
+   硬塞进约 700px、nowrap 内容被裁，所以这里补回可读最小宽。 */
+@media (min-width: 769px) and (max-width: 860px) {
+  body[data-app-page="admin"] .adk-card .table-responsive {
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  html.ilink-app body[data-app-page="admin"] .adk-main .adk-card .table-responsive > .admin-table {
+    min-width: 860px !important;
   }
 }
 }

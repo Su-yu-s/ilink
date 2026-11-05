@@ -291,7 +291,7 @@ html.ilink-app body[data-app-page="team-space"] .chat-input-wrap { border-radius
 html.ilink-app body[data-app-page="team-space"] .chat-input-wrap:focus-within {
     background: #ffffff;
     border-color: var(--color-gray-400);
-    box-shadow: 0 0 0 3px rgb(40 42 47 / 8%);
+    box-shadow: 0 0 0 3px rgb(15 23 42 / 8%);
 }
 /* 发送按钮与气泡同一套冷灰：浅灰底 + 深灰字（原来的近黑填充） */
 /* 发送按钮：白底 + 深灰字（描边撑住边界），和同一个输入区里的浅灰输入框拉开层次 */
@@ -508,7 +508,7 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
     position: absolute; top: calc(100% + 6px); right: 0; z-index: 70;
     width: min(360px, 88vw);
     background: #ffffff; border: 1px solid #e8e8ed; border-radius: 12px;
-    box-shadow: 0 12px 32px rgba(29, 29, 31, .13);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, .13);
     overflow: hidden;
   }
   .ai-comp-combo__searchwrap {
@@ -689,7 +689,7 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
   .library-pv-canvas {
     display: flex; flex-direction: column;
     width: 100%; max-width: 1240px; background: #ffffff; border-radius: 12px;
-    box-shadow: 0 2px 12px -4px rgba(0, 0, 0, .08); overflow: hidden; min-height: 100%;
+    box-shadow: 0 2px 12px -4px rgba(15, 23, 42, .08); overflow: hidden; min-height: 100%;
   }
   /* 图片 / PDF / 降级卡片撑满预览区并按容器缩放；md、txt 这类长内容撑高自身，由外层滚动 */
   .library-pv-canvas > .ilpv-img,
@@ -697,7 +697,7 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
   .library-pv-canvas > .ilpv-fallback,
   .library-pv-canvas > .ilpv-doc { flex: 1 1 auto; min-height: 0; }
   .library-pv-canvas > .ilpv-img { display: grid; place-items: center; padding: 20px; min-height: 260px; }
-  .library-pv-canvas > .ilpv-img img { max-width: 100%; max-height: 100%; object-fit: contain; background: #ffffff; border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(0,0,0,.2); }
+  .library-pv-canvas > .ilpv-img img { max-width: 100%; max-height: 100%; object-fit: contain; background: #ffffff; border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(15,23,42,.2); }
   /* iframe 用绝对定位填满：父级高度由 flex 决定，百分比高度在 flex 尺寸下不成立（会退回默认 150px） */
   .library-pv-canvas > .ilpv-pdf-frame { position: relative; min-height: 420px; display: flex; flex-direction: column; }
   .ilpv-pdf-body { position: relative; flex: 1 1 auto; min-height: 0; }
@@ -719,7 +719,7 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
   .library-context-menu {
     position: fixed; z-index: 400; min-width: 140px;
     background: #ffffff; border: 1px solid #e8e8ed; border-radius: 12px;
-    box-shadow: 0 12px 32px rgba(29, 29, 31, .14); padding: 4px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, .14); padding: 4px;
   }
   .library-context-menu button {
     display: block; width: 100%; text-align: left; padding: 8px 12px;
@@ -731,12 +731,12 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
   .library-context-menu button.danger:hover { background: #fdecec; }
 
   .library-conflict-mask {
-    position: fixed; inset: 0; z-index: 500; background: rgba(20, 25, 40, .45);
+    position: fixed; inset: 0; z-index: 500; background: rgba(15, 23, 42, .34);
     display: flex; align-items: center; justify-content: center; padding: 24px;
   }
   .library-conflict {
     background: #ffffff; border-radius: 12px; padding: 22px 24px; width: 100%; max-width: 440px;
-    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .3);
+    box-shadow: 0 24px 60px -20px rgba(15, 23, 42, .3);
   }
   .library-conflict__title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
   .library-conflict__existing { font-size: 12px; color: #6e6e73; margin-bottom: 14px; }
@@ -754,7 +754,7 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
     border: 1px solid #e8e8ed; border-radius: 8px; background: #ffffff;
     font-family: inherit; font-size: 13.5px; color: #1d1d1f;
   }
-  .library-dialog__input:focus { outline: none; border-color: var(--color-gray-400, #6e6e73); box-shadow: 0 0 0 3px rgb(40 42 47 / 8%); }
+  .library-dialog__input:focus { outline: none; border-color: var(--color-gray-400, #6e6e73); box-shadow: 0 0 0 3px rgb(15 23 42 / 8%); }
   .library-dialog__error { margin-top: 6px; font-size: 12px; color: #d70015; }
   html.ilink-app .library-dialog__danger { color: #ffffff !important; background: #d70015 !important; border-color: #d70015 !important; }
   html.ilink-app .library-dialog__danger:hover { background: #b00012 !important; border-color: #b00012 !important; }
@@ -779,7 +779,7 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
   /* 预览内容（ILinkPreview 渲染的节点） */
   /* 图片预览：中性灰底（原为紫色渐变，与全站黑白灰不一致）；滚轮/按钮缩放，放大后可拖动 */
   .ilpv-img { position: relative; background: #f5f5f7; min-height: 320px; display: grid; place-items: center; padding: 16px; overflow: hidden; }
-  .ilpv-img img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(0,0,0,.2); background: #ffffff; transform-origin: center center; will-change: transform; }
+  .ilpv-img img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(15,23,42,.2); background: #ffffff; transform-origin: center center; will-change: transform; }
   html.ilink-app .ilpv-img.is-zoomed img { cursor: grab; }
   /* 图片按容器高度收敛：尺寸约束（min-height + max-height）会把画布撑破，撑出滚动条。
      md/txt 这类长内容仍走「撑高自身、外层滚动」的老路，故只对含图片的画布生效 */
@@ -894,9 +894,9 @@ html.ilink-app body[data-app-page="team-space"] .modal-content { border-radius: 
   html.ilink-app a.ilpv-download {
     display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
     height: 32px; padding: 0 16px; border-radius: 8px;
-    background: #1d1d1f; color: #ffffff; font-size: 12.5px; font-weight: 500; text-decoration: none;
+    background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)); color: var(--ui-brand-text); font-size: 12.5px; font-weight: 500; text-decoration: none;
   }
-  html.ilink-app a.ilpv-download:hover { background: #000000; color: #ffffff; }
+  html.ilink-app a.ilpv-download:hover { background: linear-gradient(180deg, #f2f9ff, #b5dcff); color: var(--ui-brand-text); }
   html.ilink-app a.ilpv-download svg { width: 13px; height: 13px; }
   .ilpv-hinttext { color: #6e6e73; }
 

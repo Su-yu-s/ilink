@@ -47,7 +47,7 @@ html.ilink-app body[data-app-page="team-detail"] .detail-load-state,
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-card,
 html.ilink-app body[data-app-page="teacher-detail"] .detail-load-state {
     background: #ffffff; border: 1px solid #e8e8ed; border-radius: 18px;
-    box-shadow: 0 1px 2px rgba(29,29,31,.04), 0 1px 3px rgba(29,29,31,.06);
+    box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
 }
 html.ilink-app body[data-app-page="team-detail"] .detail-view__header,
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__header {
@@ -209,7 +209,7 @@ html.ilink-app body[data-app-page="team-detail"] .pending-card { border-color: #
 html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-control,
 html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-select { border-color: #e8e8ed; border-radius: 12px; }
 html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-control:focus,
-html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-select:focus { border-color: var(--field-focus-border, #1d1d1f); box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)); }
+html.ilink-app body[data-app-page="team-detail"] #editModePanel .form-select:focus { border-color: var(--field-focus-border, #1d1d1f); box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)); }
 
 /* ============================================================
    导师详情
@@ -226,7 +226,7 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot
     min-height: 80px !important; max-height: 80px !important;
     flex: 0 0 80px !important;
     background: #ffffff !important; border-color: #ffffff; border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(29,29,31,.08);
+    box-shadow: 0 4px 12px rgba(15,23,42,.08);
 }
 .td-cert-badge { display: inline-flex; align-items: center; padding: 2px 9px; margin-left: 2px; background: #f2f7fd; color: #0066cc; border: 1px solid #e8f1fc; border-radius: 999px; font-size: 11px; font-weight: 500; letter-spacing: 0; }
 
@@ -267,7 +267,7 @@ html.ilink-app body[data-app-page="teacher-detail"] .td-textblock .detail-view__
 html.ilink-app body[data-app-page="teacher-detail"] .td-standalone-card {
     background: #ffffff !important; border: 1px solid #e8e8ed !important; border-radius: 18px !important;
     padding: 28px 32px !important; margin-top: 24px !important;
-    box-shadow: 0 1px 2px rgba(29,29,31,.04), 0 1px 3px rgba(29,29,31,.06);
+    box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__section-label { font-size: 20px !important; font-weight: 600 !important; color: #1d1d1f !important; }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-hint { color: #6e6e73; font-size: 14px; }
@@ -279,7 +279,7 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea {
     color: #1d1d1f; font-size: 14px; line-height: 1.7; resize: vertical;
     transition: border-color .15s, box-shadow .15s;
 }
-html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea:focus { outline: none; border-color: var(--field-focus-border, #1d1d1f) !important; box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important; }
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__textarea:focus { outline: none; border-color: var(--field-focus-border, #1d1d1f) !important; box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important; }
 .td-char-count { position: absolute; right: 14px; bottom: 10px; color: #6e6e73; font-size: 12px; pointer-events: none; }
 .td-char-count.is-near { color: #8a5300; font-weight: 500; }
 
@@ -376,4 +376,199 @@ html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-det
   background: none !important;
   border: 0 !important;
   box-shadow: none !important;
+}
+
+@layer legacy {
+/* ============================================================
+   v2 光影收尾：详情页画布与信息块
+   ------------------------------------------------------------
+   原来整页是 #f5f5f7 平灰，主卡只有 1px 级别的影子，放在
+   全站的冷白径向渐变里显得又平又暖。这里只补材质与层次。
+   ============================================================ */
+html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) {
+  background: var(--ui-bg-gradient) !important;
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamDetailContent {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 24px 64px -24px rgba(15, 23, 42, 0.12),
+    0 8px 20px -8px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 #ffffff !important;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .detail-view__header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
+/* 条件块：冷白小面板 + 顶部内高光，和后台图卡同一材质 */
+html.ilink-app body[data-app-page="team-detail"] .detail-view__row.td-cond {
+  background: linear-gradient(165deg, #fdfefe 0%, #f5f9fd 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.05) !important;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-publisher-bar {
+  background: linear-gradient(165deg, #fdfefe 0%, #f6f9fc 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.05) !important;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 1px 2px rgba(15, 23, 42, 0.03) !important;
+}
+
+/* 描述 / 成员：白卡再浮一档 */
+html.ilink-app body[data-app-page="team-detail"] .detail-view__row.td-block-card,
+html.ilink-app body[data-app-page="team-detail"] .td-block-card.td-members-card {
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 6px 18px -10px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* 返回链接做成一枚可点的安静小牌，而不是一行贴边的灰字 */
+html.ilink-app body[data-app-page="team-detail"] .team-detail-back {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 999px;
+  color: var(--ui-text-secondary) !important;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 1px 2px rgba(15, 23, 42, 0.03);
+  font-weight: 500 !important;
+  transition: background 160ms var(--ui-ease), color 160ms var(--ui-ease),
+              box-shadow 160ms var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-back:hover {
+  color: var(--ui-text) !important;
+  background: #ffffff;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 4px 12px -6px rgba(15, 23, 42, 0.10);
+}
+
+/* 导师详情与组队详情同一张主卡材质 */
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%) !important;
+  border: 1px solid rgba(15, 23, 42, 0.06) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 24px 64px -24px rgba(15, 23, 42, 0.12),
+    0 8px 20px -8px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 #ffffff !important;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-back {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 999px;
+  color: var(--ui-text-secondary) !important;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 1px 2px rgba(15, 23, 42, 0.03);
+  font-weight: 500 !important;
+  transition: background 160ms var(--ui-ease), color 160ms var(--ui-ease),
+              box-shadow 160ms var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-back:hover {
+  color: var(--ui-text) !important;
+  background: #ffffff;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 4px 12px -6px rgba(15, 23, 42, 0.10);
+}
+
+}
+
+/* 手机端详情标题：32px 会折成三行，压到 26px 并收紧页头留白 */
+@layer legacy {
+  @media (max-width: 640px) {
+    html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__header {
+      padding: 22px 20px !important;
+    }
+
+    html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__title {
+      font-size: 26px !important;
+      line-height: 1.35 !important;
+    }
+  }
+}
+
+/* 手机端详情页正文宽度：桌面居中写法 width: min(100% - 48px, …) 会与
+   layout.css 的移动端 width:100% 同层竞争（都进 legacy，靠特异性取胜），
+   再叠加外层 24px 与 shell 16px 两道安全边距，375px 屏只剩 247px 正文。
+   这里把居中留白统一收到外层，shell 不再重复留白。
+   注意：asset-detail 没有外层 wrapper（shell 即最外层），它只需把 24px 收到 16px。 */
+@layer legacy {
+  @media (max-width: 767.98px) {
+    html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"],
+                           [data-app-page="community-article"])
+      :is(.team-detail-page, .teacher-detail-main, .community-article-page) {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+      padding-left: 16px !important;
+      padding-right: 16px !important;
+      box-sizing: border-box !important;
+    }
+
+    html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"],
+                           [data-app-page="community-article"])
+      :is(.team-detail-shell, .teacher-detail-shell, .community-article-shell) {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    html.ilink-app body[data-app-page="asset-detail"] .asset-detail-shell {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin-right: 0 !important;
+      margin-left: 0 !important;
+      padding-left: 16px !important;
+      padding-right: 16px !important;
+      box-sizing: border-box !important;
+    }
+  }
+}
+
+/* 触摸设备上的两处收尾：
+   1) 返回按钮被本文件的 min-height:32px 压回（旧文件是 40px），
+      app-redesign 的全局触摸规则用 :where() 降权、且只列了 button，
+      管不到 <a>，所以这里显式补 44px；
+   2) 详情卡圆角在 ≤640 被本文件的 20px !important 压掉旧文件的 12px，
+      手机上 16px 内边距配 20px 圆角偏"鼓"，还原成 12px。 */
+@media (max-width: 767.98px), (pointer: coarse) {
+  html.ilink-app body[data-app-page="team-detail"] .team-detail-back,
+  html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-back {
+    min-height: 44px !important;
+  }
+}
+
+/* 必须包进 legacy 层：本文件 395 行那条 20px 是 legacy 层里的 !important，
+   而未分层 !important 恒输于分层 !important（层序反转），写在层外不生效。 */
+@layer legacy {
+  @media (max-width: 640px) {
+    html.ilink-app body[data-app-page="team-detail"] #teamDetailContent,
+    html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-card {
+      border-radius: 12px !important;
+    }
+  }
 }

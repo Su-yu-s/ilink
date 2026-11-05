@@ -79,7 +79,7 @@
   .library-pv-canvas {
     display: flex; flex-direction: column;
     width: 100%; background: #ffffff; border-radius: 12px;
-    box-shadow: 0 2px 12px -4px rgba(0, 0, 0, .08); overflow: hidden;
+    box-shadow: 0 2px 12px -4px rgba(15, 23, 42, .08); overflow: hidden;
   }
   /* 图片 / PDF / 降级卡片撑满预览区并按容器缩放；md、txt 这类长内容撑高自身，由外层滚动 */
   .library-pv-canvas > .ilpv-img,
@@ -88,7 +88,7 @@
   .library-pv-canvas > .ilpv-doc { flex: 1 1 auto; min-height: 0; }
   /* 图片预览：中性灰底（原为紫色渐变，与全站黑白灰不一致）；滚轮/按钮缩放，放大后可拖动 */
   .ilpv-img { position: relative; background: #f5f5f7; min-height: 320px; display: grid; place-items: center; padding: 16px; overflow: hidden; }
-  .ilpv-img img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(0,0,0,.2); background: #ffffff; transform-origin: center center; will-change: transform; }
+  .ilpv-img img { max-width: 100%; max-height: 640px; object-fit: contain; border-radius: 8px; box-shadow: 0 6px 20px -8px rgba(15,23,42,.2); background: #ffffff; transform-origin: center center; will-change: transform; }
   html.ilink-app .ilpv-img.is-zoomed img { cursor: grab; }
   /* 图片按容器高度收敛：尺寸约束（min-height + max-height）会把画布撑破，撑出滚动条。
      md/txt 这类长内容仍走「撑高自身、外层滚动」的老路，故只对含图片的画布生效 */
@@ -183,9 +183,9 @@
   html.ilink-app a.ilpv-download {
     display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
     height: 32px; padding: 0 16px; border-radius: 8px;
-    background: #1d1d1f; color: #ffffff; font-size: 12.5px; font-weight: 500; text-decoration: none;
+    background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)); color: var(--ui-brand-text); font-size: 12.5px; font-weight: 500; text-decoration: none;
   }
-  html.ilink-app a.ilpv-download:hover { background: #000000; color: #ffffff; }
+  html.ilink-app a.ilpv-download:hover { background: linear-gradient(180deg, #f2f9ff, #b5dcff); color: var(--ui-brand-text); }
   html.ilink-app a.ilpv-download svg { width: 13px; height: 13px; }
   .ilpv-hinttext { color: #6e6e73; }
   .ilpv-text { padding: 32px 40px; }

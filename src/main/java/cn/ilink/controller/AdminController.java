@@ -39,17 +39,27 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/api/admin")
 public class AdminController {
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
     private static final Set<String> ALLOWED_ROLES = Set.of("STUDENT", "TEACHER", "ADMIN");
+    /** 概览页趋势卡取近 14 天，活跃卡取近 7 天 */
+    private static final int USER_TREND_DAYS = 14;
+    private static final int CONTENT_TREND_DAYS = 7;
 
     private final UserService userService;
     private final TeamDemandServiceImpl teamDemandService;
@@ -110,11 +120,69 @@ public class AdminController {
             data.setAssetCount(assetService.count());
             data.setPostCount(communityPostService.count());
 
+            // 概览页三张图卡的数据。都只取时间列，在内存里按天分桶：
+            // 数据量限于窗口内，比逐天发 count 查询少 6~13 次往返。
+            ZoneId zone = ZoneId.systemDefault();
+            LocalDate today = LocalDate.now(zone);
+
+            LocalDate userStart = today.minusDays(USER_TREND_DAYS - 1L);
+            List<Date> userCreatedAt = userService.list(new LambdaQueryWrapper<User>()
+                            .select(User::getCreatedAt)
+                            .ge(User::getCreatedAt, Date.from(userStart.atStartOfDay(zone).toInstant())))
+                    .stream().map(User::getCreatedAt).filter(Objects::nonNull).collect(Collectors.toList());
+            data.setUserTrend(bucketByDay(userCreatedAt, userStart, USER_TREND_DAYS));
+
+            LocalDate contentStart = today.minusDays(CONTENT_TREND_DAYS - 1L);
+            Date contentSince = Date.from(contentStart.atStartOfDay(zone).toInstant());
+            List<Date> contentCreatedAt = new ArrayList<>();
+            assetService.list(new LambdaQueryWrapper<Asset>()
+                            .select(Asset::getCreatedAt)
+                            .ge(Asset::getCreatedAt, contentSince))
+                    .forEach(asset -> contentCreatedAt.add(asset.getCreatedAt()));
+            communityPostService.list(new LambdaQueryWrapper<CommunityPost>()
+                            .select(CommunityPost::getCreatedAt)
+                            .ge(CommunityPost::getCreatedAt, contentSince))
+                    .forEach(post -> contentCreatedAt.add(post.getCreatedAt()));
+            data.setContentTrend(bucketByDay(contentCreatedAt, contentStart, CONTENT_TREND_DAYS));
+
+            DateTimeFormatter labelFormat = DateTimeFormatter.ofPattern("MM-dd");
+            List<String> contentLabels = new ArrayList<>(CONTENT_TREND_DAYS);
+            for (int i = 0; i < CONTENT_TREND_DAYS; i++) {
+                contentLabels.add(contentStart.plusDays(i).format(labelFormat));
+            }
+            data.setContentLabels(contentLabels);
+
+            data.setApprovedTeacherCount(teacherApplicationService.count(
+                    new LambdaQueryWrapper<TeacherApplication>().eq(TeacherApplication::getStatus, "APPROVED")));
+
             return Result.ok("获取成功", data).toResponseEntity();
         } catch (Exception e) {
             log.error("获取仪表盘数据失败", e);
             return Result.fail(500, "获取数据失败，请稍后重试").toResponseEntity();
         }
+    }
+
+    /**
+     * 把一批时间戳按自然日分桶，index 0 是 start 当天。
+     * 窗口外的时间戳直接忽略，避免时区换算把边界数据算到别的天。
+     */
+    private static List<Integer> bucketByDay(List<Date> times, LocalDate start, int days) {
+        int[] counts = new int[days];
+        ZoneId zone = ZoneId.systemDefault();
+        for (Date time : times) {
+            if (time == null) {
+                continue;
+            }
+            long index = ChronoUnit.DAYS.between(start, time.toInstant().atZone(zone).toLocalDate());
+            if (index >= 0 && index < days) {
+                counts[(int) index]++;
+            }
+        }
+        List<Integer> result = new ArrayList<>(days);
+        for (int count : counts) {
+            result.add(count);
+        }
+        return result;
     }
 
     @GetMapping("/users")

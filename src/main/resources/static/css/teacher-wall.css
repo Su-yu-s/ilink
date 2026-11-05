@@ -102,7 +102,7 @@
 
 .mentor-card-shell:hover {
     transform: translateY(-6px);
-    box-shadow: 0 24px 48px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.04);
+    box-shadow: 0 24px 48px rgba(15,23,42,0.10), 0 8px 16px rgba(15,23,42,0.05);
     border-color: rgba(0, 113, 227, 0.3);
 }
 
@@ -455,7 +455,7 @@
     overflow-y: auto;
     background: #ffffff;
     border-radius: 18px;
-    box-shadow: 0 24px 48px rgba(0,0,0,0.12);
+    box-shadow: 0 24px 48px rgba(15,23,42,0.14);
     transform: translateY(20px) scale(0.97);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -655,7 +655,7 @@ body[data-app-page="teacher-wall"] .teacher-apply-dialog {
   background: #ffffff ;
   border: 1px solid var(--border-light) ;
   border-radius: 12px ;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) ;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16) ;
   overflow: hidden ;
   animation: ilink-modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
   box-sizing: border-box;
@@ -756,7 +756,7 @@ body[data-app-page="teacher-wall"] .teacher-apply-input:focus,
 body[data-app-page="teacher-wall"] .teacher-apply-textarea:focus {
   outline: none ;
   border-color: #6e6e73 ;
-  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.08) ;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08) ;
 }
 #applyModal .teacher-apply-dialog__footer,
 body[data-app-page="teacher-wall"] .teacher-apply-dialog__footer {
@@ -770,14 +770,14 @@ body[data-app-page="teacher-wall"] .teacher-apply-dialog__footer {
 }
 #applyModal .teacher-apply-dialog__footer .il-btn-primary,
 body[data-app-page="teacher-wall"] .teacher-apply-dialog__footer .il-btn-primary {
-  background: #1d1d1f ;
-  border-color: #1d1d1f ;
-  color: #ffffff ;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) ;
+  border-color: rgba(12, 74, 110, 0.10) ;
+  color: var(--ui-brand-text) ;
 }
 #applyModal .teacher-apply-dialog__footer .il-btn-primary:hover,
 body[data-app-page="teacher-wall"] .teacher-apply-dialog__footer .il-btn-primary:hover {
-  background: #424245 ;
-  border-color: #424245 ;
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff) ;
+  border-color: rgba(12, 74, 110, 0.16) ;
 }
 
 @media (max-width: 767.98px) {
@@ -854,14 +854,14 @@ body[data-app-page="teacher-detail"] .teacher-detail-card {
   margin: 0;
   border-radius: 12px;
   box-shadow:
-    0 1px 2px rgba(29, 29, 31, 0.06),
-    0 8px 24px rgba(29, 29, 31, 0.08);
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 8px 24px rgba(15, 23, 42, 0.08);
 }
 body[data-app-page="teacher-detail"] .teacher-detail-card:hover {
   transform: none;
   box-shadow:
-    0 1px 2px rgba(29, 29, 31, 0.06),
-    0 8px 24px rgba(29, 29, 31, 0.08);
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 8px 24px rgba(15, 23, 42, 0.08);
 }
 body[data-app-page="teacher-detail"] .teacher-detail__header {
   padding: 1.5rem 1.75rem;
@@ -891,7 +891,7 @@ body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot > a.publisher-
   font-weight: 600;
   line-height: 1;
   text-decoration: none;
-  box-shadow: 0 0 0 2px #ffffff, 0 2px 8px rgba(29, 29, 31, 0.1);
+  box-shadow: 0 0 0 2px #ffffff, 0 2px 8px rgba(15, 23, 42, 0.1);
 }
 body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot .publisher-avatar__img {
   width: 100%;
@@ -949,7 +949,7 @@ body[data-app-page="teacher-detail"] .teacher-detail__textarea {
 body[data-app-page="teacher-detail"] .teacher-detail__textarea:focus {
   outline: none;
   border-color: #1d1d1f;
-  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.08);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 body[data-app-page="teacher-detail"] .teacher-detail__textarea:disabled {
   background: var(--bg-light, #f8f9fa);
@@ -966,13 +966,13 @@ body[data-app-page="teacher-detail"] .teacher-detail__submit {
   padding: 0.5rem 1.25rem;
   font-size: 0.875rem;
   font-weight: 500;
-  background: #1d1d1f !important;
-  border-color: #1d1d1f !important;
-  color: #ffffff !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  border-color: rgba(12, 74, 110, 0.10) !important;
+  color: var(--ui-brand-text) !important;
   border-radius: 8px;
 }
 body[data-app-page="teacher-detail"] .teacher-detail__submit:hover:not(:disabled) {
-  background: #424245 !important;
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff) !important;
   border-color: #424245 !important;
 }
 body[data-app-page="teacher-detail"] .teacher-detail__submit:disabled {
@@ -1032,7 +1032,7 @@ html.ilink-app body[data-app-page="teacher-wall"] .mentor-card-shell .mentor-ava
     background: linear-gradient(135deg, #fff8e8, #fffdf5);
     border: 1px solid #f0d9a8;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 .teacher-incomplete-banner[hidden] {
     display: none;

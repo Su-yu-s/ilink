@@ -649,7 +649,7 @@ body[data-app-page="team-space"] .main-content {
     transition: border-color .12s, background-color .12s, box-shadow .12s;
 }
 
-.chat-input-wrap:focus-within { background: var(--kb-surface); border-color: var(--kb-text); box-shadow: 0 0 0 3px rgb(40 42 47 / 8%); }
+.chat-input-wrap:focus-within { background: var(--kb-surface); border-color: var(--kb-text); box-shadow: 0 0 0 3px rgb(15 23 42 / 8%); }
 
 .chat-input-bar textarea {
     min-width: 0;
@@ -1067,7 +1067,7 @@ body[data-app-page="team-space"] .form-select:focus { border-color: var(--kb-tex
 .ai-qa-bubble--error { color: #b00012; background: #fee2e2; }
 .ai-qa-composer { display: flex; align-items: flex-end; gap: 8px; margin-top: 12px; }
 .ai-qa-input { flex: 1 1 auto; min-height: 44px; max-height: 140px; padding: 10px 14px; font-family: inherit; font-size: 14px; line-height: 1.5; color: var(--kb-text); background: var(--kb-bg); border: 1px solid var(--kb-border); border-radius: 12px; resize: none; }
-.ai-qa-input:focus { outline: none; border-color: var(--kb-text); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08); }
+.ai-qa-input:focus { outline: none; border-color: var(--kb-text); box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08); }
 .ai-privacy-note { margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: var(--kb-text-muted); }
 
 /* 任务拆解 */

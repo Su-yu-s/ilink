@@ -51,7 +51,7 @@ body[data-app-page="teacher-detail"] .detail-load-state {
     background: var(--td-surface);
     border: 1px solid var(--td-border);
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(29, 29, 31, 0.07);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
 }
 
 body[data-app-page="teacher-detail"] .detail-load-state__indicator {
@@ -98,7 +98,7 @@ body[data-app-page="teacher-detail"] .teacher-detail-card {
     background: var(--td-surface);
     border: 1px solid var(--td-border);
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(29, 29, 31, 0.07);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
 }
 
 body[data-app-page="teacher-detail"] .teacher-detail__header {

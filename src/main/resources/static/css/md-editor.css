@@ -88,7 +88,7 @@
 .md-mode-btn.active {
   background: var(--tab-active-bg, #ffffff);
   color: var(--ui-text, #1d1d1f);
-  box-shadow: var(--tab-active-shadow, 0 1px 2px rgba(29, 29, 31, 0.08));
+  box-shadow: var(--tab-active-shadow, 0 1px 2px rgba(15, 23, 42, 0.08));
   font-weight: 600;
 }
 .md-mode-btn:hover:not(.active) {

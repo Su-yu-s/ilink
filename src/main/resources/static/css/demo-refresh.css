@@ -115,7 +115,7 @@ html.ilink-app .il-hero__eyebrow {
     border-radius: 999px !important;
     background: #ffffff !important;
     border: 1px solid var(--dr-gray-200) !important;
-    box-shadow: 0 1px 2px rgba(29,29,31,.05) !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,.05) !important;
     color: var(--dr-gray-500) !important;
     font-size: 12px !important;
     font-weight: 500 !important;
@@ -733,11 +733,11 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn:hover {
     transform: translateY(-1px) !important;
-    box-shadow: 0 6px 14px rgba(29, 29, 31, .18) !important;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, .18) !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn:active {
     transform: var(--btn-press, scale(0.97)) !important;
-    box-shadow: 0 1px 3px rgba(29, 29, 31, .16) !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .16) !important;
     transition-duration: .06s !important;
 }
 /* 浅色次级按钮（刷新等）：悬停浅灰底 + 边框加深 */
@@ -895,6 +895,28 @@ html.ilink-app body[data-app-page="competitions"] .competition-hub {
   padding: 0 32px !important;
 }
 
+/* 手机端竞赛页有三层横向留白叠加（main 24 + hub 32 + hero 32 = 88px），
+   375px 屏只剩 263px 内容。这里把 hub 与 hero 的左右留白归零，只留
+   main 的 16px。必须写在本文件同一层（legacy）—— @layer 内 !important
+   越早的层越优先，层外或 pages 层都压不过它。 */
+@media (max-width: 767.98px) {
+  html.ilink-app body[data-app-page="competitions"] .main-content,
+  html.ilink-app body[data-app-page="competitions"] .container.main-content {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .competition-hub {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  html.ilink-app body[data-app-page="competitions"] .il-hero {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
 html.ilink-app body[data-app-page="competitions"] .il-search-bar {
   margin-bottom: 16px;
 }
@@ -907,6 +929,75 @@ html.ilink-app body[data-app-page="gallery"] .il-page-wrapper {
   padding: 34px 32px 64px !important;
 }
 
+/* 手机端左右留白收到 16px，与其它列表页一致。
+   必须紧跟上面那条写在同一层（legacy）：@layer 内 !important 的
+   优先级与普通声明相反，越早的层越优先，legacy 是第一个层 ——
+   写在层外或 pages 层的 !important 都压不过它。 */
+@media (max-width: 767.98px) {
+  html.ilink-app body[data-app-page="gallery"] .il-page-wrapper {
+    padding: 20px 16px 56px !important;
+  }
+}
+
 html.ilink-app body[data-app-page="gallery"] .il-search-bar {
   margin-bottom: 16px;
+}
+/* ============================================================
+   浏览页移动端还原（2026-11）
+   ------------------------------------------------------------
+   本文件顶部是 @layer legacy，且一直包到文件末尾 —— 追加在这里的
+   规则位于该层最晚的源序，可以压过同层更早的 !important。
+
+   起因：本文件里 hero 的内边距 / 字号、搜索栏布局都写成了不带媒体
+   查询的 !important，portal-redesign.css 与 search-bar.css 的窄屏
+   还原（同层、同特异度、更早源序）因此全部失效。
+   ============================================================ */
+@media (max-width: 767.98px) {
+  /* hero：32px 横向留白在手机上过宽，收到 16px；
+     .hero-inner 只在组队大厅/导师墙用，其余页面用 .il-hero */
+  html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],
+                         [data-app-page="community"],[data-app-page="competitions"],
+                         [data-app-page="gallery"]) :is(.hero-inner, .il-hero, .hero-section) {
+    padding: 18px 16px 20px !important;
+  }
+
+  /* hero 标题/说明：24px + 13px 在手机上偏小，回到 28px / 15px */
+  html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],
+                         [data-app-page="community"],[data-app-page="competitions"],
+                         [data-app-page="gallery"]) :is(.hero-title, .il-hero__title) {
+    font-size: 28px !important;
+    line-height: 1.3 !important;
+  }
+
+  html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],
+                         [data-app-page="community"],[data-app-page="competitions"],
+                         [data-app-page="gallery"]) :is(.hero-desc, .il-hero__desc) {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+  }
+
+  /* 搜索栏：桌面的单行 flex 在手机上放不下，还原成两列网格 */
+  html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],
+                         [data-app-page="community"],[data-app-page="competitions"],
+                         [data-app-page="gallery"]) .il-search-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    padding: 12px !important;
+  }
+
+  html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],
+                         [data-app-page="community"],[data-app-page="competitions"],
+                         [data-app-page="gallery"]) .il-search-bar__input-wrap {
+    grid-column: 1 / -1;
+  }
+
+  /* 输入框 14px 会触发 iOS Safari 聚焦自动放大；必须 16px */
+  html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],
+                         [data-app-page="community"],[data-app-page="competitions"],
+                         [data-app-page="gallery"]) .il-search-bar__input-wrap .il-search-field__input {
+    font-size: 16px !important;
+  }
 }

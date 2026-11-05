@@ -1211,7 +1211,7 @@ body {
 .il-filter-item input:focus,
 .il-filter-item select:focus {
   border-color: var(--field-focus-border, #1d1d1f) !important;
-  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important;
 }
 
 /* --- migrated: global card resets removed; each page owns its card styles now --- */
@@ -1473,7 +1473,7 @@ body[data-app-page] .il-filter-item select:focus,
 body[data-app-page] .form-control:focus,
 body[data-app-page] .form-select:focus {
   border-color: var(--border-default) !important;
-  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.08) !important;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08) !important;
   transform: none !important;
 }
 
@@ -1550,7 +1550,7 @@ body[data-app-page] .admin-table-card {
   background: #ffffff !important;
   border: 1px solid #e8e8ed !important;
   border-radius: 18px !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   overflow: hidden;
@@ -1571,7 +1571,7 @@ body[data-app-page] .competition-card:hover,
 body[data-app-page] .admin-table-card:hover {
   transform: translateY(-4px) !important;
   border-color: #d2d2d7 !important;
-  box-shadow: 0 20px 60px -15px rgba(0,0,0,0.08) !important;
+  box-shadow: 0 20px 60px -15px rgba(15,23,42,0.08) !important;
   background: #ffffff !important;
 }
 
@@ -1640,7 +1640,7 @@ body[data-app-page] .card-image {
 }
 
 body[data-app-page] .card-image::after {
-  background: linear-gradient(180deg, transparent 58%, rgba(29, 29, 31, 0.72) 100%) !important;
+  background: linear-gradient(180deg, transparent 58%, rgba(15, 23, 42, 0.72) 100%) !important;
 }
 
 body[data-app-page] .card-actions {
@@ -2031,7 +2031,7 @@ body[data-app-page="gallery"] .category-pill {
 body[data-app-page="gallery"] .il-search-field:focus-within,
 body[data-app-page="competitions"] .competition-toolbar__search .il-search-field:focus-within {
   border-color: var(--border-default) !important;
-  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.08) !important;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08) !important;
 }
 
 
@@ -2290,7 +2290,7 @@ a:not(.btn):not(.il-btn):not(.nav-link):not(.il-profile-nav-item):not(.page-link
 /* 鍗＄墖閫氱敤 hover */
 .card:not(.no-hover):hover,
 .il-card:not(.no-hover):hover {
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
 }
 
 /* 鍗＄墖閫氱敤鐐瑰嚮 */
@@ -2326,12 +2326,12 @@ a:not(.btn):not(.il-btn):not(.nav-link):not(.il-profile-nav-item):not(.page-link
     --bs-btn-active-border-color: #000000;
     --bs-btn-disabled-bg: #6e6e73;
     --bs-btn-disabled-border-color: #6e6e73;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 1px 2px rgba(15,23,42,0.08) !important;
 }
 
 .btn-primary:hover {
     transform: none !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.15) !important;
 }
 
 .btn-primary:active {
@@ -2474,7 +2474,7 @@ body.teacher-apply-open {
 }
 
 .publisher-avatar:hover {
-  box-shadow: 0 2px 8px rgba(29, 29, 31, 0.12);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
 }
 
 .publisher-avatar__img {
@@ -2617,7 +2617,7 @@ body[data-app-page="teacher-detail"] .detail-view .card-body {
 .il-bs-form-modal .modal-content {
   border: 1px solid var(--border-light, #e8e8e8);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
   overflow: hidden;
 }
 
@@ -2725,7 +2725,7 @@ body[data-app-page="teacher-detail"] .detail-view .card-body {
 .il-bs-form-modal .il-select:focus {
   outline: none;
   border-color: #6e6e73;
-  box-shadow: 0 0 0 3px rgba(29, 29, 31, 0.08);
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
 }
 
 .il-bs-form-modal .modal-footer {
@@ -2776,15 +2776,15 @@ body[data-app-page="teacher-detail"] .detail-view .card-body {
 }
 
 .il-bs-form-modal .modal-footer .il-btn-primary {
-  background: #1d1d1f;
-  border: 1px solid #1d1d1f;
-  color: #ffffff;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom));
+  border: 1px solid rgba(12, 74, 110, 0.10);
+  color: var(--ui-brand-text);
 }
 
 .il-bs-form-modal .modal-footer .il-btn-primary:hover {
-  background: #424245;
-  border-color: #424245;
-  color: #ffffff;
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff);
+  border-color: rgba(12, 74, 110, 0.16);
+  color: var(--ui-brand-text);
   transform: none;
   box-shadow: none;
 }
@@ -2953,7 +2953,7 @@ img.honors-preview-proof__img {
     transition: box-shadow 0.2s ease;
 }
 .task-card:hover {
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.08);
 }
 .task-card .badge {
     font-size: 0.75rem;

@@ -246,7 +246,7 @@ textarea {
 .ilink-app select:focus,
 .ilink-app .form-control:focus {
   border-color: var(--field-focus-border, #1d1d1f) !important;
-  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important;
   outline: none !important;
 }
 

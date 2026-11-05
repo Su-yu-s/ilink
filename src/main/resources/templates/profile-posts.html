@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的文章 - iLink</title>
+    <title>我的发布 - iLink</title>
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <link th:href="@{/css/profile.css}" rel="stylesheet">
     <link th:href="@{/css/profile-refresh.css}" rel="stylesheet">
+    <link th:href="@{/css/v2/pages/profile.css}" rel="stylesheet">
 </head>
 <body data-profile-page="posts" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -20,36 +21,31 @@
                 <div class="il-section-card">
                     <div class="il-section-header">
                         <div>
-                            <h2 class="il-section-title">我的文章</h2>
-                            <p class="il-section-subtitle">在社区发布的文章会出现在这里，可随时编辑或删除</p>
+                            <h2 class="il-section-title">我的发布</h2>
+                            <p class="il-section-subtitle">你发布的作品与文章都汇总在这里，可随时编辑或查看</p>
                         </div>
-                        <a href="/community.html" class="il-btn il-btn-primary">去社区发布新文章</a>
+                        <div class="il-section-header__actions">
+                            <a href="/community.html" class="il-btn il-btn-ghost il-btn-sm">去社区发文</a>
+                            <a href="/profile-asset-edit.html" class="il-btn il-btn-primary il-btn-sm">发布成果</a>
+                        </div>
                     </div>
 
                     <div class="pf-toolbar">
+                        <div class="pp-tabs" role="tablist">
+                            <button type="button" class="pp-tab active" data-publish-type="all" role="tab" aria-selected="true">全部</button>
+                            <button type="button" class="pp-tab" data-publish-type="work" role="tab" aria-selected="false">作品</button>
+                            <button type="button" class="pp-tab" data-publish-type="article" role="tab" aria-selected="false">文章</button>
+                        </div>
                         <div class="pf-toolbar__search">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-                            <input type="text" id="pfSearchInput" class="pf-toolbar__input" aria-label="搜索文章标题" placeholder="搜索文章标题...">
-                        </div>
-                        <div class="pf-toolbar__divider"></div>
-                        <div class="pf-toolbar__filters">
-                            <select id="pfCategorySelect" class="pf-toolbar__select" aria-label="按分类筛选">
-                                <option value="all">全部分类</option>
-                            </select>
-                            <select id="pfSortSelect" class="pf-toolbar__select" aria-label="文章排序方式">
-                                <option value="latest">最新发布</option>
-                                <option value="views">最多阅读</option>
-                                <option value="likes">最多点赞</option>
-                            </select>
+                            <input type="text" id="publishSearch" class="pf-toolbar__input" aria-label="搜索标题或内容" placeholder="搜索标题或内容...">
                         </div>
                     </div>
 
-                    <div id="myPostsList" style="min-height: 100px;">
-                        <p class="text-muted mb-0" style="font-size: 14px;">加载中…</p>
+                    <div id="publishList" style="min-height: 100px;">
+                        <p class="pp-loading">加载中…</p>
                     </div>
-                    <nav id="myPostsPager" class="d-none mt-4" aria-label="分页">
-                        <ul class="pagination pagination-sm justify-content-center mb-0" id="myPostsPagerInner"></ul>
-                    </nav>
+                    <nav id="publishPager" class="pp-pager" aria-label="分页"></nav>
                 </div>
             </div>
         </div>
@@ -58,7 +54,7 @@
     <script th:src="@{/lib/bootstrap.bundle.min.js}"></script>
     <script th:src="@{/js/common.js}"></script>
     <script th:src="@{/js/profile.js}"></script>
-    <script th:src="@{/js/profile-posts.js}"></script>
+    <script th:src="@{/js/profile-publish.js}"></script>
     <script th:src="@{/js/profile-refresh.js}"></script>
 </body>
 </html>

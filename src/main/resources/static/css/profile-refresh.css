@@ -22,7 +22,7 @@ html.ilink-app body[data-profile-page] .il-form-select {
 html.ilink-app body[data-profile-page] .il-form-input:focus,
 html.ilink-app body[data-profile-page] .il-form-select:focus {
   border-color: var(--field-focus-border, #1d1d1f) !important;
-  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important;
   outline: none !important;
 }
 
@@ -34,7 +34,7 @@ html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-
   background: #ffffff !important;
   border: 1px solid #e8e8ed !important;
   border-radius: 18px !important;
-  box-shadow: 0 1px 2px rgba(29,29,31,.04), 0 1px 3px rgba(29,29,31,.05) !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.05) !important;
   padding: 0 !important;
 }
 html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-details-header {
@@ -76,7 +76,7 @@ html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-
   height: 80px !important;
   flex-basis: 80px !important;
   border: 0 !important;
-  box-shadow: 0 0 0 1px #e8e8ed;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.06);
 }
 html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-name { font-size: 20px !important; font-weight: 600 !important; color:#1d1d1f !important; }
 html.ilink-app body[data-profile-page="edit"]:not(.profile-details-editing) .il-profile-read-role {
@@ -230,7 +230,7 @@ html.ilink-app body[data-profile-page="favorites"] .il-section-header { margin-b
   display: flex; align-items: center; gap: 12px;
   background: #ffffff; border: 1px solid #e8e8ed; border-radius: 18px;
   padding: 8px; margin-bottom: 20px;
-  box-shadow: 0 1px 2px rgba(29,29,31,.04), 0 1px 3px rgba(29,29,31,.05);
+  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.05);
 }
 .pf-toolbar__search { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; padding: 0 10px; }
 .pf-toolbar__search > svg { width: 19px; height: 19px; color: #6e6e73; flex: 0 0 auto; }
@@ -250,7 +250,7 @@ html.ilink-app body[data-profile-page="favorites"] .il-section-header { margin-b
   cursor: pointer; transition: border-color .16s ease, background-color .16s ease;
 }
 .pf-toolbar__select:hover { border-color: #e8e8ed !important; background-color: #f5f5f7 !important; }
-.pf-toolbar__select:focus { border-color: var(--field-focus-border, #1d1d1f) !important; box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)); outline: none; }
+.pf-toolbar__select:focus { border-color: var(--field-focus-border, #1d1d1f) !important; box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)); outline: none; }
 
 /* 列表与卡片 */
 html.ilink-app body[data-profile-page] .profile-post-list { display: flex; flex-direction: column; gap: 16px !important; }
@@ -258,14 +258,14 @@ html.ilink-app body[data-profile-page] .profile-post-card {
   background: #ffffff !important;
   border: 1px solid #e8e8ed !important;
   border-radius: 18px !important;
-  box-shadow: 0 1px 2px rgba(29,29,31,.04), 0 1px 3px rgba(29,29,31,.06) !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06) !important;
   padding: 4px 6px;
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
 }
 html.ilink-app body[data-profile-page] .profile-post-card:hover {
   transform: translateY(-2px) !important;
   border-color: #d2d2d7 !important;
-  box-shadow: 0 12px 24px -10px rgba(29,29,31,.14) !important;
+  box-shadow: 0 12px 24px -10px rgba(15,23,42,.14) !important;
 }
 html.ilink-app body[data-profile-page] .profile-post-card__body { gap: 12px !important; padding: 18px 18px !important; align-items: flex-start !important; }
 html.ilink-app body[data-profile-page] .profile-post-card__main { gap: 12px !important; }
@@ -336,7 +336,7 @@ html.ilink-app body[data-profile-page="password"] #passwordForm {
   max-width: 640px;
   background: #ffffff; border: 1px solid #e8e8ed; border-radius: 18px;
   padding: 30px 32px;
-  box-shadow: 0 1px 2px rgba(29,29,31,.04), 0 1px 3px rgba(29,29,31,.06);
+  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06);
 }
 html.ilink-app body[data-profile-page="password"] #passwordForm .row { --bs-gutter-x: 0; --bs-gutter-y: 0; }
 html.ilink-app body[data-profile-page="password"] #passwordForm .col-12 { margin-bottom: 18px; }
@@ -350,7 +350,7 @@ html.ilink-app body[data-profile-page="password"] .pf-pwd-field .il-form-input {
   font-size: 14px; color: #1d1d1f; height: auto;
 }
 html.ilink-app body[data-profile-page="password"] .pf-pwd-field .il-form-input:focus {
-  background: var(--field-bg, #ffffff) !important; border-color: var(--field-focus-border, #1d1d1f) !important; box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
+  background: var(--field-bg, #ffffff) !important; border-color: var(--field-focus-border, #1d1d1f) !important; box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important;
 }
 .pf-pwd-toggle {
   position: absolute; right: 8px; top: 50%; transform: translateY(-50%);

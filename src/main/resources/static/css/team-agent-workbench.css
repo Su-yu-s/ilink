@@ -38,7 +38,7 @@ html.ilink-app {
     border: 1px solid var(--taw-line);
     border-radius: 18px;
     background: var(--taw-surface);
-    box-shadow: 0 1px 2px rgba(29, 29, 31, .04), 0 14px 36px rgba(29, 29, 31, .06);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 14px 36px rgba(15, 23, 42, .06);
     overflow: hidden;
     color: var(--taw-ink);
 }
@@ -227,7 +227,7 @@ html.ilink-app {
 .taw-conversation-item.is-active {
     border-color: var(--taw-line);
     background: var(--taw-surface);
-    box-shadow: 0 1px 2px rgba(29, 29, 31, .04);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
 }
 
 .taw-conversation-item strong {
@@ -409,7 +409,7 @@ html.ilink-app {
 .taw-capabilities button:hover {
     transform: none;
     border-color: var(--taw-line-strong);
-    box-shadow: 0 8px 20px rgba(29, 29, 31, .06);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .06);
 }
 
 .taw-capability-icon {
@@ -677,7 +677,7 @@ html.ilink-app {
     border: 1px solid var(--taw-line-strong);
     border-radius: 12px;
     background: var(--taw-surface);
-    box-shadow: 0 2px 8px rgba(29, 29, 31, .04);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .04);
     transition: border-color .16s ease, box-shadow .16s ease;
 }
 .taw-composer__box:focus-within {
@@ -718,8 +718,8 @@ html.ilink-app {
     place-items: center;
     border: 0;
     border-radius: 8px;
-    background: var(--btn-primary-bg, #0066cc);
-    color: #ffffff;
+    background: var(--btn-primary-bg, #c9e5ff);
+    color: var(--btn-primary-text, #0c4a6e);
     cursor: pointer;
     transition: opacity .16s ease, transform .16s ease;
 }

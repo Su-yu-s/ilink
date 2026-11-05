@@ -103,6 +103,9 @@
                             <path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/>
                         </svg>
                         <span>Agent 工作台</span>
+                        <svg class="sidebar-nav-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M6 9l6 6 6-6"/>
+                        </svg>
                     </button>
     <aside class="taw-conversations" id="tawConversations" aria-label="Agent 会话">
                                     <div class="taw-conversations__head">
@@ -121,22 +124,6 @@
                                     </p>
                                 </aside>
 
-                    <div class="sidebar-members-card" id="sidebarMembersCard">
-                        <div class="smc-avatars" id="smcAvatars"></div>
-                        <div class="smc-info">
-                            <span class="smc-status" id="smcStatus">组队中</span>
-                            <span class="smc-deadline" id="smcDeadline">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                <span id="smcDeadlineText">-</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <button class="sidebar-weekly-btn" type="button" onclick="teamSpace.generateWeeklyReport()"
-                            title="本地聚合任务进度，生成团队周报">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        周报
-                    </button>
                 </nav>
             </aside>
 
@@ -388,10 +375,6 @@
                                     <p id="tawContextSummary">正在读取团队上下文…</p>
                                 </div>
                             </div>
-                            <div class="taw-contextbar__meta" id="tawContextMeta"></div>
-                            <button class="taw-icon-btn taw-conversation-toggle" id="tawConversationToggle" type="button" aria-label="展开会话列表" aria-expanded="false">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
-                            </button>
                         </header>
 
                         <div class="taw-layout">
@@ -409,18 +392,24 @@
                                         </div>
                                         <p class="taw-eyebrow">基于 Agentic GraphRAG</p>
                                         <h3>把竞赛资料与团队协作，<br>放进同一个可核验的工作台。</h3>
-                                        <p class="taw-welcome__desc">检索当前团队可访问的知识、读取结构化任务事实，并在你确认后执行受控动作。</p>
+                                        <p class="taw-welcome__desc">检索团队知识与任务事实，动作需你确认后执行。</p>
                                         <div class="taw-capabilities">
                                             <button type="button" data-taw-prompt="汇总当前团队的任务数量、完成率和逾期情况" data-taw-mode="AUTO">
-                                                <span class="taw-capability-icon is-metric" aria-hidden="true">01</span>
+                                                <span class="taw-capability-icon is-metric" aria-hidden="true">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                                                </span>
                                                 <strong>团队态势</strong><small>来自数据库的确定性统计</small>
                                             </button>
                                             <button type="button" data-taw-prompt="巡检当前团队逾期、未指派和长期待审核的任务风险" data-taw-mode="AUTO">
-                                                <span class="taw-capability-icon is-risk" aria-hidden="true">02</span>
+                                                <span class="taw-capability-icon is-risk" aria-hidden="true">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></svg>
+                                                </span>
                                                 <strong>风险巡检</strong><small>只分析你有权读取的任务</small>
                                             </button>
                                             <button type="button" data-taw-prompt="根据当前任务帮我制定下一阶段行动计划" data-taw-mode="ACTION_PLAN">
-                                                <span class="taw-capability-icon is-action" aria-hidden="true">03</span>
+                                                <span class="taw-capability-icon is-action" aria-hidden="true">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                                                </span>
                                                 <strong>任务规划</strong><small>先生成提案，再由你确认</small>
                                             </button>
                                         </div>
@@ -446,14 +435,14 @@
                                     </div>
                                     <div class="taw-composer__box">
                                         <textarea id="tawInput" rows="2" maxlength="500" placeholder="询问团队事实、竞赛资料，或让 Agent 制定任务计划…" aria-label="向团队 Agent 提问"></textarea>
-                                        <div class="taw-composer__footer">
-                                            <span>Enter 发送 · Shift + Enter 换行</span>
-                                            <button class="taw-send" id="tawSend" type="button" aria-label="发送">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                                            </button>
-                                        </div>
+                                        <button class="taw-send" id="tawSend" type="button" aria-label="发送">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                                        </button>
                                     </div>
-                                    <p class="taw-composer__note">Agent 只会执行你确认的动作；不会修改成员、解散团队或审核任务。</p>
+                                    <div class="taw-composer__footer">
+                                        <span>Agent 只会执行你确认的动作；不会修改成员、解散团队或审核任务。</span>
+                                        <span>Enter 发送 · Shift + Enter 换行</span>
+                                    </div>
                                 </div>
                             </section>
 

@@ -1144,7 +1144,17 @@
     function setupSidebarNav() {
         document.querySelectorAll('.sidebar-nav-item').forEach(function (item) {
             item.addEventListener('click', function () {
-                switchPanel(item.dataset.panel || 'kanban-panel');
+                var panelId = item.dataset.panel || 'kanban-panel';
+                // Agent 工作台是会话树的一级目录：已经停在这一页时再点一次，
+                // 收起/展开下面的会话列表；从别的面板切回来时总是展开。
+                if (panelId === 'ai-panel') {
+                    if (item.classList.contains('active')) {
+                        item.classList.toggle('is-collapsed');
+                    } else {
+                        item.classList.remove('is-collapsed');
+                    }
+                }
+                switchPanel(panelId);
                 if (isMobileLayout()) setProjectMenu(false);
             });
         });
@@ -2049,6 +2059,7 @@
     // 展开状态单独存：libraryTreeData 每次刷新都会换成新对象，
     // 把 open 挂在节点上，一次轮询就会把用户展开的目录收回去。
     var libraryOpenIds = new Set();
+    var lastTreeSignature = null;
     var libraryTrashView = false;
     var librarySelectedFileId = null;
     var librarySelectedFolder = null;
@@ -2076,7 +2087,11 @@
         var box = byId('libraryTree');
         if (!box) return Promise.resolve(false);
         stopLibraryIndexPolling();
-        box.innerHTML = '<div class="panel-loading">加载中...</div>';
+        // 轮询会周期性调用这里。只有首屏（容器还空着）才显示"加载中"，
+        // 否则每次刷新都把整棵树擦掉再重画，看起来就是一闪一闪。
+        if (!box.querySelector('.library-row')) {
+            box.innerHTML = '<div class="panel-loading">加载中...</div>';
+        }
         var trashBtn = byId('libraryTrashBtn');
         if (trashBtn) {
             trashBtn.hidden = !currentUserIsLeader();
@@ -2360,10 +2375,21 @@
     }
     window.libraryDeleteWithReferences = libraryDeleteWithReferences;
 
+    var lastTreeSignature = null;
+
     function renderLibraryTree() {
         var container = byId('libraryTree');
         if (!container) return;
         var keyword = (byId('librarySearch')?.value || '').trim().toLowerCase();
+        // 数据与展开状态都没变就不重建 DOM。
+        // 上一处已保证轮询不再清空容器，这里跳过渲染不会留下空白。
+        var sig = keyword + '|' + libraryTrashView + '|' + librarySelectedFileId + '|' +
+                  Array.from(libraryOpenIds).sort().join(',') + '|' +
+                  libraryTreeData.map(function (n) {
+                      return n.id + ':' + n.name + ':' + (n.indexStatus || '') + ':' + ((n.children || []).length);
+                  }).join(',');
+        if (sig === lastTreeSignature && container.querySelector('.library-row')) return;
+        lastTreeSignature = sig;
         container.innerHTML = '';
         if (!libraryTreeData.length) {
             container.innerHTML = '<div class="library-empty">' +

@@ -782,6 +782,51 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
     box-sizing: border-box !important;
   }
 
+  /* 成果展示的外壳在 demo-refresh.css 里被 !important 钉成 34px 32px 64px，
+     且 demo-refresh.css 在本文件之后加载；同层同特异度时后加载者胜，
+     所以这条窄屏还原放在最后加载的 v2/pages/gallery.css 里，
+     不在本文件重复声明。 */
+
+  /* 详情页外层 wrapper 的移动端还原：app-redesign 的 width: min(100% - 48px, …)
+     与 layout.css 的 width:100% 同层竞争，特异性更高的一方胜出，结果窄屏每侧
+     多留 24px；再叠加 shell 的 16px，正文只剩约 247px。这里把居中留白收到 16px，
+     并让 shell 不再重复留白。 */
+  html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"],
+                         [data-app-page="asset-detail"],[data-app-page="community-article"])
+    :is(.team-detail-page, .teacher-detail-main, .il-page-wrapper) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"],
+                         [data-app-page="community-article"]) .il-page-wrapper
+    :is(.team-detail-shell, .teacher-detail-shell, .community-article-shell),
+  html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"],
+                         [data-app-page="community-article"])
+    :is(.team-detail-shell, .teacher-detail-shell, .community-article-shell) {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* asset-detail 没有外层 wrapper，shell 自己就是最外层 */
+  html.ilink-app body[data-app-page="asset-detail"] .asset-detail-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+    padding-right: 16px !important;
+    padding-left: 16px !important;
+    box-sizing: border-box !important;
+  }
+
   html.ilink-app body[data-app-page="team-market"] .content-section,
   html.ilink-app body[data-app-page="teacher-wall"] .content-section,
   html.ilink-app body[data-app-page="team-market"] .toolbar-section,
@@ -1019,12 +1064,12 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   background: #ffffff !important;
   border: 1px solid #e8e8ed !important;
   border-radius: 28px !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02) !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.02) !important;
   transition: box-shadow .25s ease, border-color .25s ease;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar:focus-within {
   border-color: #d6e4fb !important;
-  box-shadow: 0 0 0 4px rgba(0,113,227,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08), 0 2px 8px rgba(15,23,42,0.06) !important;
 }
 
 /* input wrap */
@@ -1188,7 +1233,7 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   background: #ffffff !important;
   border: 1px solid #e8e8ed !important;
   border-radius: 12px !important;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06) !important;
+  box-shadow: 0 12px 32px rgba(15,23,42,0.14), 0 2px 8px rgba(15,23,42,0.06) !important;
   padding: 6px !important;
   opacity: 0 !important;
   visibility: hidden !important;
@@ -1244,8 +1289,8 @@ html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wal
   height: 16px !important;
 }
 html.ilink-app body:is([data-app-page="team-market"],[data-app-page="teacher-wall"],[data-app-page="gallery"],[data-app-page="competitions"],[data-app-page="community"]) .il-search-bar .il-search-bar__btn--primary {
-  background: #1d1d1f !important;
-  color: #ffffff !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  color: var(--ui-brand-text) !important;
   margin-left: 8px !important;
   width: 44px !important;
   height: 44px !important;
@@ -1304,13 +1349,13 @@ html.ilink-app body[data-app-page="competitions"] .il-search-bar.competition-too
   background: #ffffff !important;
   border: 1px solid #e8e8ed !important;
   border-radius: 28px !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02) !important;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.02) !important;
   transition: box-shadow .25s ease, border-color .25s ease;
   margin-bottom: 24px !important;
 }
 html.ilink-app body[data-app-page="competitions"] .il-search-bar.competition-toolbar:focus-within {
   border-color: #d6e4fb !important;
-  box-shadow: 0 0 0 4px rgba(0,113,227,0.06), 0 2px 8px rgba(0,0,0,0.06) !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08), 0 2px 8px rgba(15,23,42,0.06) !important;
 }
 html.ilink-app body[data-app-page="competitions"] .competition-toolbar__search {
   flex: 1 1 auto !important;
@@ -1395,9 +1440,9 @@ html.ilink-app body[data-app-page="competitions"] .il-search-field--combo .il-se
   border-radius: 50% !important;
   font-size: 0 !important;
   cursor: pointer !important;
-  border: none !important;
-  background: #1d1d1f !important;
-  color: #ffffff !important;
+  border: 1px solid rgba(12, 74, 110, 0.10) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  color: var(--ui-brand-text) !important;
   transition: all .2s ease !important;
   box-shadow: none !important;
   flex-shrink: 0 !important;
@@ -1641,12 +1686,12 @@ html.ilink-app body[data-app-page="team-publish"] .il-surface {
   margin: 0 auto !important;
   padding: 4px 40px 28px !important;
   border-radius: 18px !important;
-  box-shadow: 0 8px 30px rgba(29,29,31,0.05) !important;
+  box-shadow: 0 8px 30px rgba(15,23,42,0.05) !important;
 }
 /* 表单卡片不是内容卡：跟 hover 上浮会把整张表单抬起来，观感很怪 */
 html.ilink-app body[data-app-page="team-publish"] .il-surface:hover {
   transform: none !important;
-  box-shadow: 0 8px 30px rgba(29,29,31,0.05) !important;
+  box-shadow: 0 8px 30px rgba(15,23,42,0.05) !important;
 }
 
 /* 字段分组：六个字段糊成一整列会看不出层次，按「基本信息 / 队伍设置」切开 */
@@ -1744,7 +1789,7 @@ html.ilink-app body[data-app-page="team-publish"] .il-form-input:focus,
 html.ilink-app body[data-app-page="team-publish"] .il-form-select:focus {
   outline: none !important;
   border-color: var(--field-focus-border, #1d1d1f) !important;
-  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important;
 }
 
 /* 标签行：左标题右注解（字数统计 / 一直开放招募） */
@@ -1875,7 +1920,7 @@ html.ilink-app body[data-app-page="team-publish"] .il-btn {
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view,
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-card {
   border-radius: 18px !important;
-  box-shadow: 0 8px 30px rgba(29,29,31,0.05) !important;
+  box-shadow: 0 8px 30px rgba(15,23,42,0.05) !important;
   overflow: hidden !important;
 }
 html.ilink-app body:is([data-app-page="team-detail"],[data-app-page="teacher-detail"]) .detail-view__header,
@@ -1979,7 +2024,7 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot
   overflow: hidden !important;
   flex-shrink: 0 !important;
   background: #eef0ef !important;
-  box-shadow: 0 4px 14px rgba(29,29,31,0.10) !important;
+  box-shadow: 0 4px 14px rgba(15,23,42,0.10) !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__avatar-slot img {
   /* display 不能加 !important：onerror 会写内联 display:none 让位给文字头像，
@@ -2036,9 +2081,9 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__apply-actio
   padding: 0 24px !important;
   border-radius: 12px !important;
   font-weight: 600 !important;
-  border: none !important;
-  background: #1d1d1f !important;
-  color: #ffffff !important;
+  border: 1px solid rgba(12, 74, 110, 0.10) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  color: var(--ui-brand-text) !important;
 }
 html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__submit:hover { background: #424245 !important; }
 
@@ -2061,7 +2106,7 @@ html.ilink-app body[data-app-page="community-article"] .community-article-card,
 html.ilink-app body[data-app-page="community-article"] .community-article-comments {
   border: 1px solid #f5f5f7 !important;
   border-radius: 18px !important;
-  box-shadow: 0 8px 30px rgba(29,29,31,0.05) !important;
+  box-shadow: 0 8px 30px rgba(15,23,42,0.05) !important;
   overflow: hidden !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article-comments { margin-top: 20px !important; }
@@ -2096,7 +2141,7 @@ html.ilink-app body[data-app-page="community-article"] .community-article__heade
   color: var(--ui-text, #1d1d1f) !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__header-actions .community-article__action-btn:is(.community-article__action-btn--active, [aria-pressed="true"]) .community-article__action-num {
-  background: rgba(29, 29, 31, 0.08) !important;
+  background: rgba(15, 23, 42, 0.08) !important;
   color: #424245 !important;
 }
 html.ilink-app body[data-app-page="community-article"] .community-article__header-back {
@@ -2365,7 +2410,7 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-rea
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready:hover {
-  background: var(--ui-border, #e8e8ed) !important;
+  background: var(--btn-primary-bg-hover, #b5dcff) !important;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready:active {
@@ -2373,8 +2418,8 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-rea
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-loading {
-  background: #1d1d1f !important;
-  color: #ffffff !important;
+  background: var(--btn-primary-bg-hover, #b5dcff) !important;
+  color: var(--btn-primary-text, #0c4a6e) !important;
   cursor: progress !important;
 }
 
@@ -2600,7 +2645,7 @@ html.ilink-app .tp-comp-menu {
   background: #ffffff;
   border: 1px solid #d2d2d7;
   border-radius: 12px;
-  box-shadow: 0 12px 30px -10px rgba(20, 25, 40, 0.18);
+  box-shadow: 0 12px 30px -10px rgba(15, 23, 42, 0.18);
   padding: 6px;
   max-height: 280px;
   overflow-y: auto;

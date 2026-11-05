@@ -16,9 +16,9 @@
   --brand: var(--primary);
   --brand-deep: var(--primary-dark);
   --brand-soft: var(--primary-light);
-  --brand-border: rgba(29, 29, 31, 0.12);
-  --brand-ring: rgba(29, 29, 31, 0.10);
-  --brand-glow: rgba(29, 29, 31, 0.08);
+  --brand-border: rgba(15, 23, 42, 0.12);
+  --brand-ring: rgba(15, 23, 42, 0.10);
+  --brand-glow: rgba(15, 23, 42, 0.08);
   --accent-violet: var(--accent);
   --success: #1e7a3e;
   --warning: #d70015;
@@ -108,8 +108,8 @@
   /* === Shadows - Subtle Depth === */
   /* 阴影只有两级：贴面卡片 / 浮起层（下拉、抽屉、弹窗、FAB）。
      中间档位不再新增，需要区分层级时用表面色而不是投影。 */
-  --shadow-card: 0 1px 2px rgba(29, 29, 31, 0.04);
-  --shadow-float: 0 12px 32px rgba(29, 29, 31, 0.12), 0 2px 8px rgba(29, 29, 31, 0.04);
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-float: 0 12px 32px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.04);
 
   /* 旧档位保留为别名，避免存量引用断链 */
   --shadow-xs: var(--shadow-card);
@@ -125,8 +125,8 @@
   --glass-bg: rgba(252, 252, 253, 0.98);
   --glass-bg-light: rgba(252, 252, 253, 0.94);
   --glass-bg-strong: rgba(252, 252, 253, 1);
-  --glass-border: rgba(29, 29, 31, 0.08);
-  --glass-border-strong: rgba(29, 29, 31, 0.12);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-border-strong: rgba(15, 23, 42, 0.12);
   --glass-shadow: var(--shadow-card);
   --glass-highlight: rgba(252, 252, 253, 1);
   --glass-highlight-soft: rgba(252, 252, 253, 0.7);
@@ -230,10 +230,12 @@
   /* 按压反馈全站统一：只缩不放、不做位移。 */
   --btn-press: scale(0.97);
 
-  /* === Button color roles === */
-  --btn-primary-bg: #0066cc;
-  --btn-primary-bg-hover: #0055b3;
-  --btn-primary-text: #ffffff;
+  /* === Button color roles ===
+     主按钮统一走「浅云蓝」品牌色（与 v2 --ui-brand-* 同一组）：
+     浅蓝底 + 深蓝字，饱和度只在文字上，整页不会出现大块深色。 */
+  --btn-primary-bg: #c9e5ff;
+  --btn-primary-bg-hover: #b5dcff;
+  --btn-primary-text: #0c4a6e;
   --btn-secondary-bg: #f5f5f7;
   --btn-secondary-bg-hover: #ECEDEF;
   --btn-secondary-text: #1d1d1f;
@@ -258,7 +260,7 @@
   --field-bg: #ffffff;
   --field-border: #d2d2d7;
   --field-focus-border: #1d1d1f;
-  --field-ring: 0 0 0 3px rgba(29, 29, 31, 0.12);
+  --field-ring: 0 0 0 3px rgba(15, 23, 42, 0.12);
   --field-invalid-border: #d70015;
   --field-invalid-ring: 0 0 0 3px rgba(215, 0, 21, 0.12);
   --field-font-size: 14px;
@@ -276,7 +278,7 @@
   --tab-item-radius: 6px;
   --tab-font-size: 13px;
   --tab-active-bg: #ffffff;
-  --tab-active-shadow: 0 1px 2px rgba(29, 29, 31, 0.08);
+  --tab-active-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
   /* 分页与按钮同档 */
   --pagination-size: 36px;
   --pagination-radius: 8px;

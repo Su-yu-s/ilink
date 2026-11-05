@@ -115,18 +115,9 @@
         var competition = boot.competition || {};
         var capabilities = boot.capabilities || {};
         var competitionName = competition.name || competition.customCompetition || '未绑定竞赛';
-        var resolution = competition.resolution === 'CUSTOM' ? '自定义竞赛'
-            : competition.resolution === 'CATALOG' ? '竞赛目录' : '未绑定';
-        byId('tawContextSummary').textContent = team.name + ' · ' + competitionName
-            + ' · ' + roleLabel(team.role);
-
-        var statusClass = team.status === 'TEAMING' ? 'is-success'
-            : team.status === 'OPEN' ? 'is-warning' : 'is-danger';
-        byId('tawContextMeta').innerHTML =
-            '<span class="taw-status-chip ' + statusClass + '">' + escapeHtml(teamStatusLabel(team.status)) + '</span>'
-            + '<span class="taw-meta-chip">' + escapeHtml(resolution) + '</span>'
-            + '<span class="taw-meta-chip">' + escapeHtml(capabilities.readOnly ? '只读' : '可执行 · 需确认') + '</span>'
-            + '<span class="taw-meta-chip">知识新鲜度 ' + escapeHtml(freshnessLabel(boot.knowledgeFreshness && boot.knowledgeFreshness.status)) + '</span>';
+        // 副标题只留团队名：竞赛绑定和角色在侧栏、成员页都能看到，
+        // 堆在标题下面只会让头部变长。
+        byId('tawContextSummary').textContent = team.name;
 
         byId('tawReadMode').textContent = capabilities.canReadAllTasks
             ? '当前团队全部任务' : '仅我参与或负责的任务';
@@ -173,9 +164,11 @@
         state.conversationCursor = result ? result.nextCursor : null;
         renderConversations();
 
-        if (!state.currentConversation && state.conversations.length) {
-            await selectConversation(state.conversations[0].conversationId);
-        } else if (!state.currentConversation && !state.conversations.length) {
+        // 进入工作台停在新会话页，不自动打开最近一条。
+        // 之前会自动 select 列表第一个，而列表第一个往往是上次没发消息的空会话，
+        // 看起来就像"每次进来都新建了一个"。会话只由两个动作产生：
+        // 发送消息（sendMessage 里兜底创建）或点 + 号。
+        if (!state.currentConversation) {
             showWelcome();
         }
     }
@@ -217,8 +210,6 @@
         state.lastSeq = 0;
         state.traces = [];
         state.selectedActions = {};
-        root.classList.remove('is-conversations-open');
-        byId('tawConversationToggle').setAttribute('aria-expanded', 'false');
         renderConversations();
         renderMessages();
         clearTrace();
@@ -256,6 +247,12 @@
     }
 
     async function createConversation() {
+        // 当前会话还是空的（刚点过 +、或发消息失败留下的空壳），复用它。
+        // 否则连点几次 + 就会在列表里堆出一串"新会话"。
+        if (state.currentConversation && !state.messages.length) {
+            byId('tawInput').focus();
+            return state.currentConversation;
+        }
         var conversation = await api('/conversations', {
             method: 'POST',
             body: {clientRequestId: uuid(), title: null}
@@ -273,7 +270,7 @@
             return Number(row.conversationId) === Number(conversationId);
         });
         var confirmed = await confirmDialog(
-            'Delete this conversation?',
+            '删除这个会话？',
             '会话正文、运行记录和待确认动作将从工作台隐藏。已执行动作的最小审计仍会保留。',
             '删除会话', true);
         if (!confirmed) return;
@@ -285,11 +282,8 @@
             && Number(state.currentConversation.conversationId) === Number(conversationId)) {
             closeEventSource();
             state.currentConversation = null;
-            if (state.conversations.length) {
-                await selectConversation(state.conversations[0].conversationId);
-            } else {
-                showWelcome();
-            }
+            // 删掉正在看的会话后回到新会话页，而不是自动跳到下一条
+            showWelcome();
         } else {
             renderConversations();
         }
@@ -325,9 +319,9 @@
         var pending = message.status && message.status !== 'COMPLETE';
         return '<article class="taw-message ' + (isUser ? 'taw-message--user' : 'taw-message--assistant')
             + (pending ? ' is-pending' : '') + '" data-message-id="' + Number(message.messageId || 0) + '">'
-            + '<div class="taw-message__avatar" aria-hidden="true">' + (isUser ? '你' : 'A') + '</div>'
+            + '<div class="taw-message__avatar" aria-hidden="true">' + (isUser ? '你' : agentAvatarIcon()) + '</div>'
             + '<div class="taw-message__main"><div class="taw-message__head"><strong>'
-            + (isUser ? '你' : '团队 Agent') + '</strong><span>'
+            + (isUser ? '你' : 'iLink Agent') + '</strong><span>'
             + escapeHtml(formatDateTime(message.createdAt)) + '</span>'
             + (pending ? '<span class="taw-tag">' + escapeHtml(message.status) + '</span>' : '')
             + '</div><div class="taw-message__content">' + content + '</div>'
@@ -335,6 +329,13 @@
             + (isUser ? '' : '<div class="taw-message__actions"><button type="button" class="taw-copy-btn" '
                 + 'data-copy-message="' + Number(message.messageId || 0) + '">复制回答</button></div>')
             + '</div></article>';
+    }
+
+    // Agent 头像：和头部品牌标同一枚星芒，用文字 "A" 会显得像占位符
+    function agentAvatarIcon() {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+            + '<path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21'
+            + 'l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/></svg>';
     }
 
     function renderCitations(citations) {
@@ -1036,10 +1037,6 @@
         byId('tawMoreConversations').addEventListener('click', function () {
             loadConversations(false).catch(handleError);
         });
-        byId('tawConversationToggle').addEventListener('click', function () {
-            var open = root.classList.toggle('is-conversations-open');
-            this.setAttribute('aria-expanded', String(open));
-        });
         byId('tawRefreshActions').addEventListener('click', function () {
             loadActions().catch(handleError);
         });
@@ -1057,17 +1054,6 @@
                 setMode(quick.dataset.tawMode || 'AUTO');
                 resizeInput();
                 byId('tawInput').focus();
-                return;
-            }
-            var conversation = event.target.closest('[data-conversation-id]');
-            if (conversation) {
-                var deleteButton = event.target.closest('[data-delete-conversation]');
-                if (deleteButton) {
-                    event.stopPropagation();
-                    deleteConversation(deleteButton.dataset.deleteConversation).catch(handleError);
-                    return;
-                }
-                selectConversation(conversation.dataset.conversationId).catch(handleError);
                 return;
             }
             var mode = event.target.closest('[data-taw-mode-option]');
@@ -1122,16 +1108,23 @@
             state.selectedActions[groupId] = state.selectedActions[groupId] || {};
             state.selectedActions[groupId][checkbox.dataset.selectAction] = checkbox.checked;
         });
-        root.addEventListener('keydown', function (event) {
-            if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.taw-conversation-delete')) {
+        // 会话列表在侧栏（#tawConversations），已不在 #teamAgentWorkbench 内部，
+        // 委托挂到 root 上收不到事件；这里统一挂到 document，并用 closest 限定范围。
+        document.addEventListener('click', function (event) {
+            var conversation = event.target.closest('[data-conversation-id]');
+            if (!conversation || !conversation.closest('#tawConversations')) return;
+            var deleteButton = event.target.closest('[data-delete-conversation]');
+            if (deleteButton) {
+                deleteConversation(deleteButton.dataset.deleteConversation).catch(handleError);
+                return;
+            }
+            selectConversation(conversation.dataset.conversationId).catch(handleError);
+        });
+        document.addEventListener('keydown', function (event) {
+            if ((event.key === 'Enter' || event.key === ' ')
+                && event.target.matches('.taw-conversation-delete')) {
                 event.preventDefault();
                 deleteConversation(event.target.dataset.deleteConversation).catch(handleError);
-            }
-        });
-        document.addEventListener('click', function (event) {
-            if (!root || !root.classList.contains('is-conversations-open')) return;
-            if (!root.querySelector('.taw-layout').contains(event.target)) {
-                root.classList.remove('is-conversations-open');
             }
         });
     }
@@ -1195,10 +1188,6 @@
         var minutes = Math.floor(safe / 60);
         var remain = safe % 60;
         return minutes + ':' + String(remain).padStart(2, '0');
-    }
-
-    function teamStatusLabel(status) {
-        return {OPEN: '招募中', TEAMING: '组队中', CLOSED: '已关闭'}[status] || status || '未知状态';
     }
 
     function roleLabel(role) {

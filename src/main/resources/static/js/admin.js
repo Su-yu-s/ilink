@@ -444,12 +444,107 @@ function wrapRichTextForSave(text, kind) {
     return markdownSourceMarker(encodeMarkdownSource(value)) + html;
 }
 
+// 概览趋势卡：把每日新增用户画成一条 SVG 折线（viewBox 240×64，随容器拉伸）
+function renderUserTrend(trend) {
+    const line = document.getElementById('userSparkLine');
+    const area = document.getElementById('userSparkArea');
+    if (!line || !area || !Array.isArray(trend) || trend.length < 2) return;
+
+    // 14 天全是 0 时不画线：否则会贴着底边拉出一条深色横线，像一条分割线
+    const chart = document.getElementById('userSparkChart');
+    const empty = document.getElementById('userSparkEmpty');
+    if (!trend.some(value => value > 0)) {
+        line.setAttribute('d', '');
+        area.setAttribute('d', '');
+        if (chart) chart.style.display = 'none';
+        if (empty) empty.hidden = false;
+        return;
+    }
+    if (chart) chart.style.display = '';
+    if (empty) empty.hidden = true;
+
+    const width = 240;
+    const height = 64;
+    const pad = 4;
+    const max = Math.max(1, ...trend);
+    const step = (width - pad * 2) / (trend.length - 1);
+    const points = trend.map((value, index) => {
+        const x = pad + index * step;
+        const y = height - pad - (value / max) * (height - pad * 2);
+        return [x, y];
+    });
+    const path = points.map((point, index) =>
+        (index === 0 ? 'M' : 'L') + point[0].toFixed(1) + ' ' + point[1].toFixed(1)
+    ).join(' ');
+    line.setAttribute('d', path);
+    area.setAttribute('d', path + ' L' + (width - pad) + ' ' + height + ' L' + pad + ' ' + height + ' Z');
+}
+
+// 涨跌徽标：近 7 天新增 vs 前 7 天新增
+function renderUserDelta(trend) {
+    const badge = document.getElementById('userDelta');
+    if (!badge || !Array.isArray(trend) || trend.length < 14) return;
+
+    const recent = trend.slice(7).reduce((sum, value) => sum + value, 0);
+    const previous = trend.slice(0, 7).reduce((sum, value) => sum + value, 0);
+
+    let text;
+    let tone;
+    if (previous === 0) {
+        text = '近 7 天 +' + recent;
+        tone = recent > 0 ? 'is-up' : 'is-flat';
+    } else {
+        const percent = Math.round(((recent - previous) / previous) * 100);
+        text = (percent >= 0 ? '↑ ' : '↓ ') + Math.abs(percent) + '%';
+        tone = percent > 0 ? 'is-up' : (percent < 0 ? 'is-down' : 'is-flat');
+    }
+    badge.textContent = text;
+    badge.className = 'adk-delta ' + tone;
+    badge.hidden = false;
+}
+
+// 进度卡：stroke-dasharray 画环，周长 = 2πr
+function renderTeacherRing(approved, total) {
+    const bar = document.getElementById('teacherRing');
+    if (!bar) return;
+
+    const radius = 52;
+    const circumference = 2 * Math.PI * radius;
+    const rate = total > 0 ? Math.min(1, approved / total) : 0;
+    bar.setAttribute('stroke-dasharray', (circumference * rate).toFixed(1) + ' ' + circumference.toFixed(1));
+    // 0% 时圆头线帽仍会在 12 点方向留一个点，藏掉更干净
+    bar.style.opacity = rate > 0 ? '1' : '0';
+
+    const rateEl = document.getElementById('teacherRate');
+    const ratioEl = document.getElementById('teacherRatio');
+    if (rateEl) rateEl.textContent = Math.round(rate * 100) + '%';
+    if (ratioEl) ratioEl.textContent = approved + ' / ' + total;
+}
+
+// 活跃卡：近 7 天柱状图，最高的一天用深色强调
+function renderContentBars(values, labels) {
+    const wrap = document.getElementById('contentBars');
+    if (!wrap || !Array.isArray(values) || !values.length) return;
+
+    const max = Math.max(1, ...values);
+    const peak = values.lastIndexOf(max);
+    wrap.innerHTML = values.map((value, index) => {
+        const height = Math.max(4, Math.round((value / max) * 100));
+        const label = labels && labels[index] ? labels[index] : '';
+        return '<div class="adk-bars__col" style="--h:' + height + '%" title="' + label + '：' + value + ' 条">' +
+            '<span class="adk-bars__bar' + (index === peak ? ' is-peak' : '') + '"></span>' +
+            '<span class="adk-bars__value">' + value + '</span>' +
+            '<span class="adk-bars__label">' + (label.length > 5 ? label.slice(5) : label) + '</span>' +
+        '</div>';
+    }).join('');
+}
+
 // 加载仪表盘数据
 async function loadDashboardData() {
     try {
         const response = await apiFetch('/api/admin/dashboard');
         const result = await response.json();
-        
+
         if (result.code === 200) {
             const data = result.data;
             document.getElementById('userCount').textContent = data.userCount;
@@ -458,6 +553,24 @@ async function loadDashboardData() {
             document.getElementById('assetCount').textContent = data.assetCount;
             const postEl = document.getElementById('postCount');
             if (postEl) postEl.textContent = data.postCount != null ? data.postCount : 0;
+
+            renderUserTrend(data.userTrend);
+            renderUserDelta(data.userTrend);
+            renderTeacherRing(Number(data.approvedTeacherCount || 0), Number(data.teacherCount || 0));
+            renderContentBars(data.contentTrend, data.contentLabels);
+            const totalEl = document.getElementById('contentTotal');
+            if (totalEl) {
+                const total = (data.contentTrend || []).reduce((sum, value) => sum + value, 0);
+                totalEl.textContent = total + ' 条';
+
+                // 全为 0 时收起七根 4% 的柱脚，让位给一行空状态说明
+                const bars = document.getElementById('contentBars');
+                const barsEmpty = document.getElementById('contentBarsEmpty');
+                if (bars && barsEmpty) {
+                    bars.style.display = total === 0 ? 'none' : '';
+                    barsEmpty.hidden = total !== 0;
+                }
+            }
         } else if (result.code === 403) {
             showMessage('无权限访问管理后台', 'error');
             window.location.href = '/index.html';
@@ -518,7 +631,7 @@ function renderUserPage(page) {
     const rows = AdminState.filteredUsers; // 服务端已分页，这里就是当前页
     const total = AdminState.userTotal || rows.length;
     if (total === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center admin-empty-cell">暂无匹配用户</td></tr>';
+        renderEmptyRow(tbody, 7, '暂无匹配用户');
         renderUserPagination(0, 1);
         updateUserListHint(0, 0, 0);
         return;
@@ -913,7 +1026,18 @@ async function deleteUser(userId) {
 }
 
 function renderEmptyRow(tbody, colspan, text) {
-    tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-center admin-empty-cell">${escapeHtml(text)}</td></tr>`;
+    // 统一空状态：图标 + 主文案 + 一句操作提示，比一行灰字更像"设计过"
+    tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-center admin-empty-cell">
+        <div class="adk-empty">
+            <span class="adk-empty__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+                </svg>
+            </span>
+            <span class="adk-empty__title">${escapeHtml(text)}</span>
+            <span class="adk-empty__hint">换个关键词，或清空筛选条件再试</span>
+        </div>
+    </td></tr>`;
 }
 
 function openAdminRecordDetailModal(title, summaryName, subtitle, fields) {
@@ -1872,6 +1996,8 @@ const COMPETITION_PAGE_SIZE = 10;
 
 const ADMIN_AUDIT_ACTION_LABELS = {
     CREATE: '新增', UPDATE: '更新', DELETE: '删除', APPROVE: '审批',
+    REVOKE: '撤销认证', CHANGE_ROLE: '修改角色',
+    DISABLE_USER: '禁用账号', ENABLE_USER: '启用账号',
     PIN: '置顶', UNPIN: '取消置顶'
 };
 
@@ -1879,6 +2005,58 @@ const ADMIN_AUDIT_TARGET_LABELS = {
     USER: '用户', TEAM: '队伍', TEACHER_PROFILE: '导师', ASSET: '成果',
     COMMUNITY_POST: '帖子', COMPETITION: '竞赛', IDENTITY: '身份'
 };
+
+/* 审计详情在后端是按 "key=value, key=value" 拼的原始串（如 pinned=false、
+   status=APPROVED）。直接显示是程序员视角，这里按字段名和取值翻成中文。 */
+const ADMIN_AUDIT_DETAIL_KEYS = {
+    pinned: '置顶', role: '角色', status: '状态', title: '标题',
+    username: '用户名', reason: '原因', name: '名称'
+};
+
+const ADMIN_AUDIT_DETAIL_VALUES = {
+    pinned: { 'true': '是', 'false': '否' },
+    role: { ADMIN: '管理员', TEACHER: '教师', STUDENT: '学生' },
+    status: {
+        ACTIVE: '正常', DISABLED: '已禁用',
+        OPEN: '开放中', TEAMING: '组队中', CLOSED: '已关闭',
+        PENDING: '待审核', INCOMPLETE: '资料不完整', APPROVED: '已通过', REJECTED: '已驳回'
+    }
+};
+
+function formatAuditDetail(raw) {
+    const text = String(raw == null ? '' : raw).trim();
+    if (!text) return '';
+    return text.split(',').map(function (part) {
+        const piece = part.trim();
+        if (!piece) return '';
+        const eq = piece.indexOf('=');
+        if (eq < 0) return piece;
+        const key = piece.slice(0, eq).trim();
+        const value = piece.slice(eq + 1).trim();
+        const keyLabel = ADMIN_AUDIT_DETAIL_KEYS[key] || key;
+        const valueMap = ADMIN_AUDIT_DETAIL_VALUES[key];
+        const valueLabel = valueMap && Object.prototype.hasOwnProperty.call(valueMap, value)
+            ? valueMap[value]
+            : value;
+        return keyLabel + '：' + valueLabel;
+    }).filter(Boolean).join('，');
+}
+
+function renderAuditDetailCell(raw) {
+    const text = formatAuditDetail(raw);
+    if (!text) return '<span class="admin-cell-empty">—</span>';
+    return `<span class="admin-cell-text" title="${escapeHtml(text)}">${escapeHtml(text)}</span>`;
+}
+
+// 审计动作的语义色：删除/撤销/禁用红、审批/新增/启用绿、更新/置顶/改角色蓝，其余中性
+function auditActionTone(action) {
+    const tones = {
+        DELETE: 'is-danger', REVOKE: 'is-danger', DISABLE_USER: 'is-danger',
+        APPROVE: 'is-success', CREATE: 'is-success', ENABLE_USER: 'is-success',
+        UPDATE: 'is-info', PIN: 'is-info', CHANGE_ROLE: 'is-info'
+    };
+    return tones[String(action || '').toUpperCase()] || '';
+}
 
 async function loadAuditLogs(page) {
     page = page || 1;
@@ -1926,9 +2104,9 @@ function renderAuditRows(rows) {
         setTableRowCells(tr, [
             { label: '时间', html: escapeHtml(formatTime(row.createdAt)) },
             { label: '操作人', html: escapeHtml(row.adminName || ('用户#' + row.adminUserId)) },
-            { label: '动作', html: escapeHtml(actionLabel) },
+            { label: '动作', html: '<span class="adk-audit-action ' + auditActionTone(row.action) + '">' + escapeHtml(actionLabel) + '</span>' },
             { label: '对象', html: escapeHtml(target) },
-            { label: '详情', html: renderUserCell(row.details) },
+            { label: '详情', html: renderAuditDetailCell(row.details) },
             { label: 'IP', html: escapeHtml(row.ipAddress || '') }
         ]);
         tbody.appendChild(tr);
@@ -1944,14 +2122,17 @@ function renderOverviewRecent(rows) {
         box.innerHTML = '<div class="adk-recent__row"><span class="adk-recent__what">暂无管理操作</span></div>';
         return;
     }
+    // 动作按语义着色：删除红、审批/新增加绿、更新蓝，其余保持中性
     box.innerHTML = list.map(row => {
-        const actionLabel = ADMIN_AUDIT_ACTION_LABELS[String(row.action || '').toUpperCase()] || row.action || '';
+        const actionCode = String(row.action || '').toUpperCase();
+        const actionLabel = ADMIN_AUDIT_ACTION_LABELS[actionCode] || row.action || '';
+        const actionTone = auditActionTone(actionCode);
         const targetLabel = ADMIN_AUDIT_TARGET_LABELS[String(row.targetType || '').toUpperCase()] || row.targetType || '';
         const target = targetLabel + (row.targetId ? ' #' + row.targetId : '');
         const who = row.adminName || ('用户#' + row.adminUserId);
         return '<div class="adk-recent__row">' +
             '<span class="adk-recent__time">' + escapeHtml(formatTime(row.createdAt)) + '</span>' +
-            '<span class="adk-recent__action">' + escapeHtml(actionLabel) + '</span>' +
+            '<span class="adk-recent__action ' + actionTone + '">' + escapeHtml(actionLabel) + '</span>' +
             '<span class="adk-recent__what" title="' + escapeHtml(target) + '">' + escapeHtml(target) + '</span>' +
             '<span class="adk-recent__who" title="' + escapeHtml(who) + '">' + escapeHtml(who) + '</span>' +
             '</div>';

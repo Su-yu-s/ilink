@@ -188,17 +188,23 @@ body[data-profile-page] {
   flex-shrink: 0;
 }
 
+/* 主按钮统一走浅云蓝，与组队大厅的 .ui-btn--brand 同一套 */
 .ilink-app body[data-profile-page] .il-btn-primary,
 .ilink-app body[data-profile-page] .il-btn-dark {
-  background: var(--pf-text);
-  color: #ffffff;
-  border-color: var(--pf-text);
+  color: var(--ui-brand-text);
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom));
+  border-color: rgba(12, 74, 110, 0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 5px rgba(10, 61, 92, 0.14),
+    0 6px 14px -8px var(--ui-brand-glow);
 }
 
 .ilink-app body[data-profile-page] .il-btn-primary:hover,
 .ilink-app body[data-profile-page] .il-btn-dark:hover {
-  background: var(--pf-accent-dark);
-  border-color: var(--pf-accent-dark);
+  color: var(--ui-brand-text);
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff);
+  border-color: rgba(12, 74, 110, 0.16);
   transform: none;
 }
 
@@ -261,14 +267,14 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page] .il-btn-xs-dark {
-  background: var(--pf-text);
-  color: #ffffff;
-  border-color: var(--pf-text);
+  color: var(--ui-brand-text);
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom));
+  border-color: rgba(12, 74, 110, 0.10);
 }
 
 .ilink-app body[data-profile-page] .il-btn-xs-dark:hover {
-  background: var(--pf-accent-dark);
-  border-color: var(--pf-accent-dark);
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff);
+  border-color: rgba(12, 74, 110, 0.16);
 }
 
 .ilink-app body[data-profile-page] .il-btn-xs-danger {
@@ -999,7 +1005,7 @@ body[data-profile-page] {
 .ilink-app body[data-profile-page="honors"] #honorModal .il-select:focus,
 .ilink-app body[data-profile-page="honors"] #honorModal textarea.il-input:focus {
   border-color: var(--field-focus-border, #1d1d1f);
-  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12));
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12));
 }
 
 .ilink-app body[data-profile-page="honors"] #honorModal .il-field {
@@ -1123,14 +1129,14 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page] .profile-post-card__btn.btn-primary {
-  background: var(--pf-text);
-  color: #ffffff;
-  border-color: var(--pf-text);
+  color: var(--ui-brand-text);
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom));
+  border-color: rgba(12, 74, 110, 0.10);
 }
 
 .ilink-app body[data-profile-page] .profile-post-card__btn.btn-primary:hover {
-  background: var(--pf-accent-dark);
-  border-color: var(--pf-accent-dark);
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff);
+  border-color: rgba(12, 74, 110, 0.16);
 }
 
 .ilink-app body[data-profile-page] .profile-post-card__btn.btn-light {
@@ -1183,7 +1189,7 @@ body[data-profile-page] {
   background: var(--pf-card);
   border: 1px solid var(--pf-border);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1349,16 +1355,17 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-primary {
-  background: var(--pf-text);
-  border-color: var(--pf-text);
+  color: var(--ui-brand-text);
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom));
+  border-color: rgba(12, 74, 110, 0.10);
   border-radius: 12px;
   padding: 0 20px;
   font-weight: var(--font-weight-semibold);
 }
 
 .ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-primary:hover {
-  background: var(--pf-accent-dark);
-  border-color: var(--pf-accent-dark);
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff);
+  border-color: rgba(12, 74, 110, 0.16);
 }
 
 .ilink-app body[data-profile-page="posts"] .profile-article-edit-body .btn-outline-secondary,
@@ -1655,14 +1662,15 @@ body[data-profile-page] {
 }
 
 .ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-primary {
-  background: var(--pf-text);
-  border-color: var(--pf-text);
+  color: var(--ui-brand-text);
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom));
+  border-color: rgba(12, 74, 110, 0.10);
   border-radius: 12px;
 }
 
 .ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-primary:hover {
-  background: var(--pf-accent-dark);
-  border-color: var(--pf-accent-dark);
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff);
+  border-color: rgba(12, 74, 110, 0.16);
 }
 
 .ilink-app body[data-profile-page="overview"] .profile-empty-cta .btn-outline-primary {
@@ -1737,7 +1745,7 @@ body[data-profile-page] {
 
 html.ilink-app body[data-profile-page] .il-activity-toolbar__select:focus {
   border-color: var(--field-focus-border, #1d1d1f) !important;
-  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important;
 }
 
 .ilink-app body[data-profile-page] .il-activity-toolbar__action {
@@ -1755,8 +1763,8 @@ html.ilink-app body[data-profile-page] .il-activity-toolbar__select:focus {
 }
 
 .ilink-app body[data-profile-page] .il-activity-toolbar__action:hover {
-  background: var(--pf-accent-dark);
-  border-color: var(--pf-accent-dark);
+  background: var(--btn-primary-bg-hover);
+  border-color: var(--btn-primary-bg-hover);
 }
 
 .ilink-app body[data-profile-page] .il-team-card {
@@ -1988,19 +1996,6 @@ html.ilink-app body[data-profile-page] .il-activity-toolbar__select:focus {
   color: var(--pf-text);
 }
 
-.ilink-app body[data-profile-page] .il-team-card__btn--primary,
-.ilink-app body[data-profile-page] .il-team-card__btn--secondary {
-  background: var(--pf-text);
-  color: #ffffff;
-  border-color: var(--pf-text);
-}
-
-.ilink-app body[data-profile-page] .il-team-card__btn--primary:hover,
-.ilink-app body[data-profile-page] .il-team-card__btn--secondary:hover {
-  background: var(--pf-accent-dark);
-  border-color: var(--pf-accent-dark);
-}
-
 .ilink-app body[data-profile-page] .il-team-card__btn--danger:hover {
   background: var(--pf-danger);
   color: #ffffff;
@@ -2202,7 +2197,7 @@ body[data-profile-page="edit"] .il-avatar-overlay {
 }
 
 .ilink-app body[data-profile-page="honors"] .modal-backdrop {
-  background-color: rgba(29, 29, 31, 0.45);
+  background-color: rgba(15, 23, 42, 0.45);
 }
 
 .ilink-app body[data-profile-page="honors"] .il-bs-form-modal .modal-dialog {
@@ -2317,11 +2312,13 @@ html.ilink-app body[data-profile-page] .il-profile-nav-item:hover {
   background: var(--nav-hover-bg, #f5f5f7) !important;
 }
 
+/* 选中态：白色小玉牌。旧值 --nav-active-bg 是灰底、基础层还用了一个未定义的
+   --pf-text 令牌（会算出透明），两者都不能再用，这里直接写死。 */
 html.ilink-app body[data-profile-page] .il-profile-nav-item.active,
 html.ilink-app body[data-profile-page] .il-profile-nav-item.active:hover {
-  color: #1d1d1f !important;
-  background: var(--nav-active-bg, #ECEDEF) !important;
-  box-shadow: none !important;
+  color: var(--ui-text) !important;
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), inset 0 1px 0 #fff, 0 0 0 1px rgba(15, 23, 42, 0.03) !important;
   font-weight: 600;
 }
 html.ilink-app body[data-profile-page] .il-profile-nav-item.active::before {
@@ -2348,18 +2345,22 @@ html.ilink-app body[data-profile-page] .il-section-card {
   min-width: 0;
   max-width: 100%;
   color: var(--ui-text);
-  background: var(--ui-surface) !important;
-  border: 1px solid var(--ui-border) !important;
+  background: linear-gradient(165deg, #ffffff 0%, #f7fafd 100%) !important;
+  border: 0 !important;
   border-radius: var(--ui-radius-surface) !important;
-  box-shadow: none !important;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 0 0 1px rgba(15, 23, 42, 0.05),
+    var(--ui-shadow-ao),
+    var(--ui-shadow-drop) !important;
   transform: none !important;
 }
 
 html.ilink-app body[data-profile-page] .il-profile-card:hover,
 html.ilink-app body[data-profile-page] .il-section-card:hover {
-  border-color: var(--ui-border-strong) !important;
-  box-shadow: none !important;
-  transform: none !important;
+  border-color: var(--ui-border-strong);
+  box-shadow: none;
+  transform: none;
 }
 
 html.ilink-app body[data-profile-page="overview"] #profileOverviewCard[hidden],
@@ -2707,7 +2708,7 @@ html.ilink-app body[data-profile-page] .il-tab:hover {
 html.ilink-app body[data-profile-page] .il-tab.active {
   color: var(--ui-text) !important;
   background: var(--tab-active-bg, #ffffff) !important;
-  box-shadow: var(--tab-active-shadow, 0 1px 2px rgba(29, 29, 31, 0.08)) !important;
+  box-shadow: var(--tab-active-shadow, 0 1px 2px rgba(15, 23, 42, 0.08)) !important;
   font-weight: 600;
 }
 
@@ -3100,7 +3101,7 @@ html.ilink-app body[data-profile-page] .il-avatar-container {
 
 html.ilink-app body[data-profile-page] .il-avatar-overlay {
   color: var(--ui-surface) !important;
-  background: rgba(29, 29, 31, 0.58) !important;
+  background: rgba(15, 23, 42, 0.58) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-avatar-hint,
@@ -3136,15 +3137,15 @@ html.ilink-app body[data-profile-page] .btn {
 html.ilink-app body[data-profile-page] .il-btn-primary,
 html.ilink-app body[data-profile-page] .btn-primary {
   color: var(--btn-primary-text) !important;
-  background: var(--btn-primary-bg) !important;
-  border-color: var(--btn-primary-bg) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  border-color: rgba(12, 74, 110, 0.10) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-btn-primary:hover,
 html.ilink-app body[data-profile-page] .btn-primary:hover {
   color: var(--btn-primary-text) !important;
-  background: var(--btn-primary-bg-hover) !important;
-  border-color: var(--btn-primary-bg-hover) !important;
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff) !important;
+  border-color: rgba(12, 74, 110, 0.16) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-btn-ghost,
@@ -3242,8 +3243,8 @@ html.ilink-app body[data-profile-page] .il-activity-toolbar__action {
   padding: 0 14px;
   font-size: 13px;
   color: var(--btn-primary-text) !important;
-  background: var(--btn-primary-bg) !important;
-  border: 1px solid var(--btn-primary-bg) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  border: 1px solid rgba(12, 74, 110, 0.10) !important;
   border-radius: 8px !important;
   box-shadow: none !important;
 }
@@ -3306,13 +3307,18 @@ html.ilink-app body[data-profile-page] .il-back-btn {
   font-weight: 600;
 }
 
-html.ilink-app body[data-profile-page] .il-team-card__btn--primary,
 html.ilink-app body[data-profile-page] .il-team-card__btn--secondary,
-html.ilink-app body[data-profile-page] .il-team-card__btn:hover,
+html.ilink-app body[data-profile-page] .il-team-card__btn:hover {
+  color: var(--ui-text-secondary) !important;
+  background: var(--ui-surface) !important;
+  border-color: var(--ui-border-strong) !important;
+}
+
+/* 行内主操作：浅云蓝底 + 深蓝字，和其他页面的主按钮一致 */
 html.ilink-app body[data-profile-page] .profile-post-card__btn.il-btn-xs-dark {
-  color: var(--ui-surface) !important;
-  background: var(--ui-text) !important;
-  border-color: var(--ui-text) !important;
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  border-color: rgba(12, 74, 110, 0.10) !important;
 }
 
 /* 一张卡里三个按钮：邀请 / 进入 / 详情。三者同级同形，不加主次区分——
@@ -3341,42 +3347,42 @@ html.ilink-app body[data-profile-page] .meta-chip--muted {
   border-radius: 999px !important;
 }
 
+/* 状态徽章：和全站同一组高饱和语义色，避免白底上发灰 */
 html.ilink-app body[data-profile-page] .il-team-card__badge--open,
 html.ilink-app body[data-profile-page] .il-team-card__badge--approved {
-  --ui-status-color: var(--ui-success);
-  color: var(--ui-success) !important;
-  background: var(--ui-success-soft) !important;
-  border-color: rgba(22, 163, 74, 0.24) !important;
+  --ui-status-color: #22c55e;
+  color: #15803d !important;
+  background: #dcfce7 !important;
+  border-color: rgba(22, 163, 74, 0.18) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-team-card__badge--teaming {
-  /* 「已组队」用青灰：和组队大厅、详情页的同一状态保持一个色相，不用蓝 */
-  --ui-status-color: #17403f;
-  color: #17403f !important;
-  background: #d9eaea !important;
-  border-color: rgba(23, 64, 63, 0.22) !important;
+  --ui-status-color: #0284c7;
+  color: #0c4a6e !important;
+  background: #e0f2fe !important;
+  border-color: rgba(2, 132, 199, 0.18) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-team-card__badge--pending {
-  --ui-status-color: var(--ui-warning);
-  color: var(--ui-warning) !important;
-  background: var(--ui-warning-soft) !important;
-  border-color: rgba(138, 83, 0, 0.24) !important;
+  --ui-status-color: #f59e0b;
+  color: #b45309 !important;
+  background: #fef3c7 !important;
+  border-color: rgba(217, 119, 6, 0.18) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-team-card__badge--closed {
-  --ui-status-color: var(--ui-text-muted);
-  color: var(--ui-text-secondary) !important;
-  background: var(--ui-surface-subtle) !important;
-  border-color: var(--ui-border) !important;
+  --ui-status-color: #94a3b8;
+  color: #475569 !important;
+  background: #f1f5f9 !important;
+  border-color: rgba(100, 116, 139, 0.16) !important;
 }
 
 html.ilink-app body[data-profile-page] .il-team-card__badge--dissolved,
 html.ilink-app body[data-profile-page] .il-team-card__badge--rejected {
-  --ui-status-color: var(--ui-danger);
-  color: var(--ui-danger) !important;
-  background: var(--ui-danger-soft) !important;
-  border-color: rgba(215, 0, 21, 0.24) !important;
+  --ui-status-color: #ef4444;
+  color: #b91c1c !important;
+  background: #fee2e2 !important;
+  border-color: rgba(220, 38, 38, 0.18) !important;
 }
 
 html.ilink-app body[data-profile-page] .kanban-mini-card,
@@ -3575,7 +3581,7 @@ html.ilink-app body[data-profile-page] .modal-title {
 
 .honor-asset-card:hover {
   border-color: var(--ui-border-strong);
-  box-shadow: 0 4px 12px rgba(29,29,31,0.06);
+  box-shadow: 0 4px 12px rgba(15,23,42,0.06);
   transform: translateY(-2px);
 }
 
@@ -4111,7 +4117,7 @@ html.ilink-app body[data-profile-page] .modal-title {
 .il-builtin-avatar-item:hover {
     transform: translateY(-2px);
     border-color: var(--pf-text-secondary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 .il-builtin-avatar-item:focus-visible {
     outline: 2px solid var(--pf-accent);

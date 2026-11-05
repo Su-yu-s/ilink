@@ -7,6 +7,7 @@
 
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <link th:href="@{/css/profile.css}" rel="stylesheet">
+    <link th:href="@{/css/v2/pages/profile.css}" rel="stylesheet">
     <link th:href="@{/css/profile-public.css}" rel="stylesheet">
 </head>
 <body data-profile-page="public" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">

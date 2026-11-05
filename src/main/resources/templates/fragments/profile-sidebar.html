@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
+<!--
+  个人中心侧栏。
+  按心智模型分四组：概览 / 协作空间 / 内容管理 / 账户设置。
+  分组标题是纯装饰（aria-hidden），导航语义仍由 <nav> 承担。
+-->
 <th:block th:fragment="sidebar (active)">
     <aside class="il-profile-sidebar">
         <h3 class="il-profile-sidebar-title">个人中心</h3>
         <p class="il-profile-sidebar-subtitle">资料与协作设置</p>
         <nav class="il-profile-nav">
+
+            <div class="il-profile-nav-group" aria-hidden="true">概览</div>
             <a th:href="@{/profile.html}" href="/profile.html"
                class="il-profile-nav-item"
                th:classappend="${active == 'overview'} ? ' active' : ''">
@@ -18,6 +25,8 @@
                 </svg>
                 <span>竞赛概览</span>
             </a>
+
+            <div class="il-profile-nav-group" aria-hidden="true">协作空间</div>
             <a th:href="@{/profile.html#teams}" href="/profile.html#teams"
                class="il-profile-nav-item"
                th:classappend="${active == 'teams'} ? ' active' : ''">
@@ -55,6 +64,8 @@
                 </svg>
                 <span>我的学生</span>
             </a>
+
+            <div class="il-profile-nav-group" aria-hidden="true">内容管理</div>
             <a th:href="@{/profile-edit.html}" href="/profile-edit.html"
                class="il-profile-nav-item"
                th:classappend="${active == 'edit'} ? ' active' : ''">
@@ -67,24 +78,18 @@
                 </svg>
                 <span>个人资料</span>
             </a>
-            <a th:href="@{/profile-honors.html}" href="/profile-honors.html"
-               class="il-profile-nav-item"
-               th:classappend="${active == 'honors'} ? ' active' : ''">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                <span>个人成果</span>
-            </a>
+            <!-- 成果与文章已合并为「我的发布」；旧的两个入口保留页面本身，
+                 但导航里只出现一个，避免同一批内容出现两条路径。 -->
             <a th:href="@{/profile-posts.html}" href="/profile-posts.html"
                class="il-profile-nav-item"
-               th:classappend="${active == 'posts'} ? ' active' : ''">
+               th:classappend="${active == 'posts' or active == 'honors'} ? ' active' : ''">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                     <polyline points="14 2 14 8 20 8"/>
                     <line x1="16" y1="13" x2="8" y2="13"/>
                     <line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
-                <span>我的文章</span>
+                <span>我的发布</span>
             </a>
             <a th:href="@{/profile-favorites.html}" href="/profile-favorites.html"
                class="il-profile-nav-item"
@@ -94,6 +99,8 @@
                 </svg>
                 <span>我的收藏</span>
             </a>
+
+            <div class="il-profile-nav-group" aria-hidden="true">账户设置</div>
             <a th:href="@{/profile-password.html}" href="/profile-password.html"
                class="il-profile-nav-item"
                th:classappend="${active == 'password'} ? ' active' : ''">
@@ -103,7 +110,6 @@
                 </svg>
                 <span>修改密码</span>
             </a>
-            <!-- 注销账号：危险操作，与常规设置分组，靠底部并用危险色区分 -->
             <a th:href="@{/profile-delete.html}" href="/profile-delete.html"
                class="il-profile-nav-item il-profile-nav-item--danger"
                th:classappend="${active == 'delete'} ? ' active' : ''">

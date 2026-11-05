@@ -9,6 +9,7 @@
     <link th:href="@{/css/admin-shell.css}" rel="stylesheet">
     <link th:href="@{/css/admin-redesign.css}" rel="stylesheet">
     <link th:href="@{/css/admin-workbench.css}" rel="stylesheet">
+    <link th:href="@{/css/v2/pages/admin.css}" rel="stylesheet">
 </head>
 <body data-app-page="admin" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -16,21 +17,26 @@
     <div class="adk">
         <aside class="adk-side" aria-label="后台管理模块">
             <nav class="adk-nav" id="adminTabs" role="tablist" aria-label="管理模块">
+                <div class="adk-nav__group" aria-hidden="true">总览</div>
                 <button class="adk-nav__item active" id="overview-tab" type="button" role="tab" aria-selected="true" aria-controls="overview" data-bs-toggle="tab" data-bs-target="#overview">
                     <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
                     <span>概览</span>
                 </button>
+
+                <div class="adk-nav__group" aria-hidden="true">用户与权限</div>
                 <button class="adk-nav__item" id="users-tab" type="button" role="tab" aria-selected="false" aria-controls="users" data-bs-toggle="tab" data-bs-target="#users">
                     <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     <span>用户管理</span>
                 </button>
-                <button class="adk-nav__item" id="teams-tab" type="button" role="tab" aria-selected="false" aria-controls="teams" data-bs-toggle="tab" data-bs-target="#teams">
-                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    <span>组队管理</span>
-                </button>
                 <button class="adk-nav__item" id="teachers-tab" type="button" role="tab" aria-selected="false" aria-controls="teachers" data-bs-toggle="tab" data-bs-target="#teachers">
                     <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="m8 12-2 9 6-3 6 3-2-9"/></svg>
                     <span>导师管理</span>
+                </button>
+
+                <div class="adk-nav__group" aria-hidden="true">内容与协作</div>
+                <button class="adk-nav__item" id="teams-tab" type="button" role="tab" aria-selected="false" aria-controls="teams" data-bs-toggle="tab" data-bs-target="#teams">
+                    <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span>组队管理</span>
                 </button>
                 <button class="adk-nav__item" id="assets-tab" type="button" role="tab" aria-selected="false" aria-controls="assets" data-bs-toggle="tab" data-bs-target="#assets">
                     <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -44,6 +50,8 @@
                     <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M6 4h12v5a6 6 0 0 1-12 0z"/><path d="M9 15h6"/><path d="M12 15v4"/><path d="M8 21h8"/></svg>
                     <span>竞赛目录</span>
                 </button>
+
+                <div class="adk-nav__group" aria-hidden="true">系统</div>
                 <button class="adk-nav__item" id="audit-tab" type="button" role="tab" aria-selected="false" aria-controls="audit" data-bs-toggle="tab" data-bs-target="#audit">
                     <svg class="adk-nav__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
                     <span>审计日志</span>
@@ -66,12 +74,61 @@
                             <p class="adk-pagehead__sub">平台现有数据，以及最近的管理操作</p>
                         </div>
                     </header>
-                    <div class="adk-metrics">
-                        <div class="adk-metric"><span class="adk-metric__label">用户总数</span><span class="adk-metric__value" id="userCount">0</span></div>
-                        <div class="adk-metric"><span class="adk-metric__label">组队需求</span><span class="adk-metric__value" id="teamCount">0</span></div>
-                        <div class="adk-metric"><span class="adk-metric__label">导师申请</span><span class="adk-metric__value" id="teacherCount">0</span></div>
-                        <div class="adk-metric"><span class="adk-metric__label">成果作品</span><span class="adk-metric__value" id="assetCount">0</span></div>
-                        <div class="adk-metric"><span class="adk-metric__label">社区帖子</span><span class="adk-metric__value" id="postCount">0</span></div>
+                    <!-- 三张图卡全部用原生 SVG / CSS 绘制，不引入图表库 -->
+                    <div class="adk-dash">
+                        <article class="adk-chart adk-chart--trend">
+                            <div class="adk-chart__head">
+                                <span class="adk-chart__label">用户总数</span>
+                                <span class="adk-delta" id="userDelta" hidden></span>
+                            </div>
+                            <div class="adk-chart__value" id="userCount">0</div>
+                            <div class="adk-chart__foot">近 14 天每日新增</div>
+                            <svg class="adk-spark" id="userSparkChart" viewBox="0 0 240 64" preserveAspectRatio="none" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="adkSparkFill" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#0284c7" stop-opacity="0.16"/>
+                                        <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path id="userSparkArea" class="adk-spark__area" fill="url(#adkSparkFill)" d=""></path>
+                                <path id="userSparkLine" class="adk-spark__line" d=""></path>
+                            </svg>
+                            <p class="adk-chart-empty" id="userSparkEmpty" hidden>近 14 天暂无新增</p>
+                        </article>
+
+                        <article class="adk-chart adk-chart--ring">
+                            <div class="adk-chart__head">
+                                <span class="adk-chart__label">导师申请通过率</span>
+                            </div>
+                            <div class="adk-ring">
+                                <svg viewBox="0 0 120 120" aria-hidden="true">
+                                    <circle class="adk-ring__track" cx="60" cy="60" r="52"></circle>
+                                    <circle class="adk-ring__bar" id="teacherRing" cx="60" cy="60" r="52" stroke-dasharray="0 327"></circle>
+                                </svg>
+                                <div class="adk-ring__center">
+                                    <strong id="teacherRate">0%</strong>
+                                    <span id="teacherRatio">0 / 0</span>
+                                </div>
+                            </div>
+                            <div class="adk-chart__foot">已通过 / 全部申请</div>
+                        </article>
+
+                        <article class="adk-chart adk-chart--bars">
+                            <div class="adk-chart__head">
+                                <span class="adk-chart__label">近 7 天内容产出</span>
+                                <span class="adk-chart__badge" id="contentTotal">0 条</span>
+                            </div>
+                            <div class="adk-bars" id="contentBars" role="img" aria-label="近 7 天每日新增作品与帖子"></div>
+                            <p class="adk-chart-empty" id="contentBarsEmpty" hidden>近 7 天暂无新增</p>
+                            <div class="adk-chart__foot">作品 + 社区帖子</div>
+                        </article>
+                    </div>
+
+                    <div class="adk-statline">
+                        <div class="adk-statline__item"><span>组队需求</span><strong id="teamCount">0</strong></div>
+                        <div class="adk-statline__item"><span>导师申请</span><strong id="teacherCount">0</strong></div>
+                        <div class="adk-statline__item"><span>成果作品</span><strong id="assetCount">0</strong></div>
+                        <div class="adk-statline__item"><span>社区帖子</span><strong id="postCount">0</strong></div>
                     </div>
                     <div class="card admin-table-card adk-card">
                         <div class="adk-toolbar">
@@ -332,10 +389,12 @@
                                 <tbody id="competitionTableBody"></tbody>
                             </table>
                         </div>
-                        <nav aria-label="竞赛分页" class="d-none mt-3" id="competitionPager">
-                            <ul class="pagination justify-content-center mb-0" id="competitionPagerInner"></ul>
-                        </nav>
-                        <small class="text-muted d-block mt-3" id="competitionListHint">共 0 条</small>
+                        <div class="adk-tablefoot">
+                            <small class="adk-hint" id="competitionListHint">共 0 条</small>
+                            <nav aria-label="竞赛分页" class="admin-user-pager d-none" id="competitionPager">
+                                <ul class="pagination mb-0" id="competitionPagerInner"></ul>
+                            </nav>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -360,6 +419,10 @@
                                     <option value="UPDATE">更新</option>
                                     <option value="DELETE">删除</option>
                                     <option value="APPROVE">审批</option>
+                                    <option value="REVOKE">撤销认证</option>
+                                    <option value="CHANGE_ROLE">修改角色</option>
+                                    <option value="DISABLE_USER">禁用账号</option>
+                                    <option value="ENABLE_USER">启用账号</option>
                                     <option value="PIN">置顶</option>
                                     <option value="UNPIN">取消置顶</option>
                                 </select>

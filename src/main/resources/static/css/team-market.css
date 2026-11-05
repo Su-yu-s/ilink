@@ -30,6 +30,7 @@
     text-transform: uppercase;
     color: #0066cc;
     margin-bottom: 16px;
+    white-space: nowrap;
 }
 
 .hero-eyebrow svg {
@@ -426,8 +427,13 @@ html.ilink-app body[data-app-page="team-market"] .tm-row--closed .tm-seat__face 
 
 /* ============================================================
    2026-11 组队大厅版面
-   全局 hero 规则已用 :where() 降权，这里正常写即可
+   全局 hero 规则已用 :where() 降权，这里正常写即可。
+
+   必须包进 @layer legacy：这些规则带 !important，而 demo-refresh.css
+   （legacy 层）里同选择器的 !important 靠"同层更晚源序"胜出；写在
+   层外的话，未分层 !important 恒输于分层 !important，全部失效。
    ============================================================ */
+@layer legacy {
 
 body[data-app-page="team-market"] .hero-section {
   display: block !important;
@@ -571,4 +577,33 @@ html.ilink-app body[data-app-page="team-market"] .toolbar-inner {
 html.ilink-app body[data-app-page="team-market"] .content-inner {
   max-width: 1240px !important;
   padding: 20px 40px 80px !important;
+}
+
+/* 手机端：标题、说明、CTA 竖排，避免 CTA 把说明挤成窄列。
+   断点从 640 提到 767.98：641–767px（平板竖屏）同样放不下横排。 */
+@media (max-width: 767.98px) {
+  html.ilink-app body[data-app-page="team-market"] .hero-section .hero-inner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px;
+    padding: 26px 20px 0 !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .hero-cta {
+    align-self: flex-start;
+  }
+
+  /* 上面的 B 方案把标题写成 34px（特异性带 .hero-section，比
+     demo-refresh 的移动端还原更高），手机上必须在这里再压一档 */
+  html.ilink-app body[data-app-page="team-market"] .hero-section .hero-title {
+    font-size: 26px !important;
+    line-height: 1.3 !important;
+  }
+
+  html.ilink-app body[data-app-page="team-market"] .hero-section .hero-desc {
+    font-size: 14px !important;
+    line-height: 1.7 !important;
+  }
+}
+
 }

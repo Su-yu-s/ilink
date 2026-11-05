@@ -45,10 +45,11 @@
   --ui-shadow-lift: 0 2px 6px rgba(22, 35, 46, 0.05), 0 16px 36px rgba(22, 35, 46, 0.08);
   --ui-shadow-float: var(--shadow-float);
 
-  /* design-tokens.css 里的 #0066cc 仍被多处引用，这里统一改指石墨 */
-  --btn-primary-bg: var(--ui-action-soft);
-  --btn-primary-bg-hover: var(--ui-action-hover);
-  --btn-primary-text: var(--ui-action-ink);
+  /* design-tokens.css 里的主按钮变量仍被多处引用，
+     统一改指浅云蓝品牌色（与 .ui-btn--brand 同一组令牌） */
+  --btn-primary-bg: var(--ui-brand-bg-bottom);
+  --btn-primary-bg-hover: #b5dcff;
+  --btn-primary-text: var(--ui-brand-text);
   --btn-danger-bg: var(--ui-danger-soft);
   --btn-danger-text: var(--ui-danger);
   --ui-font: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
@@ -93,8 +94,8 @@
   --home-bg-warm: var(--ui-canvas);
   --home-text-secondary: var(--ui-text-secondary);
   --home-text-muted: var(--ui-text-muted);
-  --home-border: rgba(29, 29, 31, 0.08);
-  --home-border-strong: rgba(29, 29, 31, 0.14);
+  --home-border: rgba(15, 23, 42, 0.08);
+  --home-border-strong: rgba(15, 23, 42, 0.14);
   --home-radius: var(--ui-radius-panel);
   --home-radius-sm: var(--ui-radius-control);
   --home-radius-pill: 100px;
@@ -275,43 +276,55 @@ html.ilink-app .mentor-btn:hover {
   transform: none;
 }
 
-/* 按钮语义色：主 = Apple 蓝；次 = 浅灰实心；三级 = 白底细描边。
-   主按钮只给每个视图真正的主操作，列表行内动作用三级/文字按钮。 */
+/* 按钮语义色：主 = 浅云蓝；次 = 浅灰实心；三级 = 白底细描边。
+   主按钮只给每个视图真正的主操作，列表行内动作用三级/文字按钮。
+   浅云蓝与团队大厅的 .ui-btn--brand 是同一套：上浅下深的渐变 + 深蓝字，
+   白色内高光负责"厚度"，外发光只在悬浮时增强。 */
 html.ilink-app .il-btn-primary,
 html.ilink-app .btn-primary,
 html.ilink-app .il-search-bar__btn--primary,
 html.ilink-app .il-search-bar__btn--create {
-  /* 主操作默认浅色石墨：内描边 + 深字，避免白卡上的浅底"化掉" */
-  color: var(--ui-action-ink) !important;
-  background: var(--ui-action-soft) !important;
-  border-color: var(--ui-action-line) !important;
-  box-shadow: inset 0 0 0 1px var(--ui-action-line), 0 1px 2px rgba(47, 58, 66, .10) !important;
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  border-color: rgba(12, 74, 110, 0.10) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 5px rgba(10, 61, 92, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 6px 14px -8px var(--ui-brand-glow) !important;
 }
 
 html.ilink-app .il-btn-primary:hover,
 html.ilink-app .btn-primary:hover,
 html.ilink-app .il-search-bar__btn--primary:hover,
 html.ilink-app .il-search-bar__btn--create:hover {
-  color: var(--ui-action-ink) !important;
-  background: var(--ui-action-hover) !important;
-  border-color: var(--ui-action-line) !important;
-  box-shadow: inset 0 0 0 1px #b4c0ca, 0 1px 3px rgba(47, 58, 66, .14) !important;
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff) !important;
+  border-color: rgba(12, 74, 110, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -2px 5px rgba(10, 61, 92, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.7),
+    0 12px 22px -10px var(--ui-brand-glow) !important;
 }
 
-/* 决定性提交（登录 / 发布 / 保存）用实心石墨 */
+/* 决定性提交（登录 / 发布 / 保存）同样走浅云蓝，不再用大块深色 */
 html.ilink-app .btn-primary--solid,
 html.ilink-app .il-btn-primary--solid {
-  color: #fff !important;
-  background: var(--ui-action-solid) !important;
-  border-color: var(--ui-action-solid) !important;
-  box-shadow: 0 1px 2px rgba(47, 58, 66, .18) !important;
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, var(--ui-brand-bg-top), var(--ui-brand-bg-bottom)) !important;
+  border-color: rgba(12, 74, 110, 0.10) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 5px rgba(10, 61, 92, 0.14),
+    0 6px 14px -8px var(--ui-brand-glow) !important;
 }
 
 html.ilink-app .btn-primary--solid:hover,
 html.ilink-app .il-btn-primary--solid:hover {
-  color: #fff !important;
-  background: var(--ui-action-solid-hover) !important;
-  border-color: var(--ui-action-solid-hover) !important;
+  color: var(--ui-brand-text) !important;
+  background: linear-gradient(180deg, #f2f9ff, #b5dcff) !important;
+  border-color: rgba(12, 74, 110, 0.16) !important;
 }
 
 html.ilink-app .il-btn-secondary {
@@ -495,7 +508,7 @@ html.ilink-app .il-form-select:focus,
 html.ilink-app .il-input:focus,
 html.ilink-app .il-textarea:focus {
   border-color: var(--field-focus-border, #1d1d1f) !important;
-  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important;
 }
 
 html.ilink-app .form-control::placeholder,
@@ -548,7 +561,7 @@ html.ilink-app select:not([multiple]) option {
     background: #ffffff;
     border: 1px solid var(--ui-border-strong);
     border-radius: 12px;
-    box-shadow: 0 12px 28px rgb(40 42 47 / 12%);
+    box-shadow: 0 12px 28px rgb(15 23 42 / 12%);
     /* 固定向下展开：默认 Chrome 会在下方空间不足时向上翻，方向忽上忽下很跳。
        改成永远在下方，超过 320px 的列表在面板内滚动，避免贴底时被裁掉 */
     position-area: block-end span-inline-end;
@@ -615,16 +628,18 @@ html.ilink-app .competition-card__tag {
   font-weight: 500 !important;
 }
 
+/* 状态色提高一档饱和度：旧的一组（#1b7a57/#b8403a/#8c5f09）偏灰，
+   在白底列表里像褪色。底色仍然很浅，靠文字和圆点给信号。 */
 html.ilink-app .il-status-recruiting,
 html.ilink-app .il-team-card__badge--open,
 html.ilink-app .il-team-card__badge--approved,
 html.ilink-app .status-approved,
 html.ilink-app .status-open,
 html.ilink-app .status-success {
-  --ui-status-color: var(--ui-success);
-  color: var(--ui-success) !important;
-  background: var(--ui-success-soft) !important;
-  border-color: #cbe8d6 !important;
+  --ui-status-color: #22c55e;
+  color: #15803d !important;
+  background: #dcfce7 !important;
+  border-color: rgba(22, 163, 74, 0.18) !important;
 }
 
 html.ilink-app .il-status-closed,
@@ -632,26 +647,26 @@ html.ilink-app .il-status-teamed,
 html.ilink-app .il-team-card__badge--closed,
 html.ilink-app .status-closed,
 html.ilink-app .status-neutral {
-  --ui-status-color: var(--ui-text-muted);
-  color: var(--ui-text-secondary) !important;
-  background: var(--ui-surface-subtle) !important;
-  border-color: var(--ui-border) !important;
+  --ui-status-color: #94a3b8;
+  color: #475569 !important;
+  background: #f1f5f9 !important;
+  border-color: rgba(100, 116, 139, 0.16) !important;
 }
 
 html.ilink-app .il-team-card__badge--teaming,
 html.ilink-app .status-teaming {
-  --ui-status-color: var(--ui-info);
-  color: #0055b3 !important;
-  background: var(--ui-info-soft) !important;
-  border-color: rgba(0, 102, 204, 0.24) !important;
+  --ui-status-color: #0284c7;
+  color: #0c4a6e !important;
+  background: #e0f2fe !important;
+  border-color: rgba(2, 132, 199, 0.18) !important;
 }
 
 html.ilink-app .il-team-card__badge--pending,
 html.ilink-app .status-pending {
-  --ui-status-color: var(--ui-warning);
-  color: var(--ui-warning) !important;
-  background: var(--ui-warning-soft) !important;
-  border-color: rgba(138, 83, 0, 0.24) !important;
+  --ui-status-color: #f59e0b;
+  color: #b45309 !important;
+  background: #fef3c7 !important;
+  border-color: rgba(217, 119, 6, 0.18) !important;
 }
 
 html.ilink-app .il-team-card__badge--dissolved,
@@ -661,10 +676,10 @@ html.ilink-app .status-rejected,
 html.ilink-app .status-error,
 html.ilink-app .status-expired,
 html.ilink-app .il-status-danger {
-  --ui-status-color: var(--ui-danger);
-  color: var(--ui-danger) !important;
-  background: var(--ui-danger-soft) !important;
-  border-color: #f7cfcd !important;
+  --ui-status-color: #ef4444;
+  color: #b91c1c !important;
+  background: #fee2e2 !important;
+  border-color: rgba(220, 38, 38, 0.18) !important;
 }
 
 html.ilink-app .il-status-recruiting,
@@ -852,6 +867,12 @@ html.ilink-app .modal-footer {
   border-color: var(--ui-border) !important;
 }
 
+/* 遮罩从纯黑改成冷灰蓝：纯黑压在冷白页面上会发褐，也和 Agent 抽屉的遮罩不一致 */
+html.ilink-app .modal-backdrop.show {
+  background-color: rgba(15, 23, 42, 0.34) !important;
+  opacity: 1 !important;
+}
+
 /* Authentication is deliberately quiet: one focused form on a neutral canvas. */
 html.ilink-app body.auth-page--login,
 html.ilink-app body.auth-page--register {
@@ -919,7 +940,7 @@ html.ilink-app .auth-card select {
 html.ilink-app .auth-card input:not([type="checkbox"]):not([type="radio"]):focus,
 html.ilink-app .auth-card select:focus {
   border-color: var(--field-focus-border, #1d1d1f) !important;
-  box-shadow: var(--field-ring, 0 0 0 3px rgba(29, 29, 31, 0.12)) !important;
+  box-shadow: var(--field-ring, 0 0 0 3px rgba(15, 23, 42, 0.12)) !important;
 }
 
 html.ilink-app .identifier-toggle {
@@ -941,11 +962,12 @@ html.ilink-app .identifier-toggle__btn {
 html.ilink-app .identifier-toggle__btn.active {
   color: var(--ui-text) !important;
   background: var(--ui-surface) !important;
-  box-shadow: 0 1px 2px rgba(29, 29, 31, 0.08) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
 }
 
 /* 登录 / 注册 / 找回密码页的主按钮：保持深色实心（这两页是单卡极简布局，
-   深色按钮是页面上唯一的主动作，改成浅灰会失去焦点） */
+   深色按钮是页面上唯一的主动作，改成浅色会失去焦点）。
+   这两页是明确例外，不跟随全站浅云蓝。 */
 html.ilink-app .btn-submit {
   height: var(--btn-height-lg, 44px);
   min-height: 44px;
