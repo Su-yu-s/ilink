@@ -1000,4 +1000,12 @@ html.ilink-app body[data-app-page="gallery"] .il-search-bar {
                          [data-app-page="gallery"]) .il-search-bar__input-wrap .il-search-field__input {
     font-size: 16px !important;
   }
+
+  /* 社区排序组（4 个按钮）在半宽格里放不下：按钮受全局 44px 触摸下限约束
+     不能压缩，nowrap 下会顶出容器、把整页撑出横向滚动条。让它独占一行。 */
+  html.ilink-app body[data-app-page="community"] .il-search-bar .il-sort-group {
+    grid-column: 1 / -1;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
 }

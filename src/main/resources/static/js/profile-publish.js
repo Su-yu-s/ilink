@@ -88,19 +88,35 @@
             (state.page >= pages ? ' disabled' : '') + '>下一页</button>';
     }
 
+    // 搜索/切页会连续发请求，用序号丢弃过期响应：
+    // 先发的慢请求后返回时，不能把新结果覆盖掉。
+    var loadToken = 0;
+
     async function load() {
+        var token = ++loadToken;
         listEl.innerHTML = '<p class="pp-loading">加载中…</p>';
         var params = new URLSearchParams({ page: state.page, size: state.size, type: state.type });
         if (state.keyword) params.set('keyword', state.keyword);
         try {
             var resp = await apiFetch('/api/profile/publications?' + params.toString(), { credentials: 'same-origin' });
             var json = await resp.json();
+            if (token !== loadToken) return;   // 已有更新的请求，丢弃本次结果
+            if (json && json.code === 401) {
+                listEl.innerHTML = '<p class="pp-loading">登录已过期，请重新登录后查看</p>';
+                renderPager(0);
+                return;
+            }
             var rows = (json && json.data) || [];
-            var total = (json && json.pagination && json.pagination.total) || rows.length;
+            // 分页信息在 extra.pagination 下（Result.withPagination 的约定，
+            // 全站其它列表页也都这么读）。读顶层 json.pagination 会恒为
+            // undefined，导致超过一页时永远翻不到第 2 页。
+            var pageInfo = (json && json.extra && json.extra.pagination) || {};
+            var total = typeof pageInfo.total === 'number' ? pageInfo.total : rows.length;
             if (!rows.length) { listEl.innerHTML = emptyHtml(); renderPager(0); return; }
             listEl.innerHTML = rows.map(rowHtml).join('');
             renderPager(total);
         } catch (e) {
+            if (token !== loadToken) return;
             listEl.innerHTML = '<p class="pp-loading">加载失败，请稍后重试</p>';
         }
     }

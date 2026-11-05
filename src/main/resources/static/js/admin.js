@@ -531,10 +531,15 @@ function renderContentBars(values, labels) {
     wrap.innerHTML = values.map((value, index) => {
         const height = Math.max(4, Math.round((value / max) * 100));
         const label = labels && labels[index] ? labels[index] : '';
-        return '<div class="adk-bars__col" style="--h:' + height + '%" title="' + label + '：' + value + ' 条">' +
+        // label 来自接口（日期串），仍统一转义后再拼进属性与节点，避免以后换成用户数据时出问题。
+        // 先截短再转义：对已转义的字符串做 slice 可能把 &amp; 这类实体截断。
+        const shortLabel = label.length > 5 ? label.slice(5) : label;
+        const safeLabel = escapeHtml(String(label));
+        const safeShort = escapeHtml(String(shortLabel));
+        return '<div class="adk-bars__col" style="--h:' + height + '%" title="' + safeLabel + '：' + value + ' 条">' +
             '<span class="adk-bars__bar' + (index === peak ? ' is-peak' : '') + '"></span>' +
             '<span class="adk-bars__value">' + value + '</span>' +
-            '<span class="adk-bars__label">' + (label.length > 5 ? label.slice(5) : label) + '</span>' +
+            '<span class="adk-bars__label">' + safeShort + '</span>' +
         '</div>';
     }).join('');
 }
@@ -2017,7 +2022,7 @@ const ADMIN_AUDIT_DETAIL_VALUES = {
     pinned: { 'true': '是', 'false': '否' },
     role: { ADMIN: '管理员', TEACHER: '教师', STUDENT: '学生' },
     status: {
-        ACTIVE: '正常', DISABLED: '已禁用',
+        ACTIVE: '正常', DISABLED: '已禁用', INACTIVE: '未激活',
         OPEN: '开放中', TEAMING: '组队中', CLOSED: '已关闭',
         PENDING: '待审核', INCOMPLETE: '资料不完整', APPROVED: '已通过', REJECTED: '已驳回'
     }
@@ -2026,7 +2031,9 @@ const ADMIN_AUDIT_DETAIL_VALUES = {
 function formatAuditDetail(raw) {
     const text = String(raw == null ? '' : raw).trim();
     if (!text) return '';
-    return text.split(',').map(function (part) {
+    // 只在「逗号后面紧跟 key=」处切分：原因/标题里本身可能带逗号，
+    // 简单 split(',') 会把一句话拆成两段假字段。
+    return text.split(/,\s*(?=[A-Za-z_][A-Za-z0-9_]*=)/).map(function (part) {
         const piece = part.trim();
         if (!piece) return '';
         const eq = piece.indexOf('=');

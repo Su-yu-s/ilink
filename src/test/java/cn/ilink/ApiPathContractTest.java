@@ -139,13 +139,14 @@ class ApiPathContractTest {
 
     @Test
     void listPagesResolvePaginationFromExtra() throws Exception {
-        List<String> listJs = List.of("team-market.js", "teacher-wall.js", "gallery.js");
+        List<String> listJs = List.of("team-market.js", "teacher-wall.js", "gallery.js", "profile-publish.js");
         for (String name : listJs) {
             Path file = JS_ROOT.resolve(name);
             assertTrue(Files.exists(file), name + " should exist");
             String content = Files.readString(file, StandardCharsets.UTF_8);
             assertTrue(
-                content.contains("extra.pagination") || content.contains("extra && result.extra.pagination"),
+                content.contains("extra.pagination") || content.contains("extra && result.extra.pagination")
+                    || content.contains("json.extra && json.extra.pagination"),
                 name + " should read pagination from extra"
             );
         }

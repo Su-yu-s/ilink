@@ -60,6 +60,13 @@ public class AdminController {
     /** 概览页趋势卡取近 14 天，活跃卡取近 7 天 */
     private static final int USER_TREND_DAYS = 14;
     private static final int CONTENT_TREND_DAYS = 7;
+    /**
+     * 业务时区。必须与数据源 serverTimezone（application.yml 里是
+     * Asia/Shanghai）一致：用 ZoneId.systemDefault() 的话，容器镜像
+     * 默认 TZ=UTC 时「今天」会比数据库早 8 小时，凌晨 0-8 点的数据
+     * 会被算到前一天，趋势卡和「近 7 天 +N」都会错位。
+     */
+    private static final ZoneId BIZ_ZONE = ZoneId.of("Asia/Shanghai");
 
     private final UserService userService;
     private final TeamDemandServiceImpl teamDemandService;
@@ -122,7 +129,7 @@ public class AdminController {
 
             // 概览页三张图卡的数据。都只取时间列，在内存里按天分桶：
             // 数据量限于窗口内，比逐天发 count 查询少 6~13 次往返。
-            ZoneId zone = ZoneId.systemDefault();
+            ZoneId zone = BIZ_ZONE;
             LocalDate today = LocalDate.now(zone);
 
             LocalDate userStart = today.minusDays(USER_TREND_DAYS - 1L);
@@ -168,7 +175,7 @@ public class AdminController {
      */
     private static List<Integer> bucketByDay(List<Date> times, LocalDate start, int days) {
         int[] counts = new int[days];
-        ZoneId zone = ZoneId.systemDefault();
+        ZoneId zone = BIZ_ZONE;
         for (Date time : times) {
             if (time == null) {
                 continue;

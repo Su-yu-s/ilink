@@ -8,6 +8,7 @@ import cn.ilink.entity.User;
 import cn.ilink.service.impl.AssetServiceImpl;
 import cn.ilink.service.impl.CommunityPostServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -63,7 +64,9 @@ public class ProfilePublishController {
             return Result.unauthorized().toResponseEntity();
         }
 
-        int safePage = Math.max(1, page == null ? 1 : page);
+        // 页码要有上限：int 乘法 (page-1)*size 在极端页码下会溢出成负数，
+        // 后面 subList 就会抛 IndexOutOfBoundsException 变成 500。
+        int safePage = Math.min(100_000, Math.max(1, page == null ? 1 : page));
         int safeSize = Math.min(50, Math.max(1, size == null ? 10 : size));
 
         List<Map<String, Object>> rows = new ArrayList<>();
@@ -91,7 +94,9 @@ public class ProfilePublishController {
         ));
 
         int total = rows.size();
-        int from = Math.min((safePage - 1) * safeSize, total);
+        // 用 long 计算偏移，避免 (safePage - 1) * safeSize 在 int 下溢出为负数
+        long offset = (long) (safePage - 1) * safeSize;
+        int from = (int) Math.min(offset, total);
         int to = Math.min(from + safeSize, total);
         List<Map<String, Object>> pageRows = new ArrayList<>(rows.subList(from, to));
 
@@ -101,10 +106,16 @@ public class ProfilePublishController {
     }
 
     private List<Map<String, Object>> loadAssets(Long userId) {
-        LambdaQueryWrapper<Asset> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Asset::getUserId, userId)
-            .orderByDesc(Asset::getCreatedAt)
-            .orderByDesc(Asset::getId)
+        // 用 QueryWrapper 而不是 LambdaQueryWrapper：只有前者支持字符串列名，
+        // 才能写出 LEFT(description, 400) 这种 SQL 层截断。
+        // 只取列表需要的列，正文在 SQL 层截断 —— 描述上限 6 万字，500 行
+        // 全量读回再跑正则纯属浪费（搜索框防抖后会反复触发）。
+        QueryWrapper<Asset> wrapper = new QueryWrapper<>();
+        wrapper.select("id", "title", "category", "cover_url", "view_count", "created_at",
+                "LEFT(description, 400) AS description")
+            .eq("user_id", userId)
+            .orderByDesc("created_at")
+            .orderByDesc("id")
             .last("LIMIT " + MAX_PER_SOURCE);
 
         return assetService.list(wrapper).stream().map(a -> {
@@ -120,15 +131,19 @@ public class ProfilePublishController {
     }
 
     private List<Map<String, Object>> loadPosts(Long userId) {
-        LambdaQueryWrapper<CommunityPost> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(CommunityPost::getAuthorId, userId)
-            .orderByDesc(CommunityPost::getCreatedAt)
-            .orderByDesc(CommunityPost::getId)
+        // 同上：正文上限 20 万字，只取前 400 字用于列表摘要
+        QueryWrapper<CommunityPost> wrapper = new QueryWrapper<>();
+        wrapper.select("id", "title", "category", "view_count", "like_count", "created_at",
+                "LEFT(content, 400) AS content")
+            .eq("author_id", userId)
+            .orderByDesc("created_at")
+            .orderByDesc("id")
             .last("LIMIT " + MAX_PER_SOURCE);
 
         return communityPostService.list(wrapper).stream().map(p -> {
+            // baseRow 内部已经会做 plainText + 截断，这里不要再跑一遍正则
             Map<String, Object> row = baseRow(
-                p.getId(), "article", p.getTitle(), plainText(p.getContent()),
+                p.getId(), "article", p.getTitle(), p.getContent(),
                 p.getCategory(), null, p.getCreatedAt());
             row.put("viewCount", p.getViewCount() == null ? 0 : p.getViewCount());
             row.put("likeCount", p.getLikeCount() == null ? 0 : p.getLikeCount());
