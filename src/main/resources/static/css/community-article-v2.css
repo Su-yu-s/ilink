@@ -1,0 +1,900 @@
+/* ============================================================
+   交流社区 · 文章详情 v2：无边界阅读流
+   ------------------------------------------------------------
+   设计原则：不套卡片（无白底 + 圆角 + 投影），靠字号、字重、
+   极细分割线与三栏留白建立层级。
+
+   刻意不包进 @layer：本页要在 github-markdown / md-editor /
+   portal-redesign 之后彻底接管排版，而未分层的普通声明恒胜
+   任何分层内的普通声明。这里改用「未分层 + 高特异性」取胜，
+   所以全文件不需要任何。
+   ============================================================ */
+
+/* 设计令牌：浅云蓝无边界阅读流。
+   颜色与描边统一由变量驱动，换肤只改这一块。 */
+:root {
+  --text-display: #09090b;   /* 页面大标题：绝对极黑 */
+  --text-heading: #18181b;   /* Markdown 小标题 */
+  --text-body: #3f3f46;      /* 正文 */
+  --text-muted: #71717a;     /* 辅助说明、面包屑 */
+  --text-subtle: #a1a1aa;    /* 目录未激活项、时间戳 */
+
+  --brand-primary: #0284c7;
+  --brand-soft: rgba(224, 242, 254, 0.6);  /* 选中底色、浅蓝填充 */
+  --brand-glow: rgba(14, 165, 233, 0.2);   /* 发光 */
+  --brand-line: rgba(14, 165, 233, 0.3);   /* 细线 */
+
+  /* 极细分割线：三栏、右栏分组、表格行共用 */
+  --ca-rule: rgba(15, 23, 42, 0.08);
+}
+
+/* ---------- 画布与三栏骨架 ---------- */
+/* 三栏总宽 1400，外层 wrapper 也要跟着放宽（默认被限在 1200） */
+@media (min-width: 1024px) {
+  html.ilink-app body[data-app-page="community-article"] .il-page-wrapper.community-article-page {
+    width: min(100% - 32px, 1500px);
+    max-width: 1500px;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .community-article-shell {
+    width: 100%;
+    max-width: 1400px;
+    padding: 40px 0 72px;
+  }
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-shell {
+  max-width: 1400px;
+  padding-top: 40px;
+  padding-bottom: 72px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-layout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 64px;
+}
+
+/* 左：极简目录 */
+html.ilink-app body[data-app-page="community-article"] .ca-toc {
+  position: sticky;
+  top: 112px;
+  width: 180px;
+  flex: 0 0 180px;
+  max-height: calc(100dvh - 160px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-toc__title {
+  margin: 0 0 16px;
+  color: #a1a1aa;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-toc__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+/* 目录项最多两行，超长标题截断：长标题折成五六行会把整栏撑爆，
+   而目录只需要能认出章节即可。 */
+html.ilink-app body[data-app-page="community-article"] .ca-toc__link {
+  position: relative;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  flex: 0 0 auto;
+  /* 两行截断：长标题折五六行会把整栏撑爆，目录只需能认出章节。
+     注意 padding 也占高度，所以用 line-clamp 而不是 max-height:3em。 */
+  overflow: hidden;
+  padding: 6px 14px;
+  color: #71717a;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  transition: color 0.2s var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-toc__link--sub {
+  padding-left: 26px;
+  font-size: 12.5px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-toc__link:hover {
+  color: #0284c7;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-toc__link.is-active {
+  color: #0284c7;
+  font-weight: 700;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-toc__link.is-active::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: #0284c7;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+}
+
+/* 中：黄金阅读行宽 */
+html.ilink-app body[data-app-page="community-article"] .ca-main {
+  width: 100%;
+  max-width: 760px;
+  min-width: 0;
+}
+
+/* 右：作者与文章事实 */
+html.ilink-app body[data-app-page="community-article"] .ca-side {
+  position: sticky;
+  top: 112px;
+  width: 240px;
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__author {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #e2e8f0;
+}
+
+/* 头像：外层 56px 圆槽，但里面的 .il-avatar-wrap 被 JS 写成行内
+   40x40（min/max 也钉死），只写 img 会留下 40px 小图 + 16px 灰边。
+   行内样式只能用 覆盖，四件尺寸一起给。 */
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar,
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar > a,
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar .il-publisher-avatar,
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar .il-avatar-wrap {
+  width: 72px;
+  height: 72px;
+  min-width: 72px;
+  min-height: 72px;
+  max-width: 72px;
+  max-height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: block;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar img,
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar .il-avatar-wrap img,
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar .il-publisher-avatar__img,
+html.ilink-app body[data-app-page="community-article"] .ca-side__avatar .il-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__name {
+  margin: 0;
+  color: #09090b;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__link {
+  color: #71717a;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s var(--ui-ease), border-color 0.2s var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__link:hover {
+  color: #0284c7;
+  border-bottom-color: rgba(14, 165, 233, 0.3);
+}
+
+/* 日期与阅读数在右栏：居中一行小字，紧跟在姓名下方 */
+html.ilink-app body[data-app-page="community-article"] .ca-side__meta {
+  width: 100%;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__meta .ca-meta {
+  justify-content: center;
+  margin: 0;
+  font-size: 12.5px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__meta .ca-actions {
+  display: none;
+}
+
+/* 右栏互动区（点赞 / 收藏），与作者信息用一条细线隔开 */
+html.ilink-app body[data-app-page="community-article"] .ca-side__engage {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__engage:empty {
+  display: none;
+}
+
+/* 两个互动按钮等宽并排：整块更规整，点击区域也更大 */
+html.ilink-app body[data-app-page="community-article"] .ca-side__engage .ca-engage {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__engage .ca-action {
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--ca-rule);
+  border-radius: 10px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.2s var(--ui-ease), border-color 0.2s var(--ui-ease),
+              background 0.2s var(--ui-ease);
+}
+
+/* 无底色线框：悬浮时只浮现极浅的浅云蓝底（图标是 currentColor，跟着变蓝） */
+html.ilink-app body[data-app-page="community-article"] .ca-side__engage .ca-action:hover {
+  background: var(--brand-soft);
+  border-color: var(--brand-line);
+  color: var(--brand-primary);
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__engage .ca-action svg {
+  width: 18px;
+  height: 18px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-side__engage .ca-action__num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 删除入口：桌面在右栏底部，窄屏跟到正文下方 */
+html.ilink-app body[data-app-page="community-article"] .ca-side__danger {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-mobile-actions {
+  display: none;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-mobile-actions:not(:empty) {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 1023.98px) {
+  html.ilink-app body[data-app-page="community-article"] .ca-mobile-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding-top: 24px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-fact dt {
+  color: #a1a1aa;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-fact dd {
+  margin: 0;
+  color: #3f3f46;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* ---------- 文章头部：无卡片，纯排版 ---------- */
+html.ilink-app body[data-app-page="community-article"] .ca-article {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-header {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+/* 顶部行：面包屑在左，返回社区在右 */
+html.ilink-app body[data-app-page="community-article"] .ca-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-breadcrumb {
+  margin: 0;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-back-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #71717a;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s var(--ui-ease), border-color 0.2s var(--ui-ease),
+              background 0.2s var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-back-top:hover {
+  background: #ffffff;
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #0284c7;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-back-top svg {
+  width: 14px;
+  height: 14px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-category {
+  margin: 0 0 14px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-category span {
+  display: inline-block;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(14, 165, 233, 0.3);
+  color: #0284c7;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* 大标题 42px/900：必须与 MD 的 H2（22px）拉开断崖式差距，
+   否则页面标题和正文小标题会互相「打架」。 */
+html.ilink-app body[data-app-page="community-article"] .ca-title {
+  margin: 0 0 40px;
+  color: var(--text-display);
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: -1.5px;
+  line-height: 1.2;
+  text-wrap: pretty;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 32px;
+  color: #71717a;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-meta__avatar {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-meta__avatar img,
+html.ilink-app body[data-app-page="community-article"] .ca-meta__avatar > * {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-meta__author {
+  color: #3f3f46;
+  font-weight: 600;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-meta__sep {
+  color: #d4d4d8;
+}
+
+/* 操作：纯文字 + 线框图标，无实体底 */
+html.ilink-app body[data-app-page="community-article"] .ca-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-left: auto;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-actions:empty {
+  display: none;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: #71717a;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-action:hover,
+html.ilink-app body[data-app-page="community-article"] .ca-action.is-active,
+html.ilink-app body[data-app-page="community-article"] .ca-action[aria-pressed="true"] {
+  color: #0284c7;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-action svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-action.is-active svg,
+html.ilink-app body[data-app-page="community-article"] .ca-action[aria-pressed="true"] svg {
+  fill: rgba(224, 242, 254, 0.9);
+}
+
+html.ilink-app body[data-app-page="community-article"] .ca-action--danger {
+  color: #dc2626;
+}
+
+/* ---------- Markdown 深度排版 ---------- */
+/* md-editor.css 有一条 `.ilink-app .markdown-body.il-markdown-content`
+   （两个类，特异性 0,2,0）把正文写成 14px；community-article.css 又用
+   `.community-article__content` 写 0.9375rem。这里用同样长度的选择器
+   再叠一层，才能把 16.5px 与去白底真正落下去。 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content.ca-body,
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody,
+html.ilink-app body[data-app-page="community-article"] .ca-body,
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody {
+  padding: 0;
+  max-width: none;
+  background: transparent;
+  color: var(--text-body);
+  font-size: 16.5px;
+  line-height: 1.8;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody p {
+  /* 段落继承容器的 16.5px：写死数值会让移动端的 16px 覆盖失效 */
+  margin: 0 0 1.5em;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* 首段引语：稍大、更深，作为阅读入口 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody > h1 + p, html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody > p:first-of-type {
+  margin-bottom: 2em;
+  color: #18181b;
+  font-size: 18.5px;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h1,
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h2,
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h3,
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h4 {
+  color: #09090b;
+  font-weight: 800;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin: 1.8em 0 0.8em;
+  padding: 0;
+  border: 0;
+}
+
+/* MD 内 H1 强制降级成 H2 的外观：正文里再出现一个 42px 级别的标题，
+   会把页面标题的唯一性彻底打散。 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h1 { font-size: 22px; }
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h2 { font-size: 22px; }
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h3 { font-size: 18px; }
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h4 { font-size: 16px; }
+
+/* 正文开头的第一个标题不该再撑一段上边距 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody > :is(h1, h2, h3):first-child {
+  margin-top: 0;
+}
+
+/* MD 小标题左侧的 4px 浅云蓝发光竖线。
+   用 ::before 而不是 border-left：border 带不了 box-shadow 的辉光。 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody :is(h1, h2, h3) {
+  position: relative;
+  padding-left: 16px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody :is(h1, h2, h3)::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.2em;
+  bottom: 0.2em;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--brand-primary);
+  box-shadow: 0 0 10px var(--brand-glow);
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody ul,
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody ol {
+  margin: 0 0 1.5em;
+  padding-left: 20px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody li {
+  margin-bottom: 8px;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody ul li::marker {
+  color: #0284c7;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody ol li::marker {
+  color: #0284c7;
+  font-weight: 800;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody strong {
+  color: var(--text-display);
+  font-weight: 800;
+}
+
+/* 引用块：去底色，左侧 4px 云蓝粗线 + 斜体 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody blockquote {
+  margin: 1.8em 0;
+  padding: 0 20px;
+  border: 0;
+  border-left: 4px solid var(--brand-primary);
+  border-radius: 0;
+  /* 极浅的横向渐变，让引用块「有体积」但不靠色块 */
+  background: linear-gradient(90deg, rgba(224, 242, 254, 0.4) 0%, transparent 100%);
+  color: var(--text-muted);
+  font-size: 17px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.75;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody blockquote p {
+  margin: 0 0 0.8em;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* 行内代码：无底、云蓝字、2px 浅蓝底线 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody code:not(pre code) {
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 2px solid var(--brand-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--brand-primary);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* 代码块：深海蓝底、去边框、轻弥散阴影 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody pre {
+  margin: 1.8em 0;
+  padding: 20px;
+  border: 0;
+  border-radius: 12px;
+  background: #0f172a;
+  box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.35);
+  overflow-x: auto;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody pre > code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* 表格：去掉竖向边框，只留极细横线 */
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody table {
+  width: 100%;
+  margin: 1.8em 0;
+  border: 0;
+  border-collapse: collapse;
+  font-size: 15px;
+  text-align: left;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody th {
+  padding: 12px 12px 12px 0;
+  border: 0;
+  border-bottom: 2px solid var(--text-display);
+  background: transparent;
+  color: var(--text-display);
+  font-weight: 800;
+  text-align: left;
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody td {
+  padding: 12px 12px 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--ca-rule);
+  color: var(--text-body);
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody tr:hover td {
+  background: rgba(15, 23, 42, 0.02);
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody a {
+  color: var(--brand-primary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--brand-line);
+  transition: border-color 0.2s var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody a:hover {
+  border-bottom-color: var(--brand-primary);
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody hr {
+  margin: 2.4em 0;
+  border: 0;
+  border-top: 1px solid var(--ca-rule);
+}
+
+html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+/* ---------- 评论区：去卡片，输入框只留底线 ---------- */
+html.ilink-app body[data-app-page="community-article"] .community-article-comments {
+  margin-top: 64px;
+  padding: 32px 0 0;
+  border: 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__header,
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__body {
+  padding: 0;
+}
+
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__title {
+  color: #09090b;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer {
+  border: 0;
+  border-bottom: 2px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transition: border-color 0.3s var(--ui-ease), box-shadow 0.3s var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer:focus-within {
+  border-bottom-color: #0284c7;
+  box-shadow: 0 6px 18px -12px rgba(14, 165, 233, 0.6);
+}
+
+/* 收起态的「假输入框」与展开态的编辑器都退成纯文本，
+   底线只由外层 composer 提供，避免出现两层框 */
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger {
+  padding: 10px 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger:hover {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-body);
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger:focus-visible {
+  outline: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__editor {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+/* 评论输入框左侧头像：与 36px 圆槽对齐，避免 40px 底图被裁偏 */
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar,
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar > a,
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar .il-avatar-wrap,
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar .il-avatar-fallback {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  max-width: 36px;
+  max-height: 36px;
+  border-radius: 50%;
+}
+
+html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* 空评论提示：不再是灰色方块 */
+html.ilink-app body[data-app-page="community-article"] .community-article-comment-list__empty {
+  padding: 24px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 1023.98px) {
+  html.ilink-app body[data-app-page="community-article"] .ca-toc,
+  html.ilink-app body[data-app-page="community-article"] .ca-side {
+    display: none;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .ca-layout {
+    gap: 0;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .ca-main {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 767.98px) {
+  html.ilink-app body[data-app-page="community-article"] .community-article-shell {
+    padding: 24px 0 56px;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .community-article-comments__header,
+  html.ilink-app body[data-app-page="community-article"] .community-article-comments__body {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .ca-title {
+    margin-bottom: 24px;
+    font-size: 28px;
+    letter-spacing: -0.6px;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .ca-meta {
+    margin-bottom: 24px;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .ca-actions {
+    width: 100%;
+    margin-left: 0;
+    gap: 16px;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .ca-body,
+  html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody {
+    font-size: 16px;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody > h1 + p, html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody > p:first-of-type {
+    font-size: 17.5px;
+  }
+
+  /* H1 在正文里本来就降级成 H2 的外观，窄屏也要跟着降到 20px，
+     否则 28px 的页面标题与它只剩 6px 差距，断崖不成立。 */
+  html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody :is(h1, h2) { font-size: 20px; }
+  html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody h3 { font-size: 17px; }
+
+  html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody pre {
+    padding: 16px;
+  }
+
+  html.ilink-app body[data-app-page="community-article"] .markdown-body.il-markdown-content#articleBody table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* 选中高亮：浅云蓝底 + 深云蓝字 */
+html.ilink-app body[data-app-page="community-article"] ::selection {
+  background: var(--brand-soft);
+  color: var(--brand-primary);
+}

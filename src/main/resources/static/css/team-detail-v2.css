@@ -1,0 +1,534 @@
+@layer legacy {
+/* ============================================================
+   组队详情 · v2 版式（去卡片化 + 双栏信息流）
+   ------------------------------------------------------------
+   本文件在 team-detail.html 里最后加载，且整段包在 @layer legacy 内：
+   既有 team-detail.css / detail-refresh.css / portal-redesign.css 的
+   同名规则也在 legacy 层，同层内「后加载者胜」，因此这里不需要堆
+   特异性，只在必须压过旧 !important 的地方加 !important。
+   ============================================================ */
+
+/* ---------- 画板 ---------- */
+/* portal-redesign.css 里 `.team-detail-shell` 被 `width: min(100% - 48px, 960px)
+   !important` 限死，只写 max-width 无效；宽屏下同样用 !important 放到 1040。 */
+@media (min-width: 861px) {
+  /* 外层 wrapper 在 detail-refresh.css 里被限成 1000px，画板再宽也撑不开，
+     所以两层一起放到 1200 / 1040（右侧 84px 是浮球轨道）。 */
+  html.ilink-app body[data-app-page="team-detail"] .team-detail-page {
+    width: min(100% - 48px, 1200px) !important;
+    max-width: 1200px !important;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .team-detail-shell {
+    width: min(100% - 48px, 1040px) !important;
+    max-width: 1040px;
+  }
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamDetailContent {
+  background: #ffffff !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  box-shadow:
+    0 24px 64px -12px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 1) !important;
+  overflow: hidden;
+}
+
+/* ---------- 头部 ---------- */
+html.ilink-app body[data-app-page="team-detail"] .td-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 40px 48px 32px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 20px;
+  background: #d1fae5;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+/* portal-redesign.css 里有一条 `.team-detail-status.is-open`（多一个类、
+   特异性更高）把底色压成 --ui-success-soft，这里必须同样带上 .is-open 才能覆盖。 */
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status.is-open {
+  background: #d1fae5;
+  color: #047857;
+  border-color: transparent;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status.is-open::before {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status.is-neutral {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .team-detail-status.is-neutral::before {
+  background: #94a3b8;
+  box-shadow: none;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-title {
+  margin: 0 0 20px;
+  color: #0f172a;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-tag > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-tag--competition {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-tag--direction {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-tag__icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+/* ---------- 双栏主体 ---------- */
+html.ilink-app body[data-app-page="team-detail"] .td-body {
+  display: flex;
+  gap: 48px;
+  padding: 40px 48px;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-main {
+  flex: 1;
+  min-width: 0;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-side {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+/* ---------- 信息网格 ---------- */
+html.ilink-app body[data-app-page="team-detail"] .td-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px 24px;
+  margin-bottom: 40px;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-info {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-info--wide {
+  grid-column: 1 / -1;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-info__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border: 1px solid rgba(15, 23, 42, 0.04);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0369a1;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-info__icon-svg {
+  width: 18px;
+  height: 18px;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-info__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+  min-width: 0;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-info__label {
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-info__value {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 队伍描述 ---------- */
+html.ilink-app body[data-app-page="team-detail"] .td-desc-wrap {
+  grid-column: 1 / -1;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-section-title__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: #94a3b8;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-desc {
+  padding: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.03);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-desc__text {
+  margin: 0;
+  color: #334155;
+  font-size: 14.5px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 成员列表 ---------- */
+html.ilink-app body[data-app-page="team-detail"] .td-side__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-side__head .td-section-title {
+  margin: 0;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-side__count {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* #teamMembers 自己就是列表容器：detail-refresh.css 里有一条
+   `display:flex !important; flex-direction: row !important; flex-wrap: wrap`
+   的横向排列规则，必须同层后置覆盖成纵向，否则成员卡会并排挤成半宽。 */
+html.ilink-app body[data-app-page="team-detail"] #teamMembers,
+html.ilink-app body[data-app-page="team-detail"] .td-members-list {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member {
+  width: 100% !important;
+  flex: 0 0 auto !important;
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 72px;
+  height: 72px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.02),
+    0 4px 12px -2px rgba(15, 23, 42, 0.04),
+    inset 0 1px 1px #ffffff,
+    0 0 0 1px rgba(15, 23, 42, 0.03);
+  transition: transform 0.2s var(--ui-ease), box-shadow 0.2s var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 12px -2px rgba(15, 23, 42, 0.05),
+    0 12px 24px -8px rgba(15, 23, 42, 0.08),
+    inset 0 1px 1px #ffffff,
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+/* 头像用圆角矩形，比正圆更有科技感（设计稿明确要求） */
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__avatar {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 10px !important;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__name {
+  color: #0f172a;
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__major {
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__role {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__role--leader {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member__role--member {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* ---------- 底部操作舱 ---------- */
+html.ilink-app body[data-app-page="team-detail"] .td-dock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 32px 32px;
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 12px 32px -8px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(15, 23, 42, 0.04);
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-dock__hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-dock__icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-dock__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-dock__actions .il-btn {
+  height: 44px;
+  padding: 0 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 主按钮：浅云蓝渐变 + 内高光 + 悬浮上浮 / 按下回弹（设计稿第四节） */
+html.ilink-app body[data-app-page="team-detail"] .td-dock__actions #applyBtn.il-btn--primary {
+  background: linear-gradient(180deg, #eaf5ff 0%, #c9e5ff 100%) !important;
+  color: #0c4a6e !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  font-weight: 700 !important;
+  box-shadow:
+    0 6px 16px -4px rgba(186, 230, 253, 0.6),
+    inset 0 1px 2px #ffffff !important;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-dock__actions #applyBtn.il-btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 24px -4px rgba(186, 230, 253, 0.8),
+    inset 0 1px 2px #ffffff !important;
+}
+
+html.ilink-app body[data-app-page="team-detail"] .td-dock__actions #applyBtn.il-btn--primary:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ---------- 待审批区（沿用旧样式，只补间距） ---------- */
+html.ilink-app body[data-app-page="team-detail"] .td-main .team-pending-section {
+  margin-top: 32px;
+}
+
+/* ---------- 响应式：<860 折成单栏，操作舱固定到底部 ---------- */
+@media (max-width: 860px) {
+  html.ilink-app body[data-app-page="team-detail"] .td-hero {
+    padding: 28px 24px 24px;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .td-title {
+    font-size: 26px;
+    letter-spacing: -0.6px;
+    margin-bottom: 16px;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .td-body {
+    flex-direction: column;
+    gap: 32px;
+    padding: 28px 24px;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .td-side {
+    width: 100%;
+  }
+
+  /* 两处进场动画都会留下 transform（identity 也算），从而成为
+     position:fixed 的包含块，操作舱会贴到面板底部而不是屏幕底部：
+       1) 画板的 .page-transition pt-enter（fill: both）
+       2) 外层 wrapper 的 ilink-page-in
+     手机上把这两段动画一起关掉。 */
+  html.ilink-app body[data-app-page="team-detail"] #teamDetailContent,
+  html.ilink-app body[data-app-page="team-detail"] .team-detail-page {
+    transform: none !important;
+    animation: none !important;
+  }
+
+  /* 拇指热区：操作舱贴底铺满 */
+  html.ilink-app body[data-app-page="team-detail"] .td-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1040;
+    margin: 0;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 32px -8px rgba(15, 23, 42, 0.14);
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .td-dock__hint {
+    display: none;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .td-dock__actions {
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .td-dock__actions .il-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0 12px;
+    justify-content: center;
+  }
+
+  /* 给固定操作舱让位 */
+  html.ilink-app body[data-app-page="team-detail"] #teamDetailContent {
+    padding-bottom: 88px;
+  }
+}
+
+@media (max-width: 600px) {
+  html.ilink-app body[data-app-page="team-detail"] .td-info-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .td-info--wide,
+  html.ilink-app body[data-app-page="team-detail"] .td-desc-wrap {
+    grid-column: auto;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] .td-desc {
+    padding: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member,
+  html.ilink-app body[data-app-page="team-detail"] .td-dock__actions #applyBtn.il-btn--primary {
+    transition: none;
+  }
+
+  html.ilink-app body[data-app-page="team-detail"] #teamMembers .team-member:hover,
+  html.ilink-app body[data-app-page="team-detail"] .td-dock__actions #applyBtn.il-btn--primary:hover {
+    transform: none;
+  }
+}
+}

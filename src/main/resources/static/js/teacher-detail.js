@@ -97,7 +97,16 @@ function renderTeacherDetail(teacher) {
         ((pv.displayName && String(pv.displayName).trim()) || (pv.realName && String(pv.realName).trim()))
             ? (pv.displayName && String(pv.displayName).trim()) || pv.realName
             : '';
-    document.getElementById('teacherName').textContent = display ? display + ' · 导师' : `导师 #${teacher.id}`;
+    // 「导师」后缀单独一个 span：v2 版式里它是浅灰细体，和姓名同写在
+    // textContent 里就没法分开控制字重/颜色了。
+    const nameEl = document.getElementById('teacherName');
+    const suffixEl = document.getElementById('teacherNameSuffix');
+    if (nameEl) {
+        nameEl.textContent = display ? display : `导师 #${teacher.id}`;
+    }
+    if (suffixEl) {
+        suffixEl.hidden = !display;
+    }
     
     // 更新各个字段
     const majorElem = document.getElementById('teacherMajor');

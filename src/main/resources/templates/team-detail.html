@@ -9,6 +9,7 @@
     <link th:href="@{/css/team-detail.css}" rel="stylesheet">
     <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
     <link th:href="@{/css/detail-refresh.css}" rel="stylesheet">
+    <link th:href="@{/css/team-detail-v2.css}" rel="stylesheet">
     <link th:href="@{/css/review-workbench.css}" rel="stylesheet">
     <script>
         // 从任务看板跳来批阅时，详情页要先渲染一轮才等到工作台打开，会闪一下。
@@ -41,16 +42,24 @@
                 </div>
             </section>
 
-            <article class="detail-view page-transition" id="teamDetailContent" hidden>
-                <header class="detail-view__header td-detail-header">
-                    <div class="td-detail-header__main">
-                    <p class="detail-view__eyebrow">组队详情</p>
-                    <h1 class="detail-view__title" id="teamTitle">组队标题</h1>
+            <article class="td-page page-transition" id="teamDetailContent" hidden>
+                <header class="td-hero">
+                    <span class="team-detail-status" id="teamStatus">-</span>
+                    <h1 class="td-title" id="teamTitle">组队标题</h1>
+                    <div class="td-tags">
+                        <span class="td-tag td-tag--competition">
+                            <svg class="td-tag__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                            <span id="teamCompetition">-</span>
+                        </span>
+                        <span class="td-tag td-tag--direction">
+                            <svg class="td-tag__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                            <span id="teamCategory">-</span>
+                        </span>
                     </div>
-                    <span class="td-status-pill" id="teamHeaderStatus" hidden></span>
                 </header>
-                <div class="detail-view__body">
-                    <!-- 编辑模式（仅队长可见） -->
+
+                <div class="td-body">
+                    <div class="td-main">
                     <div id="editModePanel" class="d-none">
                         <div class="mb-3">
                             <label class="form-label">需求标题</label>
@@ -107,65 +116,54 @@
                         </div>
                     </div>
 
-                    <!-- 详情展示模式（默认） -->
-                    <div class="detail-view__meta" id="detailViewMeta">
-                        <div class="detail-view__row td-row-hidden">
-                            <span class="detail-view__term">状态</span>
-                            <span class="detail-view__value" id="teamStatus">-</span>
+                        <div class="td-info-grid" id="detailViewMeta">
+                            <div class="td-info">
+                                <span class="td-info__icon"><svg class="td-info__icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span>
+                                <span class="td-info__text">
+                                    <span class="td-info__label">所需人数</span>
+                                    <span class="td-info__value" id="teamMemberCount">-</span>
+                                </span>
+                            </div>
+                            <div class="td-info">
+                                <span class="td-info__icon"><svg class="td-info__icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+                                <span class="td-info__text">
+                                    <span class="td-info__label">截止日期</span>
+                                    <span class="td-info__value" id="teamDeadline">-</span>
+                                </span>
+                            </div>
+                            <div class="td-info td-info--wide">
+                                <span class="td-info__icon"><svg class="td-info__icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg></span>
+                                <span class="td-info__text">
+                                    <span class="td-info__label">所需技能</span>
+                                    <span class="td-info__value" id="teamSkills">-</span>
+                                </span>
+                            </div>
+                            <div class="td-info">
+                                <span class="td-info__icon"><svg class="td-info__icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
+                                <span class="td-info__text">
+                                    <span class="td-info__label">发布者</span>
+                                    <span class="td-info__value" id="teamPublisher">-</span>
+                                </span>
+                            </div>
+                            <div class="td-info">
+                                <span class="td-info__icon"><svg class="td-info__icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
+                                <span class="td-info__text">
+                                    <span class="td-info__label">发布时间</span>
+                                    <span class="td-info__value" id="teamCreateTime">-</span>
+                                </span>
+                            </div>
+
+                            <div class="td-desc-wrap">
+                                <h3 class="td-section-title">
+                                    <svg class="td-section-title__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                    <span>队伍描述</span>
+                                </h3>
+                                <div class="td-desc">
+                                    <p id="teamDescription" class="td-desc__text">-</p>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="detail-view__row">
-                            <span class="detail-view__term">参赛竞赛</span>
-                            <span class="detail-view__value" id="teamCompetition">-</span>
-                        </div>
-
-                        <div class="td-cond-grid">
-                            <div class="detail-view__row td-cond td-cond--category">
-                                <span class="detail-view__term">项目方向</span>
-                                <span class="detail-view__value" id="teamCategory">-</span>
-                            </div>
-                            <div class="detail-view__row td-cond td-cond--count">
-                                <span class="detail-view__term">所需人数</span>
-                                <span class="detail-view__value" id="teamMemberCount">-</span>
-                            </div>
-                            <div class="detail-view__row td-cond td-cond--deadline">
-                                <span class="detail-view__term">截止日期</span>
-                                <span class="detail-view__value" id="teamDeadline">-</span>
-                            </div>
-                            <div class="detail-view__row td-cond td-cond--skills">
-                                <span class="detail-view__term">所需技能</span>
-                                <span class="detail-view__value" id="teamSkills">-</span>
-                            </div>
-                        </div>
-
-                        <div class="td-publisher-bar">
-                            <div class="detail-view__row td-publisher">
-                                <span class="detail-view__term">发布者</span>
-                                <span class="detail-view__value" id="teamPublisher">-</span>
-                            </div>
-                            <div class="detail-view__row td-pubtime">
-                                <span class="detail-view__term">发布时间</span>
-                                <span class="detail-view__value" id="teamCreateTime">-</span>
-                            </div>
-                        </div>
-
-                        <div class="detail-view__row detail-view__row--block td-block-card">
-                            <span class="detail-view__term">队伍描述</span>
-                            <span class="detail-view__value">
-                                <p id="teamDescription" class="detail-view__text mb-0">-</p>
-                            </span>
-                        </div>
-
-                        <div class="td-block-card td-members-card">
-                            <div class="td-block-head">
-                                <h4 class="td-block-title">当前成员</h4>
-                                <span class="td-members-count" id="teamMembersCount"></span>
-                            </div>
-                            <div id="teamMembers" class="td-members-list">-</div>
-                        </div>
-                    </div>
-
-                    <!-- 待审批申请区：仅队长可见，仅 OPEN 状态 -->
                     <section id="pendingSection" class="team-pending-section d-none">
                         <div class="pending-section__header">
                             <h2 class="pending-section__title">待审批申请</h2>
@@ -174,9 +172,26 @@
                         <div id="pendingList" class="pending-list"></div>
                     </section>
 
-                    <div class="detail-view__actions">
-                        <span class="td-actions-hint">申请加入后，队长将收到你的个人资料。</span>
-                        <div class="td-actions-btns">
+                    </div>
+
+                    <aside class="td-side">
+                        <div class="td-side__head">
+                            <h3 class="td-section-title">
+                                <svg class="td-section-title__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                <span>当前成员</span>
+                            </h3>
+                            <span class="td-side__count" id="teamMembersCount"></span>
+                        </div>
+                        <div id="teamMembers" class="td-members-list">-</div>
+                    </aside>
+                </div>
+
+                <div class="td-dock">
+                    <span class="td-dock__hint">
+                        <svg class="td-dock__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        申请加入后，队长将收到你的个人资料。
+                    </span>
+                    <div class="td-dock__actions">
                         <button type="button" id="editTeamBtn" class="il-btn d-none">
                             <svg class="il-btn__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -192,12 +207,10 @@
                         </button>
                         <button type="button" id="markTeamingBtn" class="il-btn d-none">完成组队</button>
                         <button type="button" id="closeTeamBtn" class="il-btn d-none">结束项目</button>
-                        <button type="button" id="applyBtn" class="il-btn il-btn--primary">申请加入</button>
                         <a href="/team-market.html" id="backBtn" class="il-btn">返回组队大厅</a>
-                        </div>
+                        <button type="button" id="applyBtn" class="il-btn il-btn--primary">申请加入</button>
                     </div>
                 </div>
-
             </article>
         </div>
     </div>

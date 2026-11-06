@@ -1,0 +1,447 @@
+@layer legacy {
+/* ============================================================
+   导师详情 · v2 版式（去边框化，学术简历阅读感）
+   ------------------------------------------------------------
+   本文件在 teacher-detail.html 里最后加载，整段包在 @layer legacy：
+   与 teacher-detail.css / detail-refresh.css / portal-redesign.css 同层，
+   同层内后加载者胜，因此只在必须压过旧 !important 时补 !important。
+   ============================================================ */
+
+/* ---------- 画板：840 宽、24 圆角、强脱离感 ---------- */
+@media (min-width: 768px) {
+  /* 画板要 840，但外层 main 还带着 24px 左内边距 + 84px 右侧浮球轨道，
+     所以 main 放到 948，再让 shell 铺满内容区（去掉它自己的 -48px 收缩）。 */
+  html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-main {
+    width: min(100% - 48px, 948px) !important;
+    max-width: 948px !important;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] #teacherDetailContent {
+  background: #ffffff !important;
+  border: 0 !important;
+  border-radius: 24px !important;
+  box-shadow:
+    0 24px 64px -12px rgba(15, 23, 42, 0.10),
+    0 0 0 1px rgba(255, 255, 255, 1) !important;
+  overflow: hidden;
+}
+
+/* ---------- 头部身份区 ---------- */
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 48px 48px 32px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+/* 头像 88px 圆形 + 3px 白边 + 弥散投影。
+   .publisher-avatar 在 style.css 里被 min/max 钉成 48px，
+   min/max 恒胜 width，所以必须整组一起写。 */
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-avatar,
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-avatar > a,
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-avatar .publisher-avatar {
+  width: 88px !important;
+  height: 88px !important;
+  min-width: 88px !important;
+  max-width: 88px !important;
+  min-height: 88px !important;
+  max-height: 88px !important;
+  flex: 0 0 88px !important;
+  border: 3px solid #ffffff !important;
+  border-radius: 50% !important;
+  overflow: hidden;
+  background: #f8fafc !important;
+  box-shadow:
+    0 8px 24px -4px rgba(15, 23, 42, 0.10),
+    inset 0 1px 2px #ffffff !important;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-avatar img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-name {
+  margin: 0;
+  color: #0f172a;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-suffix {
+  margin-left: -8px;
+  color: #94a3b8;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-cert {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-cert__icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-sub__dot {
+  color: #cbd5e1;
+}
+
+/* ---------- 主体 ---------- */
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-body {
+  padding: 32px 48px 40px;
+}
+
+/* 数据列：三列均分，靠 1px 竖线分割，不再套灰底方块 */
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 40px;
+  padding: 0 16px;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 24px;
+  min-width: 0;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-stat:first-child {
+  padding-left: 0;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-stat:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 10%;
+  bottom: 10%;
+  width: 1px;
+  background: rgba(15, 23, 42, 0.06);
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-stat__label {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-stat__value {
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-stat__value--sm {
+  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* 长文本：彻底去掉灰底，只靠图标锚点与缩进对齐 */
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-section {
+  margin-bottom: 32px;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-section:last-child {
+  margin-bottom: 0;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-section__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-section__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #64748b;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-section__content {
+  padding-left: 26px;
+  color: #334155;
+  font-size: 14.5px;
+  line-height: 1.8;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-section__content p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 申请区：视觉下沉 ---------- */
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-apply {
+  padding: 40px 48px;
+  background: #f8fafc;
+  border-top: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-apply__title {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-apply__desc {
+  margin: 0 0 20px;
+  color: #64748b;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* 水晶输入框：无边框 + inset 内凹，聚焦时外圈柔光 */
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-input {
+  position: relative;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow:
+    inset 0 2px 4px rgba(15, 23, 42, 0.02),
+    0 0 0 1px rgba(15, 23, 42, 0.08);
+  transition: box-shadow 0.3s var(--ui-ease);
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-input:focus-within {
+  box-shadow:
+    inset 0 2px 4px rgba(15, 23, 42, 0.02),
+    0 0 0 2px #bae6fd;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-input__field {
+  display: block;
+  width: 100%;
+  min-height: 140px;
+  padding: 20px;
+  border: 0 !important;
+  outline: none !important;
+  border-radius: 12px;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 14.5px;
+  line-height: 1.6;
+  resize: none;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-input__field::placeholder {
+  color: #94a3b8;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-input__count {
+  position: absolute;
+  right: 20px;
+  bottom: 16px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-apply__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-apply__note {
+  color: #94a3b8;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* 主按钮：全站最高级别的深色 + 物理按压回弹 */
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-submit {
+  padding: 12px 32px;
+  border: 0;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 24px rgba(15, 23, 42, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-submit:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+html.ilink-app body[data-app-page="teacher-detail"] .tdm-apply__status {
+  margin: 12px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ---------- 待处理申请区（导师本人视图，沿用旧组件，只做视觉衔接） ---------- */
+html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail__pending {
+  margin-top: 16px;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 767.98px) {
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    padding: 32px 24px 24px;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-head {
+    align-items: center;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-title-row {
+    justify-content: center;
+    gap: 10px;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-name {
+    font-size: 26px;
+    letter-spacing: -0.6px;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-suffix {
+    margin-left: -4px;
+    font-size: 17px;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-body {
+    padding: 24px;
+  }
+
+  /* 数据列改单列：竖线换成微弱横线 */
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-stats {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 0;
+    margin-bottom: 32px;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-stat {
+    padding: 0 0 16px;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-stat:not(:last-child)::after {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: auto;
+    height: 1px;
+    background: rgba(15, 23, 42, 0.06);
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-apply {
+    padding: 28px 24px;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-apply__actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-submit {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-submit,
+  html.ilink-app body[data-app-page="teacher-detail"] .tdm-submit:hover:not(:disabled) {
+    transition: none;
+    transform: none;
+  }
+}
+}

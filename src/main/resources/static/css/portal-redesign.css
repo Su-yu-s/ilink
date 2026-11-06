@@ -582,7 +582,6 @@ html.ilink-app body[data-app-page="teacher-detail"] .teacher-detail-main {
 html.ilink-app .detail-view,
 html.ilink-app .teacher-detail-card,
 html.ilink-app .community-article-card,
-html.ilink-app .community-article-comments,
 html.ilink-app .share-card {
   color: var(--ui-text) !important;
   background: var(--ui-surface) !important;
@@ -610,8 +609,7 @@ html.ilink-app .project-title {
 
 html.ilink-app .detail-view__body,
 html.ilink-app .teacher-detail__body,
-html.ilink-app .community-article-card__body,
-html.ilink-app .community-article-comments__body {
+html.ilink-app .community-article-card__body {
   padding: 24px !important;
 }
 
@@ -960,8 +958,7 @@ html.ilink-app body[data-app-page="team-chat"] .chat-input-wrapper {
   html.ilink-app .community-article-card__header,
   html.ilink-app .detail-view__body,
   html.ilink-app .teacher-detail__body,
-  html.ilink-app .community-article-card__body,
-  html.ilink-app .community-article-comments__body {
+  html.ilink-app .community-article-card__body {
     padding: 18px !important;
   }
 
@@ -2102,14 +2099,13 @@ html.ilink-app body[data-app-page="community-article"] .community-article-breadc
 html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb a:hover { color: #1d1d1f !important; }
 html.ilink-app body[data-app-page="community-article"] .community-article-breadcrumb__current { color: #1d1d1f !important; font-weight: 600 !important; }
 
-html.ilink-app body[data-app-page="community-article"] .community-article-card,
-html.ilink-app body[data-app-page="community-article"] .community-article-comments {
+html.ilink-app body[data-app-page="community-article"] .community-article-card {
   border: 1px solid #f5f5f7 !important;
   border-radius: 18px !important;
   box-shadow: 0 8px 30px rgba(15,23,42,0.05) !important;
   overflow: hidden !important;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-comments { margin-top: 20px !important; }
+/* 新版文章页的评论区长在画布上，不再套卡片 —— 交给 community-article-v2.css 接管 */
 
 html.ilink-app body[data-app-page="community-article"] .community-article-card__header { padding: 30px 34px 20px !important; border-bottom: 1px solid #f5f5f7 !important; }
 html.ilink-app body[data-app-page="community-article"] .community-article-card__header-top {
@@ -2175,101 +2171,101 @@ html.ilink-app body[data-app-page="community-article"] .community-article-card__
 
 /* 评论区 */
 html.ilink-app body[data-app-page="community-article"] .community-article-comments__header {
-  padding: 22px 34px 0 !important; display:flex !important; align-items:baseline !important; gap:10px !important;
+  padding: 22px 34px 0; display:flex; align-items:baseline; gap:10px;
 }
-html.ilink-app body[data-app-page="community-article"] .community-article-comments__title { font-size: 18px !important; font-weight: 600 !important; color:#1d1d1f !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article-comments__hint { font-size: 13px !important; color:#6e6e73 !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding: 18px 34px 28px !important; }
-html.ilink-app body[data-app-page="community-article"] .community-article-comment-list { margin-top: 0 !important; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__title { font-size: 18px; font-weight: 600; color:#1d1d1f; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__hint { font-size: 13px; color:#6e6e73; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding: 18px 34px 28px; }
+html.ilink-app body[data-app-page="community-article"] .community-article-comment-list { margin-top: 0; }
 
 /* ====== 评论区：三态编辑器（收起态 / 展开态 / 提交中） ====== */
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer {
-  display: flex !important;
-  align-items: flex-start !important;
-  gap: 12px !important;
-  padding: 0 0 20px !important;
-  margin-bottom: 20px !important;
-  border-bottom: 1px solid #f5f5f7 !important;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 0 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f5f5f7;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar {
-  flex: 0 0 36px !important;
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  border-radius: 50% !important;
-  overflow: hidden !important;
-  background: #f1f1f3 !important;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f1f1f3;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar img,
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar .il-avatar-fallback {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 14px !important;
-  color: #6e6e73 !important;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #6e6e73;
 }
 
 /* 收起态：假输入框 */
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  min-height: 44px !important;
-  padding: 10px 14px !important;
-  background: #f5f5f7 !important;
-  border: 1px solid #e8e8ed !important;
-  border-radius: 12px !important;
-  color: #6e6e73 !important;
-  font-size: 13.5px !important;
-  font-weight: 400 !important;
-  text-align: left !important;
-  cursor: text !important;
-  transition: background-color .15s ease, border-color .15s ease !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  background: #f5f5f7;
+  border: 1px solid #e8e8ed;
+  border-radius: 12px;
+  color: #6e6e73;
+  font-size: 13.5px;
+  font-weight: 400;
+  text-align: left;
+  cursor: text;
+  transition: background-color .15s ease, border-color .15s ease;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger svg {
-  width: 16px !important;
-  height: 16px !important;
-  flex: 0 0 16px !important;
-  color: #b6b6bb !important;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #b6b6bb;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger[hidden] {
-  display: none !important;
+  display: none;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger:hover {
-  background: #f5f5f7 !important;
-  border-color: #d2d2d7 !important;
+  background: #f5f5f7;
+  border-color: #d2d2d7;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__trigger:focus-visible {
-  outline: none !important;
-  border-color: #1d1d1f !important;
-  box-shadow: 0 0 0 3px rgba(31, 41, 55, .06) !important;
+  outline: none;
+  border-color: #1d1d1f;
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, .06);
 }
 
 /* 展开态：输入区 + 工具栏共用一个圆角容器 */
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__editor {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  background: #f5f5f7 !important;
-  border: 1px solid #e8e8ed !important;
-  border-radius: 12px !important;
-  overflow: hidden !important;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #f5f5f7;
+  border: 1px solid #e8e8ed;
+  border-radius: 12px;
+  overflow: hidden;
   animation: ilCommentEditorIn .18s ease both;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__editor[hidden] {
-  display: none !important;
+  display: none;
 }
 
 @keyframes ilCommentEditorIn {
@@ -2278,316 +2274,316 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-composer__edi
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea {
-  display: block !important;
-  width: 100% !important;
-  min-height: 96px !important;
-  max-height: 320px !important;
-  padding: 12px 16px 8px !important;
-  border: 0 !important;
-  background: transparent !important;
-  color: #1d1d1f !important;
-  font-family: inherit !important;
-  font-size: 13.5px !important;
-  line-height: 1.7 !important;
-  resize: vertical !important;
-  box-shadow: none !important;
+  display: block;
+  width: 100%;
+  min-height: 96px;
+  max-height: 320px;
+  padding: 12px 16px 8px;
+  border: 0;
+  background: transparent;
+  color: #1d1d1f;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.7;
+  resize: vertical;
+  box-shadow: none;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea:focus {
-  outline: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
+  outline: none;
+  border: 0;
+  box-shadow: none;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea::placeholder {
-  color: #6e6e73 !important;
+  color: #6e6e73;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__toolbar {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  min-height: 40px !important;
-  padding: 6px 10px !important;
-  border-top: 1px solid #e8e8ed !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-top: 1px solid #e8e8ed;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__tools {
-  display: flex !important;
-  align-items: center !important;
-  gap: 2px !important;
-  min-width: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-tool {
-  width: 28px !important;
-  height: 28px !important;
-  flex: 0 0 28px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 !important;
-  border: 0 !important;
-  background: transparent !important;
-  border-radius: 8px !important;
-  color: #6e6e73 !important;
-  cursor: pointer !important;
-  transition: background-color .15s ease, color .15s ease !important;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-tool svg {
-  width: 16px !important;
-  height: 16px !important;
+  width: 16px;
+  height: 16px;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-tool:hover {
-  background: #e8e8ed !important;
-  color: #424245 !important;
+  background: #e8e8ed;
+  color: #424245;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  margin-left: auto !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count {
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  color: #6e6e73 !important;
-  font-variant-numeric: tabular-nums !important;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6e6e73;
+  font-variant-numeric: tabular-nums;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count[hidden] {
-  display: none !important;
+  display: none;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count.is-warn {
-  color: #8a5300 !important;
+  color: #8a5300;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-composer__count.is-over {
-  color: #d70015 !important;
+  color: #d70015;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-cancel {
-  height: 30px !important;
-  padding: 0 12px !important;
-  border: 0 !important;
-  background: transparent !important;
-  border-radius: 8px !important;
-  color: #6e6e73 !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: background-color .15s ease, color .15s ease !important;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  color: #6e6e73;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-cancel:hover {
-  background: #e8e8ed !important;
-  color: #1d1d1f !important;
+  background: #e8e8ed;
+  color: #1d1d1f;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit {
-  height: 30px !important;
-  padding: 0 16px !important;
-  border: 1px solid transparent !important;
-  border-radius: 8px !important;
-  background: #e8e8ed !important;
-  color: #6e6e73 !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  cursor: not-allowed !important;
-  transition: background-color .15s ease, color .15s ease, transform .1s ease !important;
+  height: 30px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #e8e8ed;
+  color: #6e6e73;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: background-color .15s ease, color .15s ease, transform .1s ease;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready {
-  background: var(--btn-primary-bg, #0066cc) !important;
-  color: var(--btn-primary-text, #ffffff) !important;
-  cursor: pointer !important;
+  background: var(--btn-primary-bg, #0066cc);
+  color: var(--btn-primary-text, #ffffff);
+  cursor: pointer;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready:hover {
-  background: var(--btn-primary-bg-hover, #b5dcff) !important;
+  background: var(--btn-primary-bg-hover, #b5dcff);
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-ready:active {
-  transform: var(--btn-press, scale(0.97)) !important;
+  transform: var(--btn-press, scale(0.97));
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-submit.is-loading {
-  background: var(--btn-primary-bg-hover, #b5dcff) !important;
-  color: var(--btn-primary-text, #0c4a6e) !important;
-  cursor: progress !important;
+  background: var(--btn-primary-bg-hover, #b5dcff);
+  color: var(--btn-primary-text, #0c4a6e);
+  cursor: progress;
 }
 
 /* 评论条目：悬停整条淡出删除按钮 */
 html.ilink-app body[data-app-page="community-article"] .community-article-comment {
-  padding: 14px 12px !important;
-  margin: 0 -12px !important;
-  border-radius: 12px !important;
-  border-bottom: 1px solid #f5f5f7 !important;
-  transition: background-color .15s ease !important;
+  padding: 14px 12px;
+  margin: 0 -12px;
+  border-radius: 12px;
+  border-bottom: 1px solid #f5f5f7;
+  transition: background-color .15s ease;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment:last-child {
-  border-bottom: 0 !important;
+  border-bottom: 0;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment:hover {
-  background: rgba(249, 250, 251, .6) !important;
+  background: rgba(249, 250, 251, .6);
 }
 
 /* 评论操作区（回复 / 删除）：默认隐藏，悬停整条或键盘聚焦时淡入 */
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 4px !important;
-  opacity: 0 !important;
-  transition: opacity .15s ease !important;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .15s ease;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment:hover .community-article-comment__actions,
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__actions:focus-within {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__action {
-  padding: 2px 8px !important;
-  border: 0 !important;
-  background: transparent !important;
-  border-radius: 8px !important;
-  color: #6e6e73 !important;
-  font-size: 12px !important;
-  cursor: pointer !important;
-  transition: background-color .15s ease, color .15s ease !important;
+  padding: 2px 8px;
+  border: 0;
+  background: transparent;
+  border-radius: 8px;
+  color: #6e6e73;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__action:hover {
-  background: #f5f5f7 !important;
-  color: #1d1d1f !important;
+  background: #f5f5f7;
+  color: #1d1d1f;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__delete:hover {
-  background: #fee2e2 !important;
-  color: #d70015 !important;
+  background: #fee2e2;
+  color: #d70015;
 }
 
 /* 回复列表：单层缩进，左侧细引导线 */
 html.ilink-app body[data-app-page="community-article"] .il-comment-replies {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 2px !important;
-  margin-top: 10px !important;
-  padding-left: 12px !important;
-  border-left: 2px solid #f5f5f7 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid #f5f5f7;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply {
-  padding: 8px 10px !important;
-  margin: 0 !important;
-  border-bottom: 0 !important;
-  border-radius: 8px !important;
+  padding: 8px 10px;
+  margin: 0;
+  border-bottom: 0;
+  border-radius: 8px;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply .community-article-comment__avatar {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  min-height: 28px !important;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply .community-article-comment__author {
-  font-size: 12.5px !important;
+  font-size: 12.5px;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment--reply .community-article-comment__body {
-  font-size: 13px !important;
+  font-size: 13px;
 }
 
 html.ilink-app body[data-app-page="community-article"] .community-article-comment__reply-to {
-  margin-right: 3px !important;
-  color: #6e6e73 !important;
-  font-weight: 500 !important;
+  margin-right: 3px;
+  color: #6e6e73;
+  font-weight: 500;
 }
 
 /* 内联回复框 */
 html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box {
-  margin-top: 10px !important;
-  padding: 8px 10px !important;
-  background: #f5f5f7 !important;
-  border: 1px solid #e8e8ed !important;
-  border-radius: 12px !important;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #f5f5f7;
+  border: 1px solid #e8e8ed;
+  border-radius: 12px;
   animation: ilCommentEditorIn .18s ease both;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box__input {
-  display: block !important;
-  width: 100% !important;
-  min-height: 52px !important;
-  padding: 4px 2px !important;
-  border: 0 !important;
-  background: transparent !important;
-  color: #1d1d1f !important;
-  font-family: inherit !important;
-  font-size: 13px !important;
-  line-height: 1.65 !important;
-  resize: vertical !important;
-  box-shadow: none !important;
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  padding: 4px 2px;
+  border: 0;
+  background: transparent;
+  color: #1d1d1f;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.65;
+  resize: vertical;
+  box-shadow: none;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box__input:focus {
-  outline: none !important;
+  outline: none;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-reply-box__actions {
-  display: flex !important;
-  justify-content: flex-end !important;
-  align-items: center !important;
-  gap: 8px !important;
-  margin-top: 6px !important;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 /* 加载更多 */
 html.ilink-app body[data-app-page="community-article"] .il-comment-more {
-  display: flex !important;
-  justify-content: center !important;
-  padding: 16px 0 4px !important;
+  display: flex;
+  justify-content: center;
+  padding: 16px 0 4px;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-more[hidden] {
-  display: none !important;
+  display: none;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn {
-  height: 34px !important;
-  padding: 0 18px !important;
-  border: 1px solid #e8e8ed !important;
-  border-radius: 8px !important;
-  background: #ffffff !important;
-  color: #6e6e73 !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: background-color .15s ease, border-color .15s ease, color .15s ease !important;
+  height: 34px;
+  padding: 0 18px;
+  border: 1px solid #e8e8ed;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #6e6e73;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
 
 html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn:hover {
-  background: #f5f5f7 !important;
-  border-color: #d2d2d7 !important;
-  color: #1d1d1f !important;
+  background: #f5f5f7;
+  border-color: #d2d2d7;
+  color: #1d1d1f;
 }
 
 /* 平板：隐藏工具栏尾部提示；移动端：精简图标、头像缩小 */
 @media (max-width: 767.98px) {
   html.ilink-app body[data-app-page="community-article"] .il-comment-composer__avatar {
-    flex-basis: 32px !important;
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
+    flex-basis: 32px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
   }
 }
 
@@ -2595,23 +2591,23 @@ html.ilink-app body[data-app-page="community-article"] .il-comment-more__btn:hov
   html.ilink-app body[data-app-page="community-article"] .il-comment-tool[data-tool="image"],
   html.ilink-app body[data-app-page="community-article"] .il-comment-tool[data-tool="code"],
   html.ilink-app body[data-app-page="community-article"] .il-comment-tool[data-tool="mention"] {
-    display: none !important;
+    display: none;
   }
 
   html.ilink-app body[data-app-page="community-article"] .il-comment-composer__textarea {
-    min-height: 80px !important;
+    min-height: 80px;
   }
 }
 html.ilink-app body[data-app-page="community-article"] .community-article-comment-list__empty {
-  padding: 22px !important; text-align:center !important; color:#6e6e73 !important; font-size: 13.5px !important;
-  background:#f5f5f7 !important; border:1px solid #f5f5f7 !important; border-radius:12px !important;
+  padding: 22px; text-align:center; color:#6e6e73; font-size: 13.5px;
+  background:#f5f5f7; border:1px solid #f5f5f7; border-radius:12px;
 }
 @media (max-width: 700px) {
   html.ilink-app body[data-app-page="community-article"] .community-article-card__header,
   html.ilink-app body[data-app-page="community-article"] .community-article-card__body,
   html.ilink-app body[data-app-page="community-article"] .community-article-comments__header,
-  html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding-left:20px !important; padding-right:20px !important; }
-  html.ilink-app body[data-app-page="community-article"] .community-article__title { font-size: 23px !important; }
+  html.ilink-app body[data-app-page="community-article"] .community-article-comments__body { padding-left:20px; padding-right:20px; }
+  html.ilink-app body[data-app-page="community-article"] .community-article__title { font-size: 23px; }
 }
 
 /* ====== 组队详情：成员横向同一行排列 ====== */

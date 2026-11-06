@@ -9,6 +9,7 @@
     <link th:href="@{/css/teacher-detail.css}" rel="stylesheet">
     <link th:href="@{/css/portal-redesign.css}" rel="stylesheet">
     <link th:href="@{/css/detail-refresh.css}" rel="stylesheet">
+    <link th:href="@{/css/teacher-detail-v2.css}" rel="stylesheet">
 </head>
 <body data-app-page="teacher-detail" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -30,82 +31,79 @@
                 </div>
             </section>
 
-            <article class="detail-view teacher-detail-card page-transition" id="teacherDetailContent" hidden>
-                <header class="detail-view__header teacher-detail__header">
-                    <div class="teacher-detail__identity">
-                        <div id="teacherHeaderAvatar" class="teacher-detail__avatar-slot" aria-hidden="false"></div>
-                        <div class="teacher-detail__title-wrap">
-                            <p class="detail-view__eyebrow">导师详情 <span class="td-cert-badge">认证导师</span></p>
-                            <h1 class="detail-view__title mb-0" id="teacherName">导师姓名</h1>
+            <article class="tdm-page page-transition" id="teacherDetailContent" hidden>
+                <header class="tdm-header">
+                    <div id="teacherHeaderAvatar" class="tdm-avatar" aria-hidden="false"></div>
+                    <div class="tdm-head">
+                        <div class="tdm-title-row">
+                            <h1 class="tdm-name" id="teacherName">导师姓名</h1>
+                            <span class="tdm-suffix" id="teacherNameSuffix" hidden>导师</span>
+                            <span class="tdm-cert">
+                                <svg class="tdm-cert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                认证导师
+                            </span>
                         </div>
+                        <p class="tdm-sub"><span id="teacherMajor">-</span><span class="tdm-sub__dot">·</span><span id="teacherTitle">-</span></p>
                     </div>
                 </header>
 
-                <div class="teacher-detail__body">
-                    <div class="detail-view__meta teacher-detail__meta">
-                        <div class="td-stat-grid">
-                            <div class="detail-view__row td-stat">
-                                <span class="detail-view__term">申请时间</span>
-                                <span class="detail-view__value" id="applicationTime">-</span>
-                            </div>
-                            <div class="detail-view__row td-stat">
-                                <span class="detail-view__term">已通过合作</span>
-                                <span class="detail-view__value" id="teacherApprovedProjects">0</span>
-                            </div>
-                            <div class="detail-view__row td-stat">
-                                <span class="detail-view__term">公开成果</span>
-                                <span class="detail-view__value" id="teacherPublicAssets">0</span>
-                            </div>
+                <div class="tdm-body">
+                    <div class="tdm-stats">
+                        <div class="tdm-stat">
+                            <span class="tdm-stat__label">申请时间</span>
+                            <span class="tdm-stat__value tdm-stat__value--sm" id="applicationTime">-</span>
                         </div>
-
-                        <div class="td-info-grid">
-                            <div class="detail-view__row td-info">
-                                <span class="detail-view__term">专业领域</span>
-                                <span class="detail-view__value" id="teacherMajor">-</span>
-                            </div>
-                            <div class="detail-view__row td-info">
-                                <span class="detail-view__term">职称</span>
-                                <span class="detail-view__value" id="teacherTitle">-</span>
-                            </div>
+                        <div class="tdm-stat">
+                            <span class="tdm-stat__label">已通过合作</span>
+                            <span class="tdm-stat__value" id="teacherApprovedProjects">0</span>
                         </div>
-
-                        <div class="detail-view__row detail-view__row--block td-textblock td-textblock--bio">
-                            <span class="detail-view__term">个人简介</span>
-                            <span class="detail-view__value">
-                                <p id="teacherBio" class="detail-view__text mb-0">-</p>
-                            </span>
-                        </div>
-                        <div class="detail-view__row detail-view__row--block td-textblock td-textblock--research">
-                            <span class="detail-view__term">研究方向</span>
-                            <span class="detail-view__value">
-                                <p id="teacherResearch" class="detail-view__text mb-0">-</p>
-                            </span>
-                        </div>
-                        <div class="detail-view__row detail-view__row--block td-textblock td-textblock--projects" id="teacherProjectsRow" hidden>
-                            <span class="detail-view__term">代表项目</span>
-                            <span class="detail-view__value">
-                                <p id="teacherProjects" class="detail-view__text mb-0">-</p>
-                            </span>
+                        <div class="tdm-stat">
+                            <span class="tdm-stat__label">公开成果</span>
+                            <span class="tdm-stat__value" id="teacherPublicAssets">0</span>
                         </div>
                     </div>
-                </div>
-            </article>
 
-            <section id="projectApplySection" class="teacher-detail__apply td-standalone-card" aria-labelledby="projectApplyHeading">
-                        <h2 id="projectApplyHeading" class="teacher-detail__section-label">申请合作 / 课题意向</h2>
-                        <p id="projectApplyHint" class="teacher-detail__apply-hint">登录后可向该导师提交合作意向说明。</p>
-                        <div class="td-textarea-wrap">
-                            <textarea id="projectApplyMessage" class="teacher-detail__textarea" rows="5" maxlength="500"
-                                aria-label="合作意向说明"
-                                placeholder="请简述您的背景、技能与希望参与的方向（选填）"></textarea>
-                            <span class="td-char-count"><span id="tdCharCount">0</span> / 500</span>
-                        </div>
-                        <div class="teacher-detail__apply-actions td-apply-actions">
-                            <span class="td-apply-note">提交后，导师将在 3-5 个工作日内处理您的申请。</span>
-                            <button type="button" id="projectApplyBtn" class="btn btn-primary teacher-detail__submit">提交申请</button>
-                        </div>
-                        <p id="projectApplyStatus" class="teacher-detail__apply-status" role="status"></p>
+                    <section class="tdm-section">
+                        <h2 class="tdm-section__title">
+                            <svg class="tdm-section__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            个人简介
+                        </h2>
+                        <div class="tdm-section__content"><p id="teacherBio">-</p></div>
                     </section>
+
+                    <section class="tdm-section">
+                        <h2 class="tdm-section__title">
+                            <svg class="tdm-section__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                            研究方向
+                        </h2>
+                        <div class="tdm-section__content"><p id="teacherResearch">-</p></div>
+                    </section>
+
+                    <section class="tdm-section" id="teacherProjectsRow" hidden>
+                        <h2 class="tdm-section__title">
+                            <svg class="tdm-section__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                            代表项目
+                        </h2>
+                        <div class="tdm-section__content"><p id="teacherProjects">-</p></div>
+                    </section>
+                </div>
+
+                <section id="projectApplySection" class="tdm-apply" aria-labelledby="projectApplyHeading">
+                    <h2 id="projectApplyHeading" class="tdm-apply__title">申请合作 / 课题意向</h2>
+                    <p id="projectApplyHint" class="tdm-apply__desc">登录后可向该导师提交合作意向说明。</p>
+                    <div class="tdm-input">
+                        <textarea id="projectApplyMessage" class="tdm-input__field" rows="5" maxlength="500"
+                            aria-label="合作意向说明"
+                            placeholder="请简述您的背景、技能与希望参与的方向（选填）"></textarea>
+                        <span class="tdm-input__count"><span id="tdCharCount">0</span> / 500</span>
+                    </div>
+                    <div class="tdm-apply__actions">
+                        <span class="tdm-apply__note">提交后，导师将在 3-5 个工作日内处理您的申请。</span>
+                        <button type="button" id="projectApplyBtn" class="tdm-submit">提交申请</button>
+                    </div>
+                    <p id="projectApplyStatus" class="tdm-apply__status" role="status"></p>
+                </section>
+            </article>
 
                     <section id="teacherPendingSection" class="teacher-detail__apply teacher-detail__pending td-standalone-card" aria-labelledby="teacherPendingHeading" hidden>
                         <div class="teacher-detail__pending-heading">
