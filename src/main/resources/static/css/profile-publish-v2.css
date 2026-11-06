@@ -1,0 +1,772 @@
+/* ============================================================
+   我的发布 · 浅云蓝无边界与物理光影
+   ═══════════════════════════════════════════════════════════
+   本文件在 profile-posts.html 里最后加载，且刻意不包进 @layer：
+   未分层的普通声明恒胜任何分层内的普通声明，因此全文件不需要
+   一个 !important 就能压过 profile.css / profile-refresh.css。
+   作用域固定为 data-profile-page="posts"，不影响个人中心其它页。
+   ============================================================ */
+
+/* ────────────────────────────────────────────────────────────
+   设计令牌（规范 v1.0）
+   ──────────────────────────────────────────────────────────── */
+html.ilink-app body[data-profile-page="posts"] {
+  --text-main: #09090b;      /* 主标题 */
+  --text-sub: #3f3f46;       /* 正文描述 */
+  --text-light: #a1a1aa;     /* 元数据 */
+
+  --brand-primary: #0284c7;
+  --brand-soft: rgba(224, 242, 254, 0.6);
+
+  --danger-primary: #dc2626;
+  --danger-hover: #b91c1c;
+
+  --surface-panel: #ffffff;
+  --panel-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.08), 0 0 0 1px #ffffff;
+
+  /* 极光背景：两层径向光 + 一层竖向底色 */
+  --bg-radial:
+    radial-gradient(circle at 15% 0%, rgba(224, 242, 254, 0.8) 0%, transparent 40%),
+    radial-gradient(circle at 85% 100%, rgba(186, 230, 253, 0.4) 0%, transparent 40%),
+    linear-gradient(180deg, #ffffff 0%, #f1f5fb 100%);
+}
+
+/* ────────────────────────────────────────────────────────────
+   画布：外层 1400 居中，两侧 40px 留白
+   ──────────────────────────────────────────────────────────── */
+html.ilink-app body[data-profile-page="posts"] .il-page-wrapper {
+  width: min(100% - 80px, 1400px);
+  max-width: 1400px;
+  margin-right: auto;
+  margin-left: auto;
+  padding: 32px 0 64px;
+  position: relative;
+}
+
+/* 极光铺满视口而不是只铺内容列：固定定位 + 负层级，
+   画在页面底色之上、内容之下，滚动时不动。 */
+html.ilink-app body[data-profile-page="posts"] .il-page-wrapper::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--bg-radial);
+  pointer-events: none;
+}
+
+/* ────────────────────────────────────────────────────────────
+   双栏：左 240 玻璃侧栏 / 右 悬浮白板
+   ──────────────────────────────────────────────────────────── */
+html.ilink-app body[data-profile-page="posts"] .il-profile-layout {
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+html.ilink-app body[data-profile-page="posts"] .il-profile-sidebar {
+  padding: 20px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 16px 40px -12px rgba(15, 23, 42, 0.08),
+    inset 0 1px 1px #ffffff;
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+}
+
+html.ilink-app body[data-profile-page="posts"] .il-profile-content {
+  padding: 28px 32px;
+  border-radius: 20px;
+  background: var(--surface-panel);
+  box-shadow: var(--panel-shadow);
+}
+
+/* ────────────────────────────────────────────────────────────
+   顶部 Header
+   ──────────────────────────────────────────────────────────── */
+html.ilink-app body[data-profile-page="posts"] .il-section-title {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+html.ilink-app body[data-profile-page="posts"] .il-section-subtitle {
+  margin: 6px 0 0;
+  color: var(--text-light);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+html.ilink-app body[data-profile-page="posts"] .il-section-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 「去社区发文 / 发布成果」沿用站点标准的 .il-btn 体系，本页不做改写；
+   只有「管理 / 完成」是本页新增的按钮，才需要在这里定义。 */
+
+/* 管理 / 完成：白底黑字的实体按钮。
+   和「去社区发文」同尺寸同边框，靠更深的字色区分动作层级。 */
+html.ilink-app body[data-profile-page="posts"] .pp-manage-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 与相邻的 .il-btn-sm 同为 32px，避免按钮行高低不齐 */
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 9px;
+  background: #ffffff;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-manage-btn:hover {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.2);
+  color: var(--text-main);
+}
+
+/* 删除选中：默认置灰，勾选后转危险红 */
+html.ilink-app body[data-profile-page="posts"] .pp-batch-delete {
+  display: none;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #f4f4f5;
+  color: #c4c4c8;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: not-allowed;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-batch-delete:not(:disabled) {
+  background: var(--danger-primary);
+  border-color: var(--danger-primary);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.24);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-batch-delete:not(:disabled):hover {
+  background: var(--danger-hover);
+  border-color: var(--danger-hover);
+}
+
+/* 管理态：隐去发文入口，露出删除选中 */
+html.ilink-app body[data-profile-page="posts"] .il-section-header__actions.is-managing .il-btn {
+  display: none;
+}
+
+html.ilink-app body[data-profile-page="posts"] .il-section-header__actions.is-managing .pp-batch-delete {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Tab + 搜索
+   ──────────────────────────────────────────────────────────── */
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 8px;
+  padding: 14px 0 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: transparent;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-tabs {
+  display: flex;
+  gap: 24px;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-tab {
+  position: relative;
+  padding: 0 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--text-light);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.16s ease;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-tab:hover {
+  color: var(--text-sub);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-tab.active {
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-tab.active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text-main);
+}
+
+/* 管理态：Tab 置灰不可点，右侧浮出红色计数 */
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar.is-managing .pp-tabs {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-selection-hint {
+  display: none;
+  flex: 0 0 auto;
+  color: var(--danger-primary);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar.is-managing .pp-selection-hint {
+  display: inline;
+}
+
+/* 搜索：无边框透明底，只留图标做视觉引导 */
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar__search {
+  flex: 0 1 280px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar__search > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-light);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar__input {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 13.5px;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar__input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar__input::placeholder {
+  color: var(--text-light);
+}
+
+/* 管理期间锁定列表范围：搜索与翻页都不可用 */
+html.ilink-app body[data-profile-page="posts"] .pf-toolbar__input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-pager.is-managing {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* ────────────────────────────────────────────────────────────
+   列表项
+   ──────────────────────────────────────────────────────────── */
+/* 上下分层：标题一行、内容一行。
+   标题脱离封面的横向流，所有行的标题左边缘才能真正对齐。 */
+html.ilink-app body[data-profile-page="posts"] .pp-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin: 0 -12px;
+  padding: 16px 12px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  transition: background 0.16s ease;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-row__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-row__main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-row:hover {
+  background: #f8fafc;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-row:last-child {
+  border-bottom: 0;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-cover {
+  flex: 0 0 120px;
+  width: 120px;
+  height: 80px;
+  border: 1px solid rgba(15, 23, 42, 0.04);
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
+}
+
+/* 封面来自用户上传，长宽比从 1.4 到 2 以上都有。
+   用 cover 会把宽图两侧的文字标题直接切掉，这里改成 contain：
+   整张图完整可见，空出来的部分由浅色底补上。 */
+html.ilink-app body[data-profile-page="posts"] .pp-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #f8fafc;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-cover__letter {
+  color: #cbd5e1;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-main);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.4;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-title:hover {
+  color: var(--brand-primary);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-tag {
+  flex: 0 0 auto;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-tag--work {
+  background: var(--brand-soft);
+  color: #0369a1;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-tag--article {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+/* 描述单行，超出省略 */
+html.ilink-app body[data-profile-page="posts"] .pp-desc {
+  display: block;
+  max-width: none;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-sub);
+  font-size: 13px;
+  line-height: 1.6;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 0;
+  color: var(--text-light);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-action {
+  padding: 2px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-sub);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.6;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-action:hover {
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--text-main);
+}
+
+/* 删除是唯一的危险色，常态即红；hover 加下划线 */
+html.ilink-app body[data-profile-page="posts"] .pp-action--danger {
+  color: var(--danger-primary);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-action--danger:hover {
+  background: rgba(220, 38, 38, 0.06);
+  color: var(--danger-hover);
+  text-decoration: underline;
+}
+
+/* 圆形复选框：常态隐藏，管理态出现 */
+html.ilink-app body[data-profile-page="posts"] .pp-check {
+  display: none;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  margin-left: 4px;
+  padding: 0;
+  place-items: center;
+  border: 1.5px solid #d4d4d8;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-list.is-managing .pp-check {
+  display: grid;
+  /* 操作区隐藏后由复选框自己顶到最右 */
+  margin-left: auto;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-list.is-managing .pp-actions {
+  display: none;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-check:hover {
+  border-color: var(--danger-primary);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-check.is-checked {
+  border-color: var(--danger-primary);
+  background: var(--danger-primary);
+}
+
+/* 白色对勾用两条边框旋转拼出来，避免再引入一份图标 */
+html.ilink-app body[data-profile-page="posts"] .pp-check.is-checked::after {
+  content: "";
+  width: 4px;
+  height: 8px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+/* ────────────────────────────────────────────────────────────
+   二次确认弹窗
+   ──────────────────────────────────────────────────────────── */
+html.ilink-app body[data-profile-page="posts"] .pp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal[hidden] {
+  display: none;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 9, 11, 0.32);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__card {
+  position: relative;
+  width: 400px;
+  max-width: 100%;
+  padding: 32px 28px 24px;
+  border-radius: 20px;
+  background: var(--surface-panel);
+  box-shadow: 0 32px 80px -16px rgba(15, 23, 42, 0.32);
+  text-align: center;
+  animation: ppModalIn 0.2s var(--ui-ease, ease) both;
+}
+
+@keyframes ppModalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: var(--danger-primary);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__title {
+  margin: 0;
+  color: var(--text-main);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__text {
+  margin: 8px 0 0;
+  color: var(--text-light);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__btn {
+  flex: 1 1 0;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background-color 0.16s ease, opacity 0.16s ease;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__btn--cancel {
+  background: #f4f4f5;
+  color: var(--text-sub);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__btn--cancel:hover {
+  background: #e9e9ec;
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__btn--danger {
+  background: var(--danger-primary);
+  color: #ffffff;
+  box-shadow: 0 6px 16px -6px rgba(220, 38, 38, 0.6);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__btn--danger:hover {
+  background: var(--danger-hover);
+}
+
+html.ilink-app body[data-profile-page="posts"] .pp-modal__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ────────────────────────────────────────────────────────────
+   响应式
+   ──────────────────────────────────────────────────────────── */
+/* 平板：左栏折叠，主内容占满。
+   断点取 1024 是刻意的：profile.css 在 (768–1024) 已经把导航切成横排，
+   若这里用 1023.98，恰好 1024px 的屏幕会落进"横排导航 + 双栏布局"的
+   缝隙，导航被 240px 的侧栏挤成竖排文字。 */
+@media (max-width: 1024px) {
+  html.ilink-app body[data-profile-page="posts"] .il-page-wrapper {
+    width: min(100% - 32px, 1400px);
+    padding: 20px 0 48px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .il-profile-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .il-profile-sidebar {
+    width: 100%;
+    max-height: none;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .il-profile-nav {
+    display: flex;
+    flex-flow: row nowrap;
+    gap: 4px;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .il-profile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .il-profile-nav-group {
+    display: none;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .il-profile-nav-item {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 10px 12px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 767.98px) {
+  html.ilink-app body[data-profile-page="posts"] .il-profile-content {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  /* 工具栏拆成两行：Tab 一行、搜索一行 */
+  html.ilink-app body[data-profile-page="posts"] .pf-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding-top: 12px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pf-toolbar__search {
+    flex: 1 1 auto;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .il-section-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .il-section-header__actions {
+    flex-wrap: wrap;
+  }
+
+  /* 管理态的按钮必须在拇指热区里 */
+  html.ilink-app body[data-profile-page="posts"] .pp-batch-delete,
+  html.ilink-app body[data-profile-page="posts"] .pp-manage-btn {
+    min-height: 44px;
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pp-row {
+    gap: 8px;
+    padding: 14px 8px;
+  }
+
+  /* 窄屏第二行会挤：操作区主动掉到下一行，靠右对齐 */
+  html.ilink-app body[data-profile-page="posts"] .pp-row__main {
+    flex-wrap: wrap;
+    gap: 10px 12px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pp-cover {
+    flex: 0 0 96px;
+    width: 96px;
+    height: 64px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pp-cover__letter {
+    font-size: 26px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pp-meta {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pp-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pp-action {
+    min-height: 36px;
+    padding: 4px 10px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pp-modal__card {
+    padding: 28px 20px 20px;
+  }
+}
+
+@media (max-width: 479.98px) {
+  html.ilink-app body[data-profile-page="posts"] .pp-cover {
+    flex: 0 0 80px;
+    width: 80px;
+    height: 56px;
+  }
+
+  html.ilink-app body[data-profile-page="posts"] .pp-cover__letter {
+    font-size: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.ilink-app body[data-profile-page="posts"] .pp-modal__card {
+    animation: none;
+  }
+}

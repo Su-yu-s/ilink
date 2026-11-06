@@ -9,6 +9,7 @@
     <link th:href="@{/css/profile.css}" rel="stylesheet">
     <link th:href="@{/css/profile-refresh.css}" rel="stylesheet">
     <link th:href="@{/css/v2/pages/profile.css}" rel="stylesheet">
+    <link th:href="@{/css/profile-publish-v2.css}" rel="stylesheet">
 </head>
 <body data-profile-page="posts" class="ilink-page-bg" th:attr="data-user-id=${currentUser != null ? currentUser.id : null}">
     <div th:replace="fragments/header :: header(${currentUser}, '')"></div>
@@ -24,29 +25,54 @@
                             <h2 class="il-section-title">我的发布</h2>
                             <p class="il-section-subtitle">你发布的作品与文章都汇总在这里，可随时编辑或查看</p>
                         </div>
-                        <div class="il-section-header__actions">
+                        <div class="il-section-header__actions" id="publishActions">
+                            <button type="button" class="pp-batch-delete" id="publishBatchDelete" disabled>删除选中</button>
                             <a href="/community.html" class="il-btn il-btn-ghost il-btn-sm">去社区发文</a>
                             <a href="/profile-asset-edit.html" class="il-btn il-btn-primary il-btn-sm">发布成果</a>
+                            <button type="button" class="pp-manage-btn" id="publishManageBtn" aria-pressed="false">管理</button>
                         </div>
                     </div>
 
-                    <div class="pf-toolbar">
+                    <div class="pf-toolbar" id="publishToolbar">
                         <div class="pp-tabs" role="tablist">
                             <button type="button" class="pp-tab active" data-publish-type="all" role="tab" aria-selected="true">全部</button>
                             <button type="button" class="pp-tab" data-publish-type="work" role="tab" aria-selected="false">作品</button>
                             <button type="button" class="pp-tab" data-publish-type="article" role="tab" aria-selected="false">文章</button>
                         </div>
+                        <span class="pp-selection-hint" id="publishSelectionHint" aria-live="polite">
+                            已选择 <span id="publishSelectionCount">0</span> 项
+                        </span>
                         <div class="pf-toolbar__search">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
                             <input type="text" id="publishSearch" class="pf-toolbar__input" aria-label="搜索标题或内容" placeholder="搜索标题或内容...">
                         </div>
                     </div>
 
-                    <div id="publishList" style="min-height: 100px;">
+                    <div id="publishList" class="pp-list" style="min-height: 100px;">
                         <p class="pp-loading">加载中…</p>
                     </div>
                     <nav id="publishPager" class="pp-pager" aria-label="分页"></nav>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除二次确认：毛玻璃遮罩 + 实体白卡 -->
+    <div class="pp-modal" id="publishConfirm" hidden>
+        <div class="pp-modal__backdrop" data-confirm-cancel></div>
+        <div class="pp-modal__card" role="dialog" aria-modal="true" aria-labelledby="publishConfirmTitle">
+            <div class="pp-modal__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </div>
+            <h3 class="pp-modal__title" id="publishConfirmTitle">确认删除吗？</h3>
+            <p class="pp-modal__text">此操作无法撤销。</p>
+            <div class="pp-modal__actions">
+                <button type="button" class="pp-modal__btn pp-modal__btn--cancel" id="publishConfirmCancel" data-confirm-cancel>取消</button>
+                <button type="button" class="pp-modal__btn pp-modal__btn--danger" id="publishConfirmOk">确认删除</button>
             </div>
         </div>
     </div>
