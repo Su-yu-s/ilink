@@ -254,10 +254,13 @@ function renderTeamList(teams) {
                 '</span>');
         });
         for (var i = 0; i < missing; i++) {
-            var needRole = skillList[i] || '待定';
+            // 空缺席位的标签必须写明「缺」：只写技能名（尤其 "C" 这种单字母）
+            // 会被读成某个成员的名字，配上 "+" 头像就更像"添加 C"的按钮。
+            var skill = skillList[i];
+            var seatLabel = skill ? ('缺 ' + skill) : '待招募';
             emptyCells.push('<span class="tm-seat tm-seat--empty">' +
                 '<span class="tm-seat__face">+</span>' +
-                '<span class="tm-seat__duty" title="' + escapeHtml(needRole) + '">' + escapeHtml(needRole) + '</span>' +
+                '<span class="tm-seat__duty" title="' + escapeHtml(seatLabel) + '">' + escapeHtml(seatLabel) + '</span>' +
                 '</span>');
         }
 
