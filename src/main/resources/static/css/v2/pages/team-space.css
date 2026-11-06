@@ -1279,3 +1279,172 @@ html.ilink-app body[data-app-page="team-space"] .taw-contextbar p {
     padding: 14px;
   }
 }
+
+/* ============================================================
+   团队空间 · 弹窗（创建任务 / 任务详情 / 邀请等）
+   ═══════════════════════════════════════════════════════════
+   全站弹窗原本是 Bootstrap 默认的那一套：标题 18px、标签 14px、
+   字段圆角 8px、页脚按钮大小不一。这里统一到冷白体系：
+   20px 圆角画板、13px 标签、44px 字段、浅云蓝聚焦环。
+   写在文件末尾且不包 @layer，靠未分层压过 style.css 与
+   team-space-refresh.css 的同名规则。
+   ============================================================ */
+/* 圆角与投影在 app-redesign.css 里是 !important 的，
+   但取值来自下面这几个变量 —— 改值比改声明更干净：
+   变量按「最近的祖先」解析，作用到弹窗内部即可，不外溢。 */
+html.ilink-app body[data-app-page="team-space"] .modal-content {
+  --ui-radius-surface: 20px;
+  --ui-shadow-float:
+    0 32px 80px -20px rgba(15, 23, 42, 0.32),
+    0 2px 8px rgba(15, 23, 42, 0.06);
+  --field-radius: 10px;
+  overflow: hidden;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal-header {
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal-title {
+  color: #09090b;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/* 关闭按钮：32px 的方形热区，比默认的 × 好点 */
+html.ilink-app body[data-app-page="team-space"] .modal-header .btn-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 9px;
+  background-size: 12px;
+  opacity: 0.45;
+  transition: opacity 0.16s ease, background-color 0.16s ease;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal-header .btn-close:hover,
+html.ilink-app body[data-app-page="team-space"] .modal-header .btn-close:focus-visible {
+  opacity: 0.9;
+  background-color: rgba(15, 23, 42, 0.05);
+  box-shadow: none;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal-body {
+  padding: 22px 28px 8px;
+}
+
+/* 标签：从 14px 常规体降到 13px 半粗，和值的层级拉开 */
+html.ilink-app body[data-app-page="team-space"] .modal .form-label {
+  margin-bottom: 8px;
+  color: #3f3f46;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal .form-label .text-danger {
+  margin-left: 2px;
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* 字段：44px 高、10px 圆角、浅灰描边，聚焦换成浅云蓝环 */
+html.ilink-app body[data-app-page="team-space"] .modal .form-control,
+html.ilink-app body[data-app-page="team-space"] .modal .form-select {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+/* 下拉框的右内边距由 app-redesign.css 用 !important 统一控制，
+   这里不再重复声明，只保留左侧 14px 的对齐。 */
+html.ilink-app body[data-app-page="team-space"] .modal .form-control::placeholder {
+  color: #a1a1aa;
+}
+
+/* 聚焦态：描边色同样来自布局层的 !important 变量，
+   所以在元素上改 --field-border，而不是硬写 border-color。 */
+html.ilink-app body[data-app-page="team-space"] .modal .form-control:focus,
+html.ilink-app body[data-app-page="team-space"] .modal .form-select:focus {
+  --field-border: #0284c7;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16);
+  outline: none;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal textarea.form-control {
+  min-height: 108px;
+  padding: 12px 14px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+/* 两列栅格：16px 间距，比 Bootstrap 默认的 24px 更紧凑 */
+html.ilink-app body[data-app-page="team-space"] .modal .row {
+  --bs-gutter-x: 16px;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal-footer {
+  padding: 18px 28px 24px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  gap: 10px;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal-footer .btn {
+  min-width: 88px;
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal-footer .btn-secondary {
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: #ffffff;
+  color: #3f3f46;
+}
+
+html.ilink-app body[data-app-page="team-space"] .modal-footer .btn-secondary:hover {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.18);
+  color: #09090b;
+}
+
+@media (max-width: 575.98px) {
+  html.ilink-app body[data-app-page="team-space"] .modal-header {
+    padding: 20px 20px 16px;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .modal-body {
+    padding: 18px 20px 6px;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .modal-footer {
+    padding: 16px 20px 20px;
+  }
+
+  /* 窄屏两列会挤成豆腐块，直接改单列 */
+  html.ilink-app body[data-app-page="team-space"] .modal .row {
+    --bs-gutter-x: 0px;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .modal .row > [class*="col-"] {
+    width: 100%;
+  }
+
+  /* 两列变单列后，同一行里的第二个字段需要自己的间距 */
+  html.ilink-app body[data-app-page="team-space"] .modal .row > [class*="col-"] + [class*="col-"] {
+    margin-top: 16px;
+  }
+
+  html.ilink-app body[data-app-page="team-space"] .modal-footer .btn {
+    flex: 1 1 0;
+  }
+}
