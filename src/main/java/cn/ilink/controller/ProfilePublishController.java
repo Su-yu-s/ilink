@@ -7,7 +7,6 @@ import cn.ilink.entity.CommunityPost;
 import cn.ilink.entity.User;
 import cn.ilink.service.impl.AssetServiceImpl;
 import cn.ilink.service.impl.CommunityPostServiceImpl;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.HtmlUtils;
 
 import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,8 @@ public class ProfilePublishController {
         }
 
         if (!kw.isEmpty()) {
+            // 摘要参与搜索，必须先补齐；搜索是低频操作，允许为此读正文
+            fillSummaries(rows);
             rows = rows.stream()
                 .filter(r -> String.valueOf(r.get("title")).toLowerCase().contains(kw)
                     || String.valueOf(r.get("summary")).toLowerCase().contains(kw))
@@ -99,6 +102,10 @@ public class ProfilePublishController {
         int from = (int) Math.min(offset, total);
         int to = Math.min(from + safeSize, total);
         List<Map<String, Object>> pageRows = new ArrayList<>(rows.subList(from, to));
+        if (kw.isEmpty()) {
+            // 只有当前页需要摘要，正文按页读，避免把每位用户的全部正文拉回内存
+            fillSummaries(pageRows);
+        }
 
         return Result.ok("获取成功", pageRows)
             .withPagination(safePage, safeSize, total)
@@ -106,13 +113,12 @@ public class ProfilePublishController {
     }
 
     private List<Map<String, Object>> loadAssets(Long userId) {
-        // 用 QueryWrapper 而不是 LambdaQueryWrapper：只有前者支持字符串列名，
-        // 才能写出 LEFT(description, 400) 这种 SQL 层截断。
-        // 只取列表需要的列，正文在 SQL 层截断 —— 描述上限 6 万字，500 行
-        // 全量读回再跑正则纯属浪费（搜索框防抖后会反复触发）。
+        // 用 QueryWrapper 而不是 LambdaQueryWrapper：只有前者支持字符串列名。
+        // 这里不再带 LEFT(description, 400)：摘要正文开头有一段不可见的
+        // Markdown 标记（base64 存整篇源码），SQL 层定长截断会把标记切一半，
+        // 露出半截 HTML。摘要统一交给 fillSummaries 按页补算。
         QueryWrapper<Asset> wrapper = new QueryWrapper<>();
-        wrapper.select("id", "title", "category", "cover_url", "view_count", "created_at",
-                "LEFT(description, 400) AS description")
+        wrapper.select("id", "title", "category", "cover_url", "view_count", "created_at")
             .eq("user_id", userId)
             .orderByDesc("created_at")
             .orderByDesc("id")
@@ -120,7 +126,7 @@ public class ProfilePublishController {
 
         return assetService.list(wrapper).stream().map(a -> {
             Map<String, Object> row = baseRow(
-                a.getId(), "work", a.getTitle(), a.getDescription(),
+                a.getId(), "work", a.getTitle(), "",
                 a.getCategory(), a.getCoverUrl(), a.getCreatedAt());
             row.put("viewCount", a.getViewCount() == null ? 0 : a.getViewCount());
             row.put("likeCount", 0);
@@ -131,19 +137,17 @@ public class ProfilePublishController {
     }
 
     private List<Map<String, Object>> loadPosts(Long userId) {
-        // 同上：正文上限 20 万字，只取前 400 字用于列表摘要
+        // 正文上限 20 万字，与 loadAssets 同理：不在这里取正文
         QueryWrapper<CommunityPost> wrapper = new QueryWrapper<>();
-        wrapper.select("id", "title", "category", "view_count", "like_count", "created_at",
-                "LEFT(content, 400) AS content")
+        wrapper.select("id", "title", "category", "view_count", "like_count", "created_at")
             .eq("author_id", userId)
             .orderByDesc("created_at")
             .orderByDesc("id")
             .last("LIMIT " + MAX_PER_SOURCE);
 
         return communityPostService.list(wrapper).stream().map(p -> {
-            // baseRow 内部已经会做 plainText + 截断，这里不要再跑一遍正则
             Map<String, Object> row = baseRow(
-                p.getId(), "article", p.getTitle(), p.getContent(),
+                p.getId(), "article", p.getTitle(), "",
                 p.getCategory(), null, p.getCreatedAt());
             row.put("viewCount", p.getViewCount() == null ? 0 : p.getViewCount());
             row.put("likeCount", p.getLikeCount() == null ? 0 : p.getLikeCount());
@@ -151,6 +155,65 @@ public class ProfilePublishController {
             row.put("editUrl", "/profile-article-edit.html?id=" + p.getId());
             return row;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 按需补齐摘要。
+     *
+     * <p>文章正文以一段不可见的 Markdown 标记开头（base64 保存整篇源码），
+     * 长度随正文增长，任何定长的 SQL 截断都会切在标记中间，导致半截 HTML
+     * 直接显示在列表里。因此正文只对「当前页」或「搜索」这两条路径读取，
+     * 剥掉标记后再压缩成纯文本。</p>
+     */
+    private void fillSummaries(List<Map<String, Object>> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return;
+        }
+        List<Long> assetIds = new ArrayList<>();
+        List<Long> postIds = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            Long id = asLong(row.get("id"));
+            if (id == null) {
+                continue;
+            }
+            if ("work".equals(row.get("type"))) {
+                assetIds.add(id);
+            } else if ("article".equals(row.get("type"))) {
+                postIds.add(id);
+            }
+        }
+
+        if (!assetIds.isEmpty()) {
+            QueryWrapper<Asset> wrapper = new QueryWrapper<>();
+            wrapper.select("id", "description").in("id", assetIds);
+            Map<Long, String> byId = new HashMap<>();
+            for (Asset asset : assetService.list(wrapper)) {
+                byId.put(asset.getId(), asset.getDescription());
+            }
+            for (Map<String, Object> row : rows) {
+                if ("work".equals(row.get("type"))) {
+                    row.put("summary", shorten(plainText(byId.get(asLong(row.get("id"))))));
+                }
+            }
+        }
+
+        if (!postIds.isEmpty()) {
+            QueryWrapper<CommunityPost> wrapper = new QueryWrapper<>();
+            wrapper.select("id", "content").in("id", postIds);
+            Map<Long, String> byId = new HashMap<>();
+            for (CommunityPost post : communityPostService.list(wrapper)) {
+                byId.put(post.getId(), post.getContent());
+            }
+            for (Map<String, Object> row : rows) {
+                if ("article".equals(row.get("type"))) {
+                    row.put("summary", shorten(plainText(byId.get(asLong(row.get("id"))))));
+                }
+            }
+        }
+    }
+
+    private Long asLong(Object value) {
+        return value instanceof Number ? ((Number) value).longValue() : null;
     }
 
     private Map<String, Object> baseRow(Long id, String type, String title, String summary,
@@ -174,12 +237,16 @@ public class ProfilePublishController {
         String text = raw
             .replaceAll("(?s)```.*?```", " ")
             .replaceAll("<[^>]+>", " ")
+            // 保险：万一传进来的是被截断的标签（没有闭合的 ">"），也一并丢掉，
+            // 否则会像以前那样把半截 <span ... 当正文显示出来
+            .replaceAll("<[a-zA-Z/][^>]*$", " ")
             .replaceAll("!\\[[^\\]]*]\\([^)]*\\)", " ")
             .replaceAll("\\[([^\\]]*)]\\([^)]*\\)", "$1")
             .replaceAll("[#*_>`~|-]+", " ")
             .replaceAll("\\s+", " ")
             .trim();
-        return text;
+        // 正文里的 &amp; &#39; 这类实体转回可读字符
+        return HtmlUtils.htmlUnescape(text);
     }
 
     private String shorten(String text) {
