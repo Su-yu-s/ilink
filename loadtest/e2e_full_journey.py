@@ -7,7 +7,10 @@ import urllib.request, urllib.parse, urllib.error, http.cookiejar
 
 BASE = 'http://localhost:8092'
 results = []
-MYSQL = ['mysql', '-uroot', '-p1234', '-h127.0.0.1', '-D', 'ilink', '-N', '-B']
+# 数据库与测试账号密码从环境变量读取，源码不落明文
+DB_PASSWORD = os.environ.get('ILINK_DB_PASSWORD') or sys.exit('请先设置环境变量 ILINK_DB_PASSWORD')
+PASSWORD = os.environ.get('ILINK_TEST_PASSWORD') or sys.exit('请先设置环境变量 ILINK_TEST_PASSWORD')
+MYSQL = ['mysql', '-uroot', '-p' + DB_PASSWORD, '-h127.0.0.1', '-D', 'ilink', '-N', '-B']
 
 def sql(q):
     r = subprocess.run(MYSQL + ['-e', q], capture_output=True, text=True)
@@ -77,9 +80,9 @@ lop, lcj = mk_session()
 mop, mcj = mk_session()
 req(mop, mcj, 'GET', '/login')
 st, _ = req(lop, lcj, 'GET', '/login')
-st, txt = req(lop, lcj, 'POST', '/api/login', data={'identifier': '13900011111', 'password': 'Loadtest123'})
+st, txt = req(lop, lcj, 'POST', '/api/login', data={'identifier': '13900011111', 'password': PASSWORD})
 check('队长登录', st == 200 and jload(txt).get('code') == 200, (st, txt[:120]))
-st, txt = req(mop, mcj, 'POST', '/api/login', data={'identifier': '13900022222', 'password': 'Loadtest123'})
+st, txt = req(mop, mcj, 'POST', '/api/login', data={'identifier': '13900022222', 'password': PASSWORD})
 check('成员登录', st == 200 and jload(txt).get('code') == 200, (st, txt[:120]))
 
 # ===== 2. 队长创建团队 =====
@@ -253,7 +256,7 @@ check('恢复后回到 active', st == 200 and str(fid2) in txt, st)
 
 # ===== 20. 权限边界：非成员访问 =====
 oop, ocj = mk_session()
-st, txt = req(oop, ocj, 'POST', '/api/login', data={'identifier': '13900011111', 'password': 'Loadtest123'})
+st, txt = req(oop, ocj, 'POST', '/api/login', data={'identifier': '13900011111', 'password': PASSWORD})
 # 用第三个全新会话但换一个非成员账号：直接用未登录会话验证 401 已在回归脚本覆盖，这里跳过
 
 # ===== 21. 清理 =====

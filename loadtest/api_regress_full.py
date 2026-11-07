@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """API 全面回归：登录 → 新功能(检索/通讯录) → 团队 → 资料库 → 任务 → 批阅"""
-import json, re, sys, io
+import json, os, re, sys, io
 import urllib.request, http.cookiejar
 
 BASE = 'http://localhost:8092'
+# 测试账号密码从环境变量读取，源码不落明文
+PASSWORD = os.environ.get('ILINK_TEST_PASSWORD') or sys.exit('请先设置环境变量 ILINK_TEST_PASSWORD')
 cj = http.cookiejar.CookieJar()
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
 results = []
@@ -48,7 +50,7 @@ st, txt = req('GET', '/login')
 check('首页可达', st == 200, st)
 
 # 2. 登录 uitest_leader
-st, txt = req('POST', '/api/login', data={'identifier': '13900011111', 'password': 'Loadtest123'})
+st, txt = req('POST', '/api/login', data={'identifier': '13900011111', 'password': PASSWORD})
 try:
     rj = json.loads(txt)
 except Exception:

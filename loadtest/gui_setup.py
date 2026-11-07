@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """GUI 测试数据准备：建团队+成员+任务(REVIEW中)+资料库文件，保留不清理"""
-import json, subprocess, sys, uuid
+import json, os, subprocess, sys, uuid
 import urllib.request, urllib.parse, urllib.error, http.cookiejar
 
 BASE = 'http://localhost:8092'
-MYSQL = ['mysql', '-uroot', '-p1234', '-h127.0.0.1', '-D', 'ilink', '-N', '-B']
+# 数据库与测试账号密码从环境变量读取，源码不落明文
+DB_PASSWORD = os.environ.get('ILINK_DB_PASSWORD') or sys.exit('请先设置环境变量 ILINK_DB_PASSWORD')
+PASSWORD = os.environ.get('ILINK_TEST_PASSWORD') or sys.exit('请先设置环境变量 ILINK_TEST_PASSWORD')
+MYSQL = ['mysql', '-uroot', '-p' + DB_PASSWORD, '-h127.0.0.1', '-D', 'ilink', '-N', '-B']
 
 def sql(q):
     r = subprocess.run(MYSQL + ['-e', q], capture_output=True, text=True)
@@ -63,8 +66,8 @@ lop, lcj = mk_session()
 mop, mcj = mk_session()
 req(lop, lcj, 'GET', '/login')
 req(mop, mcj, 'GET', '/login')
-print('leader login:', req(lop, lcj, 'POST', '/api/login', data={'identifier': '13900011111', 'password': 'Loadtest123'})[0])
-print('member login:', req(mop, mcj, 'POST', '/api/login', data={'identifier': '13900022222', 'password': 'Loadtest123'})[0])
+print('leader login:', req(lop, lcj, 'POST', '/api/login', data={'identifier': '13900011111', 'password': PASSWORD})[0])
+print('member login:', req(mop, mcj, 'POST', '/api/login', data={'identifier': '13900022222', 'password': PASSWORD})[0])
 
 # 建队 → 成员加入 → TEAMING
 st, txt = req(lop, lcj, 'POST', '/api/team', data={
@@ -117,5 +120,5 @@ print('submit:', st)
 print()
 print('===== GUI 测试数据就绪 =====')
 print('team_id=%s task_id=%s' % (team_id, task_id))
-print('leader: 13900011111/Loadtest123 (ADMIN)')
-print('member: 13900022222/Loadtest123 (STUDENT)')
+print('leader: 13900011111/%s (ADMIN)' % PASSWORD)
+print('member: 13900022222/%s (STUDENT)' % PASSWORD)
