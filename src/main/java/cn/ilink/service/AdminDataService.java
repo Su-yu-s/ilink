@@ -247,7 +247,19 @@ public class AdminDataService {
             .eq(CommunityPostFavorite::getUserId, userId)).forEach(row -> affectedPosts.add(row.getPostId()));
         communityPostLikeMapper.delete(new LambdaQueryWrapper<CommunityPostLike>().eq(CommunityPostLike::getUserId, userId));
         communityPostFavoriteMapper.delete(new LambdaQueryWrapper<CommunityPostFavorite>().eq(CommunityPostFavorite::getUserId, userId));
-        communityCommentMapper.delete(new LambdaQueryWrapper<CommunityComment>().eq(CommunityComment::getUserId, userId));
+        // 先删"别人挂在我评论下的回复"，再删我的评论：
+        // 直接删会留下 parent_id 指向不存在行的孤儿回复，帖子评论数也会虚高
+        List<CommunityComment> ownComments = communityCommentMapper.selectList(
+            new LambdaQueryWrapper<CommunityComment>().eq(CommunityComment::getUserId, userId));
+        ownComments.stream().map(CommunityComment::getPostId).filter(Objects::nonNull)
+            .forEach(affectedPosts::add);
+        List<Long> ownCommentIds = ownComments.stream().map(CommunityComment::getId)
+            .filter(Objects::nonNull).collect(Collectors.toList());
+        if (!ownCommentIds.isEmpty()) {
+            communityCommentMapper.delete(new LambdaQueryWrapper<CommunityComment>()
+                .in(CommunityComment::getParentId, ownCommentIds));
+            communityCommentMapper.deleteBatchIds(ownCommentIds);
+        }
         affectedPosts.forEach(this::refreshPostInteractionCounts);
 
         chatMessageMapper.delete(new LambdaQueryWrapper<ChatMessage>().eq(ChatMessage::getSenderId, userId));

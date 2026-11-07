@@ -892,7 +892,7 @@ public class AdminController {
             String projects = emptyToNull(str(payload.get("projects")));
 
             if ((introduction != null && introduction.length() > 2000)
-                || (researchDirection != null && researchDirection.length() > 500)
+                || (researchDirection != null && researchDirection.length() > 200)
                 || (professionalTitle != null && professionalTitle.length() > 100)
                 || (projects != null && projects.length() > 3000)) {
                 return Result.badRequest("导师资料内容过长，请精简后重试").toResponseEntity();
@@ -1076,8 +1076,9 @@ public class AdminController {
             asset.setDescription(description);
             String category = str(payload.get("category"));
             if (!category.isEmpty()) {
-                if (category.length() > 100) {
-                    return Result.badRequest("分类不能超过100字").toResponseEntity();
+                // asset.category 是 VARCHAR(50)，放行 100 会在 51-100 字时撞列宽变成 500
+                if (category.length() > 50) {
+                    return Result.badRequest("分类不能超过50字").toResponseEntity();
                 }
                 asset.setCategory(category);
             }

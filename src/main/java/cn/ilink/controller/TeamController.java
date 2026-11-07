@@ -512,13 +512,18 @@ public class TeamController {
             if (!STATUS_OPEN.equals(team.getStatus())) {
                 return Result.badRequest("只有招募中的组队需求可以删除").toResponseEntity();
             }
-            if (countApplications(id) > 0) {
-                return Result.badRequest("已有报名记录，不能删除").toResponseEntity();
+            // 只看"正式成员"：邀请记录、被拒/已退出的历史行都不该拦住删除，
+            // 之前的全表计数让发过一次邀请的队长永远删不掉自己的队伍
+            if (countApprovedMembers(id) > 0) {
+                return Result.badRequest("队伍已有正式成员，请先移除成员后再删除").toResponseEntity();
             }
             // 资料库记录随队伍一起清理，避免 team_id 指向已删队伍的孤儿（核实报告 P2-4）
             teamLibraryService.deleteAllForTeam(id);
             teamCollaborationCleanupService.deleteTeamData(id);
             teamAgentDataCleanupService.deleteTeamData(id);
+            // 申请/邀请行也一并清掉，否则 team_application 会留下指向已删队伍的记录
+            teamApplicationService.remove(new LambdaQueryWrapper<TeamApplication>()
+                .eq(TeamApplication::getTeamId, id));
             boolean success = teamDemandService.removeById(id);
             if (success) {
                 return Result.ok("删除成功").toResponseEntity();

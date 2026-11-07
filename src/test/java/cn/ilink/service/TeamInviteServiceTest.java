@@ -137,7 +137,8 @@ class TeamInviteServiceTest {
 
     @Test
     void inviteRejectsDissolvedTeam() {
-        when(teamDemandService.getById(TEAM_ID)).thenReturn(team("DISSOLVED"));
+        // invite 现在走队伍行锁，读的是 mapper 而不是 service
+        when(teamDemandMapper.selectByIdForUpdate(TEAM_ID)).thenReturn(team("DISSOLVED"));
 
         TeamMembershipException error = assertThrows(TeamMembershipException.class,
             () -> service.invite(TEAM_ID, OWNER_ID, Collections.singletonList(3L)));

@@ -24,6 +24,10 @@ public class AssetLifecycleService {
     private final AssetServiceImpl assetService;
     private final FileService fileService;
 
+    /** 可选依赖：单测不注入，取不到时跳过图谱清理 */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private cn.ilink.service.kg.KgIndexService kgIndexService;
+
     public AssetLifecycleService(AssetServiceImpl assetService, FileService fileService) {
         this.assetService = assetService;
         this.fileService = fileService;
@@ -237,6 +241,16 @@ public class AssetLifecycleService {
         }
         deleteAfterCommit(asset.getFileUrl());
         deleteAfterCommit(asset.getCoverUrl());
+        // 成果也会进知识图谱（KgBackfillRunner 按 ASSET 入队）；删了成果不清索引，
+        // 已经不存在的内容仍会被检索并当作证据引用
+        if (kgIndexService != null) {
+            try {
+                kgIndexService.enqueueDelete("ASSET", asset.getId(),
+                    cn.ilink.entity.KgEntity.SCOPE_GLOBAL, 0L, asset.getUserId());
+            } catch (RuntimeException e) {
+                log.warn("成果删除后清理知识图谱失败: assetId={}", asset.getId(), e);
+            }
+        }
         return asset;
     }
 

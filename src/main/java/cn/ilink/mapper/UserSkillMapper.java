@@ -9,15 +9,15 @@ import java.util.List;
 
 public interface UserSkillMapper extends BaseMapper<UserSkill> {
     
-    @Select("SELECT * FROM user_skill WHERE user_id = #{userId} ORDER BY created_at DESC")
+    @Select("SELECT * FROM user_skills WHERE user_id = #{userId} ORDER BY created_at DESC")
     List<UserSkill> findByUserId(@Param("userId") Long userId);
     
-    @Select("SELECT * FROM user_skill WHERE id = #{id}")
+    @Select("SELECT * FROM user_skills WHERE id = #{id}")
     UserSkill findById(@Param("id") Long id);
     
-    @Delete("DELETE FROM user_skill WHERE id = #{id}")
+    @Delete("DELETE FROM user_skills WHERE id = #{id}")
     int deleteById(@Param("id") Long id);
     
-    @Select("SELECT COUNT(*) FROM user_skill WHERE user_id = #{userId} AND skill_name = #{skillName}")
+    @Select("SELECT COUNT(*) FROM user_skills WHERE user_id = #{userId} AND skill_name = #{skillName}")
     int countByUserIdAndSkillName(@Param("userId") Long userId, @Param("skillName") String skillName);
 }

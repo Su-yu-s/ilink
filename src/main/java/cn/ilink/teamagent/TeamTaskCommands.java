@@ -71,6 +71,7 @@ public final class TeamTaskCommands {
         Date deadline,
         Boolean requiresReview,
         Long assignedTo,
+        Integer priority,
         String requestId
     ) {}
 

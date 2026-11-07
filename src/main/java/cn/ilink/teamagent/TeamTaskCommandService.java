@@ -244,6 +244,10 @@ public class TeamTaskCommandService {
         if (command.taskType() != null) {
             update.set("task_type", normalizeType(command.taskType()));
         }
+        if (command.priority() != null) {
+            validatePriority(command.priority());
+            update.set("priority", command.priority());
+        }
         if (command.estimatedHours() != null) {
             validateEstimatedHours(command.estimatedHours());
             update.set("estimated_hours", command.estimatedHours());

@@ -90,7 +90,9 @@ public class TeamInviteService {
     /** 邀请一批用户加入团队。返回成功与跳过两拨，跳过会带上原因供前端提示。 */
     @Transactional(rollbackFor = Exception.class)
     public InviteOutcome invite(Long teamId, Long inviterId, List<Long> rawUserIds) {
-        TeamDemand team = requireTeam(teamId);
+        // 锁住队伍行：并发邀请会各自读到"还没满"的旧快照，同时插入导致超员；
+        // 与 removeMember / respond 使用同一把队伍锁，保证满员判定串行化
+        TeamDemand team = requireTeamForUpdate(teamId);
         if (!membershipService.canManageMembers(team, inviterId)) {
             throw new TeamMembershipException(403, "只有创建者或导师可以邀请成员");
         }
@@ -109,8 +111,11 @@ public class TeamInviteService {
             throw new TeamMembershipException(400, "请先选择要邀请的成员");
         }
         targets.remove(inviterId);
+        // 创建者不占 team_application 行，满员口径是 approvedCount + 1。
+        // 若给创建者发邀请并被接受，就会多出一条 APPROVED，成员数被算两次、队伍提前满员。
+        targets.remove(team.getCreatorId());
         if (targets.isEmpty()) {
-            throw new TeamMembershipException(400, "不能邀请自己");
+            throw new TeamMembershipException(400, "不能邀请自己或团队创建者");
         }
 
         Map<Long, User> users = loadUsers(targets);
@@ -233,8 +238,14 @@ public class TeamInviteService {
         if (duty.length() > DUTY_MAX_LENGTH) {
             throw new TeamMembershipException(400, "职责最多 " + DUTY_MAX_LENGTH + " 个字");
         }
-        row.setDuty(duty.isEmpty() ? null : duty);
-        if (teamApplicationMapper.updateById(row) != 1) {
+        // 加行锁后再写：updateById 是整行回写，与"移出成员"并发时
+        // 会把刚被设成 REMOVED/LEFT 的状态覆盖回 APPROVED
+        TeamApplication locked = teamApplicationMapper.selectByIdForUpdate(row.getId());
+        if (locked == null || !TeamMembershipService.STATUS_APPROVED.equals(locked.getStatus())) {
+            throw new TeamMembershipException(409, "该成员状态已变化，请刷新后重试");
+        }
+        locked.setDuty(duty.isEmpty() ? null : duty);
+        if (teamApplicationMapper.updateById(locked) != 1) {
             throw new IllegalStateException("职责更新失败");
         }
     }

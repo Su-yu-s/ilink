@@ -147,7 +147,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestPartException.class)
     public ResponseEntity<Result<?>> handleMissingServletRequestPartException(MissingServletRequestPartException e) {
         if ("file".equals(e.getRequestPartName())) {
-            return ResponseEntity.badRequest().body(Result.badRequest("附件为选填项，请重启后端服务后重试；若仍失败请联系管理员"));
+            // 真实的成因是请求里没有 file part（表单字段名不对/文件未选中），
+            // 让用户"重启后端服务"既不准确也没有可操作性
+            return ResponseEntity.badRequest().body(Result.badRequest("没有收到上传的文件，请重新选择文件后再提交"));
         }
         return ResponseEntity.badRequest().body(Result.badRequest("缺少必要的表单字段"));
     }

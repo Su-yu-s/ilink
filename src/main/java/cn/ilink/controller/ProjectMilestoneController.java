@@ -122,6 +122,11 @@ public class ProjectMilestoneController {
         if (!isTeamMember(milestone.getTeamId(), user)) {
             return Result.fail(403, "您不是该团队成员，无权编辑里程碑").toResponseEntity();
         }
+        // 已结束/已解散的队伍不应再改里程碑
+        ResponseEntity<Result<?>> gate = requireTeaming(milestone.getTeamId());
+        if (gate != null) {
+            return gate;
+        }
 
         String fieldError = validateMilestoneFields(dto, false);
         if (fieldError != null) {
@@ -160,6 +165,10 @@ public class ProjectMilestoneController {
         if (!isTeamMember(milestone.getTeamId(), user)) {
             return Result.fail(403, "您不是该团队成员，无权修改里程碑进度").toResponseEntity();
         }
+        ResponseEntity<Result<?>> gate = requireTeaming(milestone.getTeamId());
+        if (gate != null) {
+            return gate;
+        }
 
         boolean success = projectMilestoneService.updateProgress(id, progress);
         if (success) {
@@ -185,6 +194,10 @@ public class ProjectMilestoneController {
         if (!isTeamMember(milestone.getTeamId(), user)) {
             return Result.fail(403, "您不是该团队成员，无权删除里程碑").toResponseEntity();
         }
+        ResponseEntity<Result<?>> gate = requireTeaming(milestone.getTeamId());
+        if (gate != null) {
+            return gate;
+        }
         // 删除是不可逆操作，口径与任务看板一致：只有队长或里程碑创建者可以删
         if (!isTeamLeader(milestone.getTeamId(), user)
                 && !user.getId().equals(milestone.getCreatedBy())) {
@@ -197,6 +210,15 @@ public class ProjectMilestoneController {
         } else {
             return Result.notFound("里程碑不存在").toResponseEntity();
         }
+    }
+
+    /** 里程碑功能仅在队伍进入 TEAMING 后启用；与任务看板同一门槛。返回非 null 表示应直接回绝。 */
+    private ResponseEntity<Result<?>> requireTeaming(Long teamId) {
+        TeamDemand team = teamDemandService.getById(teamId);
+        if (team == null || !STATUS_TEAMING.equals(team.getStatus())) {
+            return Result.badRequest("里程碑功能仅在队伍组队成功后启用").toResponseEntity();
+        }
+        return null;
     }
 
     /** C-04: 校验用户是否为指定团队的成员 */
@@ -226,6 +248,10 @@ public class ProjectMilestoneController {
         }
         boolean namePresent = dto.getMilestoneName() != null && !dto.getMilestoneName().trim().isEmpty();
         if (creating && !namePresent) {
+            return "里程碑名称不能为空";
+        }
+        // 更新时传了名称却全是空白，同样要拒绝，否则库里会留下一个看不见名字的里程碑
+        if (!creating && dto.getMilestoneName() != null && !namePresent) {
             return "里程碑名称不能为空";
         }
         String error = ControllerUtils.checkMaxLength(

@@ -183,7 +183,7 @@ public class TeacherController {
             if (introduction.isEmpty() || researchDirection.isEmpty() || professionalTitle.isEmpty() || expertise.isEmpty()) {
                 return Result.badRequest("请完整填写专业领域、职称、导师简介和研究方向").toResponseEntity();
             }
-            if (introduction.length() > 2000 || researchDirection.length() > 500
+            if (introduction.length() > 2000 || researchDirection.length() > 200
                 || professionalTitle.length() > 100 || expertise.length() > 100 || projects.length() > 3000) {
                 return Result.badRequest("导师资料内容过长，请精简后重试").toResponseEntity();
             }
@@ -366,7 +366,7 @@ public class TeacherController {
         String researchDirection = cleanField(request.getResearchDirection());
         String professionalTitle = cleanField(request.getProfessionalTitle());
         String projects = cleanField(request.getProjects());
-        if (introduction.length() > 2000 || researchDirection.length() > 500
+        if (introduction.length() > 2000 || researchDirection.length() > 200
             || professionalTitle.length() > 100 || projects.length() > 3000) {
             return Result.badRequest("导师资料内容过长，请精简后重试").toResponseEntity();
         }

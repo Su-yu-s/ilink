@@ -7,6 +7,7 @@ import cn.ilink.service.ProjectMilestoneService;
 import cn.ilink.service.UserService;
 import cn.ilink.vo.ProjectMilestoneVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -103,17 +104,25 @@ public class ProjectMilestoneServiceImpl extends ServiceImpl<ProjectMilestoneMap
         if (milestone == null) {
             return false;
         }
-        milestone.setCompletionRate(Math.min(100, Math.max(0, progress)));
-
+        int rate = Math.min(100, Math.max(0, progress));
+        Date now = new Date();
+        String status;
+        Date completedDate;
         if (progress >= 100) {
-            milestone.setStatus("COMPLETED");
-            milestone.setCompletedDate(new Date());
+            status = "COMPLETED";
+            completedDate = now;
         } else {
-            milestone.setStatus(determineStatus(milestone.getDueDate(), progress));
+            status = determineStatus(milestone.getDueDate(), rate);
+            // 从 100% 回退时必须把完成日期清空，否则"未完成但标着完成时间"
+            completedDate = null;
         }
-
-        milestone.setUpdatedAt(new Date());
-        return this.updateById(milestone);
+        // updateById 会跳过 null 字段，清空完成日期必须显式 set
+        return this.update(new LambdaUpdateWrapper<ProjectMilestone>()
+            .eq(ProjectMilestone::getId, id)
+            .set(ProjectMilestone::getCompletionRate, rate)
+            .set(ProjectMilestone::getStatus, status)
+            .set(ProjectMilestone::getCompletedDate, completedDate)
+            .set(ProjectMilestone::getUpdatedAt, now));
     }
 
     @Override
