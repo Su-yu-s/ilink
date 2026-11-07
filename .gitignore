@@ -49,19 +49,25 @@ src/main/resources/application-local.properties
 logs/
 日志.txt
 *.stackdump
+*.hprof
 
-# === 内部文档与审计产物 ===
+# === 内部文档与审计产物（绝不提交） ===
+# docs/测试文档 含真实手机号与测试账号密码，
+# docs/superpowers 部分设计稿也含真实账号信息；如需入库请先脱敏再用 git add -f
 docs/
-PRODUCT.md
 audit_results.json
 corruption_report.txt
 
-# === 本地临时产物归档（不入库，可整目录删除） ===
+# === 本地临时产物归档（不入库） ===
+# 整个目录都不提交。其中 logs/、scratch/、trailer/ 是随时可清的临时产物；
+# backups/ 是数据库备份、secrets/ 是压测凭据，清理时务必保留
 local-artifacts/
 .tmp_*
+__tmp_tools/
 InspectIntent.*
 
-# === 开发脚本与草稿 ===
+# === 开发脚本与草稿（含真实测试账号密码，绝不提交） ===
+# 该规则同时匹配 ai-agent/scripts/（e2e-smoke.mjs 内含 internal token）
 scripts/
 searchbar-demos/
 screenshots/
