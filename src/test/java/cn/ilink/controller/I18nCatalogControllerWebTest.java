@@ -63,6 +63,29 @@ class I18nCatalogControllerWebTest {
             .andExpect(content().string(not(containsString("This team is still recruiting"))));
     }
 
+    /**
+     * 回归：服务器 JVM 默认语言是 en_US 时，中文用户必须仍拿到中文目录。
+     *
+     * <p>曾经的问题：{@code ResourceBundle.getBundle} 的默认回退链在找不到 {@code messages_zh}
+     * 时会退到 JVM 默认 locale 的 bundle。本地 Windows 默认 zh_CN，测试全绿；
+     * 一上线（Linux 默认 en_US）中文用户拿到的就是英文目录，页面呈现中英混杂。
+     */
+    @Test
+    void chineseCatalogSurvivesEnglishJvmDefaultLocale() throws Exception {
+        java.util.Locale original = java.util.Locale.getDefault();
+        try {
+            java.util.Locale.setDefault(java.util.Locale.ENGLISH);
+            java.util.ResourceBundle.clearCache();
+            mockMvc.perform(get("/i18n/catalog.js").param("lang", "zh"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"language.current\":\"中文\"")))
+                .andExpect(content().string(not(containsString("This team is still recruiting"))));
+        } finally {
+            java.util.Locale.setDefault(original);
+            java.util.ResourceBundle.clearCache();
+        }
+    }
+
     @Test
     void matchingEtagReturns304WithoutBody() throws Exception {
         MvcResult first = mockMvc.perform(get("/i18n/catalog.js").param("lang", "en"))

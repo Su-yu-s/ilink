@@ -70,7 +70,12 @@ public class I18nCatalogController {
     }
 
     private Map<String, String> readCatalog(Locale locale) {
-        ResourceBundle bundle = ResourceBundle.getBundle("messages", locale);
+        // 必须用不带「系统语言回退」的 Control。
+        // 默认的 getBundle 在找不到 messages_zh 时会退到 JVM 默认 locale 的 bundle：
+        // 服务器多为 en_US，于是中文用户拿到英文目录——本地 Windows 默认 zh_CN 看不出问题，
+        // 一上线就复现。这里找不到就落到基础包 messages（中文）。
+        ResourceBundle bundle = ResourceBundle.getBundle("messages", locale,
+            ResourceBundle.Control.getNoFallbackControl(ResourceBundle.Control.FORMAT_PROPERTIES));
         Map<String, String> catalog = new LinkedHashMap<>();
         Enumeration<String> keys = bundle.getKeys();
         while (keys.hasMoreElements()) {
