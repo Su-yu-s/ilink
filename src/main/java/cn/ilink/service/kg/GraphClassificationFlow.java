@@ -184,7 +184,8 @@ final class GraphClassificationFlow {
             }
         }
         if (!checked.supported()) return new Outcome(false, "", "PARTIAL", "CLASSIFICATION_UNVERIFIED", checked);
-        var rendered = GraphClassificationContract.renderDecisions(catalog, parsed, ledger, proofs);
+        var rendered = GraphClassificationContract.renderDecisions(catalog, parsed, ledger, proofs,
+            ClassificationCriteria.fromQuestion(question));
         if (Set.of("CLASSIFICATION_BINDING_INVALID", "CLASSIFICATION_PROOF_BINDING_INVALID",
                 "CLASSIFICATION_PROTOCOL_INCOMPLETE").contains(rendered.coverageReason()))
             return failure(trace, rendered.coverageReason());
@@ -207,6 +208,21 @@ final class GraphClassificationFlow {
             Set<String> sent, AiClient.AiChatResult response, AiClient ai, List<Map<String, Object>> trace,
             ChatRequestBudget.Stage stage, String packingPolicy, ClassificationModelContext.Projection projection,
             String proposalStage, ChatRequestBudget.Protection finalVerifierGuard) {
+        // D-stage 的大目录（modelContext）才做证据绑定：候选多到模型无法逐成员准确引用时，
+        // 丢弃它自造/未发送的编号，并给缺证据的 I/E 成员补上本轮已发送的证明。
+        // 只动引用，不改 I/E/U；绑定后仍要过下面的成员门禁与语义核验。普通小目录保持原严格路径。
+        var bound = projection == null ? parsed : ClassificationEvidenceVerifier.bindMemberProofs(
+            catalog, parsed, prepared.proofs(), sent, ledger);
+        if (bound != parsed) {
+            Map<String, Object> binding = new LinkedHashMap<>();
+            binding.put("policy", "bind-sent-member-proofs-v1");
+            binding.put("before", parsed.groups().stream()
+                .map(group -> group.state() + ":" + group.proofs()).toList());
+            binding.put("after", bound.groups().stream()
+                .map(group -> group.state() + ":" + group.proofs()).toList());
+            trace.add(Map.of("classificationMemberProofBinding", binding));
+            parsed = bound;
+        }
         AnswerEvidenceVerifier.VerificationResult result;
         boolean finished = response != null && "stop".equals(response.finishReason);
         trace.add(Map.of("classificationMemberEvidence", Map.of(
@@ -595,6 +611,10 @@ final class GraphClassificationFlow {
             + "不得用一个成员的证明代替另一个成员的证据。"
             + "同reason成员可以共用证明集合，但每个成员须独立得到其中原文支持。"
             + "U可proofs=[]；有充分证明的成员不可随意改U，缺少证明也不可猜I/E。"
+            // 图谱的 MENTIONS 会把业务模块、文件名、配置项一起拉进来；它们不是技术栈，
+            // 如果被硬判成 I/E，语义核验会以"含大量非技术项"判整份分类不支持
+            + "候选可能是业务模块、文件名或配置项，不一定是技术栈；没有证据证明其技术类别时判U，"
+            + "不得因为出现在技术文档里就当作技术。"
             + "保持全覆盖、不遗漏/重复/补ID、不从前缀发布结果；输出必须在1200tokens内闭合。";
     }
 }

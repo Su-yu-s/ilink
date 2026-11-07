@@ -100,6 +100,76 @@ final class ClassificationEvidenceVerifier {
         return java.util.Collections.unmodifiableMap(diagnostic);
     }
 
+    /**
+     * 验证前做一次确定性的证据绑定，只动引用、不改 I/E/U。
+     *
+     * <p>候选一多，模型的组级 proofs 会出现两类问题：把候选编号误写成 proof 编号（引用本轮没发送的
+     * p 编号），或者漏掉部分成员。两者都会让整份分类被门禁拒绝、退化成原文摘录。这里先丢弃未发送的
+     * 编号，再为没有相关证明的 I/E 成员补一条"本轮已发送且本地判定相关"的证明。补全后仍要过语义核验，
+     * 跨成员复用依然无效——相关性绑定的是成员本身，与证明出现在哪一组无关。</p>
+     */
+    static GraphClassificationContract.DecisionParsed bindMemberProofs(
+            GraphClassificationContract.Catalog catalog,
+            GraphClassificationContract.DecisionParsed parsed,
+            ClassificationProofCatalog.ProofCatalog proofs, Set<String> sentProofIds, EvidenceLedger ledger) {
+        if (catalog == null || proofs == null || ledger == null || parsed == null
+            || !parsed.complete() || parsed.groups().isEmpty()
+            || sentProofIds == null || sentProofIds.isEmpty()) {
+            return parsed;
+        }
+        List<String> ordered = sentProofIds.stream()
+            .filter(id -> id != null && id.matches("p[1-9]\\d{0,8}"))
+            .sorted(java.util.Comparator.comparingInt(id -> Integer.parseInt(id.substring(1))))
+            .toList();
+        List<GraphClassificationContract.DecisionGroup> groups = new ArrayList<>();
+        Set<String> cited = new LinkedHashSet<>();
+        boolean changed = false;
+        for (var group : parsed.groups()) {
+            List<String> kept = group.proofs().stream().filter(sentProofIds::contains).toList();
+            if (kept.size() != group.proofs().size()) changed = true;
+            cited.addAll(kept);
+            groups.add(kept.size() == group.proofs().size() ? group
+                : new GraphClassificationContract.DecisionGroup(group.state(), group.reason(), group.ids(), kept));
+        }
+        for (int index = 0; index < groups.size(); index++) {
+            var group = groups.get(index);
+            if (group.state() == GraphClassificationContract.State.U || group.ids().isEmpty()) continue;
+            List<String> merged = new ArrayList<>(group.proofs());
+            boolean added = false;
+            for (int id : group.ids()) {
+                var candidate = catalog.candidate(id);
+                if (candidate == null || memberCovered(cited, candidate, proofs, ledger)) continue;
+                for (String proofId : ordered) {
+                    if (cited.contains(proofId)) continue;
+                    var span = proofs.span(proofId).orElse(null);
+                    if (span == null || !ClassificationCoverageProofs.relevantToMember(candidate, span, ledger))
+                        continue;
+                    merged.add(proofId);
+                    cited.add(proofId);
+                    added = true;
+                    break;
+                }
+            }
+            if (!added) continue;
+            groups.set(index, new GraphClassificationContract.DecisionGroup(
+                group.state(), group.reason(), group.ids(), merged));
+            changed = true;
+        }
+        return changed
+            ? new GraphClassificationContract.DecisionParsed(groups, parsed.failures(), true, parsed.uncertainCount())
+            : parsed;
+    }
+
+    private static boolean memberCovered(Set<String> cited, GraphClassificationContract.Candidate candidate,
+            ClassificationProofCatalog.ProofCatalog proofs, EvidenceLedger ledger) {
+        for (String proofId : cited) {
+            var span = proofs.span(proofId).orElse(null);
+            if (span != null && ClassificationCoverageProofs.relevantToMember(candidate, span, ledger))
+                return true;
+        }
+        return false;
+    }
+
     /** A member may have a nearby source without any exact endpoint or member-name anchor. */
     private static List<String> sourceOnlyProofIds(
             GraphClassificationContract.Candidate candidate,

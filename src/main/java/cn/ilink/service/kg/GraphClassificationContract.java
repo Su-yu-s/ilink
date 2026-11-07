@@ -636,6 +636,21 @@ final class GraphClassificationContract {
         return List.copyOf(claims);
     }
 
+    /**
+     * 把 I/E 翻译成问题里的判据措辞；判据不明确时退回中性标签。
+     *
+     * @param matches true 表示该组是"符合用户所问条件"的 I 组
+     */
+    private static String criteriaLabel(ClassificationCriteria.Criteria criteria, boolean matches) {
+        if (criteria == null || !criteria.explicit() || criteria.ecosystem() == null
+            || criteria.ecosystem().isBlank()) {
+            return matches ? "符合" : "排除";
+        }
+        // negative=true 表示问题问的是"哪些不属于 X 生态"：I 组恰好就是"不属于 X"
+        String relation = matches == criteria.negative() ? "不属于" : "属于";
+        return relation + " " + criteria.ecosystem() + " 生态";
+    }
+
     private static String reasonText(Reason reason) {
         return switch (reason) {
             case MATCH -> "符合所问筛选条件";
@@ -648,16 +663,29 @@ final class GraphClassificationContract {
     /** Caller must first validate proof availability and semantics; only the program renders prose. */
     static Rendered renderDecisions(Catalog catalog, DecisionParsed parsed, EvidenceLedger ledger,
                                     ClassificationProofCatalog.ProofCatalog proofs) {
+        return renderDecisions(catalog, parsed, ledger, proofs, null);
+    }
+
+    /**
+     * 传入问题判据后，组标签直接用问题里的说法（"不属于 Java 生态"），
+     * 而不是抽象的"符合/排除"——语义核验器据此才能把清单与用户问题对上。
+     */
+    static Rendered renderDecisions(Catalog catalog, DecisionParsed parsed, EvidenceLedger ledger,
+                                    ClassificationProofCatalog.ProofCatalog proofs,
+                                    ClassificationCriteria.Criteria criteria) {
         if (!catalog.requested() || !catalog.inventoryComplete() || !parsed.complete())
             return new Rendered("现有证据不足以给出可靠的完整分类。", "PARTIAL", "CLASSIFICATION_PROTOCOL_INCOMPLETE");
         StringBuilder answer = new StringBuilder();
         boolean partial = !catalog.queryComplete() || parsed.uncertainCount() > 0 || catalog.candidates().isEmpty();
         boolean multipleSubjects = catalog.candidates().stream().map(Candidate::anchorId).distinct().count() > 1;
         answer.append(partial ? "以下是部分分类结果；尚不能完整回答所问分类：\n" : "按所问筛选条件分类如下：\n");
+        String yesLabel = criteriaLabel(criteria, true);
+        String noLabel = criteriaLabel(criteria, false);
         for (DecisionGroup group : parsed.groups()) {
             if (!compatible(group.state(), group.reason()))
                 return new Rendered("现有证据不足以给出可靠的完整分类。", "PARTIAL", "CLASSIFICATION_PROTOCOL_INCOMPLETE");
-            String state = switch (group.state()) { case I -> "符合"; case E -> "排除"; case U -> "待确认"; };
+            String state = switch (group.state()) {
+                case I -> yesLabel; case E -> noLabel; case U -> "待确认"; };
             answer.append("- ").append(state).append("（").append(reasonText(group.reason())).append("）：");
             List<String> names = new ArrayList<>();
             for (int id : group.ids()) {
