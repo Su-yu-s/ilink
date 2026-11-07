@@ -1,0 +1,98 @@
+/* ============================================================
+   全站分页 · 统一规范
+   ═══════════════════════════════════════════════════════════
+   参考主流产品的分页做法（GitHub / Linear / Ant Design）：
+   · 上一页 / 页码 / 下一页，超过 7 页时用省略号收窄
+   · 当前页实心高亮，边界页的上一页/下一页置灰不可点
+   · 统一 36px 方形热区、10px 圆角、1px 细描边
+   本文件不包 @layer，靠未分层压过各页 legacy 样式；
+   存量页面里 `.page-item > .page-link` 的三种标记都能直接套用。
+   ============================================================ */
+
+/* 与列表拉开固定间距：分页容器统一由 IlPager 打上 .il-pager */
+html.ilink-app .il-pager {
+  margin-top: 32px;
+}
+
+html.ilink-app .pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+html.ilink-app .pagination .page-item {
+  margin: 0;
+}
+
+html.ilink-app .pagination .page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #3f3f46;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+html.ilink-app .pagination .page-link:hover {
+  border-color: rgba(15, 23, 42, 0.16);
+  background: #f8fafc;
+  color: #09090b;
+}
+
+/* 当前页：实心极黑，和站内主按钮同一语言 */
+html.ilink-app .pagination .page-item.active .page-link,
+html.ilink-app .pagination .page-item.active .page-link:hover {
+  border-color: #09090b;
+  background: #09090b;
+  color: #ffffff;
+}
+
+/* 边界页与省略号：去掉描边和底色，只留灰色文字 */
+html.ilink-app .pagination .page-item.disabled .page-link,
+html.ilink-app .pagination .page-item.disabled .page-link:hover {
+  border-color: transparent;
+  background: transparent;
+  color: #c4c4c8;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+html.ilink-app .pagination .page-link:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
+/* 移动端收一档，保证 375px 宽也能放下「上一页 + 数字 + 下一页」 */
+@media (max-width: 575.98px) {
+  html.ilink-app .pagination {
+    gap: 4px;
+  }
+
+  html.ilink-app .pagination .page-link {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 9px;
+    border-radius: 9px;
+    font-size: 12.5px;
+  }
+}

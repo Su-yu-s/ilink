@@ -182,13 +182,12 @@
 
     paginate: function (pg) {
       var el = app.$('pagination'); if (!el || !pg) return;
-      var total = Math.ceil(pg.total / (pg.size || PAGE_SIZE));
-      if (total <= 1) { el.innerHTML = ''; return; }
-      el.innerHTML = '<div class="pagination-wrap">'
-        + '<button class="page-btn" onclick="GalleryApp.load(' + (pg.page - 1) + ')"' + (pg.page <= 1 ? ' disabled' : '') + '>上一页</button>'
-        + '<span class="page-info">第 ' + pg.page + ' / ' + total + ' 页</span>'
-        + '<button class="page-btn" onclick="GalleryApp.load(' + (pg.page + 1) + ')"' + (pg.page >= total ? ' disabled' : '') + '>下一页</button>'
-        + '</div>';
+      var total = Math.max(1, Math.ceil(pg.total / (pg.size || PAGE_SIZE)));
+      IlPager.render(el, {
+        page: pg.page,
+        totalPages: total,
+        onChange: function (next) { app.load(next); }
+      });
     },
 
     doAction: function (btn) {

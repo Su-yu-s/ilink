@@ -117,43 +117,7 @@
     margin: 0;
 }
 
-#pagination li {
-    margin: 0;
-}
-
-#pagination .page-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    height: 40px;
-    padding: 0 16px;
-    border-radius: 999px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #6e6e73;
-    background: #ffffff;
-    border: 1px solid #d2d2d7;
-    text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-}
-
-#pagination .page-link:hover {
-    border-color: #0066cc;
-    color: #1d1d1f;
-}
-
-#pagination .page-item.active .page-link {
-    background: #1d1d1f;
-    color: #f5f5f7;
-    border-color: #1d1d1f;
-}
-
-#pagination .page-item.disabled .page-link {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
+/* 分页样式已收敛到 pagination.css（全站唯一来源），此处不再覆盖 */
 
 /* 旧的 .team-card 卡片样式已删除：组队大厅改用下面的 .tm-* 席位行。
    .il-team-card 仍属于「我的团队」（profile.css），不要在这里重定义。 */

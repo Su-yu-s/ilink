@@ -293,6 +293,11 @@ html.ilink-app body[data-profile-page="posts"] .pp-pager.is-managing {
   pointer-events: none;
 }
 
+/* 分页容器统一用 .il-pager 的 32px 上边距，去掉旧的内边距，避免叠加 */
+html.ilink-app body[data-profile-page="posts"] .pp-pager {
+  padding-top: 0;
+}
+
 /* ────────────────────────────────────────────────────────────
    列表项
    ──────────────────────────────────────────────────────────── */

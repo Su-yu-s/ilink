@@ -387,45 +387,7 @@
     margin: 0;
 }
 
-#pagination li {
-    margin: 0;
-}
-
-#pagination .page-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: var(--pagination-size, 36px);
-    height: var(--pagination-size, 36px);
-    padding: 0 14px;
-    border-radius: var(--pagination-radius, 8px);
-    font-size: 14px;
-    font-weight: 500;
-    color: #424245;
-    background: #ffffff;
-    border: 1px solid var(--pagination-border, #e8e8ed);
-    text-decoration: none;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-#pagination .page-link:hover {
-    background: var(--nav-hover-bg, #f5f5f7);
-    border-color: var(--pagination-active-border, #d2d2d7);
-    color: #1d1d1f;
-}
-
-#pagination .page-item.active .page-link {
-    background: var(--pagination-active-bg, #ECEDEF);
-    color: #1d1d1f;
-    border-color: var(--pagination-active-border, #d2d2d7);
-    font-weight: 600;
-}
-
-#pagination .page-item.disabled .page-link {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
+/* 分页样式已收敛到 pagination.css（全站唯一来源），此处不再覆盖 */
 
 /* === Modal Overlay === */
 .teacher-apply-overlay {

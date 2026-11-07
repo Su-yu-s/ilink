@@ -127,12 +127,15 @@
     function renderPager(total) {
         if (!pagerEl) return;
         var pages = Math.max(1, Math.ceil(total / state.size));
-        if (pages <= 1) { pagerEl.innerHTML = ''; return; }
-        pagerEl.innerHTML = '<button type="button" class="pp-page" data-page="' + (state.page - 1) + '"' +
-            (state.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
-            '<span class="pp-page__info">' + state.page + ' / ' + pages + '</span>' +
-            '<button type="button" class="pp-page" data-page="' + (state.page + 1) + '"' +
-            (state.page >= pages ? ' disabled' : '') + '>下一页</button>';
+        IlPager.render(pagerEl, {
+            page: state.page,
+            totalPages: pages,
+            onChange: function (next) {
+                if (state.managing) return;
+                state.page = next;
+                load();
+            }
+        });
     }
 
     /* ── 选择与管理态 ───────────────────────────────────────── */
@@ -340,16 +343,6 @@
                 state.page = 1;
                 load();
             }, 250);
-        });
-    }
-
-    if (pagerEl) {
-        pagerEl.addEventListener('click', function (e) {
-            if (state.managing) return;
-            var btn = e.target.closest('[data-page]');
-            if (!btn || btn.disabled) return;
-            state.page = Number(btn.dataset.page);
-            load();
         });
     }
 

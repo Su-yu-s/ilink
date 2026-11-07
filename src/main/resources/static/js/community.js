@@ -8,7 +8,8 @@ const COMM_FEED_CATEGORY_LABELS = {
     resource: '资源分享'
 };
 
-const PAGE_SIZE = 20;
+// 列表一页 10 篇：20 篇时整页过长，滚动到底部才能翻页
+const PAGE_SIZE = 10;
 let currentCategory = '';
 let currentSort = 'latest';
 let currentPage = 1;
@@ -656,46 +657,16 @@ async function loadPosts(page) {
     }
 }
 
-function renderPager(pag, pagerEl, innerEl) {
-    if (!pagerEl || !innerEl) return;
-    const total = pag.total != null ? pag.total : 0;
-    const size = pag.size != null ? pag.size : PAGE_SIZE;
-    const page = pag.page != null ? pag.page : 1;
+function renderPager(pag, pagerEl) {
+    if (!pagerEl) return;
+    const total = pag && pag.total != null ? pag.total : 0;
+    const size = pag && pag.size != null ? pag.size : PAGE_SIZE;
+    const page = pag && pag.page != null ? pag.page : 1;
     const totalPages = Math.max(1, Math.ceil(total / size) || 1);
-
-    if (totalPages <= 1) {
-        // 单页时保留总数信息条（GitHub 风格），页码按钮在跨页后自动出现
-        pagerEl.classList.remove('d-none');
-        innerEl.innerHTML = '<li class="page-item disabled"><span class="page-link text-secondary">' +
-            escapeHtml(t('ui.community.totalPosts', { count: total })) + '</span></li>';
-        return;
-    }
-    pagerEl.classList.remove('d-none');
-    innerEl.innerHTML = "";
-
-    const prevLi = document.createElement('li');
-    prevLi.className = 'page-item' + (page <= 1 ? ' disabled' : '');
-    prevLi.innerHTML = `<button class="page-link" type="button" data-page="${page - 1}">上一页</button>`;
-    innerEl.appendChild(prevLi);
-
-    const infoLi = document.createElement('li');
-    infoLi.className = 'page-item disabled';
-    infoLi.innerHTML = `<span class="page-link text-secondary">${page} / ${totalPages}</span>`;
-    innerEl.appendChild(infoLi);
-
-    const nextLi = document.createElement('li');
-    nextLi.className = 'page-item' + (page >= totalPages ? ' disabled' : '');
-    nextLi.innerHTML = `<button class="page-link" type="button" data-page="${page + 1}">下一页</button>`;
-    innerEl.appendChild(nextLi);
-
-    innerEl.querySelectorAll('button.page-link[data-page]').forEach(a => {
-        a.addEventListener('click', function(ev) {
-            ev.preventDefault();
-            const parent = this.closest('.page-item');
-            if (parent && parent.classList.contains('disabled')) return;
-            const np = parseInt(this.getAttribute('data-page'), 10);
-            if (!isNaN(np)) loadPosts(np);
-        });
+    IlPager.render(pagerEl, {
+        page: page,
+        totalPages: totalPages,
+        onChange: function (next) { loadPosts(next); }
     });
 }
 

@@ -2767,15 +2767,8 @@ html.ilink-app .tp-comp-toggle:hover {
   color: #0066cc;
   border-bottom-color: #0066cc;
 }
-/* 分页链接在浅底上需达到 4.5:1，避免 Bootstrap 默认灰过低 */
-html.ilink-app .pagination .page-link {
-  color: #424245 !important;
-}
-html.ilink-app .pagination .page-item.disabled .page-link {
-  color: #6e6e73 !important;
-  background: #f5f5f7 !important;
-  opacity: 1 !important;
-}
+/* 分页配色统一由 pagination.css 负责（#3f3f46 on #fff 对比度 ≈ 9:1，
+   当前页白字黑底 ≈ 19:1，均满足 4.5:1 要求），此处不再覆盖 */
 
 /* 成果详情 / 社区文章：正文容器不再套灰底（本文件最后加载） */
 html.ilink-app body:is([data-app-page="asset-detail"],[data-app-page="community-article"]) .desc-box,

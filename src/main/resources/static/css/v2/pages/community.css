@@ -289,3 +289,10 @@
     }
   }
 }
+
+/* 卡片用 -16px 的外扩留白承载悬停底板，最后一个卡片会溢出列表盒子
+   16px。分页若紧贴列表底边就会被压在卡片上，这里让出距离，
+   使视觉间距与其它页统一为 32px（48 - 16）。 */
+html.ilink-app body[data-app-page="community"] #postPager {
+  margin-top: 48px;
+}

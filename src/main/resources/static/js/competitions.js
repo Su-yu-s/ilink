@@ -6,41 +6,17 @@ const PAGE_SIZE = 6;
 
 function renderPager(totalItems) {
     const pager = document.getElementById('competitionPager');
-    const inner = document.getElementById('competitionPagerInner');
-    if (!pager || !inner) return;
+    if (!pager) return;
     const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
-    if (totalItems <= PAGE_SIZE) {
-        pager.classList.add('d-none');
-        inner.innerHTML = '';
-        return;
-    }
-    const makeItem = (label, page, disabled, active) =>
-        '<li class="page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '') + '">' +
-        '<button class="page-link" type="button" data-page="' + page + '"' +
-        (disabled ? ' disabled' : '') + (active ? ' aria-current="page"' : '') +
-        '>' + label + '</button></li>';
-
-    const pieces = [makeItem('上一页', currentPage - 1, currentPage <= 1, false)];
-    let start = Math.max(1, currentPage - 2);
-    let end = Math.min(totalPages, currentPage + 2);
-    if (end - start < 4) {
-        if (start === 1) end = Math.min(totalPages, start + 4);
-        if (end === totalPages) start = Math.max(1, end - 4);
-    }
-    for (let page = start; page <= end; page++) {
-        pieces.push(makeItem(String(page), page, false, page === currentPage));
-    }
-    pieces.push(makeItem('下一页', currentPage + 1, currentPage >= totalPages, false));
-    inner.innerHTML = pieces.join('');
-    pager.classList.remove('d-none');
-    inner.querySelectorAll('button[data-page]').forEach(button => {
-        button.addEventListener('click', () => {
-            const page = Number(button.dataset.page || 1);
+    IlPager.render(pager, {
+        page: currentPage,
+        totalPages: totalPages,
+        onChange: function (page) {
             if (page < 1 || page > totalPages || page === currentPage) return;
             currentPage = page;
             loadCompetitions();
             window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+        }
     });
 }
 
@@ -115,7 +91,6 @@ function renderIndexItem(item) {
 async function loadCompetitions() {
     const grid = document.getElementById('competitionGrid');
     const empty = document.getElementById('competitionEmpty');
-    const hint = document.getElementById('competitionCountHint');
     if (!grid) return;
     grid.setAttribute('aria-busy', 'true');
     grid.innerHTML = '<div class="col-12 text-center text-muted py-5">正在加载竞赛目录…</div>';
@@ -139,19 +114,11 @@ async function loadCompetitions() {
         renderCompetitionCards(rows);
         empty?.classList.toggle('d-none', rows.length > 0);
         if (rows.length === 0) grid.innerHTML = '';
-        if (hint) {
-            hint.textContent = t('ui.competitions.pageCount', {
-                page: currentPage,
-                totalPages: totalPages,
-                count: total
-            });
-        }
         renderPager(total);
     } catch (error) {
         grid.innerHTML = '<div class="col-12"><div class="alert alert-danger text-center mb-0">' +
             escapeHtml(error.message || '竞赛目录暂时无法加载，请稍后重试') + '</div></div>';
         empty?.classList.add('d-none');
-        if (hint) hint.textContent = '';
         renderPager(0);
     } finally {
         grid.removeAttribute('aria-busy');
