@@ -183,14 +183,17 @@ final class ClassificationEvidenceVerifier {
                     || !java.util.Objects.equals(edge.type(), candidate.relationType()))
                     reasons.add("CLASSIFICATION_BINDING_INVALID:" + id);
             }
-            if (group.state() != GraphClassificationContract.State.U && group.proofs().stream()
+            // 证明是"本次分类引用的证据池"，模型常把一条证据放在它最先出现的组里。
+            // 只要该成员在任一组被引用过的证明覆盖即可，不要求恰好落在自己所在的组；
+            // 跨成员复用仍然无效，因为相关性与成员绑定，与证明出现在哪一组无关。
+            if (group.state() != GraphClassificationContract.State.U && usedProofs.stream()
                 .map(proofs::span).flatMap(java.util.Optional::stream).noneMatch(proof ->
                     QueryIntent.normalize(candidate.anchorName()).equals(QueryIntent.normalize(proof.title()))
                         || candidate.relationIds().stream().map(ledger::relation).flatMap(java.util.Optional::stream)
                             .anyMatch(edge -> java.util.Objects.equals(edge.sourceDocId(), proof.docType() + ":" + proof.docId())
                                 || java.util.Objects.equals(edge.sourceChunkId(), proof.chunkId()))))
                 reasons.add("CLASSIFICATION_PROOF_SUBJECT_MISMATCH:" + id);
-            if (group.state() != GraphClassificationContract.State.U && group.proofs().stream()
+            if (group.state() != GraphClassificationContract.State.U && usedProofs.stream()
                 .map(proofs::span).flatMap(java.util.Optional::stream).noneMatch(proof ->
                     ClassificationCoverageProofs.relevantToMember(candidate, proof, ledger)))
                 reasons.add("CLASSIFICATION_MEMBER_EVIDENCE_MISSING:" + id);
@@ -198,7 +201,7 @@ final class ClassificationEvidenceVerifier {
                 .filter(proof -> sentProofIds.contains(proof.id()))
                 .filter(proof -> ClassificationCoverageProofs.relevantToMember(candidate, proof, ledger))
                 .map(ClassificationProofCatalog.ProofSpan::id).toList();
-            List<String> citedRelevant = group.proofs().stream().map(proofs::span)
+            List<String> citedRelevant = usedProofs.stream().map(proofs::span)
                 .flatMap(java.util.Optional::stream)
                 .filter(proof -> sentRelevant.contains(proof.id()))
                 .map(ClassificationProofCatalog.ProofSpan::id).toList();

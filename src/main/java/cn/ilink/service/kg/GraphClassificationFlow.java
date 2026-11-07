@@ -483,7 +483,11 @@ final class GraphClassificationFlow {
                 .append(" direction=").append(candidate.direction())
                 .append(" visibleMemberProofIds=").append(visibleMemberProofs).append('\n');
         }
-        String task = "只修复下列被拒绝的原稿，不补全外部知识。\n原协议输出：\n" + Objects.toString(previous, "")
+        String task = "只修复下列被拒绝的原稿，不补全外部知识。\n"
+            // 把最关键的修复动作放在最前面：模型倾向于原样返回原稿，埋在末尾的要求经常被忽略
+            + "修复重点：逐条核对下面的「逐成员缺陷」，把每个被点名成员自己的visibleMemberProofIds"
+            + "加进它所在那一组的proofs。归属没有改变也要加；只要漏掉一个，整份分类仍会被判为成员证据缺失。\n"
+            + "原协议输出：\n" + Objects.toString(previous, "")
             + "\n拒绝原因：" + reasons
             + "\n分区失败：" + (parsed == null ? List.of() : parsed.failures())
             + "\n重复归属：" + (parsed == null ? List.of()
@@ -494,8 +498,9 @@ final class GraphClassificationFlow {
             + "未被缺陷点名的原决策必须原样保留。必须重新输出候选1.."
             + catalog.candidates().size() + "全部编号且每个恰好一次；遗漏编号必须处置，重复编号只能保留一个组。"
             + "程序不会代选归属、I/E/U或补证明。"
-            + "未被点名的原决策可保留其原proofs。被点名成员新增或改判I/E时，"
-            + "proofs只能引用本次修复证据中该成员的visibleMemberProofIds；未装入上下文的编号不可引用。"
+            + "未被点名的原决策可保留其原proofs。被点名成员无论归属是否改变，"
+            + "都必须把它自己的visibleMemberProofIds加进所在组的proofs——只保留原proofs而丢掉这些编号，"
+            + "会再次被判为成员证据缺失。新增或改判I/E时也只能引用这些编号；未装入上下文的编号不可引用。"
             + "没有足够的可见成员证据不得猜I/E，应判U。"
             + "不得删除一整组以逃避其proofs错误，不得补编号，不得输出解释。只提交完整闭合决策JSON。";
         return new RewriteRequest(List.of(message("system", protocol(question)), message("user", task)),

@@ -100,7 +100,8 @@ class GraphClassificationFlowTest {
         String revision = messages.getAllValues().get(1).get(1).get("content");
         assertTrue(revision.contains("candidateId=2")); assertTrue(revision.contains("status=SENT_NOT_CITED"));
         assertTrue(revision.contains("visibleMemberProofIds=[p2]"));
-        assertTrue(revision.contains("proofs只能引用本次修复证据中该成员的visibleMemberProofIds"));
+        // 归属不变也要补证据：只保留原 proofs 是 M7 那类"重写后原样返回"的直接成因
+        assertTrue(revision.contains("visibleMemberProofIds加进所在组的proofs"));
         assertFalse(revision.contains("原稿中该成员自己的sentRelevantProofIds"));
         assertFalse(revision.contains("availableRelevantProofIds="));
         assertTrue(trace.stream().noneMatch(step -> "VERIFY".equals(step.get("verificationStage"))));
