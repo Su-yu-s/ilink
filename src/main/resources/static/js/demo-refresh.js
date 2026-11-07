@@ -9,9 +9,9 @@
         if (!input) return;
         input.focus();
         var opts = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true };
+        // 只发 keydown：页面上的搜索框都监听 keydown 回车，
+        // 再补 keypress/keyup 会让同一次点击触发两遍查询
         input.dispatchEvent(new KeyboardEvent('keydown', opts));
-        input.dispatchEvent(new KeyboardEvent('keypress', opts));
-        input.dispatchEvent(new KeyboardEvent('keyup', opts));
     }
 
     document.addEventListener('click', function (e) {

@@ -27,7 +27,9 @@ public class FaviconController {
 
     private static final MediaType SVG_TYPE = MediaType.valueOf("image/svg+xml");
 
-    private static final CacheControl CACHE_1Y = CacheControl.maxAge(365, TimeUnit.DAYS).cachePublic();
+    // favicon 是可热替换的（直接改上传目录里的文件即可生效），发一年缓存会让替换失效，
+    // 与 /uploads 下的其它文件保持一致，按小时缓存
+    private static final CacheControl CACHE_FAVICON = CacheControl.maxAge(1, TimeUnit.HOURS).cachePublic();
 
     /** favicon 在上传目录下的相对路径，完整路径 = {upload-dir}/images/favicon.{svg,png} */
     private static final String UPLOAD_SUBPATH = "images";
@@ -54,7 +56,7 @@ public class FaviconController {
     public ResponseEntity<Resource> faviconIco() {
         Resource svg = resolve("favicon.svg");
         if (svg != null) {
-            return ResponseEntity.ok().contentType(SVG_TYPE).cacheControl(CACHE_1Y).body(svg);
+            return ResponseEntity.ok().contentType(SVG_TYPE).cacheControl(CACHE_FAVICON).body(svg);
         }
         return ResponseEntity.notFound().build();
     }
@@ -66,7 +68,7 @@ public class FaviconController {
     public ResponseEntity<Resource> faviconSvg() {
         Resource svg = resolve("favicon.svg");
         if (svg != null) {
-            return ResponseEntity.ok().contentType(SVG_TYPE).cacheControl(CACHE_1Y).body(svg);
+            return ResponseEntity.ok().contentType(SVG_TYPE).cacheControl(CACHE_FAVICON).body(svg);
         }
         return ResponseEntity.notFound().build();
     }

@@ -14,6 +14,14 @@ function formatDateStr(value) {
 
 // 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', function() {
+    // 首页搜索框以 ?keyword= 跳到本页，这里回填到输入框并参与首次查询，
+    // 否则搜索词只停在 URL 上、列表按空条件加载。
+    var keywordInput = document.getElementById('keyword');
+    var initialKeyword = new URLSearchParams(window.location.search).get('keyword');
+    if (keywordInput && initialKeyword) {
+        keywordInput.value = initialKeyword;
+    }
+
     loadTeamList();
 
     // 绑定搜索按钮
@@ -36,6 +44,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // 分类/状态下拉：原来没有监听，选了条件也不会重新拉列表
+    ['category', 'status'].forEach(function(id) {
+        var select = document.getElementById(id);
+        if (select) {
+            select.addEventListener('change', function() {
+                currentPage = 1;
+                loadTeamList();
+            });
+        }
+    });
 });
 
 // 加载团队列表

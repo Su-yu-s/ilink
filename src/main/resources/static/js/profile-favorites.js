@@ -108,7 +108,7 @@ async function loadMyFavorites(page) {
         }
 
         const posts = result.data || [];
-        const pag = result.pagination || { page: 1, size: PAGE_SIZE, total: 0 };
+        const pag = (result.extra && result.extra.pagination) || result.pagination || { page: 1, size: PAGE_SIZE, total: 0 };
 
         if (posts.length === 0) {
             listEl.innerHTML = `

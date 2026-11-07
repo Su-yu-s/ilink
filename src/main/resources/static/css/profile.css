@@ -3530,8 +3530,10 @@ html.ilink-app body[data-profile-page] .is-invalid ~ .invalid-feedback,
   display: block;
 }
 
+/* :not(.active) —— 当前页的实心高亮由通用分页样式（pagination.css）负责。
+   这里带 !important，若也命中 active 项，会把当前页涂成和普通页一样的白底。 */
 html.ilink-app body[data-profile-page] .profile-posts-pager .page-link,
-html.ilink-app body[data-profile-page] .pagination .page-link {
+html.ilink-app body[data-profile-page] .pagination .page-item:not(.active) .page-link {
   color: var(--ui-text-secondary) !important;
   background: var(--ui-surface) !important;
   border-color: var(--ui-border) !important;
@@ -3539,7 +3541,7 @@ html.ilink-app body[data-profile-page] .pagination .page-link {
 }
 
 html.ilink-app body[data-profile-page] .profile-posts-pager .page-link:hover,
-html.ilink-app body[data-profile-page] .pagination .page-link:hover {
+html.ilink-app body[data-profile-page] .pagination .page-item:not(.active) .page-link:hover {
   color: var(--ui-text) !important;
   background: var(--ui-surface-selected) !important;
 }

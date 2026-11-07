@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人成果 - iLink</title>
     <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
-    <th:block th:replace="fragments/head-assets :: core(bootstrap=true)"></th:block>
     <link th:href="@{/css/profile.css}" rel="stylesheet">
     <link th:href="@{/css/v2/pages/profile.css}" rel="stylesheet">
 </head>
@@ -76,11 +75,14 @@
             var L=document.getElementById('myAssetsList'),P=document.getElementById('myAssetsPager');
             if(!L)return;L.innerHTML='<p style="text-align:center;color:var(--ui-text-muted);padding:40px 0;">加载中…</p>';
             try{
-                var r=await apiFetch('/api/asset/list?page='+cp+'&size='+PAGE_SIZE,{credentials:'same-origin'});
+                // 按作者过滤交给后端分页：原来先取全站一页、再在前端筛自己，
+                // 自己的成果不在这一页就会整页为空
+                var r=await apiFetch('/api/asset/list?page='+cp+'&size='+PAGE_SIZE+'&userId='+encodeURIComponent(uid),{credentials:'same-origin'});
                 var d=await r.json();
                 if(d.code!==200){L.innerHTML='<p style="color:#ef4444;text-align:center;padding:32px;">'+escapeHtml(d.message||'加载失败')+'</p>';P.innerHTML='';return;}
-                var all=d.data||[],mine=all.filter(function(a){return a&&(String(a.userId)===String(uid)||(a.ownerPreview&&String(a.ownerPreview.id)===String(uid)));});
-                var total=mine.length,start=(cp-1)*PAGE_SIZE,items=mine.slice(start,start+PAGE_SIZE);
+                var items=d.data||[];
+                var pag=(d.extra&&d.extra.pagination)||{};
+                var total=pag.total!=null?pag.total:items.length;
                 if(!items.length){L.innerHTML='<div style="text-align:center;padding:56px 0;"><p style="font-size:15px;font-weight:600;color:var(--ui-text-muted);margin:0 0 8px;">还没有发布成果</p><p style="font-size:13px;color:var(--ui-text-muted);margin:0 0 16px;">发布你的第一个竞赛或项目成果</p><a href="/profile-asset-edit.html" class="il-btn il-btn-primary il-btn-sm">去发布</a></div>';P.innerHTML='';return;}
                 var h='<div class="honor-asset-grid">';
                 items.forEach(function(a){h+=renderCard(a);});

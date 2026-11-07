@@ -580,7 +580,7 @@
                         '</div>' +
                         '<div class="modal-footer ts-confirm__footer">' +
                             '<button type="button" class="btn btn-secondary" data-ts-cancel>取消</button>' +
-                            '<button type="button" class="btn btn-primary" data-ts-ok disabled>确认</button>' +
+                            '<button type="button" class="btn btn-primary" data-ts-ok>确认</button>' +
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -592,6 +592,10 @@
             var okBtn = wrapper.querySelector('[data-ts-ok]');
             var input = wrapper.querySelector('.ts-confirm__input');
             var select = wrapper.querySelector('.ts-confirm__select');
+            // 普通确认（移除成员/退出团队）没有附加输入，按钮必须默认可点；
+            // 只有需要手输名称或选择接收人时才先禁用。confirmText 是按钮文案。
+            okBtn.textContent = opts.confirmText || '确认';
+            okBtn.disabled = Boolean(opts.requireText || opts.selectOptions);
             if (select && Array.isArray(opts.selectOptions)) {
                 opts.selectOptions.forEach(function (item) {
                     var option = document.createElement('option');
@@ -1246,9 +1250,31 @@
         if (area) area.scrollTop = area.scrollHeight;
     }
 
-    function appendChatMessage(message) {
+    // 发送时先本地插入一条，服务器随后会广播回来同一条。
+    // 这里记下刚插入的「发送者 + 内容」，回声到达时抵消掉，避免发送者看到两个气泡。
+    var pendingLocalEchoes = [];
+
+    function appendChatMessage(message, isLocal) {
         var area = byId('chatMessagesArea');
         if (!area) return;
+        var now = Date.now();
+        pendingLocalEchoes = pendingLocalEchoes.filter(function (item) { return now - item.at < 10000; });
+        if (isLocal) {
+            pendingLocalEchoes.push({
+                senderId: String(message.senderId),
+                content: String(message.content),
+                at: now
+            });
+        } else {
+            for (var i = 0; i < pendingLocalEchoes.length; i++) {
+                var pending = pendingLocalEchoes[i];
+                if (pending.senderId === String(message.senderId)
+                    && pending.content === String(message.content)) {
+                    pendingLocalEchoes.splice(i, 1);
+                    return; // 已经本地渲染过了
+                }
+            }
+        }
         if (area.querySelector('.kanban-empty')) area.innerHTML = '';
         area.insertAdjacentHTML('beforeend', renderChatMessage(message));
         scrollChatToBottom();
@@ -1481,7 +1507,7 @@
                 content: content,
                 type: type,
                 createdAt: new Date().toISOString()
-            });
+            }, true);
             await postChatMessage(content, type);
             if (closeLoading) closeLoading();
             notify('上传成功', 'success');
@@ -1779,12 +1805,17 @@
                     ? '<a class="btn btn-primary" href="/team-detail.html?id=' + encodeURIComponent(teamId) +
                       '&reviewTaskId=' + Number(task.id) + '">批阅</a>'
                     : '';
+                // 删除只对队长开放（后端 TeamTaskPolicy.canDeleteTask 只认创建者），
+                // 普通成员看到按钮点了必然 403
+                var deleteButton = (teamInfo && teamInfo.isLeader)
+                    ? '<button type="button" class="btn btn-outline-secondary" onclick="teamSpace.deleteTask(' + Number(task.id) + ')">删除</button>'
+                    : '';
                 footer.innerHTML =
                     '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>' +
                     advanceButton +
                     deliverButton +
                     reviewButton +
-                    '<button type="button" class="btn btn-outline-secondary" onclick="teamSpace.deleteTask(' + Number(task.id) + ')">删除</button>';
+                    deleteButton;
             }
             bootstrap.Modal.getOrCreateInstance(byId('taskDetailModal')).show();
         },
@@ -1912,7 +1943,7 @@
                 content: content,
                 type: 'TEXT',
                 createdAt: new Date().toISOString()
-            });
+            }, true);
             try {
                 await postChatMessage(content, 'TEXT');
             } catch (error) {

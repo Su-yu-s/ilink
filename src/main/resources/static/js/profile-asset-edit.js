@@ -560,7 +560,9 @@ function parseDescription(raw) {
 // ============ 加载成果 ============
 async function loadAsset() {
     try {
-        const r = await apiFetch('/api/asset/list?page=1&size=100', { credentials: 'same-origin' });
+        // 按 id 精确取，不再从前 100 条里找（旧成果会落到第 2 页之后被误判为不存在）
+        const r = await apiFetch('/api/asset/list?page=1&size=1&id=' + encodeURIComponent(assetId),
+            { credentials: 'same-origin' });
         const d = await r.json();
         if (d.code !== 200) { showMessage(d.message || '加载失败', 'error'); return; }
         const asset = (d.data || []).find(a => String(a.id) === String(assetId));

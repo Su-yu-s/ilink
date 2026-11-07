@@ -77,9 +77,11 @@
 
         function item(label, target, state) {
             var li = document.createElement('li');
+            // 省略号也要带 disabled：样式表只认 .page-item.disabled，
+            // 只标 is-dots 会让「…」显示成一个正常可点的白底按钮
             li.className = 'page-item' +
                 (state.active ? ' active' : '') +
-                (state.disabled ? ' disabled' : '') +
+                (state.disabled || state.dots ? ' disabled' : '') +
                 (state.dots ? ' is-dots' : '');
 
             var btn = document.createElement('button');

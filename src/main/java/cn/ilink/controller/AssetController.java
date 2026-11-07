@@ -76,9 +76,21 @@ public class AssetController {
                                                         @RequestParam(defaultValue = "10") Integer size,
                                                         @RequestParam(required = false) String keyword,
                                                         @RequestParam(required = false) String category,
+                                                        @RequestParam(required = false) Long id,
+                                                        @RequestParam(required = false) Long userId,
                                                         @RequestParam(required = false, defaultValue = "latest") String sort) {
 
         LambdaQueryWrapper<Asset> wrapper = new LambdaQueryWrapper<>();
+        // 编辑页按 id 取单条：走 /api/asset/{id} 会把 view_count +1，
+        // 打开编辑页等于刷了一次浏览量
+        if (id != null) {
+            wrapper.eq(Asset::getId, id);
+        }
+        // 「我的成果/荣誉」按作者过滤：原来在前端从全站分页结果里再筛，
+        // 自己的成果落在第 2 页之后就会整页为空
+        if (userId != null) {
+            wrapper.eq(Asset::getUserId, userId);
+        }
         // 置顶帖在任何排序下都优先；id 作最终 tiebreaker，翻页顺序不漂移
         wrapper.orderByDesc(Asset::getIsPinned);
         if ("popular".equalsIgnoreCase(sort)) {

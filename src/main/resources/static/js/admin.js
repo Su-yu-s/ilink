@@ -118,6 +118,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         AdminState.competitionPage = 1;
         loadCompetitionsAdmin();
     });
+    // 状态下拉与赛道下拉此前没有任何监听，选了也不会刷新列表
+    ['competitionStatusFilter', 'competitionTrackFilter'].forEach(function(id) {
+        document.getElementById(id)?.addEventListener('change', function() {
+            AdminState.competitionPage = 1;
+            loadCompetitionsAdmin();
+        });
+    });
     bindAdminSearch('auditSearchInput', 'auditSearchBtn', function() { loadAuditLogs(1); });
     document.getElementById('auditActionFilter')?.addEventListener('change', function() { loadAuditLogs(1); });
 });
@@ -1226,7 +1233,8 @@ async function saveTeamEditFromModal() {
         if (result.code === 200) {
             showMessage('组队需求更新成功', 'success');
             AdminState.teamEditModal?.hide();
-            loadTeams();
+            // 保持当前页，别把用户弹回第一页
+            loadTeams(AdminState.teamPage || 1);
         } else {
             showMessage(result.message || '更新失败', 'error');
         }
