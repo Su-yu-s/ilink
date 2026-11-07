@@ -22,7 +22,8 @@ class AdminAuditServiceTest {
         admin.setId(3L);
         admin.setRole("ADMIN");
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader("X-Forwarded-For", "203.0.113.9, 10.0.0.1");
+        // 最右一跳由本机 nginx 追加，是唯一不可伪造的值
+        request.addHeader("X-Forwarded-For", "10.0.0.1, 203.0.113.9");
         request.addHeader("User-Agent", "audit-test");
         ArgumentCaptor<AdminAuditLog> captor = ArgumentCaptor.forClass(AdminAuditLog.class);
 

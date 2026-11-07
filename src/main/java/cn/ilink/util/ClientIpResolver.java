@@ -28,11 +28,20 @@ public final class ClientIpResolver {
             return "";
         }
         String remoteAddr = request.getRemoteAddr();
+        if (!isTrustedProxy(remoteAddr)) {
+            // 公网直连：对端就是客户端本身，它发来的任何转发头都不可信
+            return remoteAddr == null ? "" : remoteAddr.trim();
+        }
         String forwarded = request.getHeader("X-Forwarded-For");
-        if (StringUtils.hasText(forwarded) && isTrustedProxy(remoteAddr)) {
-            String first = forwarded.split(",")[0].trim();
-            if (!first.isEmpty()) {
-                return first;
+        if (StringUtils.hasText(forwarded)) {
+            // 取最右一跳：nginx 的 $proxy_add_x_forwarded_for 把 $remote_addr 追加在末尾，
+            // 客户端自带的值只会留在左侧。取首个值等于让客户端自己决定限流键（可无限换 IP 刷桶）。
+            String[] hops = forwarded.split(",");
+            for (int i = hops.length - 1; i >= 0; i--) {
+                String hop = hops[i].trim();
+                if (!hop.isEmpty()) {
+                    return hop;
+                }
             }
         }
         return remoteAddr == null ? "" : remoteAddr.trim();

@@ -166,7 +166,7 @@ class TeamLibraryControllerWebTest {
     @Test
     void deleteOthersFileSurfaces403() throws Exception {
         // 权限校验在 Service 层：抛 IllegalStateException 时 Controller 映射为 403
-        given(libraryService.softDelete(eq(50L), eq(7L), eq(false)))
+        given(libraryService.softDelete(eq(3L), eq(50L), eq(7L), eq(false)))
             .willThrow(new IllegalStateException("只有文件上传者或队长可以执行此操作"));
 
         mockMvc.perform(delete("/api/team/3/library/files/50").session(memberSession))
@@ -176,7 +176,7 @@ class TeamLibraryControllerWebTest {
 
     @Test
     void memberCanDeleteOwnFile() throws Exception {
-        given(libraryService.softDelete(eq(50L), eq(7L), eq(false))).willReturn(List.of());
+        given(libraryService.softDelete(eq(3L), eq(50L), eq(7L), eq(false))).willReturn(List.of());
 
         mockMvc.perform(delete("/api/team/3/library/files/50").session(memberSession))
             .andExpect(status().isOk())
@@ -185,7 +185,7 @@ class TeamLibraryControllerWebTest {
 
     @Test
     void leaderCanDeleteAnyFile() throws Exception {
-        given(libraryService.softDelete(eq(50L), eq(9L), eq(true))).willReturn(List.of());
+        given(libraryService.softDelete(eq(3L), eq(50L), eq(9L), eq(true))).willReturn(List.of());
 
         mockMvc.perform(delete("/api/team/3/library/files/50").session(leaderSession))
             .andExpect(status().isOk());
@@ -193,7 +193,7 @@ class TeamLibraryControllerWebTest {
 
     @Test
     void memberCannotPurge() throws Exception {
-        given(libraryService.purge(eq(50L), eq(7L), eq(false)))
+        given(libraryService.purge(eq(3L), eq(50L), eq(7L), eq(false)))
             .willThrow(new IllegalStateException("只有队长可以彻底删除文件"));
 
         mockMvc.perform(delete("/api/team/3/library/files/50?purge=true").session(memberSession))
@@ -220,7 +220,7 @@ class TeamLibraryControllerWebTest {
                 .content("{\"parentId\":11}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value(200));
-        verify(libraryService).move(50L, 7L, false, 11L);
+        verify(libraryService).move(3L, 50L, 7L, false, 11L);
     }
 
     @Test
@@ -229,13 +229,13 @@ class TeamLibraryControllerWebTest {
                 .contentType("application/json")
                 .content("{}"))
             .andExpect(status().isOk());
-        verify(libraryService).move(50L, 7L, false, null);
+        verify(libraryService).move(3L, 50L, 7L, false, null);
     }
 
     @Test
     void moveIntoOwnSubtreeRejected() throws Exception {
         willThrow(new IllegalArgumentException("不能把文件夹移动到它自己或它的子目录里"))
-            .given(libraryService).move(any(), any(), anyBoolean(), any());
+            .given(libraryService).move(any(), any(), any(), anyBoolean(), any());
 
         mockMvc.perform(put("/api/team/3/library/files/50/move").session(memberSession)
                 .contentType("application/json")
@@ -247,7 +247,7 @@ class TeamLibraryControllerWebTest {
     @Test
     void moveOthersFileSurfaces403() throws Exception {
         willThrow(new IllegalStateException("只有文件上传者或队长可以执行此操作"))
-            .given(libraryService).move(any(), any(), anyBoolean(), any());
+            .given(libraryService).move(any(), any(), any(), anyBoolean(), any());
 
         mockMvc.perform(put("/api/team/3/library/files/50/move").session(memberSession)
                 .contentType("application/json")
@@ -262,7 +262,7 @@ class TeamLibraryControllerWebTest {
                 .contentType("application/json")
                 .content("{\"parentId\":11}"))
             .andExpect(status().isOk());
-        verify(libraryService).move(50L, 9L, true, 11L);
+        verify(libraryService).move(3L, 50L, 9L, true, 11L);
     }
 
     @Test
@@ -270,14 +270,14 @@ class TeamLibraryControllerWebTest {
         mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(memberSession))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value(200));
-        verify(libraryService).reindex(50L, 7L, false);
+        verify(libraryService).reindex(3L, 50L, 7L, false);
     }
 
     @Test
     void leaderReindexUsesLeaderFlag() throws Exception {
         mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(leaderSession))
             .andExpect(status().isOk());
-        verify(libraryService).reindex(50L, 9L, true);
+        verify(libraryService).reindex(3L, 50L, 9L, true);
     }
 
     @Test
@@ -291,13 +291,13 @@ class TeamLibraryControllerWebTest {
         mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(session))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value(403));
-        verify(libraryService, never()).reindex(any(), any(), anyBoolean());
+        verify(libraryService, never()).reindex(any(), any(), any(), anyBoolean());
     }
 
     @Test
     void reindexWhileRunningSurfaces400() throws Exception {
         willThrow(new IllegalArgumentException("索引正在进行中，请稍后查看结果"))
-            .given(libraryService).reindex(any(), any(), anyBoolean());
+            .given(libraryService).reindex(any(), any(), any(), anyBoolean());
 
         mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(memberSession))
             .andExpect(status().isBadRequest())
@@ -308,7 +308,7 @@ class TeamLibraryControllerWebTest {
     @Test
     void reindexWithoutPermissionSurfaces403() throws Exception {
         willThrow(new IllegalStateException("只有文件上传者或队长可以执行此操作"))
-            .given(libraryService).reindex(any(), any(), anyBoolean());
+            .given(libraryService).reindex(any(), any(), any(), anyBoolean());
 
         mockMvc.perform(post("/api/team/3/library/files/50/reindex").session(memberSession))
             .andExpect(status().isForbidden())

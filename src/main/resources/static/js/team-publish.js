@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         mentorPicked.hidden = false;
         mentorPicked.innerHTML =
             '<span class="tp-chip is-active">' +
-            '已选导师：' + name +
+            '已选导师：' + escapeHtml(name) +
             '<button type="button" class="tp-mentor-remove" id="removeMentorBtn" aria-label="移除已选导师">×</button>' +
             '</span>';
         const removeBtn = document.getElementById('removeMentorBtn');
@@ -199,10 +199,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     mentorMenu.innerHTML = mentors.map(function(m) {
                         const title = [m.professionalTitle, m.researchDirection].filter(Boolean).join(' · ') || m.major || '';
-                        return '<button type="button" class="tp-comp-item" role="option" data-user-id="' + m.userId + '"' +
-                            ' data-name="' + m.realName + '">' +
-                            '<span class="tp-comp-name">' + m.realName + '</span>' +
-                            (title ? '<span class="tp-comp-org">' + title + '</span>' : '') +
+                        // 姓名/职称都由用户自己填写，必须转义后再拼进 HTML（含 data-name 属性）
+                        const name = m.realName || ('用户 #' + m.userId);
+                        return '<button type="button" class="tp-comp-item" role="option" data-user-id="' + escapeHtml(m.userId) + '"' +
+                            ' data-name="' + escapeHtml(name) + '">' +
+                            '<span class="tp-comp-name">' + escapeHtml(name) + '</span>' +
+                            (title ? '<span class="tp-comp-org">' + escapeHtml(title) + '</span>' : '') +
                             '</button>';
                     }).join('');
                 })

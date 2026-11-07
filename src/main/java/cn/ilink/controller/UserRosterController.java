@@ -4,12 +4,14 @@ import cn.ilink.common.ControllerUtils;
 import cn.ilink.common.Result;
 import cn.ilink.entity.ProjectApplication;
 import cn.ilink.entity.TeamApplication;
+import cn.ilink.entity.TeamDemand;
 import cn.ilink.entity.TeacherApplication;
 import cn.ilink.entity.User;
 import cn.ilink.service.TeamMembershipService;
 import cn.ilink.service.UserService;
 import cn.ilink.service.impl.ProjectApplicationServiceImpl;
 import cn.ilink.service.impl.TeacherApplicationServiceImpl;
+import cn.ilink.service.impl.TeamDemandServiceImpl;
 import cn.ilink.service.impl.TeamApplicationServiceImpl;
 import cn.ilink.util.DisplayNameResolver;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -49,15 +51,18 @@ public class UserRosterController {
     private final ProjectApplicationServiceImpl projectApplicationService;
     private final TeamApplicationServiceImpl teamApplicationService;
     private final TeacherApplicationServiceImpl teacherApplicationService;
+    private final TeamDemandServiceImpl teamDemandService;
 
     public UserRosterController(UserService userService,
                                 ProjectApplicationServiceImpl projectApplicationService,
                                 TeamApplicationServiceImpl teamApplicationService,
-                                TeacherApplicationServiceImpl teacherApplicationService) {
+                                TeacherApplicationServiceImpl teacherApplicationService,
+                                TeamDemandServiceImpl teamDemandService) {
         this.userService = userService;
         this.projectApplicationService = projectApplicationService;
         this.teamApplicationService = teamApplicationService;
         this.teacherApplicationService = teacherApplicationService;
+        this.teamDemandService = teamDemandService;
     }
 
     /** 按姓名 / 用户名 / 学号搜索用户。 */
@@ -87,7 +92,7 @@ public class UserRosterController {
             .orderByAsc(User::getId)
             .last("LIMIT " + capped);
         List<User> users = userService.list(wrapper);
-        return Result.ok(buildRows(users, teamId)).toResponseEntity();
+        return Result.ok(buildRows(users, visibleTeamId(teamId, me))).toResponseEntity();
     }
 
     /**
@@ -151,13 +156,39 @@ public class UserRosterController {
             .collect(Collectors.toMap(User::getId, u -> u, (a, b) -> a));
         // 保持「先建立关系的人排在前面」
         List<User> ordered = ids.stream().map(userMap::get).filter(Objects::nonNull).collect(Collectors.toList());
-        return Result.ok(buildRows(ordered, teamId)).toResponseEntity();
+        return Result.ok(buildRows(ordered, visibleTeamId(teamId, me))).toResponseEntity();
     }
 
     /**
      * 组装返回行，并针对 teamId 批量标注 joined / invited。
      * 放在这里一次算完，前端就不必为每个结果单独查一次，也能直接置灰。
      */
+    /**
+     * 只有该队伍的成员（创建者或已通过成员）才允许拿到 joined/invited 标注。
+     *
+     * <p>teamId 是查询参数，任意用户都能改；不校验就能拿别人的队伍 ID
+     * 批量探测"某人在不在这个队、有没有被邀请"。
+     *
+     * @return 可展示状态的 teamId；无权查看时返回 null（仍返回用户列表，只是不带队伍状态）
+     */
+    private Long visibleTeamId(Long teamId, User me) {
+        if (teamId == null || me == null) {
+            return null;
+        }
+        TeamDemand team = teamDemandService.getById(teamId);
+        if (team == null) {
+            return null;
+        }
+        if (team.getCreatorId() != null && team.getCreatorId().equals(me.getId())) {
+            return teamId;
+        }
+        long approved = teamApplicationService.count(new LambdaQueryWrapper<TeamApplication>()
+            .eq(TeamApplication::getTeamId, teamId)
+            .eq(TeamApplication::getUserId, me.getId())
+            .eq(TeamApplication::getStatus, TeamMembershipService.STATUS_APPROVED));
+        return approved > 0 ? teamId : null;
+    }
+
     private List<Map<String, Object>> buildRows(List<User> users, Long teamId) {
         if (users == null || users.isEmpty()) {
             return Collections.emptyList();

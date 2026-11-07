@@ -26,8 +26,18 @@ class WebSocketAuthInterceptorTest {
     @Mock
     private TeamAccessService teamAccessService;
 
+    @Mock
+    private cn.ilink.service.UserService userService;
+
     @InjectMocks
     private WebSocketAuthInterceptor interceptor;
+
+    /** 拦截器现在会按库里的当前状态复核账号（会话快照可能是旧的），默认让查到的就是本人 */
+    @org.junit.jupiter.api.BeforeEach
+    void stubActiveUser() {
+        org.mockito.Mockito.lenient().when(userService.getById(org.mockito.ArgumentMatchers.any()))
+            .thenAnswer(invocation -> user(((Number) invocation.getArgument(0)).longValue()));
+    }
 
     @Test
     void notificationSubscriptionIsLimitedToTheCurrentUser() {

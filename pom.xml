@@ -170,6 +170,18 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <!-- application-local.yml 里有真实的数据库/邮件/AI 密钥，只在本地开发用。
+                 它已经在 .gitignore 里，但 src/main/resources 下的文件照样会被打进 jar——
+                 拿到 jar 的人解包就能读到。这里把它从产物里排除。 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>application-local.yml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>

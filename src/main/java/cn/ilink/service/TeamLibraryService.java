@@ -119,13 +119,40 @@ public class TeamLibraryService {
             throw new IllegalArgumentException("上传访问前缀配置异常，无法校验文件地址");
         }
         String prefixPath = stripOrigin(prefix);
-        String valuePath = stripOrigin(value);
-        boolean sameManagedPrefix = prefixPath != null && !prefixPath.isEmpty()
-            && (valuePath.equals(prefixPath) || valuePath.startsWith(prefixPath + "/"));
-        boolean relativeUploads = value.startsWith("/uploads/");
-        if (!sameManagedPrefix && !relativeUploads) {
+        if (value.indexOf("://") >= 0) {
+            // 绝对地址必须与配置前缀同源：只比路径会被 https://evil.com/uploads/x 冒充，
+            // 而 FileService 删除时按路径取本地文件，等于给了外部链接一个删本站文件的入口
+            String valueOrigin = originOf(value);
+            String prefixOrigin = originOf(prefix);
+            if (prefixOrigin == null || valueOrigin == null
+                || !prefixOrigin.equalsIgnoreCase(valueOrigin)
+                || !pathWithin(stripOrigin(value), prefixPath)) {
+                throw new IllegalArgumentException("文件地址仅支持站内上传文件");
+            }
+            return;
+        }
+        // 相对地址：允许历史约定的 /uploads/ 前缀，或配置前缀本身
+        if (!value.startsWith("/uploads/") && !pathWithin(stripOrigin(value), prefixPath)) {
             throw new IllegalArgumentException("文件地址仅支持站内上传文件");
         }
+    }
+
+    /** 取 URL 的 scheme://host[:port]；相对地址返回 null */
+    private static String originOf(String value) {
+        int scheme = value.indexOf("://");
+        if (scheme < 0) {
+            return null;
+        }
+        int slash = value.indexOf('/', scheme + 3);
+        return slash < 0 ? value : value.substring(0, slash);
+    }
+
+    /** path 是否等于前缀或在它下面（按路径段比较，避免 /uploads-evil 命中 /uploads） */
+    private static boolean pathWithin(String path, String prefixPath) {
+        if (path == null || prefixPath == null || prefixPath.isEmpty()) {
+            return false;
+        }
+        return path.equals(prefixPath) || path.startsWith(prefixPath + "/");
     }
 
     /** 回收站保留天数 */
@@ -265,8 +292,8 @@ public class TeamLibraryService {
     }
 
     /** 重命名（队长或上传者） */
-    public TeamLibraryFile rename(Long fileId, Long userId, boolean isLeader, String newName) {
-        TeamLibraryFile file = requireFile(fileId);
+    public TeamLibraryFile rename(Long teamId, Long fileId, Long userId, boolean isLeader, String newName) {
+        TeamLibraryFile file = requireTeamFile(teamId, fileId);
         requireManagePermission(file, userId, isLeader);
         String trimmed = newName == null ? "" : newName.trim();
         if (trimmed.isEmpty()) throw new IllegalArgumentException("名称不能为空");
@@ -290,8 +317,8 @@ public class TeamLibraryService {
      * 移动到目标目录（targetParentId=null 表示根目录）。
      * 目标目录必须存在且同团队；文件夹不能移进自己或自己的子孙（防成环）；目标目录同名则拒绝。
      */
-    public void move(Long fileId, Long userId, boolean isLeader, Long targetParentId) {
-        TeamLibraryFile file = requireFile(fileId);
+    public void move(Long teamId, Long fileId, Long userId, boolean isLeader, Long targetParentId) {
+        TeamLibraryFile file = requireTeamFile(teamId, fileId);
         requireManagePermission(file, userId, isLeader);
         if (Boolean.TRUE.equals(file.getIsDeleted())) {
             throw new IllegalArgumentException("回收站中的内容不能移动");
@@ -318,8 +345,8 @@ public class TeamLibraryService {
      * 重新建立检索索引（上传者或队长）：索引失败、已失效或被跳过的文件可重试。
      * 排队中的文件不重复入队，避免一次点击产生两条队列任务。
      */
-    public void reindex(Long fileId, Long userId, boolean isLeader) {
-        TeamLibraryFile file = requireFile(fileId);
+    public void reindex(Long teamId, Long fileId, Long userId, boolean isLeader) {
+        TeamLibraryFile file = requireTeamFile(teamId, fileId);
         requireManagePermission(file, userId, isLeader);
         if (Boolean.TRUE.equals(file.getIsFolder())) {
             throw new IllegalArgumentException("文件夹不需要建立检索索引");
@@ -352,8 +379,8 @@ public class TeamLibraryService {
      * 软删除（进回收站）。文件夹级联删除全部子孙。
      * 返回被任务引用而被删除的文件名列表（前端 Toast/提示用）。
      */
-    public List<String> softDelete(Long fileId, Long userId, boolean isLeader) {
-        TeamLibraryFile file = requireFile(fileId);
+    public List<String> softDelete(Long teamId, Long fileId, Long userId, boolean isLeader) {
+        TeamLibraryFile file = requireTeamFile(teamId, fileId);
         requireManagePermission(file, userId, isLeader);
         Set<String> referencedNames = new HashSet<>();
         softDeleteRecursive(fileId, userId, referencedNames);
@@ -385,10 +412,9 @@ public class TeamLibraryService {
     }
 
     /** 恢复（仅队长）：恢复节点及其所有已删除的祖先，保证树路径完整 */
-    public void restore(Long fileId, Long userId, boolean isLeader) {
+    public void restore(Long teamId, Long fileId, Long userId, boolean isLeader) {
         if (!isLeader) throw new IllegalStateException("只有队长可以访问回收站");
-        TeamLibraryFile file = libraryFileMapper.selectById(fileId);
-        if (file == null) throw new IllegalArgumentException("文件不存在");
+        TeamLibraryFile file = requireTeamFile(teamId, fileId);
         // 恢复祖先链
         Deque<Long> chain = new ArrayDeque<>();
         Long cursor = file.getParentId();
@@ -425,11 +451,9 @@ public class TeamLibraryService {
     }
 
     /** 彻底删除（仅队长，不可逆）：文件夹级联；抹去 file_url 使记录不可再访问 */
-    public int purge(Long fileId, Long userId, boolean isLeader) {
+    public int purge(Long teamId, Long fileId, Long userId, boolean isLeader) {
         if (!isLeader) throw new IllegalStateException("只有队长可以彻底删除文件");
-        TeamLibraryFile file = libraryFileMapper.selectById(fileId);
-        if (file == null) throw new IllegalArgumentException("文件不存在");
-        return purgeRecursive(file);
+        return purgeRecursive(requireTeamFile(teamId, fileId));
     }
 
     private int purgeRecursive(TeamLibraryFile file) {
@@ -729,6 +753,21 @@ public class TeamLibraryService {
     private TeamLibraryFile requireFile(Long fileId) {
         TeamLibraryFile file = libraryFileMapper.selectById(fileId);
         if (file == null || Boolean.TRUE.equals(file.getIsPurged())) {
+            throw new IllegalArgumentException("文件不存在或已彻底删除");
+        }
+        return file;
+    }
+
+    /**
+     * 取文件并校验它属于路径上的团队。
+     *
+     * <p>只按 fileId 取记录时，队长身份来自路径里的 teamId——用一个自建团队当队长
+     * 就能拿别人的 fileId 跨团队改名/移动/删除。这里把两者绑定起来。
+     * 提示与"文件不存在"保持一致，不泄露其他团队的文件是否存在。
+     */
+    private TeamLibraryFile requireTeamFile(Long teamId, Long fileId) {
+        TeamLibraryFile file = requireFile(fileId);
+        if (teamId == null || !teamId.equals(file.getTeamId())) {
             throw new IllegalArgumentException("文件不存在或已彻底删除");
         }
         return file;

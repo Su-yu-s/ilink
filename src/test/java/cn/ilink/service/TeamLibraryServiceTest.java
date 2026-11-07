@@ -67,7 +67,7 @@ class TeamLibraryServiceTest {
         when(libraryFileMapper.selectById(8L)).thenReturn(node(8L, 5L, "子目录", true, 7L));
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-            () -> libraryService.move(5L, 7L, false, 8L));
+            () -> libraryService.move(3L, 5L, 7L, false, 8L));
         assertTrue(error.getMessage().contains("不能把文件夹移动到它自己或它的子目录里"));
         verify(libraryFileMapper, never()).update(any(), any());
     }
@@ -77,7 +77,7 @@ class TeamLibraryServiceTest {
         when(libraryFileMapper.selectById(5L)).thenReturn(node(5L, 8L, "竞赛", true, 7L));
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-            () -> libraryService.move(5L, 7L, false, 8L));
+            () -> libraryService.move(3L, 5L, 7L, false, 8L));
         assertEquals("已在目标目录中", error.getMessage());
         verify(libraryFileMapper, never()).update(any(), any());
     }
@@ -89,7 +89,7 @@ class TeamLibraryServiceTest {
         when(libraryFileMapper.selectOne(any())).thenReturn(node(51L, 11L, "方案.pdf", false, 9L));
 
         IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-            () -> libraryService.move(50L, 7L, false, 11L));
+            () -> libraryService.move(3L, 50L, 7L, false, 11L));
         assertEquals("目标目录下已存在同名文件或文件夹", error.getMessage());
         verify(libraryFileMapper, never()).update(any(), any());
     }
@@ -100,7 +100,7 @@ class TeamLibraryServiceTest {
         when(libraryFileMapper.selectById(50L)).thenReturn(node(50L, 11L, "方案.pdf", false, 7L));
         when(libraryFileMapper.selectOne(any())).thenReturn(null);
 
-        libraryService.move(50L, 7L, false, null);
+        libraryService.move(3L, 50L, 7L, false, null);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Wrapper<TeamLibraryFile>> captor = ArgumentCaptor.forClass(Wrapper.class);
@@ -116,7 +116,7 @@ class TeamLibraryServiceTest {
         when(libraryFileMapper.selectById(50L)).thenReturn(node(50L, 11L, "方案.pdf", false, 9L));
 
         IllegalStateException error = assertThrows(IllegalStateException.class,
-            () -> libraryService.move(50L, 7L, false, null));
+            () -> libraryService.move(3L, 50L, 7L, false, null));
         assertEquals("只有文件上传者或队长可以执行此操作", error.getMessage());
         verify(libraryFileMapper, never()).update(any(), any());
     }
@@ -134,7 +134,7 @@ class TeamLibraryServiceTest {
         TeamLibraryFile file = indexedNode(60L, "方案.pdf", TeamLibraryFile.INDEX_FAILED);
         when(libraryFileMapper.selectById(60L)).thenReturn(file);
 
-        libraryService.reindex(60L, 7L, false);
+        libraryService.reindex(3L, 60L, 7L, false);
 
         verify(collaborationIndexBridge).enqueueUpsert(file);
     }
@@ -146,8 +146,8 @@ class TeamLibraryServiceTest {
         when(libraryFileMapper.selectById(61L)).thenReturn(skipped);
         when(libraryFileMapper.selectById(62L)).thenReturn(stale);
 
-        libraryService.reindex(61L, 7L, true);
-        libraryService.reindex(62L, 7L, true);
+        libraryService.reindex(3L, 61L, 7L, true);
+        libraryService.reindex(3L, 62L, 7L, true);
 
         verify(collaborationIndexBridge).enqueueUpsert(skipped);
         verify(collaborationIndexBridge).enqueueUpsert(stale);
@@ -160,7 +160,7 @@ class TeamLibraryServiceTest {
             when(libraryFileMapper.selectById(63L)).thenReturn(file);
 
             IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-                () -> libraryService.reindex(63L, 7L, false));
+                () -> libraryService.reindex(3L, 63L, 7L, false));
             assertEquals("索引正在进行中，请稍后查看结果", error.getMessage());
         }
         verify(collaborationIndexBridge, never()).enqueueUpsert(any());
@@ -171,14 +171,14 @@ class TeamLibraryServiceTest {
         TeamLibraryFile folder = node(64L, null, "竞赛", true, 7L);
         when(libraryFileMapper.selectById(64L)).thenReturn(folder);
         IllegalArgumentException folderError = assertThrows(IllegalArgumentException.class,
-            () -> libraryService.reindex(64L, 7L, false));
+            () -> libraryService.reindex(3L, 64L, 7L, false));
         assertEquals("文件夹不需要建立检索索引", folderError.getMessage());
 
         TeamLibraryFile trashed = indexedNode(65L, "回收.pdf", TeamLibraryFile.INDEX_FAILED);
         trashed.setIsDeleted(true);
         when(libraryFileMapper.selectById(65L)).thenReturn(trashed);
         IllegalArgumentException trashError = assertThrows(IllegalArgumentException.class,
-            () -> libraryService.reindex(65L, 7L, false));
+            () -> libraryService.reindex(3L, 65L, 7L, false));
         assertEquals("回收站中的文件需要先从回收站恢复", trashError.getMessage());
 
         verify(collaborationIndexBridge, never()).enqueueUpsert(any());
@@ -190,7 +190,7 @@ class TeamLibraryServiceTest {
             .thenReturn(indexedNode(66L, "他人文件.pdf", TeamLibraryFile.INDEX_FAILED));
 
         IllegalStateException error = assertThrows(IllegalStateException.class,
-            () -> libraryService.reindex(66L, 8L, false));
+            () -> libraryService.reindex(3L, 66L, 8L, false));
         assertEquals("只有文件上传者或队长可以执行此操作", error.getMessage());
         verify(collaborationIndexBridge, never()).enqueueUpsert(any());
     }

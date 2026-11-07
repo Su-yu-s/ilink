@@ -185,7 +185,7 @@ public class TeamLibraryController {
             return Result.forbidden().toResponseEntity();
         }
         try {
-            TeamLibraryFile file = libraryService.rename(fileId, user.getId(),
+            TeamLibraryFile file = libraryService.rename(teamId, fileId, user.getId(),
                 isTeamLeader(team, user), strOf(body == null ? null : body.get("name")));
             return Result.ok("重命名成功", file).toResponseEntity();
         } catch (IllegalArgumentException e) {
@@ -214,7 +214,7 @@ public class TeamLibraryController {
             return Result.forbidden().toResponseEntity();
         }
         try {
-            libraryService.move(fileId, user.getId(), isTeamLeader(team, user),
+            libraryService.move(teamId, fileId, user.getId(), isTeamLeader(team, user),
                 longOf(body == null ? null : body.get("parentId")));
             return Result.ok("已移动", null).toResponseEntity();
         } catch (IllegalArgumentException e) {
@@ -242,7 +242,7 @@ public class TeamLibraryController {
             return Result.forbidden().toResponseEntity();
         }
         try {
-            libraryService.reindex(fileId, user.getId(), isTeamLeader(team, user));
+            libraryService.reindex(teamId, fileId, user.getId(), isTeamLeader(team, user));
             return Result.ok("已重新提交检索索引", null).toResponseEntity();
         } catch (IllegalArgumentException e) {
             return Result.badRequest(e.getMessage()).toResponseEntity();
@@ -270,10 +270,10 @@ public class TeamLibraryController {
         }
         try {
             if (purge) {
-                int count = libraryService.purge(fileId, user.getId(), isTeamLeader(team, user));
+                int count = libraryService.purge(teamId, fileId, user.getId(), isTeamLeader(team, user));
                 return Result.ok("已彻底删除 " + count + " 项", null).toResponseEntity();
             }
-            List<String> referencedNames = libraryService.softDelete(fileId, user.getId(), isTeamLeader(team, user));
+            List<String> referencedNames = libraryService.softDelete(teamId, fileId, user.getId(), isTeamLeader(team, user));
             return Result.ok(referencedNames.isEmpty()
                 ? "已删除，30 天内可在回收站恢复"
                 : "已删除。以下文件仍被任务引用，任务中将显示为「文件已删除」：" + String.join("、", referencedNames),
@@ -299,7 +299,7 @@ public class TeamLibraryController {
             return Result.notFound(MSG_TEAM_NOT_FOUND).toResponseEntity();
         }
         try {
-            libraryService.restore(fileId, user.getId(), isTeamLeader(team, user));
+            libraryService.restore(teamId, fileId, user.getId(), isTeamLeader(team, user));
             return Result.ok("已恢复", null).toResponseEntity();
         } catch (IllegalArgumentException e) {
             return Result.badRequest(e.getMessage()).toResponseEntity();

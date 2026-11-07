@@ -18,11 +18,21 @@ class ClientIpResolverTest {
     }
 
     @Test
-    void 受信代理时取XForwardedFor首个地址() {
+    void 受信代理时取XForwardedFor最右一跳() {
+        // nginx 的 $proxy_add_x_forwarded_for 把 $remote_addr 追加在末尾，
+        // 最右一跳才是不可伪造的真实对端
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr("127.0.0.1");
         request.addHeader("X-Forwarded-For", "1.2.3.4, 5.6.7.8");
-        assertEquals("1.2.3.4", ClientIpResolver.resolve(request));
+        assertEquals("5.6.7.8", ClientIpResolver.resolve(request));
+    }
+
+    @Test
+    void 客户端伪造的左侧地址不影响解析结果() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr("127.0.0.1");
+        request.addHeader("X-Forwarded-For", "9.9.9.9, 203.0.113.7");
+        assertEquals("203.0.113.7", ClientIpResolver.resolve(request));
     }
 
     @Test

@@ -94,13 +94,9 @@ public class AuthController {
                 loginRequest = new LoginRequest();
             }
 
-            String clientKey = resolveLoginAttemptKey(request, loginRequest);
-            if (loginAttemptService.isBlocked(clientKey)) {
-                return json(Result.fail(401,
-                    msg("auth.error.login.rateLimit", "登录尝试次数过多，请 {0} 分钟后再试",
-                        loginAttemptService.remainingLockMinutes())));
-            }
-
+            // 先归一化再算限流键：键必须与真正用于认证的字段一致，
+            // 否则同时传 phoneNumber 和 identifier 时，固定账号、轮换另一个字段
+            // 就能每次落在新桶里，限流形同虚设。
             normalizeIdentifier(loginRequest);
 
             String principal = firstNonBlank(
@@ -108,6 +104,12 @@ public class AuthController {
                 loginRequest.getStudentId(),
                 loginRequest.getIdentifier()
             );
+            String clientKey = resolveLoginAttemptKey(request, principal);
+            if (loginAttemptService.isBlocked(clientKey)) {
+                return json(Result.fail(401,
+                    msg("auth.error.login.rateLimit", "登录尝试次数过多，请 {0} 分钟后再试",
+                        loginAttemptService.remainingLockMinutes())));
+            }
             if (principal == null) {
                 loginAttemptService.loginFailed(clientKey);
                 return json(Result.fail(401, msg("auth.error.invalidCredentials", "用户名或密码错误")));
@@ -271,14 +273,9 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/api/logout")
-    public String logoutGet(HttpSession session, HttpServletRequest request, HttpServletResponse response) {
-        rememberMeService.revokeCurrentCookie(request, response);
-        session.invalidate();
-        SecurityContextHolder.clearContext();
-        return "redirect:/login.html";
-    }
-
+    // 故意不提供 GET /api/logout：GET 不经过 CSRF 校验，任何第三方页面
+    // 用一个 <img src="/api/logout"> 就能把用户登出并吊销 remember-me。
+    // 前端统一走下面的 POST（apiFetch 会自动带 X-XSRF-TOKEN）。
     @PostMapping("/api/logout")
     @ResponseBody
     public ResponseEntity<Result<?>> logoutPost(HttpSession session, HttpServletRequest request,
@@ -425,22 +422,33 @@ public class AuthController {
         }
     }
 
-    private static String resolveLoginAttemptKey(HttpServletRequest request, LoginRequest loginRequest) {
+    /**
+     * 限流键 = 客户端 IP + 认证主体。
+     *
+     * @param account 与 {@link #login} 里用于认证的 principal 同一个值；传 null 时退化为纯 IP 限流
+     */
+    private static String resolveLoginAttemptKey(HttpServletRequest request, String account) {
         // 修复 D-P2-10：getRemoteAddr() 在 nginx 同机部署下恒为 127.0.0.1，IP 维度限流退化为全体共享；
         // 统一走 ClientIpResolver（解析受信任代理的 X-Forwarded-For），与注册/重置等接口口径一致
         String ip = ClientIpResolver.resolve(request);
-        String account = loginRequest.getIdentifier();
-        if (account == null || account.isBlank()) {
-            account = loginRequest.getPhoneNumber();
-        }
-        if (account == null || account.isBlank()) {
-            account = loginRequest.getStudentId();
+        // IP 和账号都来自请求，长度不受限；截断后再拼键，
+        // 否则一段超长字符串就能在限流缓存里留下大对象
+        if (ip.length() > MAX_RATE_KEY_PART_LENGTH) {
+            ip = ip.substring(0, MAX_RATE_KEY_PART_LENGTH);
         }
         if (account != null && !account.isBlank()) {
-            return ip + ":" + account.trim();
+            // 用户名在 MySQL 默认排序规则下大小写不敏感，键也归一化，避免大小写轮换刷桶
+            String normalized = account.trim().toLowerCase(java.util.Locale.ROOT);
+            if (normalized.length() > MAX_RATE_KEY_PART_LENGTH) {
+                normalized = normalized.substring(0, MAX_RATE_KEY_PART_LENGTH);
+            }
+            return ip + ":" + normalized;
         }
         return ip;
     }
+
+    /** 限流键各分段的长度上限（账号 / IP） */
+    private static final int MAX_RATE_KEY_PART_LENGTH = 64;
 
     private String firstNonBlank(String... values) {
         for (String value : values) {

@@ -35,6 +35,10 @@ public class PasswordResetService {
     @Autowired(required = false)
     private I18nMessageResolver i18nMessages;
 
+    /** 可选依赖：单测不注入，取不到就不做会话清理 */
+    @Autowired(required = false)
+    private cn.ilink.common.UserSessionRegistry sessionRegistry;
+
     public PasswordResetService(PasswordResetTokenMapper tokenMapper, UserMapper userMapper,
                                 PasswordEncoder passwordEncoder, PasswordResetMailService mailService,
                                 RememberMeService rememberMeService) {
@@ -130,6 +134,36 @@ public class PasswordResetService {
         token.setUsedAt(now);
         tokenMapper.updateById(token);
         rememberMeService.revokeAllForUser(user.getId());
+        // 改密后必须让已登录的会话失效：否则被盗的会话在改密之后仍然可用，
+        // "改密码把坏人踢下线"这个用户预期就落空了。放在提交后执行，
+        // 避免事务回滚时把用户白白踢掉。
+        revokeSessionsAfterCommit(user.getId());
+    }
+
+    private void revokeSessionsAfterCommit(Long userId) {
+        if (sessionRegistry == null) {
+            return;
+        }
+        Runnable revoke = () -> {
+            try {
+                int count = sessionRegistry.invalidateAll(userId);
+                if (count > 0) {
+                    log.info("密码重置后已失效 {} 个会话: userId={}", count, userId);
+                }
+            } catch (Exception e) {
+                log.warn("密码重置后清理会话失败: userId={}", userId, e);
+            }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    revoke.run();
+                }
+            });
+        } else {
+            revoke.run();
+        }
     }
 
     @Scheduled(cron = "0 23 3 * * *")

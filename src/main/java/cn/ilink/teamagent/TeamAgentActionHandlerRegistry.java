@@ -311,7 +311,7 @@ public class TeamAgentActionHandlerRegistry {
             if (!(fileId instanceof Number number)) {
                 throw new TeamAgentException(TeamAgentErrorCode.UNDO_NOT_AVAILABLE, "文件记录不存在");
             }
-            libraryService.softDelete(number.longValue(), c.actorUserId(), false);
+            libraryService.softDelete(c.action().getTeamId(), number.longValue(), c.actorUserId(), false);
             return Map.of("deleted", true, "fileId", number.longValue());
         }
 

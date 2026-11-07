@@ -48,6 +48,12 @@ public class SecurityConfig {
                 .antMatchers("/actuator/health", "/actuator/info").permitAll()
                 // 文案字典：所有页面（含匿名可访问页）都要在 <head> 里同步取用
                 .antMatchers("/i18n/**").permitAll()
+                // 聊天/资料库/任务/证明类附件不属于公开资源：这些目录此前也匿名可读，
+                // 安全性完全依赖"URL 不可猜"。至少要求登录；头像、成果封面、社区图片
+                // 仍保持匿名可读（它们要出现在公开页面和邮件里）。
+                // 注意顺序：必须写在下面的 /uploads/** permitAll 之前。
+                .antMatchers("/uploads/chat/**", "/uploads/library/**", "/uploads/tasks/**",
+                    "/uploads/proofs/**", "/uploads/certificates/**").authenticated()
                 .antMatchers("/css/**", "/js/**", "/lib/**", "/img/**", "/images/**", "/uploads/**").permitAll()
 
                 .antMatchers(HttpMethod.GET, "/api/community/posts").permitAll()
@@ -85,6 +91,9 @@ public class SecurityConfig {
                 .antMatchers("/api/user/**").authenticated()
                 .antMatchers("/api/upload/**").authenticated()
                 .antMatchers("/api/files/**").authenticated()
+                // 机器调用端点：本身用 x-ilink-internal-token 校验，且默认不注册。
+                // 放行是为了不被会话鉴权拦死（它没有浏览器会话），不是无保护。
+                .antMatchers("/internal/agent/**").permitAll()
                 .antMatchers("/home", "/home.html", "/profile.html", "/profile-edit.html", "/profile-honors.html",
                     "/profile-posts.html", "/profile-favorites.html", "/profile-article-edit.html", "/profile-asset-edit.html",
                     "/profile-password.html", "/profile-delete.html").authenticated()
@@ -92,10 +101,11 @@ public class SecurityConfig {
                 .antMatchers("/admin.html", "/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .permitAll()
-            )
+            // 不启用 formLogin：它会给 POST /login 挂上默认的
+            // UsernamePasswordAuthenticationFilter，任何脚本都能绕开 /api/login 里的
+            // 登录限流、账号暂停检查与 remember-me 逻辑直接认证。登录页自己用
+            // JS 提交到 /api/login，这里的表单通道没有任何调用方。
+            // /login 与 /login.html 的匿名访问已在上面的 antMatchers 中放行。
             .exceptionHandling(exceptions -> exceptions
                 .authenticationEntryPoint((request, response, exception) -> {
                     if (isApiRequest(request)) {
@@ -159,7 +169,7 @@ public class SecurityConfig {
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 // 只豁免 WebSocket 握手（非浏览器表单语义）。上传接口与其它写接口一视同仁：
                 // 前端统一走 apiFetch 自动带 X-XSRF-TOKEN，无需为 /api/upload 或 /api/files 开后门。
-                .ignoringAntMatchers("/ws/**", "/ws-native/**")
+                .ignoringAntMatchers("/ws/**", "/ws-native/**", "/internal/agent/**")
             );
 
         RememberMeService rememberMeService = rememberMeServiceProvider.getIfAvailable();

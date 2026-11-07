@@ -33,9 +33,12 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
     private static final Pattern CHAT_DESTINATION = Pattern.compile("^/app/chat/(\\d+)$");
 
     private final TeamAccessService teamAccessService;
+    private final cn.ilink.service.UserService userService;
 
-    public WebSocketAuthInterceptor(TeamAccessService teamAccessService) {
+    public WebSocketAuthInterceptor(TeamAccessService teamAccessService,
+                                    cn.ilink.service.UserService userService) {
         this.teamAccessService = teamAccessService;
+        this.userService = userService;
     }
 
     @Override
@@ -52,18 +55,25 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             if (user == null) {
                 throw new AccessDeniedException("Authentication is required for WebSocket access");
             }
+            // 会话里的 user 是登录那一刻的快照，账号被停用后快照仍显示 ACTIVE。
+            // STOMP 长连接不会随 HTTP 会话一起失效，所以这里按库里的当前状态复核一次，
+            // 否则被停用的账号仍能收发团队消息。
+            final User current = user.getId() == null ? null : userService.getById(user.getId());
+            if (current == null || current.isDisabled()) {
+                throw new AccessDeniedException("Account is disabled");
+            }
             // Inbound STOMP frames are commonly immutable by the time they
             // reach this interceptor. Session attributes remain the source of
             // truth for authorization; only set a Principal when the frame is
             // still mutable so a valid frame is never rejected by header writes.
             if (accessor.isMutable()) {
-                accessor.setUser(() -> String.valueOf(user.getId()));
+                accessor.setUser(() -> String.valueOf(current.getId()));
             }
 
             if (StompCommand.SUBSCRIBE.equals(command)) {
-                assertCanSubscribe(accessor.getDestination(), user);
+                assertCanSubscribe(accessor.getDestination(), current);
             } else if (StompCommand.SEND.equals(command)) {
-                assertCanSend(accessor.getDestination(), user);
+                assertCanSend(accessor.getDestination(), current);
             }
         }
         return message;

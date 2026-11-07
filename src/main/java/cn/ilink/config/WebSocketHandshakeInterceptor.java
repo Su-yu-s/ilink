@@ -59,7 +59,15 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
                 return false;
             }
 
+            // nginx 终止 HTTPS 后转发到本机，Tomcat 看到的 scheme 恒为 http，
+            // 而浏览器发来的 Origin 是 https——直接比会恒定失败，聊天只能降级轮询。
+            // 只采信受信代理写入的 X-Forwarded-Proto；host 仍须与 Host 头一致，
+            // 所以伪造这个头也换不到别的源。
             String requestScheme = request.getURI().getScheme();
+            String forwardedProto = request.getHeaders().getFirst("X-Forwarded-Proto");
+            if (forwardedProto != null && !forwardedProto.isBlank()) {
+                requestScheme = forwardedProto.trim();
+            }
             if (requestScheme != null && originUri.getScheme() != null
                 && !requestScheme.equalsIgnoreCase(originUri.getScheme())) {
                 return false;
@@ -72,8 +80,13 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
         }
     }
 
+    /**
+     * 端口归一化。{@code Host: ilink.work}（nginx 的 {@code proxy_set_header Host $host} 不带端口）
+     * 经 HttpHeaders.getHost() 解析出来是 <b>0</b> 而不是 -1；把 0 当成真实端口会让它
+     * 与 Origin 的默认端口 443/80 永远对不上。0 与负数都按"未指定"处理。
+     */
     private int effectivePort(String scheme, int port) {
-        if (port >= 0) {
+        if (port > 0) {
             return port;
         }
         return "https".equalsIgnoreCase(scheme) ? 443 : 80;

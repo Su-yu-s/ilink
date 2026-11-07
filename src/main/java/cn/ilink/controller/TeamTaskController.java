@@ -183,7 +183,7 @@ public class TeamTaskController {
                 task.getTeamId(), user.getId(), taskId, expectedVersion,
                 dto.getTaskTitle(), dto.getTaskDescription(), dto.getTaskType(),
                 dto.getEstimatedHours(), body.has("deadline"), dto.getDeadline(),
-                dto.getRequiresReview(), dto.getAssignedTo(), null));
+                dto.getRequiresReview(), dto.getAssignedTo(), dto.getPriority(), null));
         return Result.ok(mutation.actionMessage(),
             teamTaskService.getTaskById(taskId)).toResponseEntity();
     }
@@ -691,15 +691,21 @@ public class TeamTaskController {
         if (isApprovedMentor(team.getId(), user.getId())) {
             return true;
         }
+        // 下面的两种身份都以「当前仍在队」为前提：被移出队伍后，
+        // 旧的 assignedTo 和 task_participant 行仍然留在库里，不能据此继续读队内任务。
+        if (!isApprovedMember(team.getId(), user.getId())) {
+            return false;
+        }
         // 任务的直接关系人：被指派人和参与者。
         if (task.getAssignedTo() != null && task.getAssignedTo().equals(user.getId())) {
             return true;
         }
         // 参与者名单里的人（addParticipant 写入的行）同样应该能看/评论自己参与的任务，
-        // 否则他们会变成「查不到自己参与的任务」的隐形人。
+        // 否则他们会变成「查不到自己参与的任务」的隐形人。已离开（left）的行不算。
         return taskParticipantMapper.selectCount(new LambdaQueryWrapper<cn.ilink.entity.TaskParticipant>()
             .eq(cn.ilink.entity.TaskParticipant::getTaskId, task.getId())
-            .eq(cn.ilink.entity.TaskParticipant::getUserId, user.getId())) > 0;
+            .eq(cn.ilink.entity.TaskParticipant::getUserId, user.getId())
+            .ne(cn.ilink.entity.TaskParticipant::getStatus, "left")) > 0;
     }
 
     private String serializeAttachments(Object attachments) {
