@@ -73,7 +73,12 @@ public record KgTimeRange(LocalDate startInclusive, LocalDate endExclusive) {
                 }
                 explicitDates.add(LocalDate.of(y, m, d));
             }
-            if (explicitDates.size() >= 2 && text.contains("至")) {
+            // 区间分隔符不止「至」：口头/文档里「3月1日-3月5日」「3月10日~20日」同样常见
+            boolean hasRangeSeparator = text.contains("至") || text.contains("到")
+                || text.contains("-") || text.contains("－") || text.contains("—")
+                || text.contains("~") || text.contains("～");
+
+            if (explicitDates.size() >= 2 && hasRangeSeparator) {
                 return range(explicitDates.get(0), explicitDates.get(1).plusDays(1));
             }
 
@@ -82,8 +87,15 @@ public record KgTimeRange(LocalDate startInclusive, LocalDate endExclusive) {
             while (dayMatcher.find()) {
                 days.add(Integer.parseInt(dayMatcher.group(1)));
             }
-            if (explicitDates.isEmpty() && days.size() >= 2 && text.contains("至")) {
-                return range(firstMonth.atDay(days.get(0)), firstMonth.atDay(days.get(1)).plusDays(1));
+            // 同月缩写：「3月10日至20日」只有前一个日期带月份，后一个要补本月
+            if (hasRangeSeparator && days.size() >= 2) {
+                LocalDate rangeStart = explicitDates.isEmpty()
+                    ? firstMonth.atDay(days.get(0)) : explicitDates.get(0);
+                LocalDate rangeEnd = firstMonth.atDay(days.get(1));
+                if (!rangeEnd.isAfter(rangeStart)) {
+                    rangeEnd = rangeEnd.plusMonths(1);
+                }
+                return range(rangeStart, rangeEnd.plusDays(1));
             }
             if (!explicitDates.isEmpty() && (text.contains("以后") || text.contains("之后"))) {
                 return range(explicitDates.get(0).plusDays(1), UNBOUNDED_END);

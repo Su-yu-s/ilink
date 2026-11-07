@@ -325,8 +325,13 @@ final class TemporalAnswerScope {
             && plan.requiresTemporal() && !plan.historicalStatus()
             && !REQUIRES_CONFIRMED_SUBJECT.matcher(question).find()
             && POSITIVE_COMPETITION_LIST.matcher(question).find();
+        // 与 recordScope 同一口径：问题里点名的记录组必须全部解析出来。
+        // 少解析一组时 allWindowsComplete 仍可能为真，据此宣布"记录已确定"就是给了半个结论。
+        List<String> requestedGroups = requestedRecordGroups(question);
+        boolean allRequestedGroupsResolved = !requestedGroups.isEmpty()
+            && requestedGroups.size() == groups.size();
         return new RecordScope(groups, windows, allWindowsComplete,
-            positiveRecordsQuestion && allWindowsComplete, memberCoverage);
+            positiveRecordsQuestion && allRequestedGroupsResolved && allWindowsComplete, memberCoverage);
     }
 
     /**

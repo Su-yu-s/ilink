@@ -192,6 +192,9 @@ public class WebSearchService {
             .replace("&quot;", "\"")
             .replace("&#39;", "'")
             .replace("&nbsp;", " ");
+        // 解码后可能冒出 &lt;/web_search_results&gt; 这类尖括号：换成全角，
+        // 文字保留但拼不出任何标记，也就无法伪造提示词边界
+        text = text.replace('<', '＜').replace('>', '＞');
         text = text.replaceAll("\\s+", " ").trim();
         if (text.length() > maxLen) {
             text = text.substring(0, maxLen) + "…";

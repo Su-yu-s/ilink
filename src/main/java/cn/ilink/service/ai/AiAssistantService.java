@@ -106,12 +106,22 @@ public class AiAssistantService {
         public final String reasoning;
         public final List<Map<String, String>> sources;
         public final long elapsedMs;
+        /** 上游返回的 token 用量；供应商未返回时为 null。用于用量对账。 */
+        public final Integer promptTokens;
+        public final Integer completionTokens;
 
         public QaAnswer(String answer, String reasoning, List<Map<String, String>> sources, long elapsedMs) {
+            this(answer, reasoning, sources, elapsedMs, null, null);
+        }
+
+        public QaAnswer(String answer, String reasoning, List<Map<String, String>> sources, long elapsedMs,
+                        Integer promptTokens, Integer completionTokens) {
             this.answer = answer;
             this.reasoning = reasoning;
             this.sources = sources;
             this.elapsedMs = elapsedMs;
+            this.promptTokens = promptTokens;
+            this.completionTokens = completionTokens;
         }
     }
 
@@ -138,12 +148,19 @@ public class AiAssistantService {
         AiClient.AiChatResult result = listener == null
             ? aiClient.chat(Arrays.asList(message("system", SYSTEM_QA_PROMPT), message("user", prompt)), 2048)
             : aiClient.streamChat(Arrays.asList(message("system", SYSTEM_QA_PROMPT), message("user", prompt)), 2048, listener);
+        // 被长度上限截断时内容一定是不完整的：直接报错让用户重问，
+        // 比把半句话当完整回答展示更诚实
+        if ("length".equalsIgnoreCase(result.finishReason)) {
+            throw new AiClient.AiUnavailableException("回答超出长度上限，内容可能不完整，请把问题拆小后重试");
+        }
         // 兜底清洗：个别模型会复读 prompt 中的专用标签，若出现则剥除，避免泄漏给用户
         return new QaAnswer(
             stripPromptTags(result.content),
             stripPromptTags(result.reasoning),
             toSourceList(sources),
-            System.currentTimeMillis() - startedAt);
+            System.currentTimeMillis() - startedAt,
+            result.promptTokens,
+            result.completionTokens);
     }
 
     /** 构造答疑 user prompt：竞赛公开资料 + 检索摘要 + 学生问题 + 回答要求。 */
@@ -293,12 +310,50 @@ public class AiAssistantService {
             return null;
         }
         String text = raw.trim();
-        int start = text.indexOf('[');
-        int end = text.lastIndexOf(']');
-        if (start < 0 || end <= start) {
+        // 从每个 '[' 起找"括号配平"的子串，而不是简单地取首个 '[' 到末个 ']'：
+        // 模型在数组前写一句带方括号的话（如「参考 [1] 的资料」）时，
+        // 旧写法会把前言一起截进来，JSON 直接解析失败。
+        for (int i = text.indexOf('['); i >= 0; i = text.indexOf('[', i + 1)) {
+            String candidate = balancedArrayAt(text, i);
+            if (candidate != null) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    /** 从 start 处的 '[' 开始找第一个配平的 JSON 数组；跳过字符串内部的括号 */
+    private static String balancedArrayAt(String text, int start) {
+        if (start < 0 || start >= text.length() || text.charAt(start) != '[') {
             return null;
         }
-        return text.substring(start, end + 1);
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = start; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (c == '\\') {
+                    escaped = true;
+                } else if (c == '"') {
+                    inString = false;
+                }
+                continue;
+            }
+            if (c == '"') {
+                inString = true;
+            } else if (c == '[') {
+                depth++;
+            } else if (c == ']') {
+                depth--;
+                if (depth == 0) {
+                    return text.substring(start, i + 1);
+                }
+            }
+        }
+        return null;
     }
 
     private static String normalizeTaskType(String value) {

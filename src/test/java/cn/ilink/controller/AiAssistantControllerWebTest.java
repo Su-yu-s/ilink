@@ -82,12 +82,15 @@ class AiAssistantControllerWebTest {
         team.setId(3L);
         team.setTitle("测试团队");
         team.setCreatorId(9L);
+        // 拆解要求团队处于 TEAMING（与 createTask 落库条件一致）
+        team.setStatus("TEAMING");
         given(teamDemandService.getById(3L)).willReturn(team);
 
         TeamTask task = new TeamTask();
         task.setId(11L);
         task.setTeamId(3L);
         task.setTaskTitle("完成任务书");
+        task.setStatus("IN_PROGRESS");
         given(teamTaskService.getById(11L)).willReturn(task);
 
         given(aiProperties.isEnabled()).willReturn(true);
@@ -101,6 +104,45 @@ class AiAssistantControllerWebTest {
                 .content("{\"taskId\":11}"))
             .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.code").value(401));
+    }
+
+    @Test
+    void breakdownRejectsTeamNotInTeaming() throws Exception {
+        // 队伍还在招募中：拆解出的子任务没有落库入口，提前拒绝而不是给出一串存不进的建议
+        TeamDemand openTeam = new TeamDemand();
+        openTeam.setId(3L);
+        openTeam.setTitle("测试团队");
+        openTeam.setCreatorId(9L);
+        openTeam.setStatus("OPEN");
+        given(teamDemandService.getById(3L)).willReturn(openTeam);
+
+        mockMvc.perform(post("/api/team/3/ai/task-breakdown")
+                .session(session)
+                .contentType("application/json")
+                .content("{\"taskId\":11}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(400));
+
+        verify(aiAssistantService, never()).breakdownTask(any(), any());
+    }
+
+    @Test
+    void breakdownRejectsCompletedTask() throws Exception {
+        TeamTask done = new TeamTask();
+        done.setId(11L);
+        done.setTeamId(3L);
+        done.setTaskTitle("完成任务书");
+        done.setStatus("COMPLETED");
+        given(teamTaskService.getById(11L)).willReturn(done);
+
+        mockMvc.perform(post("/api/team/3/ai/task-breakdown")
+                .session(session)
+                .contentType("application/json")
+                .content("{\"taskId\":11}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.code").value(400));
+
+        verify(aiAssistantService, never()).breakdownTask(any(), any());
     }
 
     @Test

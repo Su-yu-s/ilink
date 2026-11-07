@@ -160,6 +160,8 @@ public class AnswerEvidenceVerifier {
         Matcher bareNumbers = VIEWPORT_BARE_NUMBER.matcher(answer);
         while (bareNumbers.find()) {
             String number = bareNumbers.group("number");
+            // 年份同样是 3-5 位数字，但"2026 年"不是视口声明，不该触发尺寸门禁
+            if (looksLikeYear(answer, bareNumbers.end())) continue;
             if (!hasDimensionContext(answer, bareNumbers.start(), bareNumbers.end())) {
                 if (viewportBareNumberSupported(ledger, number))
                     reasons.add("UNSUPPORTED_VIEWPORT_NUMBER:" + bareNumbers.group());
@@ -251,6 +253,19 @@ public class AnswerEvidenceVerifier {
         int from = Math.max(0, start - 48);
         int to = Math.min(source.length(), end + 48);
         return VIEWPORT_CONTEXT.matcher(source.substring(from, to)).find();
+    }
+
+    /**
+     * 3-5 位数字后面紧跟「年/月/日」或日期分隔符时按年份处理。
+     *
+     * @param end 数字片段在原文中的结束下标
+     */
+    private static boolean looksLikeYear(String source, int end) {
+        if (source == null || end < 0 || end >= source.length()) {
+            return false;
+        }
+        char next = source.charAt(end);
+        return next == '年' || next == '月' || next == '日' || next == '-' || next == '/';
     }
 
     private static boolean hasDimensionContext(String source, int start, int end) {
@@ -582,8 +597,23 @@ public class AnswerEvidenceVerifier {
             && (relation.validTo() == null || relation.validTo().getTime() > start);
     }
 
+    /** 「否定词 + 关系类名词」才算在陈述没有关系，单个「无」字太容易出现在正常句子里 */
+    private static final java.util.regex.Pattern NO_RELATION_CLAIM = java.util.regex.Pattern.compile(
+        "(?:没有|无|未发现|未见|不存在)[^。！？；\\n]{0,12}?(?:关系|关联|联系|交集|合作|记录|往来|互动)");
+
     private static boolean looksLikeNoRelation(String answer) {
-        return answer.contains("没有") || answer.contains("无") || answer.contains("未发现")
-            || answer.contains("未见");
+        if (answer == null) {
+            return false;
+        }
+        String text = answer.trim();
+        // 长回答通常已经展开了具体内容；放行它等于让「随口带个没有」绕过引用门禁
+        if (text.isEmpty() || text.length() > 60) {
+            return false;
+        }
+        if (NO_RELATION_CLAIM.matcher(text).find()) {
+            return true;
+        }
+        // 极简否定也算（"没有。" / "无"）
+        return text.matches("^(?:没有|无|没有关系|无关系)[。.!！]?$");
     }
 }

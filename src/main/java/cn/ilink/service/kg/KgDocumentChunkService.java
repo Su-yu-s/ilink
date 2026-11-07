@@ -4,8 +4,10 @@ import cn.ilink.config.AiEmbeddingProperties;
 import cn.ilink.entity.KgDocumentChunk;
 import cn.ilink.entity.KgEntity;
 import cn.ilink.entity.KgIndexTask;
+import cn.ilink.entity.KgRelation;
 import cn.ilink.mapper.KgDocumentChunkMapper;
 import cn.ilink.mapper.KgIndexTaskMapper;
+import cn.ilink.mapper.KgRelationMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,22 +36,24 @@ public class KgDocumentChunkService {
     private final KgScopeService scopeService;
     private final AiEmbeddingProperties properties;
     private final KgIndexTaskMapper indexTaskMapper;
+    private final KgRelationMapper relationMapper;
 
     @Autowired
     public KgDocumentChunkService(KgDocumentChunkMapper mapper, KgEmbeddingService embeddings,
                                   KgScopeService scopeService, AiEmbeddingProperties properties,
-                                  KgIndexTaskMapper indexTaskMapper) {
+                                  KgIndexTaskMapper indexTaskMapper, KgRelationMapper relationMapper) {
         this.mapper = mapper;
         this.embeddings = embeddings;
         this.scopeService = scopeService;
         this.properties = properties;
         this.indexTaskMapper = indexTaskMapper;
+        this.relationMapper = relationMapper;
     }
 
     /** Compatibility constructor for isolated retrieval/chunk tests. */
     KgDocumentChunkService(KgDocumentChunkMapper mapper, KgEmbeddingService embeddings,
                            KgScopeService scopeService, AiEmbeddingProperties properties) {
-        this(mapper, embeddings, scopeService, properties, null);
+        this(mapper, embeddings, scopeService, properties, null, null);
     }
 
     public static List<KgDocumentChunk> split(KgIndexTask task) {
@@ -95,6 +99,9 @@ public class KgDocumentChunkService {
         if (sameSource(current, desired)) {
             return;
         }
+        // 旧片段一旦被删，指向它们的 kg_relation 就成了孤儿（source_chunk_id 悬空），
+        // 图谱只会随每次编辑膨胀。先按同一口径清掉关系，再删片段。
+        deleteRelationsForDocument(task);
         mapper.delete(new QueryWrapper<KgDocumentChunk>()
             .eq("doc_type", task.getDocType()).eq("doc_id", task.getDocId()));
         for (KgDocumentChunk chunk : desired) {
@@ -117,9 +124,31 @@ public class KgDocumentChunkService {
     public int deleteByDocument(KgIndexTask task) {
         if (task == null) return 0;
         assertWriteFence(task);
+        deleteRelationsForDocument(task);
         return mapper.delete(new QueryWrapper<KgDocumentChunk>()
             .eq("doc_type", task.getDocType())
             .eq("doc_id", task.getDocId()));
+    }
+
+    /**
+     * 清掉某个文档的所有片段所指向的关系。
+     *
+     * <p>片段的删除条件只按 doc_type + doc_id，这里取 id 时也用同一条件，
+     * 避免"删了一部分、关系只清了一部分"。
+     */
+    private void deleteRelationsForDocument(KgIndexTask task) {
+        if (relationMapper == null) {
+            return;
+        }
+        List<Long> chunkIds = mapper.selectList(new QueryWrapper<KgDocumentChunk>()
+                .select("id")
+                .eq("doc_type", task.getDocType())
+                .eq("doc_id", task.getDocId()))
+            .stream().map(KgDocumentChunk::getId).filter(java.util.Objects::nonNull).toList();
+        if (chunkIds.isEmpty()) {
+            return;
+        }
+        relationMapper.delete(new QueryWrapper<KgRelation>().in("source_chunk_id", chunkIds));
     }
 
     /**

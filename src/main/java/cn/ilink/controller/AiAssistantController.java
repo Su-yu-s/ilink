@@ -148,6 +148,17 @@ public class AiAssistantController {
         if (task.getAssignedTo() != null ? !isAssignee : !isLeader) {
             return Result.forbidden().toResponseEntity();
         }
+        // 拆解结果最终要经 createTask 落库，而它要求团队处于 TEAMING；
+        // 源任务已完成/已取消时也没有拆解意义。两种情况都提前拦住，
+        // 否则用户拿到一串"看起来没问题、点创建却全部失败"的建议。
+        if (!"TEAMING".equalsIgnoreCase(team.getStatus())) {
+            return Result.badRequest("队伍尚未进入进行中状态，拆解出的子任务暂时无法创建")
+                .toResponseEntity();
+        }
+        String sourceStatus = task.getStatus();
+        if ("COMPLETED".equalsIgnoreCase(sourceStatus) || "CANCELLED".equalsIgnoreCase(sourceStatus)) {
+            return Result.badRequest("任务已完成或已取消，无需再拆解").toResponseEntity();
+        }
 
         ResponseEntity<Result<?>> guard = aiGuard();
         if (guard != null) {
@@ -200,7 +211,8 @@ public class AiAssistantController {
 
         try {
             AiAssistantService.QaAnswer qa = aiAssistantService.answerCompetitionQuestion(question, competition);
-            aiUsageService.record(user.getId(), null, ACTION_COMPETITION_QA, null, null, true);
+            aiUsageService.record(user.getId(), null, ACTION_COMPETITION_QA,
+                qa.promptTokens, qa.completionTokens, true);
             Map<String, Object> data = new LinkedHashMap<>();
             data.put("answer", qa.answer);
             // 供前端「已思考」折叠区渲染：思考过程、检索到的网页、总耗时
@@ -361,21 +373,31 @@ public class AiAssistantController {
                     @Override
                     public void onReasoning(String delta) {
                         streamedAnything[0] = true;
-                        sendEvent(emitter, "reasoning", delta);
+                        // 写不出去说明用户已经关页面了：抛出以中止读取模型流，
+                        // 否则后台线程会把整段回答读完，白占线程与额度
+                        if (!sendEvent(emitter, "reasoning", delta)) {
+                            throw new ClientGoneException();
+                        }
                     }
 
                     @Override
                     public void onContent(String delta) {
                         streamedAnything[0] = true;
-                        sendEvent(emitter, "answer", delta);
+                        if (!sendEvent(emitter, "answer", delta)) {
+                            throw new ClientGoneException();
+                        }
                     }
                 });
-            aiUsageService.record(user.getId(), null, ACTION_COMPETITION_QA, null, null, true);
+            aiUsageService.record(user.getId(), null, ACTION_COMPETITION_QA,
+                qa.promptTokens, qa.completionTokens, true);
             Map<String, Object> done = new LinkedHashMap<>();
             done.put("elapsedMs", qa.elapsedMs);
             done.put("sources", qa.sources);
             sendEvent(emitter, "done", done);
             emitter.complete();
+        } catch (ClientGoneException e) {
+            // 用户已离开：不再补发 error/done，也没有可写的连接
+            log.debug("答疑客户端已断开，停止读取模型流");
         } catch (AiClient.AiUnavailableException e) {
             aiUsageService.record(user.getId(), null, ACTION_COMPETITION_QA, null, null, false);
             log.warn("竞赛答疑（流式）失败: {}", e.getMessage());
@@ -416,12 +438,18 @@ public class AiAssistantController {
      *
      * <p>中途断连（用户关页面 / 刷新）是常态，写失败只需静默忽略。
      */
-    private void sendEvent(SseEmitter emitter, String name, Object data) {
+    private boolean sendEvent(SseEmitter emitter, String name, Object data) {
         try {
             emitter.send(SseEmitter.event().name(name).data(toSingleLineJson(data), MediaType.TEXT_PLAIN));
+            return true;
         } catch (Exception ignored) {
-            // 客户端已断开，无需处理
+            // 客户端已断开：调用方据此中止后续处理
+            return false;
         }
+    }
+
+    /** 浏览器断开 SSE 连接后，用它跳出模型流的读取循环 */
+    private static final class ClientGoneException extends RuntimeException {
     }
 
     private String toSingleLineJson(Object data) {

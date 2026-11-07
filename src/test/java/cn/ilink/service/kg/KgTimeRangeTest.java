@@ -27,6 +27,15 @@ class KgTimeRangeTest {
     }
 
     @Test
+    void parsesSameMonthAbbreviatedAndDashRanges() {
+        // 同月缩写：后一个日期省略「3 月」，不能退化成单日
+        assertRange("2026 年 3 月 10 日至 20 日", "2026-03-10", "2026-03-21");
+        // 连字符/波浪线同样是区间分隔符
+        assertRange("2026 年 3 月 1 日-3 月 5 日", "2026-03-01", "2026-03-06");
+        assertRange("2026 年 3 月 10 日～20 日", "2026-03-10", "2026-03-21");
+    }
+
+    @Test
     void undatedQuestionHasNoInventedWindow() {
         assertTrue(KgTimeRange.fromQuestion("iLink 有哪些竞赛关联？").isEmpty());
     }

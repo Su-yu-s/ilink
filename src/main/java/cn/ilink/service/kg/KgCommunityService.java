@@ -45,7 +45,9 @@ public class KgCommunityService {
      */
     public KgCommunity buildCommunityForEntity(Long entityId, Long userId) {
         try {
-            KgRelationService.SubGraph graph = relationService.expandTwoHops(List.of(entityId));
+            // 带上 userId：两跳展开会按可见性过滤，不传等于用"无用户"视角，
+            // TEAM/PRIVATE 实体在这个视角下取不到邻域，摘要永远为空
+            KgRelationService.SubGraph graph = relationService.expandTwoHops(List.of(entityId), userId, null);
             // 邻域太小不值得建社区；太大按上限截断
             if (graph.entityIds.size() < 3) {
                 return null;

@@ -38,6 +38,13 @@ import java.util.Map;
 @Slf4j
 public class AiClient {
 
+    /** 末块的结束标记：finish_reason 为非 null 字符串（null 时表示还在生成） */
+    private static final java.util.regex.Pattern TERMINATOR =
+        java.util.regex.Pattern.compile("\"finish_reason\"\\s*:\\s*\"");
+    /** 取 finish_reason 的具体取值（stop / length / content_filter …） */
+    private static final java.util.regex.Pattern FINISH_REASON_VALUE =
+        java.util.regex.Pattern.compile("\"finish_reason\"\\s*:\\s*\"([^\"]+)\"");
+
     /** 对外统一异常：配置缺失 / 供应商故障 / 响应异常 */
     public static class AiUnavailableException extends RuntimeException {
         public AiUnavailableException(String message) {
@@ -258,6 +265,10 @@ public class AiClient {
 
         StringBuilder content = new StringBuilder();
         StringBuilder reasoning = new StringBuilder();
+        // 上游中途断连时 readLine 会正常返回 EOF，循环自然结束——不记录终止信号，
+        // 半截回答就会被当成完整结果写进对话。这里要求至少见过 [DONE] 或 finish_reason。
+        final boolean[] sawTerminator = {false};
+        final String[] finishReason = {null};
 
         try {
             streamRestTemplate.execute(
@@ -282,7 +293,14 @@ public class AiClient {
                                 continue;
                             }
                             if ("[DONE]".equals(payload)) {
+                                sawTerminator[0] = true;
                                 break;
+                            }
+                            // 部分兼容实现不发 [DONE]，只在末块带 finish_reason
+                            java.util.regex.Matcher reason = FINISH_REASON_VALUE.matcher(payload);
+                            if (reason.find()) {
+                                sawTerminator[0] = true;
+                                finishReason[0] = reason.group(1);
                             }
                             appendDelta(payload, content, reasoning, listener);
                         }
@@ -302,11 +320,15 @@ public class AiClient {
             throw new AiUnavailableException("AI 返回内容无法解析");
         }
 
+        if (!sawTerminator[0]) {
+            // 流被上游或网络截断：宁可报错让用户重试，也不要把半句话当完整回答存下来
+            throw new AiUnavailableException("AI 流式响应中断，请重试");
+        }
         if (content.length() == 0 && reasoning.length() == 0) {
             throw new AiUnavailableException("AI 返回内容为空");
         }
         return new AiChatResult(content.toString(),
-            reasoning.length() == 0 ? null : reasoning.toString().trim(), null, null);
+            reasoning.length() == 0 ? null : reasoning.toString().trim(), null, null, finishReason[0]);
     }
 
     /** 解析单个 SSE 分片并累加；单块损坏只跳过，不影响整条流。包级可见以便单测。 */
